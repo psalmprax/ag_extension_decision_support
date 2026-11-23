@@ -33,12 +33,11 @@ export function Pipeline() {
               key={option.id}
               type="button"
               aria-pressed={persona === option.id}
-              aria-label={`View story as ${option.label}`}
               onClick={() => setPersona(option.id)}
               className={`${choiceClass(persona === option.id)} inline-flex items-center gap-2 px-4 py-2 text-sm`}
             >
               <option.icon className="w-4 h-4" aria-hidden="true" />
-              {option.label}
+              {t(option.label)}
             </button>
           ))}
         </div>
@@ -46,10 +45,9 @@ export function Pipeline() {
         <div className="grid lg:grid-cols-12 gap-6">
           <ol className="lg:col-span-5 space-y-2">
             {pipelineStages.map((item, index) => (
-              <li key={item.name}>
+              <li key={item.id}>
                 <button
                   type="button"
-                  aria-label={`Jump to stage ${STAGE_STORIES[persona][index].num}`}
                   aria-current={stage === index ? 'step' : undefined}
                   onClick={() => setStage(index)}
                   className={`${choiceClass(stage === index)} w-full p-4 flex items-start gap-3`}
@@ -58,9 +56,9 @@ export function Pipeline() {
                   <span>
                     <span className="block text-sm font-medium">
                       <span className="tabular-nums text-white/50 me-2">{STAGE_STORIES[persona][index].num}</span>
-                      {item.name}
+                      {t(item.name)}
                     </span>
-                    <span className="block text-xs text-white/60 mt-0.5">{item.subtitle}</span>
+                    <span className="block text-xs text-white/60 mt-0.5">{t(item.subtitle)}</span>
                   </span>
                 </button>
               </li>
@@ -74,18 +72,18 @@ export function Pipeline() {
                   <div className={ICON_TILE}>
                     <StageIcon className="w-6 h-6" aria-hidden="true" />
                   </div>
-                  <span className="text-xs text-white/60">{story.category}</span>
+                  <span className="text-xs text-white/60">{t(story.category)}</span>
                 </div>
                 <span className="px-3 py-1 rounded-md text-xs bg-white/[0.06] border border-white/[0.1] text-white/90 tabular-nums">
                   {t('ui_agro_storytelling_section_step_04', { num: story.num })}
                 </span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-medium text-white mb-4 leading-snug">{story.title}</h3>
+              <h3 className="text-xl sm:text-2xl font-medium text-white mb-4 leading-snug">{t(story.title)}</h3>
               <ul className="space-y-3">
                 {story.bullets.map(bullet => (
                   <li key={bullet} className="flex items-start gap-3 text-sm text-white/80">
                     <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0 text-emerald-400" aria-hidden="true" />
-                    <span className="leading-relaxed">{bullet}</span>
+                    <span className="leading-relaxed">{t(bullet)}</span>
                   </li>
                 ))}
               </ul>
@@ -93,16 +91,16 @@ export function Pipeline() {
             <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-white/[0.06]">
               <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-300">
                 <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-                {story.tag}
+                {t(story.tag)}
               </span>
               <div className="flex items-center gap-2">
-                <button type="button" aria-label="Previous step" onClick={() => setStage((stage - 1 + count) % count)} className={STEP_BUTTON}>
+                <button type="button" aria-label={t('landing_story_previous')} onClick={() => setStage((stage - 1 + count) % count)} className={STEP_BUTTON}>
                   <ChevronLeft className="w-4 h-4" aria-hidden="true" />
                 </button>
-                <button type="button" aria-label="Next step" onClick={() => setStage((stage + 1) % count)} className={STEP_BUTTON}>
+                <button type="button" aria-label={t('landing_story_next')} onClick={() => setStage((stage + 1) % count)} className={STEP_BUTTON}>
                   <ChevronRight className="w-4 h-4" aria-hidden="true" />
                 </button>
-                <button type="button" aria-label="Open interactive demo sandbox" onClick={() => navigate('/demo')} className={BUTTON_SECONDARY}>
+                <button type="button" onClick={() => navigate('/demo')} className={BUTTON_SECONDARY}>
                   {t('ui_agro_storytelling_section_try_demo')}
                   <ArrowRight className="w-4 h-4" aria-hidden="true" />
                 </button>

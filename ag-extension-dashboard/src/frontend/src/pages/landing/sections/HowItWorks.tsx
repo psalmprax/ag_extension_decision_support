@@ -56,9 +56,9 @@ export function HowItWorks() {
                   <div className="w-16 h-16 rounded-xl bg-white/[0.04] border border-white/[0.12] flex items-center justify-center text-lg font-medium text-emerald-400 mx-auto mb-6 relative z-10 shadow-lg">
                     {step.num}
                   </div>
-                  <h3 className="text-lg font-medium mb-3 text-white/90">{step.title}</h3>
+                  <h3 className="text-lg font-medium mb-3 text-white/90">{t(step.title)}</h3>
                   <p className="text-sm text-white/50 max-w-[280px] mx-auto leading-relaxed">
-                    {step.desc}
+                    {t(step.desc)}
                   </p>
                 </motion.div>
               ))}

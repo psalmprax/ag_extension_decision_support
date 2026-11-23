@@ -43,8 +43,8 @@ function GuidanceCard({ preset }: { preset: SandboxPreset }) {
         <span className={PANEL_TITLE}>{t('ui_agent_os_example_guidance_card')}</span>
         <span className="text-xs px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-amber-200">{t('ui_agent_os_not_verified')}</span>
       </div>
-      <div className="text-sm font-medium text-emerald-300">{preset.skillTitle}</div>
-      <p className="text-sm text-white/70 leading-relaxed">{preset.skillBody}</p>
+      <div className="text-sm font-medium text-emerald-300">{t(preset.skillTitle)}</div>
+      <p className="text-sm text-white/70 leading-relaxed">{t(preset.skillBody)}</p>
       <div className={`flex flex-wrap justify-between gap-2 ${MUTED}`}>
         <span>{t('ui_agent_os_source_scripted_example')}</span>
         <span>{t('ui_agent_os_region', { targetRegion: preset.targetRegion })}</span>
@@ -77,7 +77,7 @@ function ChannelPreview({ preset }: { preset: SandboxPreset }) {
         <span>{t('ui_agent_os_channel')} {CHANNELS.find(option => option.id === channel)?.label}</span>
         <span className="text-amber-200">{t('ui_agent_os_preview_only_not_sent')}</span>
       </div>
-      <p className="p-4 rounded-xl bg-[#0d1a14]/60 border border-white/[0.06] text-sm text-white/80 leading-relaxed">{preset.channelPreview[channel]}</p>
+      <p className="p-4 rounded-xl bg-[#0d1a14]/60 border border-white/[0.06] text-sm text-white/80 leading-relaxed">{t(preset.channelPreview[channel])}</p>
       <div className="grid grid-cols-3 gap-3 text-center">
         {counts.map(count => (
           <div key={count.label} className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.06]">
@@ -109,7 +109,7 @@ export function AdvisorySimulator() {
           </div>
           <button type="button" onClick={run} disabled={running} className={BUTTON_PRIMARY}>
             <Play className="w-4 h-4" aria-hidden="true" />
-            {running ? 'Playing simulation…' : 'Run advisory simulation'}
+            {running ? t('landing_sim_running') : t('landing_sim_run')}
           </button>
         </div>
 
@@ -118,7 +118,7 @@ export function AdvisorySimulator() {
           <div role="group" aria-label={t('ui_agent_os_select_agronomic_goal_scenario')} className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             {SANDBOX_PRESETS.map(option => (
               <button key={option.id} type="button" aria-pressed={preset.id === option.id} onClick={() => setPreset(option)} className={`${choiceClass(preset.id === option.id)} p-3`}>
-                <div className="text-xs font-medium leading-tight">{option.title}</div>
+                <div className="text-xs font-medium leading-tight">{t(option.title)}</div>
                 <div className="text-xs text-white/50 mt-1">{option.targetRegion}</div>
               </button>
             ))}
@@ -130,7 +130,7 @@ export function AdvisorySimulator() {
             <span>{t('ui_agent_os_objective_prompt')}</span>
             <span>{t('ui_agent_os_region', { targetRegion: preset.targetRegion })}</span>
           </div>
-          <p className="text-sm text-white/80 leading-relaxed">{t('ui_agent_os_text', { goalPrompt: preset.goalPrompt })}</p>
+          <p className="text-sm text-white/80 leading-relaxed">{t('ui_agent_os_text', { goalPrompt: t(preset.goalPrompt) })}</p>
         </div>
 
         <div className="space-y-2">
@@ -139,7 +139,7 @@ export function AdvisorySimulator() {
             <span className="text-emerald-300 tabular-nums" aria-live="polite">{t('ui_agent_os_4_steps_completed', { simProgress: progress })}</span>
           </div>
           <ol className="space-y-2">
-            {simulationSteps(preset).map((item, index) => {
+            {simulationSteps(preset, t).map((item, index) => {
               const done = index + 1 <= progress;
               const Icon = done ? CheckCircle2 : Circle;
               return (

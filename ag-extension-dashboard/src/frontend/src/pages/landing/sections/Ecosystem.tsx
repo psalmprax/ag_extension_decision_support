@@ -35,7 +35,7 @@ export function Ecosystem() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {capabilities.map(capability => (
             <motion.div
-              key={capability.title}
+              key={capability.id}
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
@@ -45,9 +45,9 @@ export function Ecosystem() {
               <div className={ICON_TILE}>
                 <capability.icon className="w-6 h-6" aria-hidden="true" />
               </div>
-              <div className={CARD_LABEL}>{capability.badge}</div>
-              <h3 className="text-base font-medium text-white">{capability.title}</h3>
-              <p className={CARD_BODY}>{capability.desc}</p>
+              <div className={CARD_LABEL}>{t(capability.badge)}</div>
+              <h3 className="text-base font-medium text-white">{t(capability.title)}</h3>
+              <p className={CARD_BODY}>{t(capability.desc)}</p>
             </motion.div>
           ))}
         </div>
@@ -90,12 +90,12 @@ export function Ecosystem() {
         <div className="mt-10 pt-8 border-t border-white/[0.06] grid grid-cols-2 sm:grid-cols-4 gap-6 text-center">
           {operationalStandards.map(item => (
             <a
-              key={item.title}
+              key={item.id}
               href={item.target}
               className="space-y-1 p-2 rounded-xl hover:bg-white/[0.04] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
             >
-              <div className="text-sm sm:text-base font-medium text-emerald-400">{item.title}</div>
-              <div className="text-xs text-white/60">{item.sub}</div>
+              <div className="text-sm sm:text-base font-medium text-emerald-400">{t(item.title)}</div>
+              <div className="text-xs text-white/60">{t(item.sub)}</div>
             </a>
           ))}
         </div>

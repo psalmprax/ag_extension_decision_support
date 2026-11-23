@@ -19,7 +19,7 @@ export function Community() {
         <div className="grid md:grid-cols-3 gap-6">
           {audiences.map(audience => (
             <motion.div
-              key={audience.title}
+              key={audience.id}
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
@@ -29,8 +29,8 @@ export function Community() {
               <div className={ICON_TILE}>
                 <audience.icon className="w-6 h-6" aria-hidden="true" />
               </div>
-              <h3 className={CARD_TITLE}>{audience.title}</h3>
-              <p className={CARD_BODY}>{audience.desc}</p>
+              <h3 className={CARD_TITLE}>{t(audience.title)}</h3>
+              <p className={CARD_BODY}>{t(audience.desc)}</p>
             </motion.div>
           ))}
         </div>

@@ -11,6 +11,7 @@ import { AgentOS } from '../pages/landing/sections/AgentOS';
 import { Pipeline } from '../pages/landing/sections/Pipeline';
 import { Ecosystem } from '../pages/landing/sections/Ecosystem';
 import { SANDBOX_PRESETS } from '../pages/landing/sectionData';
+import { englishT } from '../test/englishT';
 import { AgroEcosystemCanvasScrubber } from '../components/canvas-ui/AgroEcosystemCanvasScrubber';
 
 vi.mock('@/components/landing/Visuals', () => ({ GlobalConstellationVisualization: () => null }));
@@ -22,27 +23,31 @@ describe('public demos', () => {
     render(<MemoryRouter><AgentOS /></MemoryRouter>);
     expect(screen.getByText(/no messages or visits are sent or queued/i)).toBeInTheDocument();
     for (const preset of SANDBOX_PRESETS) {
-      fireEvent.click(screen.getByRole('button', { name: new RegExp(preset.title) }));
-      expect(screen.getByRole('button', { name: new RegExp(preset.title) })).toHaveAttribute('aria-pressed', 'true');
+      const title = new RegExp(englishT(preset.title));
+      fireEvent.click(screen.getByRole('button', { name: title }));
+      expect(screen.getByRole('button', { name: title })).toHaveAttribute('aria-pressed', 'true');
       expect(screen.getByText('Preview only — not sent')).toBeInTheDocument();
       expect(screen.getByText('Not verified')).toBeInTheDocument();
-      expect(screen.getByText(preset.channelPreview.sms)).toBeInTheDocument();
-      expect(screen.getByText(/no farmers were identified/)).toBeInTheDocument();
+      expect(screen.getByText(englishT(preset.channelPreview.sms))).toBeInTheDocument();
+      expect(screen.getByText(new RegExp(`Illustrative ${englishT(preset.targetCrop)} scenario in ${preset.targetRegion}; no farmers were identified`))).toBeInTheDocument();
     }
     fireEvent.click(screen.getByRole('button', { name: 'WhatsApp' }));
-    expect(screen.getByText(SANDBOX_PRESETS[2].channelPreview.whatsapp)).toBeInTheDocument();
+    expect(screen.getByText(englishT(SANDBOX_PRESETS[2].channelPreview.whatsapp))).toBeInTheDocument();
     expect(screen.queryByText(/SOURCE: FIELD_VISIT_CONSENSUS|DISPATCHED \(45\/45\)/)).not.toBeInTheDocument();
   });
 
   it('tells the pipeline story for each audience, one stage at a time', () => {
     render(<MemoryRouter><Pipeline /></MemoryRouter>);
     expect(screen.getByText('Orbital recon & atmospheric ingestion')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Jump to stage 03' }));
+    // Stage and audience buttons are named by the text they show.
+    fireEvent.click(screen.getByRole('button', { name: /SoilGrids/ }));
     expect(screen.getByText('Subsurface soil horizon stratigraphy')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'View story as Agribusiness & co-ops' }));
+    expect(screen.getByRole('button', { name: /SoilGrids/ })).toHaveAttribute('aria-current', 'step');
+    fireEvent.click(screen.getByRole('button', { name: 'Agribusiness & co-ops' }));
     expect(screen.getByText('Input efficiency & fertilizer optimization')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Next step' }));
     expect(screen.getByText(/SAP\/NetSuite connector — not yet integrated/)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Try demo/ })).toBeInTheDocument();
   });
 
   it('labels the intelligence trail as example values, not a live feed', () => {

@@ -14,6 +14,10 @@ on:
         description: 'Locale codes to translate, space-separated (empty = all)'
         required: false
         default: ''
+      keys:
+        description: 'Only these keys, comma-separated (empty = every key still in English)'
+        required: false
+        default: ''
       export_run_id:
         description: 'Instead of translating: print the locale files of this earlier run into the log (for environments that can read run logs but not artifact storage)'
         required: false
@@ -58,18 +62,21 @@ jobs:
           TRANSLATE_CHUNK_SIZE: '25'
           LANGUAGES: ${{ github.event.inputs.languages || matrix.group }}
           CUSTOM_LANGUAGES: ${{ github.event.inputs.languages }}
+          ONLY_KEYS: ${{ github.event.inputs.keys }}
           FIRST_GROUP: ${{ strategy.job-index == 0 }}
         run: |
           if [ -n "$CUSTOM_LANGUAGES" ] && [ "$FIRST_GROUP" != "true" ]; then
             echo "Custom language list: translated by the first group's job only."
             exit 0
           fi
+          KEYS_ARG=""
+          if [ -n "$ONLY_KEYS" ]; then KEYS_ARG="--keys=$ONLY_KEYS"; fi
           if [ -z "$GROQ_API_KEY" ] && [ -z "$AIHUBMIX_API_KEY" ]; then
             echo "::error::Neither GROQ_API_KEY nor AIHUBMIX_API_KEY is set as a repository secret"
             exit 1
           fi
           # shellcheck disable=SC2086 # word-splitting the language list is intended
-          node scripts/llm-translate-locales.js $LANGUAGES
+          node scripts/llm-translate-locales.js $LANGUAGES ${KEYS_ARG:+"$KEYS_ARG"}
 
       - name: Check the translated files
         working-directory: ag-extension-dashboard
