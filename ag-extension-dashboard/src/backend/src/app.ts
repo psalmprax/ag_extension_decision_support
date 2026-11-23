@@ -54,6 +54,7 @@ import usersRoutes from './routes/users';
 import serviceAccessRoutes from './routes/serviceAccess';
 import farmersRoutes from './routes/farmers';
 import fieldsRoutes from './routes/fields';
+import fieldRecordsRoutes from './routes/fieldRecords';
 import visitsRoutes from './routes/visits';
 import efficacyRoutes from './routes/efficacy';
 import advisoriesRoutes from './routes/advisories';
@@ -586,6 +587,7 @@ export const routeMounts: RouteMount[] = [
   { path: '/users', router: serviceAccessRoutes }, // /:id/service-access (system administrator)
   { path: '/users', router: usersRoutes },
   { path: '/farmers', router: farmersRoutes },
+  { path: '/fields', router: fieldRecordsRoutes }, // /:fieldId/soil-tests and /:fieldId/weather
   { path: '/fields', router: fieldsRoutes },
   { path: '/visits', router: visitsRoutes },
   { path: '/efficacy', router: efficacyRoutes },

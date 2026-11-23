@@ -3,6 +3,7 @@ import { query } from '@/services/databaseService';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 import { logger } from '@/utils/logger';
+import { checkAuditChain } from '@/services/audit/auditChain';
 
 const router = Router();
 
@@ -65,6 +66,19 @@ router.get('/', authorize(['admin']), async (req: AuthRequest, res: Response) =>
     } catch (error) {
         logger.error('audit-logs query failed:', error);
         safeError(res, 500, 'Failed to load audit logs');
+    }
+});
+
+/**
+ * GET /api/v1/audit-logs/integrity — checks the hash chain from its first entry to the newest
+ * and reports the first entry where it breaks. Admin only.
+ */
+router.get('/integrity', authorize(['admin']), async (_req: AuthRequest, res: Response) => {
+    try {
+        res.json({ success: true, data: await checkAuditChain() });
+    } catch (error) {
+        logger.error('audit-logs integrity check failed:', error);
+        safeError(res, 500, 'Failed to check the audit log');
     }
 });
 

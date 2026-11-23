@@ -100,20 +100,26 @@ describe('notificationJobId', () => {
 
 // ─── Audit log writer redacts secrets ────────────────────────────────────────
 const dbQuery = jest.fn().mockResolvedValue({ rows: [] });
-jest.mock('@/services/databaseService', () => ({ query: (...a: unknown[]) => dbQuery(...a), getPool: () => null }));
+// Audit entries are written in a transaction (lock, read the chain head, insert, hash).
+const txQuery = jest.fn(async (sql: string) => ({ rows: /RETURNING id/.test(sql) ? [{ id: 'a1' }] : [] }));
+jest.mock('@/services/databaseService', () => ({
+  query: (...a: unknown[]) => dbQuery(...a),
+  getPool: () => null,
+  withTransaction: async (fn: (client: { query: typeof txQuery }) => unknown) => fn({ query: txQuery }),
+}));
 import { writeAuditLog } from '@/middleware/auditMiddleware';
 
 describe('writeAuditLog', () => {
   it('persists a row with redacted body', async () => {
-    dbQuery.mockClear();
+    txQuery.mockClear();
     await writeAuditLog({
       actorId: 'u1', actorRole: 'admin', action: 'post.users', method: 'POST', path: '/api/v1/users',
       statusCode: 201, requestBody: { email: 'a@b', password: 'hunter22', nested: { token: 'abc', ok: 1 } },
     });
-    expect(dbQuery).toHaveBeenCalledTimes(1);
-    const [sql, params] = dbQuery.mock.calls[0];
-    expect(sql).toMatch(/INSERT INTO audit_logs/);
-    const body = params[10];
+    const insert = txQuery.mock.calls.find(([sql]) => /INSERT INTO audit_logs/.test(sql)) as unknown as [string, unknown[]];
+    expect(insert).toBeDefined();
+    const [, params] = insert;
+    const body = params[10] as string;
     expect(body).toContain('a@b');
     expect(body).not.toContain('hunter22');
     expect(body).not.toContain('"abc"');

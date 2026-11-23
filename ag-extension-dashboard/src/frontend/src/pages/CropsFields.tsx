@@ -11,23 +11,14 @@ import {
 import { AnimatePresence } from 'framer-motion';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
-import {
-  fetchFields,
-  createField,
-  updateField,
-  deleteField,
-  createCropCycle,
-  updateCropCycle,
-  deleteCropCycle,
-  type Field,
-  type CropCycle,
-} from '../api/fieldService';
+import { fetchFields, deleteField, createCropCycle, updateCropCycle, deleteCropCycle, type Field, type CropCycle } from '../api/fieldService';
 import { fetchFarmers } from '../api/farmerService';
 import type { Farmer } from '../types/dashboard';
 import { DEMO_FARMERS, isDemoFarmerId, buildDemoFields, useDemoMode } from '@/demo';
 import { CropsOverviewTab } from '@/components/crops/CropsOverviewTab';
 import { CropCyclesTable } from '@/components/crops/CropCyclesTable';
 import { FieldModal } from '@/components/crops/FieldModal';
+import { useFieldEditor } from '@/components/crops/useFieldEditor';
 import { GrowthCycleModal } from '@/components/crops/GrowthCycleModal';
 import { HarvestModal } from '@/components/crops/HarvestModal';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -51,23 +42,11 @@ export function CropsFields() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'cycles'>('overview');
 
-  const [showFieldModal, setShowFieldModal] = useState(false);
   const [showCycleModal, setShowCycleModal] = useState(false);
   const [showHarvestModal, setShowHarvestModal] = useState(false);
 
-  const [editingField, setEditingField] = useState<Field | null>(null);
   const [selectedField, setSelectedField] = useState<Field | null>(null);
   const [selectedCycle, setSelectedCycle] = useState<CropCycle | null>(null);
-
-  // Form state - Field
-  const [fieldForm, setFieldForm] = useState({
-    name: '',
-    areaHectares: '',
-    soilType: '',
-    soilPh: '',
-    latitude: '',
-    longitude: '',
-  });
 
   const [cycleForm, setCycleForm] = useState({
     cropName: '',
@@ -168,68 +147,8 @@ export function CropsFields() {
     loadFieldsData();
   }, [loadFieldsData]);
 
-  const handleOpenAddField = () => {
-    setEditingField(null);
-    setFieldForm({
-      name: '',
-      areaHectares: '',
-      soilType: 'loam',
-      soilPh: '6.5',
-      latitude: '',
-      longitude: '',
-    });
-    setShowFieldModal(true);
-  };
-
-  const handleOpenEditField = (field: Field) => {
-    setEditingField(field);
-    setFieldForm({
-      name: field.name,
-      // The form shows the person's unit (hectares or acres); it is saved in hectares.
-      areaHectares: String(Math.round(units.fromHectares(Number(field.areaHectares)) * 100) / 100),
-      soilType: field.soilType || 'loam',
-      soilPh: field.soilPh?.toString() || '6.5',
-      latitude: field.latitude?.toString() || '',
-      longitude: field.longitude?.toString() || '',
-    });
-    setShowFieldModal(true);
-  };
-
-  const handleSaveField = async () => {
-    if (!fieldForm.name || !fieldForm.areaHectares) {
-      addNotification({ type: 'warning', message: 'Name and Area are required' });
-      return;
-    }
-
-    const data = {
-      farmerId: isFarmer ? undefined : selectedFarmerId,
-      name: fieldForm.name,
-      areaHectares: units.toHectares(parseFloat(fieldForm.areaHectares)),
-      soilType: fieldForm.soilType || undefined,
-      soilPh: fieldForm.soilPh ? parseFloat(fieldForm.soilPh) : undefined,
-      latitude: fieldForm.latitude ? parseFloat(fieldForm.latitude) : undefined,
-      longitude: fieldForm.longitude ? parseFloat(fieldForm.longitude) : undefined,
-    };
-
-    try {
-      let res;
-      if (editingField) {
-        res = await updateField(editingField.id, data);
-        addNotification({ type: 'success', message: 'Field updated successfully' });
-      } else {
-        res = await createField(data);
-        addNotification({ type: 'success', message: 'Field created successfully' });
-      }
-
-      if (res.success) {
-        setShowFieldModal(false);
-        loadFieldsData();
-      }
-    } catch (error) {
-      console.error('Failed to save field:', error);
-      addNotification({ type: 'error', message: 'Failed to save field record' });
-    }
-  };
+  const fieldEditor = useFieldEditor({ farmerId: isFarmer ? undefined : selectedFarmerId, notify: addNotification, onSaved: loadFieldsData });
+  const { handleOpenAddField, handleOpenEditField } = fieldEditor;
 
   const handleDeleteField = async (id: string) => {
     if (
@@ -472,15 +391,7 @@ export function CropsFields() {
       )}
 
       {/* Modals */}
-      <FieldModal
-        showFieldModal={showFieldModal}
-        setShowFieldModal={setShowFieldModal}
-        editingField={editingField}
-        fieldForm={fieldForm}
-        setFieldForm={setFieldForm}
-        handleSaveField={handleSaveField}
-        radiusClass={radiusClass}
-      />
+      <FieldModal {...fieldEditor} radiusClass={radiusClass} />
 
       <GrowthCycleModal
         showCycleModal={showCycleModal}

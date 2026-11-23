@@ -24,6 +24,7 @@
   "/api/v1/analytics/queries",
   "/api/v1/api-clients/clients",
   "/api/v1/audit-logs",
+  "/api/v1/audit-logs/integrity",
   "/api/v1/auth/login-history",
   "/api/v1/auth/login-stats",
   "/api/v1/auth/me",

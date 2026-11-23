@@ -264,6 +264,61 @@ describe('Fields & Crops API Integration Tests', () => {
         expect(response.body.data.name).toBe('East Slope');
     });
 
+    it('lets a farmer add a field without naming their own farm', async () => {
+        const response = await request(app)
+            .post('/api/v1/fields')
+            .set('Authorization', `Bearer ${farmerToken}`)
+            .send({ name: 'Home Plot', areaHectares: 0.5 });
+
+        expect(response.status).toBe(201);
+        expect(response.body.data.farmerId).toBe('11111111-1111-1111-1111-111111111111');
+    });
+
+    it('measures the area and location from a mapped boundary', async () => {
+        // About 100 m a side near the equator: one hectare.
+        const d = 100 / 111_195;
+        const response = await request(app)
+            .post('/api/v1/fields')
+            .set('Authorization', `Bearer ${farmerToken}`)
+            .send({
+                name: 'Walked Plot',
+                areaHectares: 5,
+                boundaryCoordinates: [{ lat: 0, lng: 36 }, { lat: 0, lng: 36 + d }, { lat: d, lng: 36 + d }, { lat: d, lng: 36 }],
+                boundaryMethod: 'walked',
+                boundaryAccuracyM: 4,
+            });
+
+        expect(response.status).toBe(201);
+        expect(response.body.data.areaHectares).toBeCloseTo(1, 2);
+        expect(response.body.data.latitude).toBeCloseTo(d / 2, 6);
+        expect(response.body.data.boundaryAccuracyM).toBe(4);
+    });
+
+    it('refuses a boundary that crosses itself', async () => {
+        const response = await request(app)
+            .post('/api/v1/fields')
+            .set('Authorization', `Bearer ${farmerToken}`)
+            .send({
+                name: 'Bowtie',
+                areaHectares: 1,
+                boundaryCoordinates: [{ lat: 0, lng: 0 }, { lat: 0.001, lng: 0.001 }, { lat: 0, lng: 0.001 }, { lat: 0.001, lng: 0 }],
+                boundaryMethod: 'drawn',
+            });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toMatch(/crosses itself/);
+    });
+
+    it('refuses a field with an impossible soil pH', async () => {
+        const response = await request(app)
+            .post('/api/v1/fields')
+            .set('Authorization', `Bearer ${farmerToken}`)
+            .send({ name: 'Plot', areaHectares: 1, soilPh: 19 });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toMatch(/soilPh/);
+    });
+
     it('should allow farmer to create a new crop cycle', async () => {
         const response = await request(app)
             .post('/api/v1/fields/22222222-2222-2222-2222-222222222222/cycles')

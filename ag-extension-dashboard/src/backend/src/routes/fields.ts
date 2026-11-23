@@ -10,6 +10,8 @@ import { safeError } from '@/utils/safeResponse';
 import { UUID_REGEX } from '@/utils/uuid';
 import { demoWhere, linkedDemoSql } from '@/services/demoScope';
 import { canSeeFarmer, requestCanSeeFarmer, rowsOfVisibleFarmersSql, visibleFarmerIds } from '@/services/access/farmerScope';
+import { createFieldSchema, updateFieldSchema } from '@/shared-api/field';
+import { fieldColumnsFromWrite } from '@/services/fields/fieldWrite';
 
 const router = Router();
 
@@ -165,53 +167,47 @@ router.get('/:id', async (req: Request, res: Response) => {
     }
 });
 
+/** The farmer a new field belongs to: the one named, or a farmer's own farm when none is named. */
+async function resolveNewFieldFarmer(prisma: ReturnType<typeof getPrisma>, user: FieldUser | undefined, farmerId: string | undefined): Promise<string | null> {
+    if (farmerId) return farmerId;
+    if (user?.role !== 'farmer') return null;
+    const own = await prisma.farmer.findFirst({ where: { userId: user.userId }, select: { id: true } });
+    return own?.id ?? null;
+}
+
+function invalidBody(res: Response, issues: { path: PropertyKey[]; message: string }[]) {
+    const first = issues[0];
+    return res.status(400).json({ success: false, error: first ? `${first.path.join('.') || 'body'}: ${first.message}` : 'Invalid field' });
+}
+
 /**
- * POST /api/fields — create a field. Schema-aligned to the Prisma Field model.
+ * POST /api/fields — create a field. With a boundary, the area and location are measured from it.
  */
 router.post('/', async (req: Request, res: Response) => {
     try {
-        const body = req.body as {
-            farmer_id?: string;
-            farmerId?: string;
-            name?: string;
-            area_hectares?: number;
-            areaHectares?: number;
-            soil_type?: string;
-            soilType?: string;
-            soil_ph?: number;
-            soilPh?: number;
-            boundary_coordinates?: Prisma.JsonValue;
-            boundaryCoordinates?: Prisma.JsonValue;
-        };
-        const farmerId = body.farmerId || body.farmer_id;
-        const name = body.name;
-        const areaHectares = body.areaHectares !== undefined ? body.areaHectares : body.area_hectares;
-        const soilType = body.soilType !== undefined ? body.soilType : body.soil_type;
-        const soilPh = body.soilPh !== undefined ? body.soilPh : body.soil_ph;
-        const boundaryCoordinates = body.boundaryCoordinates !== undefined ? body.boundaryCoordinates : body.boundary_coordinates;
-
-        if (!farmerId || !name || typeof areaHectares !== 'number') {
-            return res.status(400).json({ success: false, error: 'farmerId, name, and areaHectares are required' });
-        }
-        // farmer_id is a UUID FK — reject malformed ids up front.
-        if (!UUID_REGEX.test(String(farmerId))) {
-            return res.status(400).json({ success: false, error: 'farmerId must be a valid UUID' });
-        }
+        const parsed = createFieldSchema.safeParse(req.body);
+        if (!parsed.success) return invalidBody(res, parsed.error.issues);
         const prisma = getPrisma();
-        const user = req.user as { userId?: string; role?: string } | undefined;
+        const user = req.user as FieldUser | undefined;
+        const farmerId = await resolveNewFieldFarmer(prisma, user, parsed.data.farmerId);
+        if (!farmerId) {
+            return res.status(400).json({ success: false, error: 'farmerId is required' });
+        }
 
         const accessError = await checkFieldCreationAccess(prisma, user, farmerId);
         if (accessError) {
             return res.status(accessError.status).json({ success: false, error: accessError.error });
         }
+        const columns = fieldColumnsFromWrite(parsed.data);
+        if (!columns.ok) return res.status(400).json({ success: false, error: columns.error });
         const field = await prisma.field.create({
             data: {
+                soilType: null,
+                soilPh: null,
+                ...(columns.data as Prisma.FieldUncheckedCreateInput),
                 farmerId,
-                name,
-                areaHectares,
-                soilType: soilType ?? null,
-                soilPh: soilPh ?? null,
-                boundaryCoordinates: (boundaryCoordinates ?? null) as Prisma.InputJsonValue,
+                name: parsed.data.name,
+                areaHectares: columns.data.areaHectares as number,
                 isActive: true,
             },
         });
@@ -223,7 +219,7 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 /**
- * PUT /api/fields/:id — update a field. Schema-aligned to the Prisma Field model.
+ * PUT /api/fields/:id — update a field. While it has a boundary, its area and location follow it.
  */
 router.put('/:id', async (req: Request, res: Response) => {
     try {
@@ -231,35 +227,20 @@ router.put('/:id', async (req: Request, res: Response) => {
         if (!id) {
             return res.status(400).json({ success: false, error: 'Field id is required' });
         }
+        const parsed = updateFieldSchema.safeParse(req.body);
+        if (!parsed.success) return invalidBody(res, parsed.error.issues);
         const prisma = getPrisma();
-        // First, verify the field exists and include its farmer for ownership checking
         const foundField = await prisma.field.findUnique({
             where: { id },
-            include: { farmer: { select: { userId: true, assignedOfficerId: true } } },
+            select: { farmerId: true, boundaryCoordinates: true },
         });
-        if (!foundField) {
-            return res.status(404).json({ success: false, error: 'Field not found' });
-        }
-        if (!(await requestCanSeeFarmer(req, foundField.farmerId))) {
+        if (!foundField || !(await requestCanSeeFarmer(req, foundField.farmerId))) {
             return res.status(404).json({ success: false, error: 'Field not found' });
         }
 
-        const body = req.body as Partial<{
-            name: string;
-            areaHectares: number;
-            area_hectares: number;
-            soilType: string;
-            soil_type: string;
-            soilPh: number;
-            soil_ph: number;
-            boundaryCoordinates: Prisma.JsonValue;
-            boundary_coordinates: Prisma.JsonValue;
-        }>;
-
-        const data: Prisma.FieldUpdateInput = {};
-        updateFieldData(data, body);
-
-        const field = await prisma.field.update({ where: { id }, data });
+        const columns = fieldColumnsFromWrite(parsed.data, foundField.boundaryCoordinates != null);
+        if (!columns.ok) return res.status(400).json({ success: false, error: columns.error });
+        const field = await prisma.field.update({ where: { id }, data: columns.data });
         return res.json({ success: true, data: field });
     } catch (error) {
         logger.error('Failed to update field:', error);
@@ -393,28 +374,6 @@ function applyDateFieldIfDefined(
     if (key === 'plantingDate') data.plantingDate = value;
     if (key === 'expectedHarvestDate') data.expectedHarvestDate = value;
     if (key === 'actualHarvestDate') data.actualHarvestDate = value;
-}
-
-function updateFieldData(data: Prisma.FieldUpdateInput, body: Partial<{
-    name: string;
-    areaHectares: number;
-    area_hectares: number;
-    soilType: string;
-    soil_type: string;
-    soilPh: number;
-    soil_ph: number;
-    boundaryCoordinates: Prisma.JsonValue;
-    boundary_coordinates: Prisma.JsonValue;
-}>): void {
-    if (body.name !== undefined) data.name = body.name;
-    const areaHectares = body.areaHectares !== undefined ? body.areaHectares : body.area_hectares;
-    if (areaHectares !== undefined) data.areaHectares = areaHectares;
-    const soilType = body.soilType !== undefined ? body.soilType : body.soil_type;
-    if (soilType !== undefined) data.soilType = soilType;
-    const soilPh = body.soilPh !== undefined ? body.soilPh : body.soil_ph;
-    if (soilPh !== undefined) data.soilPh = soilPh;
-    const boundaryCoordinates = body.boundaryCoordinates !== undefined ? body.boundaryCoordinates : body.boundary_coordinates;
-    if (boundaryCoordinates !== undefined) data.boundaryCoordinates = boundaryCoordinates as Prisma.InputJsonValue;
 }
 
 /**

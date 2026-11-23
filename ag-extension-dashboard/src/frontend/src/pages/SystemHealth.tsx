@@ -1,21 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  Activity,
-  CheckCircle,
-  AlertTriangle,
-  XCircle,
-  RotateCcw,
-  RefreshCw,
-  Shield,
-  Server,
-  Database,
-  Zap,
-  Wifi,
-  Terminal,
-  Cpu,
-  Globe,
-  Lock,
-} from 'lucide-react';
+import { Activity, CheckCircle, AlertTriangle, XCircle, RotateCcw, RefreshCw, Shield, Server, Database, Zap, Wifi, Terminal, Cpu, Globe, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { StatusMark } from './systemHealth/StatusMark';
@@ -30,6 +14,7 @@ import {
 import { runDiagnostics, DiagnosticResult } from '../api/diagnosticsService';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 import { SyncQueuePanel } from '@/components/SyncQueuePanel';
+import { AuditIntegrityPanel } from './systemHealth/AuditIntegrityPanel';
 import { RATE_LIMIT_STATUS, CERT_EXPIRY_WARN_DAYS, ERROR_COOLDOWN_MS } from '@/lib/constants';
 import { SECONDARY_BUTTON } from '@/components/ui/controlStyles';
 import { StatTile } from '@/components/ui/StatTile';
@@ -573,7 +558,7 @@ function useSystemHealthData(
 
 function SystemHealth() {
   const { t } = useLanguage();
-  const { addNotification } = useAppStore();
+  const { addNotification, user } = useAppStore();
   const { healthChecks, recoveryLog, isLoading, isRefreshing, overallHealth, reload } =
     useSystemHealthData(addNotification, t);
 
@@ -721,6 +706,8 @@ function SystemHealth() {
 
       {/* ── Recovery Audit Log ── */}
       <RecoveryLogList actions={recoveryLog} t={t} />
+
+      {user?.role === 'admin' && <AuditIntegrityPanel />}
     </div>
   );
 }

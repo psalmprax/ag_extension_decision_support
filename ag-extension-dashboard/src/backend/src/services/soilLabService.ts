@@ -2,6 +2,50 @@ import { query } from './databaseService';
 import { logger } from '@/utils/logger';
 import { farmerScopeSql, type ScopePrincipal } from '@/services/access/farmerScope';
 import { isUuid } from '@/utils/uuid';
+import type { SoilTest, SoilTestInput } from '@/shared-api/fieldRecords';
+
+interface SoilLabRow {
+    id: string;
+    field_id: string | null;
+    lab_name: string | null;
+    sample_ref: string | null;
+    ph: string | null;
+    organic_carbon_pct: string | null;
+    organic_matter_pct: string | null;
+    nitrogen_ppm: string | null;
+    phosphorus_ppm: string | null;
+    potassium_ppm: string | null;
+    tested_at: Date | string | null;
+}
+
+const SOIL_LAB_COLUMNS = `id, field_id, lab_name, sample_ref, ph, organic_carbon_pct, organic_matter_pct,
+    nitrogen_ppm, phosphorus_ppm, potassium_ppm, tested_at`;
+
+const numberOrNull = (value: string | null): number | null => (value === null ? null : Number(value));
+
+/** The test day as YYYY-MM-DD; results store the day, and a day has no time zone. */
+function testDay(value: Date | string | null): string | null {
+    if (value === null) return null;
+    if (typeof value === 'string') return value.slice(0, 10);
+    const local = new Date(value.getTime() - value.getTimezoneOffset() * 60_000);
+    return local.toISOString().slice(0, 10);
+}
+
+function mapSoilLabRow(row: SoilLabRow): SoilTest {
+    return {
+        id: row.id,
+        fieldId: row.field_id,
+        testedAt: testDay(row.tested_at),
+        labName: row.lab_name,
+        sampleRef: row.sample_ref,
+        ph: numberOrNull(row.ph),
+        organicCarbonPct: numberOrNull(row.organic_carbon_pct),
+        organicMatterPct: numberOrNull(row.organic_matter_pct),
+        nitrogenPpm: numberOrNull(row.nitrogen_ppm),
+        phosphorusPpm: numberOrNull(row.phosphorus_ppm),
+        potassiumPpm: numberOrNull(row.potassium_ppm),
+    };
+}
 
 export interface SoilLabRowInput {
     farmerRef?: string;
@@ -107,32 +151,43 @@ export const soilLabService = {
         return { imported, unmatchedFarmers: [...new Set(unmatchedFarmers)] };
     },
 
-    async getResultsForFarmer(farmerId: string) {
-        const { rows } = await query<{
-            id: string;
-            lab_name: string | null;
-            sample_ref: string | null;
-            ph: string | null;
-            nitrogen_ppm: string | null;
-            phosphorus_ppm: string | null;
-            potassium_ppm: string | null;
-            organic_matter_pct: string | null;
-            tested_at: Date | null;
-        }>(
-            `SELECT id, lab_name, sample_ref, ph, nitrogen_ppm, phosphorus_ppm, potassium_ppm, organic_matter_pct, tested_at
-             FROM soil_lab_results WHERE farmer_id = $1 ORDER BY tested_at DESC NULLS LAST LIMIT 50`,
+    async getResultsForFarmer(farmerId: string): Promise<SoilTest[]> {
+        const { rows } = await query<SoilLabRow>(
+            `SELECT ${SOIL_LAB_COLUMNS} FROM soil_lab_results WHERE farmer_id = $1 ORDER BY tested_at DESC NULLS LAST LIMIT 50`,
             [farmerId]
         );
-        return rows.map(r => ({
-            id: r.id,
-            labName: r.lab_name,
-            sampleRef: r.sample_ref,
-            ph: r.ph !== null ? Number(r.ph) : null,
-            nitrogenPpm: r.nitrogen_ppm !== null ? Number(r.nitrogen_ppm) : null,
-            phosphorusPpm: r.phosphorus_ppm !== null ? Number(r.phosphorus_ppm) : null,
-            potassiumPpm: r.potassium_ppm !== null ? Number(r.potassium_ppm) : null,
-            organicMatterPct: r.organic_matter_pct !== null ? Number(r.organic_matter_pct) : null,
-            testedAt: r.tested_at,
-        }));
+        return rows.map(mapSoilLabRow);
+    },
+
+    /** A field's results, oldest first, so a change over the years reads left to right. */
+    async listForField(fieldId: string): Promise<SoilTest[]> {
+        const { rows } = await query<SoilLabRow>(
+            `SELECT ${SOIL_LAB_COLUMNS} FROM soil_lab_results WHERE field_id = $1
+              ORDER BY tested_at ASC NULLS LAST, imported_at ASC LIMIT 200`,
+            [fieldId]
+        );
+        return rows.map(mapSoilLabRow);
+    },
+
+    async addForField(field: { id: string; farmerId: string }, input: SoilTestInput): Promise<SoilTest> {
+        const { rows } = await query<SoilLabRow>(
+            `INSERT INTO soil_lab_results
+                 (farmer_id, field_id, lab_name, sample_ref, ph, organic_carbon_pct, organic_matter_pct,
+                  nitrogen_ppm, phosphorus_ppm, potassium_ppm, tested_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::date)
+             RETURNING ${SOIL_LAB_COLUMNS}`,
+            [
+                field.farmerId, field.id, input.labName || null, input.sampleRef || null, input.ph ?? null,
+                input.organicCarbonPct ?? null, input.organicMatterPct ?? null, input.nitrogenPpm ?? null,
+                input.phosphorusPpm ?? null, input.potassiumPpm ?? null, input.testedAt,
+            ]
+        );
+        return mapSoilLabRow(rows[0]);
+    },
+
+    /** Removes one result from a field; false when the field has no such result. */
+    async removeFromField(fieldId: string, resultId: string): Promise<boolean> {
+        const { rowCount } = await query('DELETE FROM soil_lab_results WHERE id = $1 AND field_id = $2', [resultId, fieldId]);
+        return (rowCount ?? 0) > 0;
     },
 };
