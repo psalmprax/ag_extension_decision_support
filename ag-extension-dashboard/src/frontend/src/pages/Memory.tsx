@@ -13,6 +13,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ScoreMeter } from '@/components/charts/ScoreMeter';
 import { useLanguage } from '../lib/LanguageContext';
 import { useResourceLoader } from '@/hooks/useResourceLoader';
 import { useAppStore } from '../store/useAppStore';
@@ -339,16 +340,11 @@ function Memory() {
                 {/* Importance Bar & Telemetry */}
                 <div className="space-y-1.5 pt-1">
                   <div className="flex justify-between text-xs font-mono tabular-nums text-slate-500 dark:text-white/40">
-                    <span>{t('ui_memory_importance')} {((memory.importance || 0.5) * 100).toFixed(0)}%</span>
+                    <span>{t('ui_memory_importance')} {Number.isFinite(memory.importance) ? `${(memory.importance * 100).toFixed(0)}%` : '—'}</span>
                     <span>{t('ui_memory_accesses')} {memory.accessCount || 0}</span>
                     <span>{new Date(memory.createdAt).toLocaleDateString()}</span>
                   </div>
-                  <div className="w-full bg-slate-200 dark:bg-white/5 rounded-full h-1.5 overflow-hidden">
-                    <div
-                      className="bg-emerald-600 dark:bg-emerald-500 h-full rounded-full transition-all duration-500"
-                      style={{ width: `${(memory.importance || 0.5) * 100}%` }}
-                    />
-                  </div>
+                  <ScoreMeter value={memory.importance} max={1} />
                 </div>
               </motion.div>
             ))}

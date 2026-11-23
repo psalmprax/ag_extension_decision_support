@@ -5,7 +5,7 @@
  * Consumed by:
  *   - src/theme/index.ts         (runtime CSS variable emission, per-theme + dark mode)
  *   - tailwind.config.js          (Tailwind `colors` generation)
- *   - src/lib/colors.ts           (CH_COLORS re-export for imperative/JS styling)
+ *   - src/components/charts       (series colours via --color-series-*)
  *
  * Do NOT hardcode color values anywhere else. If a color is missing, add it here.
  */
@@ -97,6 +97,20 @@ const FIELD_DARK_TEXT: TextSteps = {
   secondary: '#c5d3cb',
   muted: '#8fa69a',
 };
+
+/**
+ * Chart series colours, in a fixed order: a chart takes slot 1, then 2, and so on, and a
+ * category keeps its slot when others are filtered out. The order keeps neighbours apart for
+ * colour-blind readers (dataviz validator, adjacent pairs: colour-blind ΔE 16 light / 13 dark,
+ * normal vision ΔE 19, all slots in the lightness band). Slot 1 is the field green; dark steps
+ * are lighter for the dark panels. Six at most: past that, fold into "Other".
+ */
+export const SERIES_COLORS = {
+  light: ['#1f8053', '#2a78d6', '#eb6834', '#6250d6', '#eda100', '#e87ba4'],
+  dark: ['#4e9e73', '#3987e5', '#d95926', '#9085e9', '#c98500', '#d55181'],
+  otherLight: '#8a948f',
+  otherDark: '#7b8a82',
+} as const;
 
 /** Steps present in every color scale (drives Tailwind + CSS var generation). */
 export const COLOR_STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900] as const;

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { AlertCircle, BarChart3, Info } from 'lucide-react';
 import { fetchChurnAnalytics, ChurnAnalytics } from '@/api/billingService';
+import { RankedBars } from '@/components/charts/RankedBars';
 import { useLanguage } from '@/lib/LanguageContext';
 
 const REASON_LABELS: Record<string, string> = {
@@ -95,26 +96,11 @@ export const ChurnReasons: React.FC = () => {
       )}
 
       {!loading && !error && hasReasons && (
-        <ul className="space-y-4">
-          {reasons.map(reason => (
-            <li key={reason.reason}>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-medium text-slate-900 dark:text-white">{formatReason(reason.reason)}</span>
-                <span className="text-xxs font-mono text-slate-600 dark:text-white/60">
-                  {reason.count} · {reason.percentage.toFixed(1)}%
-                </span>
-              </div>
-              <div className="h-2 rounded-full bg-slate-50 dark:bg-white/5 overflow-hidden">
-                <div
-                  className="h-full rounded-full bg-amber-400"
-                  style={{ width: `${Math.min(100, Math.max(0, reason.percentage))}%` }}
-                  role="img"
-                  aria-label={`${formatReason(reason.reason)}: ${reason.percentage.toFixed(1)} percent of recorded reasons`}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
+        <RankedBars
+          rows={reasons.map(reason => ({ label: formatReason(reason.reason), value: reason.count, detail: `${reason.percentage.toFixed(1)}%` }))}
+          label={t('ui_churn_reasons_cancellation_reasons')}
+          formatValue={value => String(value)}
+        />
       )}
 
       {!loading && !error && coverage && (

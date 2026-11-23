@@ -24,6 +24,9 @@ function mapApiFarmerToStoreFarmer(farmer: ApiFarmer): Farmer {
     longitude: farmer.locationLng,
     region: farmer.region,
     assignedOfficerId: farmer.assignedOfficerId,
+    // The farmer panel shows these; dropping them drew every farmer as unscored with no harvests.
+    vitalScore: farmer.vitalScore,
+    yieldHistory: farmer.yieldHistory,
   };
 }
 

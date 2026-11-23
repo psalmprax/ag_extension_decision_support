@@ -70,7 +70,7 @@ function tenantPredicate(tenantId: string | null, alias: string): string {
     return `${liveOnly} AND EXISTS (SELECT 1 FROM farmers scoped_f WHERE scoped_f.id = ${alias}.farmer_id AND scoped_f.tenant_id = '${tenantId}')`;
 }
 
-interface UserScope {
+export interface UserScope {
     isOfficer: boolean;
     isManager: boolean;
     /** A farmer's own user id: they see only their own farm in any count. */
@@ -139,18 +139,34 @@ async function fetchGeography(user: UserScope) {
     `, sf.params);
 }
 
-async function fetchCropDistribution(user: UserScope) {
+/**
+ * How many of the visible active farmers grow each crop, and what share of those farmers
+ * that is. Names are lower-cased so "Maize" and "maize" are one crop. A farmer growing two
+ * crops counts once under each, so shares need not sum to 100.
+ */
+export async function fetchCropDistribution(user: UserScope) {
     const sf = buildScopeFilter(user, 'assigned_officer_id', 'f');
-    const cropsData = await getFromDB(`
-        SELECT unnest(crops) as crop, COUNT(*) as count 
-        FROM farmers f WHERE f.crops IS NOT NULL ${sf.whereClause}
-        GROUP BY crop ORDER BY count DESC
-    `, sf.params);
-    const totalCropCount = cropsData.reduce((sum: number, row: Record<string, unknown>) => sum + parseInt(row.count as string), 0);
-    return cropsData.slice(0, 5).map((row: Record<string, unknown>) => ({
-        name: row.crop as string,
-        percentage: totalCropCount > 0 ? Math.round((parseInt(row.count as string) / totalCropCount) * PERCENTAGE_MULTIPLIER) : 0
-    }));
+    const [cropsData, totalRows] = await Promise.all([
+        getFromDB(`
+            SELECT LOWER(TRIM(crop)) as crop, COUNT(DISTINCT f.id) as count
+            FROM farmers f CROSS JOIN LATERAL unnest(f.crops) AS crop
+            WHERE f.is_active = true AND TRIM(crop) <> '' ${sf.whereClause}
+            GROUP BY LOWER(TRIM(crop)) ORDER BY count DESC, crop ASC LIMIT 8
+        `, sf.params),
+        getFromDB(`
+            SELECT COUNT(*) as total FROM farmers f
+            WHERE f.is_active = true AND cardinality(f.crops) > 0 ${sf.whereClause}
+        `, sf.params),
+    ]);
+    const farmersWithCrops = parseInt(String(totalRows[0]?.total ?? 0), 10);
+    return cropsData.map((row: Record<string, unknown>) => {
+        const count = parseInt(row.count as string, 10);
+        return {
+            name: row.crop as string,
+            count,
+            percentage: farmersWithCrops > 0 ? Math.round((count / farmersWithCrops) * PERCENTAGE_MULTIPLIER) : 0,
+        };
+    });
 }
 
 async function fetchRecentActivity(user: UserScope) {

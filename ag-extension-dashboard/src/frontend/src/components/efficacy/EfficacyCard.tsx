@@ -119,7 +119,8 @@ export function EfficacyCard() {
                     <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-8 h-8 text-green-500" />
                         <div>
-                            <p className="text-2xl font-medium leading-none">{summary.data.overallSuccessRate}%</p>
+                            {/* No tracked outcomes is "not measured yet", not a 0% success rate. */}
+                            <p className="text-2xl font-medium leading-none">{summary.data.totalOutcomes > 0 ? `${summary.data.overallSuccessRate}%` : '—'}</p>
                             <p className="text-xxs text-gray-400">{t('ui_efficacy_card_success_rate')}</p>
                         </div>
                     </div>

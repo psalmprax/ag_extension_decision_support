@@ -143,5 +143,6 @@ export interface DashboardData {
     satisfactionChange: number;
   };
   geography?: { region: string; farmers: number }[];
-  crops?: { name: string; count: number }[];
+  /** Farmers growing each crop, and their share of farmers with crops (live data only). */
+  crops?: { name: string; count: number; percentage?: number }[];
 }

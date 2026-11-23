@@ -9,6 +9,7 @@ import { Badge } from './ui/Badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FarmerDetailHeader } from './FarmerDetailHeader';
 import { FarmerYieldChart } from './FarmerYieldChart';
+import { ScoreMeter } from '@/components/charts/ScoreMeter';
 import { FarmerVisitTimeline } from './FarmerVisitTimeline';
 import { X, TrendingUp, MessageSquare, Phone, Video, Clock, ChevronRight, Sprout, Activity, Mail, History, FileText, Loader2, Link2, ListChecks } from 'lucide-react';
 import { FarmerProgressLog } from './progress/FarmerProgressLog';
@@ -194,16 +195,10 @@ const VitalStatsSection = ({
       <Activity className={`w-4 h-4 text-secondary-500`} />
       {t('farmer_vital_score')}
     </h3>
-    <div className={`text-3xl font-medium tabular-nums leading-none text-gray-900 dark:text-white`}>
-      {farmer.vitalScore || 0}
-      <span className="text-sm text-gray-400">/100</span>
+    <div className="text-3xl font-medium leading-none text-gray-900 dark:text-white">
+      {Number.isFinite(farmer.vitalScore) ? <>{farmer.vitalScore}<span className="text-sm text-slate-600 dark:text-theme-text-muted">/100</span></> : <span className="text-sm font-normal text-slate-600 dark:text-theme-text-muted">{t('farmer_vital_score_none')}</span>}
     </div>
-    <div className={`w-full h-1.5 rounded-full mt-3 overflow-hidden bg-gray-100 dark:bg-white/[0.08]`}>
-      <div
-        className={`h-full rounded-full bg-secondary-500`}
-        style={{ width: `${farmer.vitalScore || 0}%` }}
-      />
-    </div>
+    <div className="mt-3"><ScoreMeter value={farmer.vitalScore} max={100} /></div>
     {isEditing && (
       <div className="mt-4">
         <label className="text-xs font-medium text-gray-400 block mb-1">

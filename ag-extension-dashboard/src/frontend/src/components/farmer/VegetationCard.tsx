@@ -3,19 +3,16 @@ import { Loader2, Sprout, CloudOff, MapPin } from 'lucide-react';
 import type { NDVIPoint } from '@/api/agriDataService';
 import type { MarketDataStatus } from '@/api/priceService';
 import { DATA_STATUS_LABELS } from './dataStatusLabels';
+import { MiniBars } from '@/components/charts/MiniBars';
 
 
-/** Rising prices read green, falling red; anything else (e.g. "Stable") stays neutral. */
+/** A plain-language band for a vegetation index value. */
 function vegInterpret(ndvi: number): { label: string; color: string } {
   if (ndvi >= 0.7) return { label: 'Lush', color: 'text-emerald-600 dark:text-emerald-400' };
   if (ndvi >= 0.5) return { label: 'Healthy', color: 'text-emerald-600 dark:text-emerald-400' };
   if (ndvi >= 0.35) return { label: 'Moderate', color: 'text-amber-600 dark:text-amber-400' };
   if (ndvi >= 0.2) return { label: 'Stressed', color: 'text-rose-600 dark:text-rose-400' };
   return { label: 'Bare', color: 'text-slate-500' };
-}
-
-function barColor(p: NDVIPoint): string {
-  return p.ndvi >= 0.5 ? '#10b981' : p.ndvi >= 0.35 ? '#f59e0b' : '#ef4444';
 }
 
 /** A quiet message in place of a card's figures. */
@@ -33,7 +30,6 @@ function VegetationFigures({ data }: { data: { data: NDVIPoint[]; dataStatus: st
   const points = data.data;
   const ndvi = points[points.length - 1].ndvi;
   const veg = vegInterpret(ndvi);
-  const maxBar = Math.max(0.05, ...points.map(p => p.ndvi), 1);
   return (
     <>
       <div className="flex items-baseline gap-2 mb-5">
@@ -43,20 +39,12 @@ function VegetationFigures({ data }: { data: { data: NDVIPoint[]; dataStatus: st
         <span className="text-sm font-medium text-gray-500 dark:text-theme-text-muted">{veg.label}</span>
       </div>
 
-      <div className="flex items-end gap-0.5 h-14 mb-2">
-        {points.slice(-14).map((p, i) => (
-          <div
-            key={i}
-            className="flex-1 rounded-t-sm"
-            style={{ height: `${Math.max((p.ndvi / maxBar) * 100, 3)}%`, backgroundColor: barColor(p) }}
-          />
-        ))}
-      </div>
-
-      <div className="flex justify-between text-xxs text-gray-400 dark:text-theme-text-muted font-mono mt-1">
-        <span>{points[0]?.date.slice(5) || ''}</span>
-        <span>{points[points.length - 1]?.date.slice(5) || ''}</span>
-      </div>
+      <MiniBars
+        points={points.slice(-14).map(p => ({ date: p.date, value: p.ndvi }))}
+        max={1}
+        format={value => value.toFixed(2)}
+        label="Vegetation index by day"
+      />
 
       <div className="mt-4 pt-3 border-t border-gray-100 dark:border-white/[0.12] flex items-center justify-between">
         <span className="text-xxs text-gray-400 dark:text-theme-text-muted capitalize">{data.reason || ''}</span>

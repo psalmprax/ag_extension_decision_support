@@ -24,6 +24,7 @@ import {
   fetchKnowledgeStats,
   fetchKnowledgeQuota,
   KnowledgeQuotaData,
+  KnowledgeSearchStats,
   Attachment,
   Citation,
   KnowledgeEvidenceStatus,
@@ -202,12 +203,7 @@ export const KnowledgeBase: React.FC = () => {
   const [librarySearchQuery, setLibrarySearchQuery] = useState<string>('');
   const [selectedArticle, setSelectedArticle] = useState<DocumentArticle | null>(null);
 
-  const [stats, setStats] = useState<{
-    crops?: { name: string; count: number }[];
-    categories?: { name: string; count: number }[];
-    totalQueries?: number;
-    cachedQueries?: number;
-  } | null>(null);
+  const [stats, setStats] = useState<KnowledgeSearchStats | null>(null);
 
   const applyQuotaUpdate = useCallback((dailyRemaining?: number, dailyLimit?: number) => {
     if (typeof dailyRemaining === 'number' && typeof dailyLimit === 'number') {

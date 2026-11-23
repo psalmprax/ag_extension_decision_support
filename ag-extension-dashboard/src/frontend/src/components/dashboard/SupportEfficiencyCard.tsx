@@ -1,13 +1,13 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import type { PerformanceData } from '@/api/analyticsService';
 import { useAppStore } from '@/store/useAppStore';
 import { lacksPaidAccess } from '@/lib/planAccess';
+import { ScoreMeter } from '@/components/charts/ScoreMeter';
 
 export const SupportEfficiencyCard: React.FC<{
   performanceData?: PerformanceData;
-  t: (key: string) => string;
+  t: (key: string, fallback?: string) => string;
   cardClass: string;
 }> = ({ performanceData, t, cardClass }) => {
   // These figures come from Pro analytics, which the server refuses the free plan
@@ -19,16 +19,14 @@ export const SupportEfficiencyCard: React.FC<{
     {
       name: t('analytics_resolution_rate'),
       value: metrics?.resolutionRate ?? null,
-      progress: metrics?.resolutionRate ?? 0,
+      max: 100,
       label: (v: number) => `${v}%`,
-      color: 'bg-primary-500',
     },
     {
       name: t('analytics_satisfaction_score'),
       value: metrics?.satisfactionScore ?? null,
-      progress: (metrics?.satisfactionScore ?? 0) * 20,
+      max: 5,
       label: (v: number) => `${v} / 5`,
-      color: 'bg-slate-500',
     },
   ];
 
@@ -41,22 +39,15 @@ export const SupportEfficiencyCard: React.FC<{
         <p className="text-sm text-slate-600 dark:text-white/60">{t('dash_support_efficiency_pro_only')}</p>
       ) : performanceData ? (
         <div className="space-y-4 sm:space-y-6">
-          {rows.map((item, i) => (
+          {rows.map(item => (
             <div key={item.name} className="space-y-1.5 sm:space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-theme-text-secondary">{item.name}</span>
-                <span className="text-xs font-medium tabular-nums text-primary-700 dark:text-primary-400">
-                  {item.value === null ? 'No data yet' : item.label(item.value)}
+                <span className={`text-xs tabular-nums ${item.value === null ? 'text-slate-600 dark:text-theme-text-muted' : 'font-medium text-slate-900 dark:text-theme-text-primary'}`}>
+                  {item.value === null ? t('chart_no_data_yet', 'No data yet') : item.label(item.value)}
                 </span>
               </div>
-              <div className="w-full h-1.5 sm:h-1 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${item.progress}%` }}
-                  transition={{ duration: 1, delay: i * 0.1 }}
-                  className={`h-full ${item.color} rounded-full`}
-                />
-              </div>
+              <ScoreMeter value={item.value} max={item.max} heightClass="h-2" />
             </div>
           ))}
         </div>
