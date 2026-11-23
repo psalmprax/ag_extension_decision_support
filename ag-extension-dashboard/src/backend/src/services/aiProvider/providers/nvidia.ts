@@ -36,6 +36,15 @@ export interface NVIDIAResponse {
   usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
 }
 
+/** The reply budget the provider uses when a caller sets none. */
+const FULL_BUDGET = 4096;
+
+/** The model stopped at its token budget without any visible reply or tool call. */
+function isCutOffBeforeAnswer(choice: NVIDIAResponse['choices'][number] | undefined): boolean {
+  return Boolean(choice) && choice!.finish_reason === 'length' && !choice!.message?.content?.trim()
+    && !(Array.isArray(choice!.message?.tool_calls) && choice!.message!.tool_calls!.length > 0);
+}
+
 /**
  * NVIDIA NIM Provider — OpenAI-compatible chat completions via the NVIDIA
  * build API (https://integrate.api.nvidia.com/v1). Reads NVIDIA_API_KEY
@@ -86,14 +95,16 @@ export class NVIDIAProvider extends BaseAIProvider {
     const model = options?.model || process.env.NVIDIA_PRIMARY_MODEL || 'nvidia/nemotron-3.5-lightning-30b-a3b';
     const tools = normalizeToolDefinitions(options?.tools);
 
-    const raw = await this.chatRaw({
-      model,
-      messages,
-      temperature: options?.temperature,
-      max_tokens: options?.maxTokens ?? 4096,
-      tools,
-    });
-    const choice = raw.choices?.[0];
+    const request = { model, messages, temperature: options?.temperature, max_tokens: options?.maxTokens ?? FULL_BUDGET, tools };
+    let raw = await this.chatRaw(request);
+    let choice = raw.choices?.[0];
+    // Reasoning models spend tokens before the visible reply; a small budget can run out
+    // ("length") with nothing shown. Ask once more with the full budget.
+    if (isCutOffBeforeAnswer(choice) && request.max_tokens < FULL_BUDGET) {
+      logger.info(`NVIDIA ${model} used its ${request.max_tokens} tokens before answering; retrying with ${FULL_BUDGET}`);
+      raw = await this.chatRaw({ ...request, max_tokens: FULL_BUDGET });
+      choice = raw.choices?.[0];
+    }
 
     return {
       text: choice?.message?.content || '',

@@ -71,7 +71,11 @@ async function checkText(factory, type) {
         ms, `${type} text`,
     );
     const text = (result?.text || '').trim();
-    if (!text) throw new Error(`empty reply (model ${result?.model || 'unknown'})`);
+    if (!text) {
+        // Say why: a reasoning model that spends its budget thinking ends with "length".
+        const used = result?.usage?.completionTokens;
+        throw new Error(`empty reply (model ${result?.model || 'unknown'}, finish ${result?.finishReason || 'unknown'}${used !== undefined ? `, ${used} completion tokens` : ''})`);
+    }
     return {
         status: 'PASS',
         detail: `${result.model || 'default model'}, ${Date.now() - started} ms, "${text.slice(0, 24).replace(/\s+/g, ' ')}"`,
