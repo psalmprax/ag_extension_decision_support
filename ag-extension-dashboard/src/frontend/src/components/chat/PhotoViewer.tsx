@@ -15,7 +15,7 @@ interface PhotoViewerProps {
 }
 
 const ICON_BUTTON =
-  'h-10 w-10 inline-flex items-center justify-center rounded-md text-slate-600 dark:text-slate-300 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.08] disabled:opacity-30 transition-colors';
+  'h-10 w-10 inline-flex items-center justify-center rounded-md text-slate-600 dark:text-theme-text-secondary hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.08] disabled:opacity-30 transition-colors';
 
 /**
  * A photo at full size inside the app. It replaces opening the file in a new tab, which

@@ -64,7 +64,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
       {/* Organization */}
       {organization && (
         <div className="space-y-3">
-          <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400 flex items-center gap-2">
+          <h3 className="text-xs font-medium text-gray-500 dark:text-theme-text-muted flex items-center gap-2">
             <Globe className="w-4 h-4" />
             {t('ui_organization_section_organization_region')}
           </h3>
@@ -146,7 +146,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                       .then(() => toast.success('Offline knowledge pack downloaded'))
                       .catch(() => toast.error('Could not download knowledge pack'))
                   }
-                  className="w-full rounded-lg border border-gray-200 dark:border-white/[0.12] px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200"
+                  className="w-full rounded-lg border border-gray-200 dark:border-white/[0.12] px-3 py-2 text-sm font-medium text-gray-700 dark:text-theme-text-primary"
                 >
                   {t('ui_organization_section_download_offline_knowledge_pack')}
                 </button>

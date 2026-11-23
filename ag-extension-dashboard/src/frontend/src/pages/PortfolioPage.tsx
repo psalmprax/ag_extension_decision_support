@@ -164,7 +164,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
       {/* ── Farmer Bento Grid ── */}
       {filteredFarmers.length === 0 ? (
         <div className="p-12 text-center backdrop-blur-xl bg-white/80 dark:bg-theme-bg-secondary/40 border border-slate-200 dark:border-white/[0.08] rounded-xl space-y-4 shadow-sm">
-          <div className="w-16 h-16 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 flex items-center justify-center mx-auto">
+          <div className="w-16 h-16 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-theme-text-secondary flex items-center justify-center mx-auto">
             <Users className="w-8 h-8 opacity-70" />
           </div>
           <div className="space-y-1">

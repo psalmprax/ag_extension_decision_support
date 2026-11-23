@@ -57,7 +57,7 @@ const getSectionId = (itemId: string) =>
   NAV_SECTIONS.find(section => (section.itemIds as readonly string[]).includes(itemId))?.id ?? 'other';
 
 const DRAWER_BUTTON =
-  'flex items-center justify-center gap-2 h-11 rounded-md border border-slate-900/[0.1] dark:border-white/[0.12] text-sm text-slate-700 dark:text-slate-200';
+  'flex items-center justify-center gap-2 h-11 rounded-md border border-slate-900/[0.1] dark:border-white/[0.12] text-sm text-slate-700 dark:text-theme-text-primary';
 
 interface AppSidebarProps {
   sidebarOpen: boolean;
@@ -158,7 +158,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                       onClick={() =>
                         setExpandedSections(current => ({ ...current, [section.id]: !current[section.id] }))
                       }
-                      className="flex w-full items-center justify-between px-3 py-1.5 text-start text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white rounded-md"
+                      className="flex w-full items-center justify-between px-3 py-1.5 text-start text-xs font-medium text-slate-500 dark:text-theme-text-muted hover:text-slate-900 dark:hover:text-white rounded-md"
                     >
                       <span>{sectionLabel}</span>
                       <ChevronDown
@@ -179,7 +179,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
                             'flex items-center justify-between px-3 py-2 min-h-[44px] md:min-h-[40px] transition-colors text-start rounded-md',
                             menuItemIsActive(item, activeTab, navItems)
                               ? 'bg-emerald-50 dark:bg-emerald-400/[0.1] text-emerald-800 dark:text-emerald-200 font-medium'
-                              : 'text-slate-600 dark:text-slate-300 hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white'
+                              : 'text-slate-600 dark:text-theme-text-secondary hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.05] hover:text-slate-900 dark:hover:text-white'
                           )}
                         >
                           <div className="flex items-center gap-3 min-w-0">
@@ -209,7 +209,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
           <div className="mt-auto flex flex-col gap-2 pt-3 border-t border-slate-900/[0.08] dark:border-white/[0.08]">
             {/* Mobile-visible Language, Theme & A/B Experiment controls */}
             <div className="lg:hidden flex flex-col gap-2 pb-2 border-b border-gray-100 dark:border-white/5">
-              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-medium text-slate-500 dark:text-theme-text-muted">
                 {t('common_preferences', { defaultValue: 'Preferences' })}
               </span>
               <div className="flex items-center justify-between gap-2">
@@ -233,7 +233,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
             <button
               type="button"
               onClick={() => setShowHelpCenter(true)}
-              className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white text-sm rounded-md hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.05] transition-colors"
+              className="flex items-center gap-3 px-3 py-2 text-slate-600 dark:text-theme-text-secondary hover:text-slate-900 dark:hover:text-white text-sm rounded-md hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.05] transition-colors"
             >
               <HelpCircle className="w-[18px] h-[18px]" aria-hidden="true" />
               {t('nav_support', { defaultValue: 'Support' })}

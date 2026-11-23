@@ -48,7 +48,7 @@ export function SMSComposerComposeTab({
       <div className="space-y-4">
         {sendMode === 'single' ? (
           <div className="space-y-1.5">
-            <label htmlFor="sms-phone" className="text-sm text-slate-700 dark:text-slate-300">
+            <label htmlFor="sms-phone" className="text-sm text-slate-700 dark:text-theme-text-secondary">
               {t('sms_phone_label')}
             </label>
             <div className="relative group">
@@ -65,7 +65,7 @@ export function SMSComposerComposeTab({
           </div>
         ) : (
           <div className="space-y-1.5">
-            <label htmlFor="sms-recipients" className="text-sm text-slate-700 dark:text-slate-300">
+            <label htmlFor="sms-recipients" className="text-sm text-slate-700 dark:text-theme-text-secondary">
               {t('sms_bulk_recipients')}
             </label>
             <textarea
@@ -82,7 +82,7 @@ export function SMSComposerComposeTab({
         <div className="space-y-1.5">
           <div className="flex justify-between items-center ms-1">
             <div className="flex items-center gap-2">
-              <label htmlFor="sms-message" className="text-sm text-slate-700 dark:text-slate-300">
+              <label htmlFor="sms-message" className="text-sm text-slate-700 dark:text-theme-text-secondary">
                 {t('sms_message_label')}
               </label>
               <button

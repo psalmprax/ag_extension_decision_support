@@ -108,7 +108,7 @@ export const PlotTelemetryDrawer: React.FC<{
 
       <div className={CARD}>
         <div className={LABEL}>{t('ui_plot_telemetry_drawer_nasa_power_weather')}</div>
-        <div className="text-base font-medium text-slate-600 dark:text-slate-400">{weatherValue(telemetry, units.temp, farmer)}</div>
+        <div className="text-base font-medium text-slate-600 dark:text-theme-text-muted">{weatherValue(telemetry, units.temp, farmer)}</div>
         <div className={NOTE}>{t('ui_plot_telemetry_drawer_open_meteo_modeled')} {telemetry.temp != null ? '• live' : '• no geo'}</div>
       </div>
 

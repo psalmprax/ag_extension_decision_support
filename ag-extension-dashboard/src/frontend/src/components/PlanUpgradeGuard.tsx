@@ -41,7 +41,7 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
   return (
     <div className="min-h-[70vh] flex items-center justify-center p-4 md:p-8">
       <div className="max-w-xl w-full rounded-lg bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] p-6 sm:p-8">
-        <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-slate-400">
+        <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-theme-text-muted">
           <Lock className="w-4 h-4" aria-hidden="true" />
           {t('plan_gate_available_on', { defaultValue: 'Available on Pro and Enterprise' })}
         </p>
@@ -50,11 +50,11 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
           <CategoryIcon className="w-5 h-5 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
           {featureName}
         </h2>
-        <p className="mt-2 text-base text-slate-600 dark:text-slate-300">{featureDescription || details.description}</p>
+        <p className="mt-2 text-base text-slate-600 dark:text-theme-text-secondary">{featureDescription || details.description}</p>
 
         <ul className="mt-6 space-y-2.5">
           {details.benefits.map(benefit => (
-            <li key={benefit} className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-slate-200">
+            <li key={benefit} className="flex items-start gap-2.5 text-sm text-slate-700 dark:text-theme-text-primary">
               <Check className="w-4 h-4 mt-0.5 text-emerald-700 dark:text-emerald-400 shrink-0" aria-hidden="true" />
               <span>{benefit}</span>
             </li>

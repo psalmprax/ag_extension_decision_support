@@ -26,7 +26,7 @@ export function EmailWorkflowsEditModal({
     >
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-2">
             {t('ui_help_center_modal_category')}
           </label>
           <select
@@ -43,7 +43,7 @@ export function EmailWorkflowsEditModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-2">
             {t('email_workflows_subject')}
           </label>
           <input
@@ -56,7 +56,7 @@ export function EmailWorkflowsEditModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-2">
             {t('ui_edit_modal_body')}
           </label>
           <textarea
@@ -69,7 +69,7 @@ export function EmailWorkflowsEditModal({
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-2">
             {t('ui_edit_modal_variables_comma_separated')}
           </label>
           <input

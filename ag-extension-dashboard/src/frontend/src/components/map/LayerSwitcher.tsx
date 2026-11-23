@@ -42,7 +42,7 @@ export function LayerSwitcher({ currentLayer, onLayerChange, t }: LayerSwitcherP
             className={`h-8 px-2.5 rounded text-xs transition-colors ${
               currentLayer === layer
                 ? 'bg-emerald-700 text-white'
-                : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white'
+                : 'text-slate-600 dark:text-theme-text-secondary hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             {TILE_LAYERS[layer].name}

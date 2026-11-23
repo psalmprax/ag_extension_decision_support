@@ -154,7 +154,7 @@ export const KnowledgeStats: React.FC<KnowledgeStatsProps> = ({ data }) => {
                     className="w-3 h-3 rounded-full"
                     style={{ backgroundColor: CHART_PALETTE[i % CHART_PALETTE.length] }}
                   ></div>
-                  <span className="text-xs font-medium text-gray-600 dark:text-gray-400 truncate w-32 capitalize">
+                  <span className="text-xs font-medium text-gray-600 dark:text-theme-text-muted truncate w-32 capitalize">
                     {String(cat.category ?? '')}
                   </span>
                   <span className="text-xs font-medium text-gray-900 dark:text-white">

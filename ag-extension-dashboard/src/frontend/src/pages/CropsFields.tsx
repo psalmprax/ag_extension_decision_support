@@ -427,7 +427,7 @@ export function CropsFields() {
               className={`flex items-center gap-2 pb-3 font-medium text-sm transition-colors border-b-2 ${
                 isActive
                   ? 'text-emerald-800 dark:text-emerald-300 border-emerald-700'
-                  : 'text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-slate-300'
+                  : 'text-slate-500 border-transparent hover:text-slate-700 dark:hover:text-theme-text-secondary'
               }`}
             >
               <Icon className="w-4 h-4" />

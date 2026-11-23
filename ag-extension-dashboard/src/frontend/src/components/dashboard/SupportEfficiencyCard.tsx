@@ -44,7 +44,7 @@ export const SupportEfficiencyCard: React.FC<{
           {rows.map((item, i) => (
             <div key={item.name} className="space-y-1.5 sm:space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300">{item.name}</span>
+                <span className="text-xs sm:text-sm font-medium text-slate-700 dark:text-theme-text-secondary">{item.name}</span>
                 <span className="text-xs font-medium tabular-nums text-primary-700 dark:text-primary-400">
                   {item.value === null ? 'No data yet' : item.label(item.value)}
                 </span>

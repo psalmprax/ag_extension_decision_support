@@ -110,7 +110,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
       {/* Visits Cards Grid */}
       {filteredVisits.length === 0 ? (
         <div className="p-12 text-center bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg space-y-4">
-          <div className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-white/[0.05] text-slate-500 dark:text-slate-300 flex items-center justify-center mx-auto">
+          <div className="w-12 h-12 rounded-lg bg-slate-100 dark:bg-white/[0.05] text-slate-500 dark:text-theme-text-secondary flex items-center justify-center mx-auto">
             <Calendar className="w-6 h-6" aria-hidden="true" />
           </div>
           <div className="space-y-1">

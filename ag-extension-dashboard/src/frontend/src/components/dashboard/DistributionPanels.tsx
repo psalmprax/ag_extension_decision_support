@@ -25,13 +25,13 @@ const DistributionCard: React.FC<{
         <h3 className="text-lg font-headline font-medium text-gray-900 dark:text-white">{title}</h3>
       </div>
       {rows.length === 0 ? (
-        <p className="text-sm text-slate-500 dark:text-slate-400">{emptyText}</p>
+        <p className="text-sm text-slate-500 dark:text-theme-text-muted">{emptyText}</p>
       ) : (
         <div className="space-y-4">
           {rows.map(row => (
             <div key={row.label}>
               <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs font-medium text-slate-700 dark:text-slate-300">{row.label}</span>
+                <span className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">{row.label}</span>
                 <span className={`text-xs font-medium tabular-nums ${valueClass}`}>{row.value}</span>
               </div>
               <div className="w-full h-2 bg-slate-200 dark:bg-white/5 rounded-full overflow-hidden">

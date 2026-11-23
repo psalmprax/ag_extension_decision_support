@@ -14,12 +14,12 @@ interface StaffBadgesProps {
 function getPlanBadgeClass(planName: string, isFree?: boolean): string {
   const normalized = planName.trim().toLowerCase();
   if (normalized === 'enterprise' || normalized === 'admin') {
-    return 'bg-slate-50 text-slate-800 border-slate-200 dark:bg-slate-500/15 dark:text-slate-300 dark:border-slate-500/30';
+    return 'bg-slate-50 text-slate-800 border-slate-200 dark:bg-slate-500/15 dark:text-theme-text-secondary dark:border-slate-500/30';
   }
   if (!isFree && normalized !== 'free') {
     return 'bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30';
   }
-  return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-white/5 dark:text-slate-300 dark:border-white/10';
+  return 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-white/5 dark:text-theme-text-secondary dark:border-white/10';
 }
 
 /** Role, subscription tier, account status, and demo badges for staff cards. */

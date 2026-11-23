@@ -91,7 +91,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
           <h2 id="written-reports" className="text-base font-medium text-slate-900 dark:text-white">
             {t('reports_list_title', { defaultValue: 'Written reports' })}
-            <span className="ms-2 text-sm font-normal tabular-nums text-slate-500 dark:text-slate-400">{filteredReports.length}</span>
+            <span className="ms-2 text-sm font-normal tabular-nums text-slate-500 dark:text-theme-text-muted">{filteredReports.length}</span>
           </h2>
           {reports.length > 0 && (
             <label className="relative">
@@ -109,11 +109,11 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
         </div>
         {filteredReports.length === 0 ? (
           <div className="px-4 py-10 text-center">
-            <p className="text-sm font-medium text-slate-800 dark:text-slate-200">
+            <p className="text-sm font-medium text-slate-800 dark:text-theme-text-primary">
               {reports.length ? t('reports_none_match', { defaultValue: 'No report title matches that search.' }) : t('ui_reports_page_no_reports_found')}
             </p>
             {!reports.length && (
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{t('ui_reports_page_click_generate_ai_report_to_synthesi')}</p>
+              <p className="mt-1 text-sm text-slate-500 dark:text-theme-text-muted">{t('ui_reports_page_click_generate_ai_report_to_synthesi')}</p>
             )}
           </div>
         ) : (

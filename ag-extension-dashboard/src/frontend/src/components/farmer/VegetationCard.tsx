@@ -23,7 +23,7 @@ function CardNotice({ icon: Icon, text }: { icon: React.ElementType; text: strin
   return (
     <div className="flex flex-col items-center justify-center py-8 text-center">
       <Icon className="w-8 h-8 text-gray-300 dark:text-gray-600 mb-3" />
-      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 max-w-[16rem]">{text}</p>
+      <p className="text-xs font-medium text-gray-500 dark:text-theme-text-muted max-w-[16rem]">{text}</p>
     </div>
   );
 }
@@ -40,7 +40,7 @@ function VegetationFigures({ data }: { data: { data: NDVIPoint[]; dataStatus: st
         <span className={`text-3xl font-medium ${veg.color}`}>
           {ndvi.toFixed(2)}
         </span>
-        <span className="text-sm font-medium text-gray-500 dark:text-gray-400">{veg.label}</span>
+        <span className="text-sm font-medium text-gray-500 dark:text-theme-text-muted">{veg.label}</span>
       </div>
 
       <div className="flex items-end gap-0.5 h-14 mb-2">
@@ -53,13 +53,13 @@ function VegetationFigures({ data }: { data: { data: NDVIPoint[]; dataStatus: st
         ))}
       </div>
 
-      <div className="flex justify-between text-xxs text-gray-400 dark:text-gray-500 font-mono mt-1">
+      <div className="flex justify-between text-xxs text-gray-400 dark:text-theme-text-muted font-mono mt-1">
         <span>{points[0]?.date.slice(5) || ''}</span>
         <span>{points[points.length - 1]?.date.slice(5) || ''}</span>
       </div>
 
       <div className="mt-4 pt-3 border-t border-gray-100 dark:border-white/[0.12] flex items-center justify-between">
-        <span className="text-xxs text-gray-400 dark:text-gray-500 capitalize">{data.reason || ''}</span>
+        <span className="text-xxs text-gray-400 dark:text-theme-text-muted capitalize">{data.reason || ''}</span>
         <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
           {data.dataStatus === 'live' ? 'NASA POWER' : data.dataStatus ? DATA_STATUS_LABELS[data.dataStatus as MarketDataStatus] : null}
         </span>
@@ -89,7 +89,7 @@ export function VegetationCard({ data, loading, isError, hasLocation }: {
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">
             Vegetation health
           </h3>
-          <p className="text-xxs text-gray-400 dark:text-gray-500">14-day agroclimatology proxy</p>
+          <p className="text-xxs text-gray-400 dark:text-theme-text-muted">14-day agroclimatology proxy</p>
         </div>
       </div>
 

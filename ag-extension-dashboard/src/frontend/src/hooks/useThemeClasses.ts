@@ -20,7 +20,7 @@ export function useThemeClasses() {
       'rounded-md transition-colors';
     const headingClass = 'text-slate-900 dark:text-white font-medium';
     const dataClass = 'text-slate-900 dark:text-white font-medium tabular-nums';
-    const subtextClass = 'text-slate-600 dark:text-slate-400';
+    const subtextClass = 'text-slate-600 dark:text-theme-text-muted';
     const cardClass = `${panelClass} ${radiusClass} p-6 relative overflow-hidden`;
 
     return {

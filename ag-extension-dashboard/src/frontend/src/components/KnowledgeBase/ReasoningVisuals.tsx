@@ -177,7 +177,7 @@ const MediaAssetsSection = ({
             </div>
           </div>
           {img.caption && (
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 px-2 flex items-center justify-between">
+            <p className="text-sm font-medium text-gray-600 dark:text-theme-text-muted px-2 flex items-center justify-between">
               <span>{img.caption}</span>
               <span className="text-xxs text-primary-500 font-medium opacity-0 group-hover:opacity-100 transition-opacity">
                 {t('ui_reasoning_visuals_click_to_enlarge')}
@@ -227,7 +227,7 @@ const MediaAssetsSection = ({
             </div>
           </div>
           {vid.caption && (
-            <p className="text-sm font-medium text-gray-600 dark:text-gray-400 px-2">{vid.caption}</p>
+            <p className="text-sm font-medium text-gray-600 dark:text-theme-text-muted px-2">{vid.caption}</p>
           )}
         </motion.div>
       ))}
@@ -343,7 +343,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
             <div className="p-2 bg-primary-500/20 rounded-xl text-primary-500">
               <TrendingUp className="w-5 h-5" />
             </div>
-            <h3 className="text-xs font-medium text-gray-500 dark:text-gray-400  ">
+            <h3 className="text-xs font-medium text-gray-500 dark:text-theme-text-muted  ">
               {title}
             </h3>
           </div>
@@ -406,7 +406,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
                   <AlertCircle className="w-5 h-5" />
                 )}
               </div>
-              <span className="text-xxs font-medium text-gray-400 dark:text-gray-500  ">
+              <span className="text-xxs font-medium text-gray-400 dark:text-theme-text-muted  ">
                 {kpi.label}
               </span>
               <span className="text-2xl font-medium text-gray-900 dark:text-white tracking-tight">

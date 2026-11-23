@@ -234,7 +234,7 @@ function MCPTools() {
               <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
                 {t('mcp_tools_select_tool')}
               </h3>
-              <p className="text-gray-600 dark:text-gray-400">
+              <p className="text-gray-600 dark:text-theme-text-muted">
                 {t('mcp_tools_choose_tool')}
               </p>
             </div>

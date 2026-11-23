@@ -333,7 +333,7 @@ const DashboardMapSection: React.FC<{
           <span>{t('stat_regional_distribution')}</span>
         </h3>
         <div className="flex gap-2">
-          <span className="text-sm text-slate-500 dark:text-slate-400">
+          <span className="text-sm text-slate-500 dark:text-theme-text-muted">
             {isDemo
               ? (t('stat_kenya_overview') || 'Kenya overview')
               : ((user?.region || userFromStore?.region) ? `${user?.region || userFromStore?.region}` : (t('stat_portfolio_overview') || 'Portfolio overview'))}
@@ -475,7 +475,7 @@ const MapFallbackEmptyState: React.FC<{
       <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
         {t('map_fallback_title') || 'Unable to load distribution'}
       </h3>
-      <p className="text-xs text-gray-500 dark:text-gray-400 font-medium leading-relaxed mb-6">
+      <p className="text-xs text-gray-500 dark:text-theme-text-muted font-medium leading-relaxed mb-6">
         {t('map_fallback_desc') ||
           'We could not retrieve the regional distribution data after multiple attempts. Please check your connection and try again.'}
       </p>

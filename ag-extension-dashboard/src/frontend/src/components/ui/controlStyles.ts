@@ -4,7 +4,7 @@ import { cn } from '@/lib/cn';
 export const PRIMARY_BUTTON =
   'inline-flex items-center justify-center gap-2 h-10 px-4 rounded-md whitespace-nowrap bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-medium transition-colors disabled:opacity-50';
 export const SECONDARY_BUTTON =
-  'inline-flex items-center justify-center gap-2 h-10 px-3 rounded-md whitespace-nowrap border border-slate-900/[0.12] dark:border-white/[0.14] text-slate-700 dark:text-slate-200 hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.06] text-sm transition-colors disabled:opacity-50';
+  'inline-flex items-center justify-center gap-2 h-10 px-3 rounded-md whitespace-nowrap border border-slate-900/[0.12] dark:border-white/[0.14] text-slate-700 dark:text-theme-text-primary hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.06] text-sm transition-colors disabled:opacity-50';
 
 /** A tab or filter button in a page header row: tinted when selected, plain otherwise. */
 export function tabButtonClass(active: boolean): string {

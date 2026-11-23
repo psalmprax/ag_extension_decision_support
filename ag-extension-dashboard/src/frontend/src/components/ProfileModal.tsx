@@ -293,7 +293,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   <div className="space-y-6">
                     {/* Avatar Picker (QA #23) */}
                     <div>
-                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block mb-2">
+                      <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary block mb-2">
                         {t('ui_profile_modal_select_field_avatar_persona')}
                       </label>
                       <div className="grid grid-cols-3 sm:grid-cols-6 gap-2.5">
@@ -310,8 +310,8 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                                   : 'border-slate-200 dark:border-white/[0.12] hover:border-slate-300 dark:hover:border-white/[0.12] bg-slate-50 dark:bg-theme-bg-tertiary/60'
                               }`}
                             >
-                              <preset.icon className="w-[18px] h-[18px] text-slate-700 dark:text-slate-200" strokeWidth={1.5} aria-hidden="true" />
-                              <span className="text-[10px] font-medium text-slate-700 dark:text-slate-300 truncate w-full">
+                              <preset.icon className="w-[18px] h-[18px] text-slate-700 dark:text-theme-text-primary" strokeWidth={1.5} aria-hidden="true" />
+                              <span className="text-[10px] font-medium text-slate-700 dark:text-theme-text-secondary truncate w-full">
                                 {preset.label}
                               </span>
                               {isSelected && (
@@ -326,7 +326,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     {/* Inputs */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                        <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">
                           {t('common_first_name') || 'First name'}
                         </label>
                         <input
@@ -339,7 +339,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
 
                       <div>
-                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                        <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">
                           {t('common_last_name') || 'Last name'}
                         </label>
                         <input
@@ -352,7 +352,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
 
                       <div>
-                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                        <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">
                           {t('ui_profile_modal_custom_handle_this_device')}
                         </label>
                         <div className="relative mt-1">
@@ -368,7 +368,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
 
                       <div>
-                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                        <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">
                           {t('login_email')}
                         </label>
                         <div className="relative mt-1">
@@ -386,7 +386,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
 
                       <div>
-                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                        <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">
                           {t('ui_profile_modal_field_mobile_number_sms_bot_link')}
                         </label>
                         <div className="relative mt-1">
@@ -404,7 +404,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
 
                       <div>
-                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                        <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">
                           {t('common_region') || 'Assigned District / Region'}
                         </label>
                         <div className="relative mt-1">
@@ -427,7 +427,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                   <div className="space-y-6">
                     {/* Language Preference */}
                     <div>
-                      <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block mb-2">
+                      <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary block mb-2">
                         {t('ui_profile_modal_system_interface_language_this_devic')}
                       </label>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -451,7 +451,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             className={`p-2.5 rounded-xl border text-xs font-medium flex items-center justify-between transition-all ${
                               language === item.code
                                 ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300'
-                                : 'border-slate-200 dark:border-white/[0.12] text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-white/[0.12] bg-slate-50 dark:bg-theme-bg-tertiary/60'
+                                : 'border-slate-200 dark:border-white/[0.12] text-slate-700 dark:text-theme-text-secondary hover:border-slate-300 dark:hover:border-white/[0.12] bg-slate-50 dark:bg-theme-bg-tertiary/60'
                             }`}
                           >
                             <span>{item.label}</span>
@@ -464,7 +464,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     {/* Measurement Units */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="p-4 rounded-xl bg-slate-50 dark:bg-theme-bg-tertiary/60 border border-slate-200 dark:border-white/[0.12] space-y-2">
-                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block">
+                        <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary block">
                           {t('ui_profile_modal_land_area_measurement')}
                         </label>
                         <div className="flex gap-2">
@@ -476,7 +476,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                               className={`flex-1 py-1.5 rounded-lg text-xs font-medium capitalize transition-all ${
                                 preferences.areaUnit === u
                                   ? 'bg-emerald-600 text-white shadow-sm'
-                                  : 'bg-white dark:bg-white/[0.08] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/[0.12]'
+                                  : 'bg-white dark:bg-white/[0.08] text-slate-700 dark:text-theme-text-primary border border-slate-200 dark:border-white/[0.12]'
                               }`}
                             >
                               {u}
@@ -486,7 +486,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       </div>
 
                       <div className="p-4 rounded-xl bg-slate-50 dark:bg-theme-bg-tertiary/60 border border-slate-200 dark:border-white/[0.12] space-y-2">
-                        <label className="text-xs font-medium text-slate-700 dark:text-slate-300 block">
+                        <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary block">
                           {t('ui_profile_modal_temperature_scale')}
                         </label>
                         <div className="flex gap-2">
@@ -501,7 +501,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                               className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                 preferences.tempUnit === tItem.id
                                   ? 'bg-emerald-600 text-white shadow-sm'
-                                  : 'bg-white dark:bg-white/[0.08] text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-white/[0.12]'
+                                  : 'bg-white dark:bg-white/[0.08] text-slate-700 dark:text-theme-text-primary border border-slate-200 dark:border-white/[0.12]'
                               }`}
                             >
                               {tItem.label}
@@ -522,7 +522,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     <form onSubmit={handlePasswordChange} className="p-4 rounded-xl bg-slate-50 dark:bg-theme-bg-tertiary/60 border border-slate-200 dark:border-white/[0.12] space-y-3">
                       <div className="flex items-center gap-2 mb-2">
                         <KeyRound className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-                        <h4 className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                        <h4 className="text-xs font-medium text-slate-800 dark:text-theme-text-primary">
                           {t('ui_profile_modal_change_account_password')}
                         </h4>
                       </div>
@@ -563,14 +563,14 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                     {/* Two-Factor Authentication */}
                     <div className="p-4 rounded-xl bg-slate-50 dark:bg-theme-bg-tertiary/60 border border-slate-200 dark:border-white/[0.12] flex items-center justify-between">
                       <div>
-                        <div className="text-xs font-medium text-slate-800 dark:text-slate-200">
+                        <div className="text-xs font-medium text-slate-800 dark:text-theme-text-primary">
                           {t('ui_profile_modal_two_factor_authentication_2fa')}
                         </div>
-                        <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                        <div className="text-[11px] text-slate-500 dark:text-theme-text-muted">
                           {t('ui_profile_modal_two_factor_enrollment_is_managed_by')}
                         </div>
                       </div>
-                      <span className="text-[11px] text-slate-600 dark:text-slate-300">{t('ui_profile_modal_managed_by_administrator')}</span>
+                      <span className="text-[11px] text-slate-600 dark:text-theme-text-secondary">{t('ui_profile_modal_managed_by_administrator')}</span>
                     </div>
 
                     {/* Danger Zone */}
@@ -586,7 +586,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                         type="button"
                         onClick={() => void handleAccountExport()}
                         disabled={isExporting}
-                        className="px-3 py-1.5 bg-white dark:bg-theme-bg-secondary border border-slate-300 dark:border-white/[0.12] text-slate-800 dark:text-slate-200 rounded-xl text-xs font-medium flex items-center gap-1.5 disabled:opacity-50"
+                        className="px-3 py-1.5 bg-white dark:bg-theme-bg-secondary border border-slate-300 dark:border-white/[0.12] text-slate-800 dark:text-theme-text-primary rounded-xl text-xs font-medium flex items-center gap-1.5 disabled:opacity-50"
                       >
                         <Download className="w-3.5 h-3.5" />
                         {isExporting ? 'Preparing export…' : 'Download my account data'}
@@ -599,7 +599,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                             <button
                               type="button"
                               onClick={() => setShowDeleteConfirm(false)}
-                              className="px-3 py-1.5 bg-slate-100 dark:bg-theme-bg-tertiary text-xs font-medium rounded-lg text-slate-700 dark:text-slate-300"
+                              className="px-3 py-1.5 bg-slate-100 dark:bg-theme-bg-tertiary text-xs font-medium rounded-lg text-slate-700 dark:text-theme-text-secondary"
                             >
                               {t('common_cancel')}
                             </button>
@@ -656,7 +656,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ isOpen, onClose }) =
                       <button
                         type="button"
                         onClick={() => setIsEditing(false)}
-                        className="px-4 py-2 bg-slate-200 dark:bg-theme-bg-tertiary text-slate-700 dark:text-slate-300 font-medium text-xs rounded-xl hover:bg-slate-300 dark:hover:bg-white/[0.08] transition-colors"
+                        className="px-4 py-2 bg-slate-200 dark:bg-theme-bg-tertiary text-slate-700 dark:text-theme-text-secondary font-medium text-xs rounded-xl hover:bg-slate-300 dark:hover:bg-white/[0.08] transition-colors"
                       >
                         {t('common_cancel')}
                       </button>

@@ -53,7 +53,7 @@ export function AdvisoriesCard() {
                                         {ruleLabels[d.ruleKey] || d.ruleKey}
                                         <span className="text-gray-400 font-normal"> · {d.district} · {d.audienceCount} {t('advisory_farmers_count', { defaultValue: 'farmers' })}</span>
                                     </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{d.message}</p>
+                                    <p className="text-xs text-gray-500 dark:text-theme-text-muted line-clamp-2">{d.message}</p>
                                 </div>
                             </li>
                         );

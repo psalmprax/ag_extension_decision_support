@@ -29,22 +29,22 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
             </h2>
           ),
           h3: ({ children }) => (
-            <h3 className="text-lg font-medium mb-2 text-gray-800 dark:text-gray-200">{children}</h3>
+            <h3 className="text-lg font-medium mb-2 text-gray-800 dark:text-theme-text-primary">{children}</h3>
           ),
 
           // Style paragraphs and lists
           p: ({ children }) => (
-            <p className="mb-4 leading-relaxed text-gray-700 dark:text-gray-300 font-medium">
+            <p className="mb-4 leading-relaxed text-gray-700 dark:text-theme-text-secondary font-medium">
               {children}
             </p>
           ),
           ul: ({ children }) => (
-            <ul className="list-disc ps-6 mb-6 space-y-2 text-gray-700 dark:text-gray-300 marker:text-primary-500">
+            <ul className="list-disc ps-6 mb-6 space-y-2 text-gray-700 dark:text-theme-text-secondary marker:text-primary-500">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal ps-6 mb-6 space-y-2 text-gray-700 dark:text-gray-300 marker:text-primary-500 marker:font-medium">
+            <ol className="list-decimal ps-6 mb-6 space-y-2 text-gray-700 dark:text-theme-text-secondary marker:text-primary-500 marker:font-medium">
               {children}
             </ol>
           ),
@@ -70,12 +70,12 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
             <thead className="bg-gray-50 dark:bg-theme-bg-secondary/50">{children}</thead>
           ),
           th: ({ children }) => (
-            <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 dark:text-gray-400">
+            <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 dark:text-theme-text-muted">
               {children}
             </th>
           ),
           td: ({ children }) => (
-            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-white/[0.08]">
+            <td className="px-4 py-3 text-sm text-gray-700 dark:text-theme-text-secondary border-t border-gray-100 dark:border-white/[0.08]">
               {children}
             </td>
           ),

@@ -11,7 +11,7 @@ import { ProfileMenu } from './ProfileMenu';
 import { useLanguage } from '@/lib/LanguageContext';
 
 const ICON_BUTTON =
-  'h-10 w-10 flex items-center justify-center rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors';
+  'h-10 w-10 flex items-center justify-center rounded-md text-slate-500 dark:text-theme-text-muted hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors';
 
 interface AppHeaderProps {
   sidebarOpen: boolean;
@@ -104,7 +104,7 @@ export const AppHeader: React.FC<AppHeaderProps> = ({
                 key={tab}
                 type="button"
                 onClick={() => React.startTransition(() => setActiveTab(tab))}
-                className="flex items-center gap-1.5 h-8 px-2.5 rounded-md text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors"
+                className="flex items-center gap-1.5 h-8 px-2.5 rounded-md text-sm text-slate-600 dark:text-theme-text-secondary hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors"
                 title={title}
               >
                 <Icon className="w-4 h-4" aria-hidden="true" />

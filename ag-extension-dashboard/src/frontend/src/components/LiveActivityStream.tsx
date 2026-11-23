@@ -149,9 +149,9 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xs font-medium text-emerald-400">{activity.crop}</span>
           <span className="text-xs text-slate-500">•</span>
-          <span className="text-xs text-slate-600 dark:text-slate-300">{activity.region}</span>
+          <span className="text-xs text-slate-600 dark:text-theme-text-secondary">{activity.region}</span>
         </div>
-        <p className="text-xs font-medium text-slate-800 dark:text-slate-200">
+        <p className="text-xs font-medium text-slate-800 dark:text-theme-text-primary">
           <span data-message><span className="text-rose-400 font-medium">{activity.issue}:</span> {activity.aiSummary}</span>
         </p>
       </div>

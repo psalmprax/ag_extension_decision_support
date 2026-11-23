@@ -10,7 +10,7 @@ import { formatLabel } from '@/lib/formatLabel';
 /** Status shown as a quiet tinted label; the word carries the meaning, not the colour alone. */
 const STATUS_TONE: Record<string, string> = {
   completed: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-400/[0.12] dark:text-emerald-200',
-  cancelled: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-slate-300',
+  cancelled: 'bg-slate-100 text-slate-600 dark:bg-white/[0.06] dark:text-theme-text-secondary',
 };
 const PENDING_TONE = 'bg-amber-50 text-amber-800 dark:bg-amber-400/[0.12] dark:text-amber-200';
 
@@ -75,7 +75,7 @@ export const VisitCard: React.FC<VisitCardProps> = ({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h4 className="text-base font-medium text-slate-900 dark:text-white truncate">{farmerDisplayName}</h4>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{visitTypeDisplay}</p>
+          <p className="text-sm text-slate-500 dark:text-theme-text-muted">{visitTypeDisplay}</p>
         </div>
         <span
           role="status"
@@ -86,12 +86,12 @@ export const VisitCard: React.FC<VisitCardProps> = ({
         </span>
       </div>
 
-      <p className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200 tabular-nums">
+      <p className="flex items-center gap-2 text-sm text-slate-700 dark:text-theme-text-primary tabular-nums">
         <Clock className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
-        {parsedDate ? whenFormat.format(parsedDate) : <span className="text-slate-500 dark:text-slate-400">{t('ui_visit_card_flexible_as_needed')}</span>}
+        {parsedDate ? whenFormat.format(parsedDate) : <span className="text-slate-500 dark:text-theme-text-muted">{t('ui_visit_card_flexible_as_needed')}</span>}
       </p>
 
-      {visit.notes && <p className="text-sm text-slate-600 dark:text-slate-300 line-clamp-2">{visit.notes}</p>}
+      {visit.notes && <p className="text-sm text-slate-600 dark:text-theme-text-secondary line-clamp-2">{visit.notes}</p>}
 
       <VisitReportSummary visit={visit} />
 
@@ -114,7 +114,7 @@ export const VisitCard: React.FC<VisitCardProps> = ({
                 e.stopPropagation();
                 onCancel(visit.id, farmerDisplayName);
               }}
-              className={`${ACTION_BUTTON} text-slate-600 dark:text-slate-300 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06]`}
+              className={`${ACTION_BUTTON} text-slate-600 dark:text-theme-text-secondary hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06]`}
             >
               {t('common_cancel')}
             </button>
@@ -124,7 +124,7 @@ export const VisitCard: React.FC<VisitCardProps> = ({
           <button
             aria-label={`View details for farmer ${farmerDisplayName}`}
             onClick={() => onOpenDetail(farmerData)}
-            className={`${ACTION_BUTTON} ms-auto inline-flex items-center gap-1 text-slate-600 dark:text-slate-300 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06]`}
+            className={`${ACTION_BUTTON} ms-auto inline-flex items-center gap-1 text-slate-600 dark:text-theme-text-secondary hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06]`}
           >
             {t('visits_open_farmer', { defaultValue: 'Farmer' })}
             <ChevronRight className="w-4 h-4" aria-hidden="true" />

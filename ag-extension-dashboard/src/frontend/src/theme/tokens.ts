@@ -48,6 +48,8 @@ export interface ThemeColors {
    * so every page sits on the same green rather than only the ones that hard-coded it.
    */
   darkBackground?: DarkBackground;
+  /** Dark mode's text steps. Themes without one use the slate steps below. */
+  darkText?: TextSteps;
 }
 
 export interface DarkBackground {
@@ -63,6 +65,37 @@ export const DEFAULT_DARK_BACKGROUND: DarkBackground = {
   primary: '#0a0f1e',
   secondary: '#111827',
   tertiary: '#1f2937',
+};
+
+/** Three text steps: headings and values, body copy, and captions or hints. */
+export interface TextSteps {
+  primary: string;
+  secondary: string;
+  muted: string;
+}
+
+/** Text steps in light mode, the same for every theme. */
+export const LIGHT_TEXT: TextSteps = {
+  primary: '#1f2937',
+  secondary: '#374151',
+  muted: '#4b5563',
+};
+
+/** Slate text for the navy dark background (Tailwind slate 200, 300, 400). */
+export const DEFAULT_DARK_TEXT: TextSteps = {
+  primary: '#e2e8f0',
+  secondary: '#cbd5e1',
+  muted: '#94a3b8',
+};
+
+/**
+ * Green-grey text for the field-green dark backgrounds, so copy sits in the same hue
+ * as the page. Muted keeps at least 5.3:1 on the lightest dark panel (WCAG AA).
+ */
+const FIELD_DARK_TEXT: TextSteps = {
+  primary: '#e6eee9',
+  secondary: '#c5d3cb',
+  muted: '#8fa69a',
 };
 
 /** Steps present in every color scale (drives Tailwind + CSS var generation). */
@@ -127,6 +160,7 @@ export const themes: Record<ThemeName, ThemeColors> = {
       secondary: '#13241b',
       tertiary: '#1a2f24',
     },
+    darkText: FIELD_DARK_TEXT,
   },
 
   /** Warm amber/gold representing wheat fields and harvest. */
@@ -357,6 +391,7 @@ export const themes: Record<ThemeName, ThemeColors> = {
       secondary: '#15251d',
       tertiary: '#1d3027',
     },
+    darkText: FIELD_DARK_TEXT,
   },
 
   /** High-contrast dark theme with glassmorphism and neon cyan accents. */

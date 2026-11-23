@@ -287,7 +287,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
         </div>
 
         {hasLiveDetections && (
-          <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+          <div className="flex items-center gap-2 text-gray-500 dark:text-theme-text-muted">
             <Sliders className="w-3.5 h-3.5" />
             <span className="text-xxs  ">{t('ui_disease_saliency_canvas_heatmap_alpha')}</span>
             <input

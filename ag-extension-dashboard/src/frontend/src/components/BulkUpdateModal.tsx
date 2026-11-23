@@ -95,15 +95,15 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
 
             <div className="p-6 space-y-6 max-h-[60vh] overflow-y-auto custom-scrollbar">
               <div className="p-4 rounded-xl bg-slate-50 dark:bg-theme-bg-secondary/20 border border-slate-100 dark:border-white/[0.08] flex gap-3">
-                <AlertCircle className="w-5 h-5 text-slate-600 dark:text-slate-400 shrink-0" />
-                <p className="text-xs text-slate-700 dark:text-slate-300">
+                <AlertCircle className="w-5 h-5 text-slate-600 dark:text-theme-text-muted shrink-0" />
+                <p className="text-xs text-slate-700 dark:text-theme-text-secondary">
                   {t('ui_bulk_update_modal_selected_fields_will_be_updated_for')} <strong>{t('ui_bulk_update_modal_all')}</strong> {selectedCount} {t('ui_bulk_update_modal_selected_farmers_leave_fields_empty')}
                 </p>
               </div>
 
               {/* Region */}
               <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <label className="text-xs font-medium text-slate-500 dark:text-theme-text-muted flex items-center gap-2">
                   <MapPin className="w-3.5 h-3.5" />
                   {t('common_region')}
                 </label>
@@ -125,7 +125,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
 
               {/* Language */}
               <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <label className="text-xs font-medium text-slate-500 dark:text-theme-text-muted flex items-center gap-2">
                   <Languages className="w-3.5 h-3.5" />
                   {t('ui_bulk_update_modal_language_preference')}
                 </label>
@@ -145,7 +145,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
 
               {/* Crops */}
               <div className="space-y-2">
-                <label className="text-xs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-2">
+                <label className="text-xs font-medium text-slate-500 dark:text-theme-text-muted flex items-center gap-2">
                   <Sprout className="w-3.5 h-3.5" />
                   {t('ui_bulk_update_modal_crop_types_overrides_existing')}
                 </label>
@@ -159,7 +159,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
                   />
                   <button
                     type="submit"
-                    className="px-4 bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-300 rounded-xl text-xs font-medium hover:bg-gray-200 transition-all"
+                    className="px-4 bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-theme-text-secondary rounded-xl text-xs font-medium hover:bg-gray-200 transition-all"
                   >
                     {t('common_add')}
                   </button>
@@ -186,7 +186,7 @@ export const BulkUpdateModal: React.FC<BulkUpdateModalProps> = ({
             <div className="p-6 bg-gray-50 dark:bg-theme-bg-tertiary/50 border-t border-gray-100 dark:border-white/[0.12] flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2.5 bg-white dark:bg-theme-bg-tertiary text-gray-700 dark:text-gray-300 font-medium text-xs rounded-xl border border-gray-200 dark:border-white/[0.12] hover:bg-gray-50 dark:hover:bg-white/[0.08] transition-colors"
+                className="flex-1 px-4 py-2.5 bg-white dark:bg-theme-bg-tertiary text-gray-700 dark:text-theme-text-secondary font-medium text-xs rounded-xl border border-gray-200 dark:border-white/[0.12] hover:bg-gray-50 dark:hover:bg-white/[0.08] transition-colors"
               >
                 {t('nav_cancel') || 'Cancel'}
               </button>

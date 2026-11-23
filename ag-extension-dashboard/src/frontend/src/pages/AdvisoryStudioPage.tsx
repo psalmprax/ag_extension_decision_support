@@ -171,10 +171,10 @@ export function AdvisoryStudioPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-theme-bg-primary text-slate-800 dark:text-slate-100 flex flex-col rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-theme-bg-primary text-slate-800 dark:text-theme-text-primary flex flex-col rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] overflow-hidden">
       <header className="h-16 border-b border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] backdrop-blur-md px-6 flex items-center justify-between z-20 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-md bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center justify-center text-slate-700 dark:text-slate-300">
+          <div className="w-8 h-8 rounded-md bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center justify-center text-slate-700 dark:text-theme-text-secondary">
             <Layers className="w-4 h-4 text-emerald-400" />
           </div>
           <div>
@@ -185,20 +185,20 @@ export function AdvisoryStudioPage() {
                 size={Math.max(12, Math.min(title.length + 1, 48))} aria-label={t('advisory_studio_protocol_name', { defaultValue: 'Protocol name' })}
                 className="font-medium text-base bg-transparent border-b border-transparent hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] focus:border-emerald-400 focus:outline-none text-slate-900 dark:text-white transition px-1"
               />
-              <span className="px-2 py-0.5 text-xs tabular-nums rounded bg-slate-100 dark:bg-white/[0.07] text-slate-700 dark:text-slate-300">
+              <span className="px-2 py-0.5 text-xs tabular-nums rounded bg-slate-100 dark:bg-white/[0.07] text-slate-700 dark:text-theme-text-secondary">
                 {status === 'published'
                   ? t('advisory_status_published', { version, defaultValue: 'Published, version {version}' })
                   : t('advisory_status_draft', { defaultValue: 'Draft' })}
               </span>
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 px-1">{t('ui_advisory_studio_page_visual_no_code_agronomic_protocol_fo')}</p>
+            <p className="text-xs text-slate-500 dark:text-theme-text-muted px-1">{t('ui_advisory_studio_page_visual_no_code_agronomic_protocol_fo')}</p>
           </div>
         </div>
 
         <div className="flex items-center gap-2.5">
           <select aria-label="Workflow template"
             onChange={(e) => handleSelectTemplate(e.target.value)}
-            className="px-2.5 py-1.5 text-xs rounded-md bg-slate-100 dark:bg-white/[0.07] border border-slate-900/[0.08] dark:border-white/[0.08] text-slate-700 dark:text-slate-300 focus:outline-none focus:border-emerald-500"
+            className="px-2.5 py-1.5 text-xs rounded-md bg-slate-100 dark:bg-white/[0.07] border border-slate-900/[0.08] dark:border-white/[0.08] text-slate-700 dark:text-theme-text-secondary focus:outline-none focus:border-emerald-500"
           >
             <option value="maize_armyworm">{t('ui_advisory_studio_page_template_maize_fall_armyworm')}</option>
             <option value="soil_lime">{t('ui_advisory_studio_page_template_soil_ph_lime')}</option>
@@ -207,7 +207,7 @@ export function AdvisoryStudioPage() {
           <button
             type="button"
             onClick={handleExportJson}
-            className="px-3 py-1.5 text-xs font-medium rounded-md bg-slate-100 dark:bg-white/[0.07] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-800 dark:text-slate-200 border border-slate-900/[0.08] dark:border-white/[0.08] transition flex items-center gap-1.5"
+            className="px-3 py-1.5 text-xs font-medium rounded-md bg-slate-100 dark:bg-white/[0.07] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-800 dark:text-theme-text-primary border border-slate-900/[0.08] dark:border-white/[0.08] transition flex items-center gap-1.5"
             title="Export workflow schema JSON"
           >
             <Download className="w-3.5 h-3.5" />
@@ -218,7 +218,7 @@ export function AdvisoryStudioPage() {
             type="button"
             disabled={isSaving}
             onClick={handleSaveDraft}
-            className="px-3 py-1.5 text-xs font-medium rounded-md bg-slate-100 dark:bg-white/[0.07] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-800 dark:text-slate-200 border border-slate-900/[0.08] dark:border-white/[0.08] transition flex items-center gap-1.5 disabled:opacity-50"
+            className="px-3 py-1.5 text-xs font-medium rounded-md bg-slate-100 dark:bg-white/[0.07] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-800 dark:text-theme-text-primary border border-slate-900/[0.08] dark:border-white/[0.08] transition flex items-center gap-1.5 disabled:opacity-50"
           >
             <Save className="w-3.5 h-3.5" />
             <span>{isSaving ? t('common_saving', { defaultValue: 'Saving…' }) : t('advisory_save_draft', { defaultValue: 'Save draft' })}</span>
@@ -278,7 +278,7 @@ export function AdvisoryStudioPage() {
                     <span className="w-6 h-6 rounded-md bg-slate-100 dark:bg-white/[0.07] border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center justify-center shrink-0">
                       {renderStepIcon(item.type)}
                     </span>
-                    <span className="text-xs font-medium text-slate-800 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white">
+                    <span className="text-xs font-medium text-slate-800 dark:text-theme-text-primary group-hover:text-slate-900 dark:group-hover:text-white">
                       {item.title}
                     </span>
                   </div>
@@ -302,7 +302,7 @@ export function AdvisoryStudioPage() {
           <div className="w-full max-w-2xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <h2 className="text-sm font-medium text-slate-800 dark:text-slate-200">{t('ui_advisory_studio_page_protocol_decision_canvas')}</h2>
+                <h2 className="text-sm font-medium text-slate-800 dark:text-theme-text-primary">{t('ui_advisory_studio_page_protocol_decision_canvas')}</h2>
                 <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-white/[0.07] text-slate-400 border border-slate-900/[0.08] dark:border-white/[0.08] font-mono">
                   {t('ui_advisory_studio_page_steps', { length: steps.length })}
                 </span>
@@ -335,7 +335,7 @@ export function AdvisoryStudioPage() {
               <button
                 type="button"
                 onClick={() => handleAddBlock(PALETTE_ITEMS[0]!)}
-                className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-dashed border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-500 text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 text-xs font-medium transition flex items-center gap-2"
+                className="px-4 py-2 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-dashed border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-500 text-slate-400 hover:text-slate-800 dark:hover:text-theme-text-primary text-xs font-medium transition flex items-center gap-2"
               >
                 <Plus className="w-4 h-4" />
                 <span>{t('ui_advisory_studio_page_add_step_to_protocol')}</span>
@@ -346,11 +346,11 @@ export function AdvisoryStudioPage() {
 
         <aside className="w-84 border-s border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-5 flex flex-col items-center shrink-0 overflow-y-auto">
           <div className="w-full flex items-center justify-between mb-4">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-300">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-theme-text-secondary">
               <Smartphone className="w-4 h-4 text-slate-400" />
               <span>{t('ui_advisory_studio_page_mobile_pwa_preview')}</span>
             </div>
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.07] text-slate-700 dark:text-slate-300 border border-slate-900/[0.08] dark:border-white/[0.08]">
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.07] text-slate-700 dark:text-theme-text-secondary border border-slate-900/[0.08] dark:border-white/[0.08]">
               {t('ui_advisory_studio_page_offline_ready')}
             </span>
           </div>

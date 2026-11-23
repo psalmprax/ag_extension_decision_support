@@ -217,7 +217,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
             onClick={() => setDualView(!dualView)}
             className={`px-3 py-1.5 rounded-xl border text-xs font-mono font-medium transition-all flex items-center gap-1.5 shrink-0 ${
               dualView
-                ? 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border-slate-500/40 shadow-sm'
+                ? 'bg-slate-500/20 text-slate-700 dark:text-theme-text-secondary border-slate-500/40 shadow-sm'
                 : 'bg-slate-100 text-slate-700 hover:text-slate-900 border-slate-200 dark:bg-white/5 dark:text-white/60 dark:hover:text-white dark:border-white/10'
             }`}
           >
@@ -257,10 +257,10 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
         {dualView && activeLang !== 'en' ? (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <div className="p-5 rounded-xl bg-slate-50 dark:bg-theme-bg-primary/60 border border-slate-200 dark:border-white/10 space-y-3">
-              <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-white/10 text-xs font-mono font-medium text-slate-500 dark:text-slate-400 ">
+              <div className="flex items-center gap-2 pb-2 border-b border-slate-200 dark:border-white/10 text-xs font-mono font-medium text-slate-500 dark:text-theme-text-muted ">
                 <span>{t('ui_airesult_english_primary_grounded_context')}</span>
               </div>
-              <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-sans text-xs">
+              <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-theme-text-primary leading-relaxed font-sans text-xs">
                 <MarkdownRenderer content={originalContent} />
               </div>
             </div>
@@ -269,13 +269,13 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
               <div className="flex items-center gap-2 pb-2 border-b border-emerald-500/20 text-xs font-mono font-medium text-emerald-700 dark:text-emerald-400 ">
                 <span>{t('ui_airesult_localized_farmer_advisory', { native: currentLangObj.native })}</span>
               </div>
-              <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-sans text-xs">
+              <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-theme-text-primary leading-relaxed font-sans text-xs">
                 <MarkdownRenderer content={activeContent} />
               </div>
             </div>
           </div>
         ) : (
-          <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-slate-200 leading-relaxed font-sans">
+          <div className="prose dark:prose-invert max-w-none text-slate-800 dark:text-theme-text-primary leading-relaxed font-sans">
             <MarkdownRenderer content={activeContent} />
           </div>
         )}
@@ -283,7 +283,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
         {result.contextUsed && result.contextUsed.length > 0 && (
           <div className="pt-6 border-t border-slate-200 dark:border-white/5 flex flex-col gap-3">
             <div className="flex items-center justify-between">
-              <span className="text-xxs font-medium text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <span className="text-xxs font-medium text-slate-500 dark:text-theme-text-muted flex items-center gap-1.5">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                 {t('ui_airesult_retrieved_verification_context')}
               </span>
@@ -298,7 +298,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
               {result.contextUsed.slice(0, 4).map((ctx, idx) => (
                 <div
                   key={idx}
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-theme-bg-primary/60 border border-slate-200 dark:border-white/5 text-xxs font-medium text-slate-700 dark:text-slate-300 flex items-center gap-2"
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-theme-bg-primary/60 border border-slate-200 dark:border-white/5 text-xxs font-medium text-slate-700 dark:text-theme-text-secondary flex items-center gap-2"
                 >
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 dark:bg-emerald-400" />
                   <span className="truncate max-w-[200px]">
@@ -333,7 +333,7 @@ const KnowledgeGraphView: React.FC<{
             <Network className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
             Spatial Knowledge Graph Explorer
           </h3>
-          <p className="text-xxs text-slate-500 dark:text-slate-400">
+          <p className="text-xxs text-slate-500 dark:text-theme-text-muted">
             Live semantic node network connecting query concepts, soil indices, FAO literature, and regional farmer records.
           </p>
         </div>
@@ -357,16 +357,16 @@ const KnowledgeGraphView: React.FC<{
               <span className="text-xs font-medium text-slate-900 dark:text-white">{selectedGraphNode.label}</span>
               <span className="text-xs px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 dark:bg-emerald-400/[0.12] dark:text-emerald-200">{formatLabel(selectedGraphNode.category)}</span>
               {selectedGraphNode.score && (
-                <span className="text-xxs font-mono text-slate-500 dark:text-slate-400">
+                <span className="text-xxs font-mono text-slate-500 dark:text-theme-text-muted">
                   Relevance: {Math.round(selectedGraphNode.score * 100)}%
                 </span>
               )}
             </div>
-            <p className="text-xs text-slate-700 dark:text-slate-300 mt-1 leading-relaxed">{selectedGraphNode.snippet}</p>
+            <p className="text-xs text-slate-700 dark:text-theme-text-secondary mt-1 leading-relaxed">{selectedGraphNode.snippet}</p>
           </div>
           <button
             onClick={() => onSelectNode(null)}
-            className="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-xs font-medium"
+            className="text-slate-500 hover:text-slate-900 dark:text-theme-text-muted dark:hover:text-white text-xs font-medium"
           >
             &times;
           </button>
@@ -390,14 +390,14 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
           <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
           Primary Evidence & Verification Provenance
         </h3>
-        <p className="text-xxs text-slate-500 dark:text-slate-400 mt-0.5">
+        <p className="text-xxs text-slate-500 dark:text-theme-text-muted mt-0.5">
           Full citation grounding retrieved from verified agronomic repositories and vector indices.
         </p>
       </div>
 
       {result.citations && result.citations.length > 0 && (
         <div className="space-y-3">
-          <span className="text-xxs font-medium text-slate-500 dark:text-slate-400  ">
+          <span className="text-xxs font-medium text-slate-500 dark:text-theme-text-muted  ">
             Formal Agronomic Citations ({result.citations.length})
           </span>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -414,10 +414,10 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
                     {cite.category}
                   </span>
                 </div>
-                <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed line-clamp-3">
+                <p className="text-xs text-slate-700 dark:text-theme-text-secondary leading-relaxed line-clamp-3">
                   {cite.excerpt}
                 </p>
-                <div className="pt-2 border-t border-slate-200 dark:border-white/5 flex items-center justify-between text-xxs text-slate-500 dark:text-slate-400 font-mono">
+                <div className="pt-2 border-t border-slate-200 dark:border-white/5 flex items-center justify-between text-xxs text-slate-500 dark:text-theme-text-muted font-mono">
                   <span>Relevance Score</span>
                   <span className="text-amber-600 dark:text-amber-400 font-medium">{Math.round(cite.score * 100)}% match</span>
                 </div>
@@ -429,7 +429,7 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
 
       {result.contextUsed && result.contextUsed.length > 0 && (
         <div className="space-y-3 pt-4 border-t border-slate-200 dark:border-white/5">
-          <span className="text-xxs font-medium text-slate-500 dark:text-slate-400  ">
+          <span className="text-xxs font-medium text-slate-500 dark:text-theme-text-muted  ">
             Retrieved Knowledge Vectors ({result.contextUsed.length})
           </span>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -456,13 +456,13 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
                         {ctx.metadata?.category || 'Vector Chunk'}
                       </span>
                       {hasUrl && (
-                        <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-emerald-600 dark:text-slate-500 dark:group-hover:text-emerald-400 transition-colors" />
+                        <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-emerald-600 dark:text-theme-text-muted dark:group-hover:text-emerald-400 transition-colors" />
                       )}
                     </div>
-                    <h4 className="text-xs font-medium text-slate-900 group-hover:text-emerald-700 dark:text-slate-200 dark:group-hover:text-white truncate">
+                    <h4 className="text-xs font-medium text-slate-900 group-hover:text-emerald-700 dark:text-theme-text-primary dark:group-hover:text-white truncate">
                       {ctx.metadata?.title || `${ctx.metadata?.crop || 'General'} Advice`}
                     </h4>
-                    <p className="text-xxs text-slate-600 dark:text-slate-400 line-clamp-2 mt-1">
+                    <p className="text-xxs text-slate-600 dark:text-theme-text-muted line-clamp-2 mt-1">
                       {ctx.content}
                     </p>
                   </div>
@@ -504,7 +504,7 @@ const AIResultHeader: React.FC<{
             Answer
           </span>
           {result.cached && (
-            <span className="text-xxs font-medium px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/30 flex items-center gap-1">
+            <span className="text-xxs font-medium px-2 py-0.5 rounded-md bg-slate-500/10 text-slate-700 dark:text-theme-text-secondary border border-slate-500/30 flex items-center gap-1">
               <Zap className="w-2.5 h-2.5 fill-current" />
               Saved answer
             </span>
@@ -528,7 +528,7 @@ const AIResultHeader: React.FC<{
         className={`p-2.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-1.5 ${
           isSpeaking
             ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/40 animate-pulse'
-            : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/5 dark:text-slate-300 dark:border-white/10 dark:hover:bg-white/10 dark:hover:text-white'
+            : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/5 dark:text-theme-text-secondary dark:border-white/10 dark:hover:bg-white/10 dark:hover:text-white'
         }`}
         title="Voice Briefing"
       >
@@ -538,7 +538,7 @@ const AIResultHeader: React.FC<{
 
       <button
         onClick={onCopy}
-        className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-300 dark:hover:text-white dark:border-white/10 text-xs font-medium transition-all flex items-center gap-1.5 active:scale-95"
+        className="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 hover:text-slate-900 border border-slate-200 dark:bg-white/5 dark:hover:bg-white/10 dark:text-theme-text-secondary dark:hover:text-white dark:border-white/10 text-xs font-medium transition-all flex items-center gap-1.5 active:scale-95"
         title="Copy Summary"
       >
         {copied ? <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" /> : <Copy className="w-4 h-4" />}
@@ -550,7 +550,7 @@ const AIResultHeader: React.FC<{
         className={`p-2.5 rounded-xl border text-xs font-medium transition-all flex items-center gap-1.5 ${
           savedBookmark
             ? 'bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/40'
-            : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/5 dark:text-slate-300 dark:border-white/10 dark:hover:bg-white/10 dark:hover:text-white'
+            : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200 hover:text-slate-900 dark:bg-white/5 dark:text-theme-text-secondary dark:border-white/10 dark:hover:bg-white/10 dark:hover:text-white'
         }`}
         title="Bookmark Advisory"
       >
@@ -575,7 +575,7 @@ const AIResultNav: React.FC<{
         className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
           viewMode === 'synthesis'
             ? 'bg-emerald-500 text-slate-950 shadow-md'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-theme-text-muted dark:hover:text-white dark:hover:bg-white/5'
         }`}
       >
         <FileText className="w-3.5 h-3.5" />
@@ -587,12 +587,12 @@ const AIResultNav: React.FC<{
         className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
           viewMode === 'graph'
             ? 'bg-emerald-500 text-slate-950 shadow-md'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-theme-text-muted dark:hover:text-white dark:hover:bg-white/5'
         }`}
       >
         <Network className="w-3.5 h-3.5" />
         <span>Knowledge Graph</span>
-        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-200 dark:bg-theme-bg-secondary/60 text-slate-700 dark:text-slate-300">
+        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-200 dark:bg-theme-bg-secondary/60 text-slate-700 dark:text-theme-text-secondary">
           {graphNodeCount}
         </span>
       </button>
@@ -603,7 +603,7 @@ const AIResultNav: React.FC<{
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
             viewMode === 'visuals'
               ? 'bg-emerald-500 text-slate-950 shadow-md'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5'
+              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-theme-text-muted dark:hover:text-white dark:hover:bg-white/5'
           }`}
         >
           <BarChart2 className="w-3.5 h-3.5" />
@@ -616,12 +616,12 @@ const AIResultNav: React.FC<{
         className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
           viewMode === 'evidence'
             ? 'bg-emerald-500 text-slate-950 shadow-md'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-slate-400 dark:hover:text-white dark:hover:bg-white/5'
+            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-theme-text-muted dark:hover:text-white dark:hover:bg-white/5'
         }`}
       >
         <Layers className="w-3.5 h-3.5" />
         <span>Sources</span>
-        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-200 dark:bg-theme-bg-secondary/60 text-slate-700 dark:text-slate-300">
+        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-200 dark:bg-theme-bg-secondary/60 text-slate-700 dark:text-theme-text-secondary">
           {sourceCount}
         </span>
       </button>

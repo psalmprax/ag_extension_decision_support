@@ -248,7 +248,7 @@ function Telemetry() {
                 {t('ui_telemetry_soilgrids_v2_nasa_power')}
               </span>
             </h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+            <p className="text-xs text-gray-600 dark:text-theme-text-muted mt-1">
               {t('ui_telemetry_hardware_accelerated_2d_idw_interpol')}
             </p>
           </div>
@@ -342,14 +342,14 @@ function Telemetry() {
                 />
                 <div>
                   <p className="font-medium text-gray-900 dark:text-white">{event.eventType}</p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-sm text-gray-600 dark:text-theme-text-muted">
                     {event.agentId && `Agent: ${event.agentId}`}
                     {event.toolName && ` • Tool: ${event.toolName}`}
                   </p>
                 </div>
               </div>
               <div className="text-end">
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-600 dark:text-theme-text-muted">
                   {new Date(event.timestamp).toLocaleString()}
                 </p>
                 {event.durationMs && <p className="text-xs text-gray-500">{event.durationMs}ms</p>}

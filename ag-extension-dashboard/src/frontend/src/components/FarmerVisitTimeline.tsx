@@ -59,7 +59,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
                     })()}
                   </span>
                 </div>
-                <p className="text-xs-plus text-gray-500 dark:text-gray-400 leading-relaxed italic">
+                <p className="text-xs-plus text-gray-500 dark:text-theme-text-muted leading-relaxed italic">
                   {t('ui_farmer_visit_timeline_ldquo')}{visit.reason || visit.notes || t('visit_routine_inspection')}{t('ui_farmer_visit_timeline_rdquo')}
                 </p>
                 {visit.status === 'scheduled' && (

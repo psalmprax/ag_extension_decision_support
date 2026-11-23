@@ -68,7 +68,7 @@ export const DashboardHeader: React.FC<{
         <h1 className={`text-2xl sm:text-3xl mb-1 ${headingClass}`}>
           {t('dashboard_operations_title', { defaultValue: 'Overview' })}
         </h1>
-        <p className="text-slate-600 dark:text-slate-400 text-sm sm:text-base">
+        <p className="text-slate-600 dark:text-theme-text-muted text-sm sm:text-base">
           {dashboardGreeting(t, userName)}
         </p>
       </div>
@@ -80,7 +80,7 @@ export const DashboardHeader: React.FC<{
             className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-rose-500'}`}
             aria-hidden="true"
           />
-          <span className="text-slate-700 dark:text-slate-200">
+          <span className="text-slate-700 dark:text-theme-text-primary">
             {isOnline
               ? t('dashboard_online', { defaultValue: 'Online' })
               : t('dashboard_offline', { defaultValue: 'Offline' })}

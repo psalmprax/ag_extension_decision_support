@@ -36,7 +36,7 @@ export const VerifyEmail: React.FC = () => {
         {status === 'pending' && <Loader2 className="w-10 h-10 mx-auto animate-spin text-primary-600" />}
         {status === 'success' && <CheckCircle className="w-10 h-10 mx-auto text-green-600" />}
         {status === 'error' && <AlertCircle className="w-10 h-10 mx-auto text-red-600" />}
-        <p className="text-sm text-gray-700 dark:text-gray-300">{message}</p>
+        <p className="text-sm text-gray-700 dark:text-theme-text-secondary">{message}</p>
         <button type="button" onClick={() => navigate('/login')} className="w-full py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors">
           {t('ui_verify_email_go_to_sign_in')}
         </button>

@@ -41,8 +41,8 @@ const DemoBlocker: React.FC<{ children: React.ReactNode; label?: string }> = ({
           <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
             <Lock className="w-6 h-6 text-amber-600 dark:text-amber-400" />
           </div>
-          <p className="text-sm font-medium text-gray-800 dark:text-gray-100">{overlayLabel}</p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">{upgradeHint}</p>
+          <p className="text-sm font-medium text-gray-800 dark:text-theme-text-primary">{overlayLabel}</p>
+          <p className="text-xs text-gray-500 dark:text-theme-text-muted">{upgradeHint}</p>
         </div>
       </div>
     </div>

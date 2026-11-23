@@ -54,7 +54,7 @@ function OutcomeModal({ item, onClose }: { item: { visitId: string; farmerName: 
                         <X className="w-4 h-4" />
                     </button>
                 </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-500 dark:text-theme-text-muted">
                     {t('ui_efficacy_card_follow_up_for')} <span className="font-medium">{item.farmerName || 'farmer'}</span>
                     {item.notes ? ` — ${item.notes.slice(0, 90)}` : ''}
                 </p>
@@ -123,7 +123,7 @@ export function EfficacyCard() {
                             <p className="text-xxs text-gray-400">{t('ui_efficacy_card_success_rate')}</p>
                         </div>
                     </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                    <p className="text-xs text-gray-500 dark:text-theme-text-muted">
                         {t('ui_efficacy_card_of_tracked_outcomes_improved_or_reso', { successCount: summary.data.successCount, totalOutcomes: summary.data.totalOutcomes })}
                     </p>
                 </div>

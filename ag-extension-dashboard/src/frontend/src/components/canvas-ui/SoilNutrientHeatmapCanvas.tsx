@@ -493,7 +493,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
       </div>
 
       {/* Data provenance for the active layer — surfaces preview/estimated status to the user */}
-      <p className={`text-xs leading-relaxed rounded-lg px-3 py-2 border ${isLiveLayer ? 'text-emerald-800 dark:text-emerald-200 bg-emerald-50 dark:bg-emerald-400/[0.06] border-emerald-700/20' : hasNoData ? 'text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-white/[0.03] border-slate-900/[0.08] dark:border-white/[0.08]' : 'text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-400/[0.06] border-amber-600/20'}`}>
+      <p className={`text-xs leading-relaxed rounded-lg px-3 py-2 border ${isLiveLayer ? 'text-emerald-800 dark:text-emerald-200 bg-emerald-50 dark:bg-emerald-400/[0.06] border-emerald-700/20' : hasNoData ? 'text-slate-600 dark:text-theme-text-secondary bg-slate-50 dark:bg-white/[0.03] border-slate-900/[0.08] dark:border-white/[0.08]' : 'text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-400/[0.06] border-amber-600/20'}`}>
         {hasNoData ? 'No live data for this nutrient yet — save the field location or add a lab test, or preview a sample map in the demo account.' : provenanceOverride ?? config.description}{' '}
         {isLiveLayer ? 'Live starting estimate from satellite soil data plus your lab results — one even colour until more field points are added.' : hasNoData ? '' : 'Blended from nearby sample points — not a substitute for a lab soil test.'}
       </p>

@@ -187,7 +187,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                 <h3 className={`text-2xl font-medium 'text-gray-900 dark:text-white'`}>
                   {t('reports_generating_title') || 'Synthesizing Data'}
                 </h3>
-                <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">
+                <p className="text-gray-500 dark:text-theme-text-muted mt-2 font-medium">
                   {t('reports_generating_desc') ||
                     'Our AI is analyzing visit records, yield trends, and farmer interactions to generate your comprehensive report.'}
                 </p>
@@ -237,7 +237,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                 </div>
               ) : props.reportContent ? (
                 <div className="prose dark:prose-invert max-w-none">
-                  <pre className="whitespace-pre-wrap text-sm text-gray-700 dark:text-gray-300">
+                  <pre className="whitespace-pre-wrap text-sm text-gray-700 dark:text-theme-text-secondary">
                     {props.reportContent}
                   </pre>
                 </div>
@@ -269,7 +269,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                     props.addNotification({ type: 'error', message: 'Download failed' });
                   }
                 }}
-                className={`px-4 py-2 bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-300 ${btnClass} text-sm font-medium transition-colors`}
+                className={`px-4 py-2 bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-theme-text-secondary ${btnClass} text-sm font-medium transition-colors`}
               >
                 {t('billing_download')}
               </button>
@@ -301,7 +301,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
               <div className="p-4 border-b border-gray-100 dark:border-white/[0.12] flex justify-between items-center">
                 <div>
                   <h3 className="font-medium text-gray-900 dark:text-white">{t('chat_start_new')}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                  <p className="text-sm text-gray-500 dark:text-theme-text-muted">
                     {t('chat_select_farmer')}
                   </p>
                 </div>
@@ -374,7 +374,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                           <div className="font-medium text-gray-900 dark:text-white">
                             {farmer.firstName} {farmer.lastName}
                           </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                          <div className="text-sm text-gray-500 dark:text-theme-text-muted">
                             {farmer.region}
                             {farmer.village ? `, ${farmer.village}` : ''}
                           </div>

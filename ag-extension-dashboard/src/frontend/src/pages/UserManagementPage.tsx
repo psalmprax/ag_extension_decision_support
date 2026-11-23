@@ -266,7 +266,7 @@ export function UserManagementPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-theme-bg-tertiary border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-slate-200 font-medium text-xs">
+                    <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-theme-bg-tertiary border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-700 dark:text-theme-text-primary font-medium text-xs">
                       {(user.firstName?.[0] || '?').toUpperCase()}
                       {(user.lastName?.[0] || '').toUpperCase()}
                     </div>
@@ -299,7 +299,7 @@ export function UserManagementPage() {
                   </div>
                   {user.phone && (
                     <div className="flex items-center gap-2 text-slate-700 dark:text-white/70">
-                      <Phone className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400/70 shrink-0" />
+                      <Phone className="w-3.5 h-3.5 text-slate-500 dark:text-theme-text-muted/70 shrink-0" />
                       <span className="font-mono">{user.phone}</span>
                     </div>
                   )}
@@ -315,7 +315,7 @@ export function UserManagementPage() {
                         <button
                           onClick={() => setSelectedUserForAccess(user)}
                           aria-label={t('users_btn_manage_access_for', 'Edit access for {name}', { name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email })}
-                          className="text-[11px] font-medium text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                          className="text-[11px] font-medium text-slate-600 dark:text-theme-text-muted hover:text-slate-700 dark:hover:text-theme-text-secondary transition-colors"
                         >
                           {t('users_btn_manage_access', 'Edit access')}
                         </button>

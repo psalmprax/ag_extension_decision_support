@@ -41,7 +41,7 @@ export function EmailWorkflowsTemplateGrid({
                   <h3 className="font-medium text-gray-900 dark:text-white mb-1">
                     {template.displayName || template.name}
                   </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
+                  <p className="text-sm text-gray-600 dark:text-theme-text-muted line-clamp-2">
                     <TemplateText text={template.subject} />
                   </p>
                 </div>
@@ -49,7 +49,7 @@ export function EmailWorkflowsTemplateGrid({
 
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600 dark:text-gray-400">Variables:</span>
+                  <span className="text-gray-600 dark:text-theme-text-muted">Variables:</span>
                   <span className="font-medium">{template.variables.length}</span>
                 </div>
 
@@ -58,7 +58,7 @@ export function EmailWorkflowsTemplateGrid({
                     {template.variables.slice(0, 3).map((variable, index) => (
                       <span
                         key={index}
-                        className="text-xs bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-gray-300 px-2 py-1 rounded"
+                        className="text-xs bg-gray-100 dark:bg-white/[0.08] text-gray-700 dark:text-theme-text-secondary px-2 py-1 rounded"
                       >
                         {variable}
                       </span>
@@ -71,7 +71,7 @@ export function EmailWorkflowsTemplateGrid({
                   </div>
                 )}
 
-                <div className="text-xs text-gray-500 dark:text-gray-400">
+                <div className="text-xs text-gray-500 dark:text-theme-text-muted">
                   Created by {template.createdBy || 'System'} •{' '}
                   {template.createdAt
                     ? new Date(template.createdAt).toLocaleDateString()
@@ -104,7 +104,7 @@ export function EmailWorkflowsTemplateGrid({
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             {t('email_workflows_no_templates_found')}
           </h3>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-theme-text-muted">
             {selectedCategory !== 'all'
               ? t('email_workflows_no_templates_category')
               : t('email_workflows_create_first')}

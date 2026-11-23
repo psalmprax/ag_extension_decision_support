@@ -112,7 +112,7 @@ export const KnowledgeSidebar: React.FC<KnowledgeSidebarProps> = ({
                         <MessageSquare className="w-4 h-4" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate mb-1">
+                        <p className="text-sm font-medium text-gray-700 dark:text-theme-text-primary truncate mb-1">
                           {h.queryText}
                         </p>
                         <div className="flex items-center gap-2 text-xxs font-medium text-gray-400  ">

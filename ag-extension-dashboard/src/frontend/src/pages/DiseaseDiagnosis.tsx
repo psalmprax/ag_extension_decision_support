@@ -136,7 +136,7 @@ export function DiseaseDiagnosis() {
         </div>
 
         {/* Tab Content Container */}
-        <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 sm:p-6 text-slate-800 dark:text-slate-100">
+        <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 sm:p-6 text-slate-800 dark:text-theme-text-primary">
           {activeTab === 'symptoms' && (
             <SymptomDiagnosisTab
               cropType={cropType}

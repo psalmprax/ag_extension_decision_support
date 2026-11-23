@@ -186,14 +186,14 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
       {/* Header */}
       <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-white/[0.06]">
         <div className="flex items-center gap-2.5">
-          <div className="w-7 h-7 rounded-md bg-slate-100 dark:bg-theme-bg-tertiary text-slate-600 dark:text-slate-300 flex items-center justify-center shrink-0">
+          <div className="w-7 h-7 rounded-md bg-slate-100 dark:bg-theme-bg-tertiary text-slate-600 dark:text-theme-text-secondary flex items-center justify-center shrink-0">
             <SlidersHorizontal className="w-3.5 h-3.5" />
           </div>
           <div>
-            <h4 className="text-xs font-medium text-slate-900 dark:text-slate-100">
+            <h4 className="text-xs font-medium text-slate-900 dark:text-theme-text-primary">
               {t('ui_agronomic_intake_card_agronomic_precision_intake')}
             </h4>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-[11px] text-slate-500 dark:text-theme-text-muted mt-0.5">
               {t('ui_agronomic_intake_card_add_only_field_details_you_know_name')}
             </p>
           </div>
@@ -201,7 +201,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
 
         <button
           onClick={() => setIsExpanded(prev => !prev)}
-          className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          className="p-1 rounded text-slate-400 hover:text-slate-700 dark:hover:text-theme-text-primary transition-colors"
           aria-label={isExpanded ? 'Collapse intake form' : 'Expand intake form'}
         >
           {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -219,14 +219,14 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
             {/* 1. Growing Zone / Location */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1">
-                  <Compass className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                <label className="text-[11px] font-medium text-slate-700 dark:text-theme-text-secondary flex items-center gap-1">
+                  <Compass className="w-3.5 h-3.5 text-slate-400 dark:text-theme-text-muted" />
                   {t('ui_agronomic_intake_card_1_growing_zone_climate_band')}
                 </label>
                 <button
                   onClick={handleAutoGPS}
                   disabled={isLocating}
-                  className="text-[10px] text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 flex items-center gap-1 font-medium transition-colors"
+                  className="text-[10px] text-slate-500 hover:text-slate-800 dark:text-theme-text-muted dark:hover:text-theme-text-primary flex items-center gap-1 font-medium transition-colors"
                 >
                   <MapPin className="w-3 h-3 text-slate-400" />
                   {isLocating ? 'Acquiring GPS...' : 'Auto-detect GPS'}
@@ -243,7 +243,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
                       className={`text-[11px] px-2.5 py-1 rounded-md border transition-colors font-medium ${
                         active
                           ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-slate-950 shadow-sm'
-                          : 'bg-slate-100 border-slate-200/80 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:bg-theme-bg-tertiary/60 dark:border-white/[0.06] dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-theme-bg-tertiary'
+                          : 'bg-slate-100 border-slate-200/80 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:bg-theme-bg-tertiary/60 dark:border-white/[0.06] dark:text-theme-text-muted dark:hover:text-theme-text-primary dark:hover:bg-theme-bg-tertiary'
                       }`}
                     >
                       {zone.short}
@@ -253,7 +253,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
               </div>
 
               {customLocation && (
-                <div className="mt-1 text-[10px] text-slate-600 dark:text-slate-400 flex items-center gap-1 font-mono">
+                <div className="mt-1 text-[10px] text-slate-600 dark:text-theme-text-muted flex items-center gap-1 font-mono">
                   <MapPin className="w-2.5 h-2.5 text-slate-400" /> {t('ui_agronomic_intake_card_selected_gps')} {customLocation}
                 </div>
               )}
@@ -261,8 +261,8 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
 
             {/* 2. Soil Texture & Drainage */}
             <div>
-              <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1 mb-1.5">
-                <Layers className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+              <label className="text-[11px] font-medium text-slate-700 dark:text-theme-text-secondary flex items-center gap-1 mb-1.5">
+                <Layers className="w-3.5 h-3.5 text-slate-400 dark:text-theme-text-muted" />
                 {t('ui_agronomic_intake_card_2_soil_texture_condition')}
               </label>
               <div className="flex flex-wrap gap-1.5">
@@ -275,7 +275,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
                       className={`text-[11px] px-2.5 py-1 rounded-md border transition-colors font-medium ${
                         active
                           ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-slate-950 shadow-sm'
-                          : 'bg-slate-100 border-slate-200/80 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:bg-theme-bg-tertiary/60 dark:border-white/[0.06] dark:text-slate-400 dark:hover:text-slate-200 dark:hover:bg-theme-bg-tertiary'
+                          : 'bg-slate-100 border-slate-200/80 text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:bg-theme-bg-tertiary/60 dark:border-white/[0.06] dark:text-theme-text-muted dark:hover:text-theme-text-primary dark:hover:bg-theme-bg-tertiary'
                       }`}
                     >
                       {soil.label}
@@ -288,8 +288,8 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
             {/* 3. Water Management & Production Goal */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
               <div>
-                <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1 mb-1.5">
-                  <Droplets className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                <label className="text-[11px] font-medium text-slate-700 dark:text-theme-text-secondary flex items-center gap-1 mb-1.5">
+                  <Droplets className="w-3.5 h-3.5 text-slate-400 dark:text-theme-text-muted" />
                   {t('ui_agronomic_intake_card_3_water_supply')}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -302,7 +302,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
                         className={`text-[10px] px-2 py-1 rounded-md border transition-colors font-medium ${
                           active
                             ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-slate-950 shadow-sm'
-                            : 'bg-slate-100 border-slate-200/80 text-slate-600 hover:text-slate-900 dark:bg-theme-bg-tertiary/60 dark:border-white/[0.06] dark:text-slate-400 dark:hover:text-slate-200'
+                            : 'bg-slate-100 border-slate-200/80 text-slate-600 hover:text-slate-900 dark:bg-theme-bg-tertiary/60 dark:border-white/[0.06] dark:text-theme-text-muted dark:hover:text-theme-text-primary'
                         }`}
                       >
                         {irr.label}
@@ -313,8 +313,8 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
               </div>
 
               <div>
-                <label className="text-[11px] font-medium text-slate-700 dark:text-slate-300 flex items-center gap-1 mb-1.5">
-                  <Target className="w-3.5 h-3.5 text-slate-400 dark:text-slate-500" />
+                <label className="text-[11px] font-medium text-slate-700 dark:text-theme-text-secondary flex items-center gap-1 mb-1.5">
+                  <Target className="w-3.5 h-3.5 text-slate-400 dark:text-theme-text-muted" />
                   {t('ui_agronomic_intake_card_4_production_goal')}
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -327,7 +327,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
                         className={`text-[10px] px-2 py-1 rounded-md border transition-colors font-medium ${
                           active
                             ? 'bg-slate-900 border-slate-900 text-white dark:bg-white dark:border-white dark:text-slate-950 shadow-sm'
-                            : 'bg-slate-100 border-slate-200/80 text-slate-600 hover:text-slate-900 dark:bg-theme-bg-tertiary/60 dark:border-white/[0.06] dark:text-slate-400 dark:hover:text-slate-200'
+                            : 'bg-slate-100 border-slate-200/80 text-slate-600 hover:text-slate-900 dark:bg-theme-bg-tertiary/60 dark:border-white/[0.06] dark:text-theme-text-muted dark:hover:text-theme-text-primary'
                         }`}
                       >
                         {goal.label}
@@ -343,7 +343,7 @@ export const AgronomicIntakeCard: React.FC<AgronomicIntakeCardProps> = ({
               {onBypass && (
                 <button
                   onClick={onBypass}
-                  className="text-[11px] text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 transition-colors font-medium"
+                  className="text-[11px] text-slate-500 hover:text-slate-800 dark:text-theme-text-muted dark:hover:text-theme-text-primary transition-colors font-medium"
                 >
                   {t('ui_agronomic_intake_card_search_general_overview')}
                 </button>

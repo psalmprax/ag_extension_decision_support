@@ -505,7 +505,7 @@ export const KnowledgeBase: React.FC = () => {
                         isDone
                           ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border border-emerald-500/30'
                           : isCurrent
-                          ? 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border border-slate-500/40'
+                          ? 'bg-slate-500/20 text-slate-700 dark:text-theme-text-secondary border border-slate-500/40'
                           : 'bg-slate-100 text-slate-400 border border-slate-200 dark:bg-white/5 dark:text-white/30 dark:border-white/5'
                       }`}
                     >
@@ -549,7 +549,7 @@ export const KnowledgeBase: React.FC = () => {
 
                     <button
                       onClick={() => setActiveTabMode('graph')}
-                      className="px-3 py-1.5 rounded-lg bg-slate-500/10 hover:bg-slate-500/20 border border-slate-500/30 text-slate-700 dark:text-slate-300 text-xs font-medium transition-colors flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg bg-slate-500/10 hover:bg-slate-500/20 border border-slate-500/30 text-slate-700 dark:text-theme-text-secondary text-xs font-medium transition-colors flex items-center gap-1.5"
                     >
                       <Brain className="w-3.5 h-3.5" />
                       <span>{t('ui_index_inspect_in_citation_graph')}</span>
@@ -557,7 +557,7 @@ export const KnowledgeBase: React.FC = () => {
 
                     <button
                       onClick={() => setActiveTabMode('workbench')}
-                      className="px-3 py-1.5 rounded-lg bg-slate-500/10 hover:bg-slate-500/20 border border-slate-500/30 text-slate-700 dark:text-slate-300 text-xs font-medium transition-colors flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg bg-slate-500/10 hover:bg-slate-500/20 border border-slate-500/30 text-slate-700 dark:text-theme-text-secondary text-xs font-medium transition-colors flex items-center gap-1.5"
                     >
                       <Layers className="w-3.5 h-3.5" />
                       <span>{t('ui_index_launch_spatial_simulator')}</span>
@@ -602,10 +602,10 @@ export const KnowledgeBase: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-medium text-slate-900 dark:text-white flex items-center gap-2">
-                    <Brain className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+                    <Brain className="w-5 h-5 text-slate-600 dark:text-theme-text-muted" />
                     <span>{t('ui_index_topological_citation_concept_mesh')}</span>
                   </h3>
-                  <span className="px-2.5 py-0.5 rounded-md text-xxs font-mono font-medium bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20">
+                  <span className="px-2.5 py-0.5 rounded-md text-xxs font-mono font-medium bg-slate-500/10 text-slate-700 dark:text-theme-text-secondary border border-slate-500/20">
                     {t('ui_index_force_directed_webgl')}
                   </span>
                 </div>
@@ -640,12 +640,12 @@ export const KnowledgeBase: React.FC = () => {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium text-slate-700 dark:text-slate-300 text-sm">{selectedNode.label}</span>
+                      <span className="font-medium text-slate-700 dark:text-theme-text-secondary text-sm">{selectedNode.label}</span>
                       <span className="text-xxs font-mono px-2 py-0.5 rounded bg-slate-200 dark:bg-white/5 text-slate-700 dark:text-white/60">
                         {t('ui_index_type', { category: selectedNode.category })}
                       </span>
                     </div>
-                    <span className="font-mono text-xxs px-2.5 py-1 rounded bg-slate-500/10 text-slate-700 dark:text-slate-300 font-medium tabular-nums">
+                    <span className="font-mono text-xxs px-2.5 py-1 rounded bg-slate-500/10 text-slate-700 dark:text-theme-text-secondary font-medium tabular-nums">
                       {t('ui_index_relevance_score')} {(((selectedNode.score ?? 0.9)) * 100).toFixed(0)}%
                     </span>
                   </div>
@@ -845,14 +845,14 @@ export const KnowledgeBase: React.FC = () => {
 
             {/* Category Filter Pills */}
             <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-1">
-              <Filter className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400 shrink-0 hidden sm:block" />
+              <Filter className="w-3.5 h-3.5 text-slate-600 dark:text-theme-text-muted shrink-0 hidden sm:block" />
               {['All', 'Agronomy', 'IPM & Pest', 'Soil Chemistry', 'Climatology', 'Horticulture'].map(cat => (
                 <button
                   key={cat}
                   onClick={() => setLibraryFilterCategory(cat)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-medium transition-all border whitespace-nowrap ${
                     libraryFilterCategory === cat
-                      ? 'bg-slate-500/20 text-slate-700 dark:text-slate-300 border-slate-500/40 shadow-sm'
+                      ? 'bg-slate-500/20 text-slate-700 dark:text-theme-text-secondary border-slate-500/40 shadow-sm'
                       : 'bg-slate-100 text-slate-600 border-slate-200 hover:border-slate-300 hover:text-slate-900 dark:bg-white/[0.03] dark:text-white/50 dark:border-white/5 dark:hover:border-white/15 dark:hover:text-white'
                   }`}
                 >
@@ -874,7 +874,7 @@ export const KnowledgeBase: React.FC = () => {
                 }}
                 className="flex-1 md:flex-none px-3.5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-200 dark:bg-white/5 dark:hover:bg-white/10 dark:text-white dark:border-white/10 text-xs font-medium transition-all flex items-center justify-center gap-1.5"
               >
-                <Download className="w-3.5 h-3.5 text-slate-600 dark:text-slate-400" />
+                <Download className="w-3.5 h-3.5 text-slate-600 dark:text-theme-text-muted" />
                 <span>{t('ui_index_export_offline_pack')}</span>
               </button>
 
@@ -940,14 +940,14 @@ export const KnowledgeBase: React.FC = () => {
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="px-2.5 py-1 rounded-md text-xxs font-mono font-medium bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20">
+                      <span className="px-2.5 py-1 rounded-md text-xxs font-mono font-medium bg-slate-500/10 text-slate-700 dark:text-theme-text-secondary border border-slate-500/20">
                         {art.category}
                       </span>
                       <span className="text-[10px] font-mono text-slate-500 dark:text-white/40">{art.readingTime}</span>
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-medium text-slate-900 group-hover:text-slate-700 dark:text-white dark:group-hover:text-slate-300 transition-colors line-clamp-2">
+                      <h3 className="text-sm font-medium text-slate-900 group-hover:text-slate-700 dark:text-white dark:group-hover:text-theme-text-secondary transition-colors line-clamp-2">
                         {art.title}
                       </h3>
                       <p className="text-xxs text-slate-500 dark:text-white/50 font-mono mt-1">{art.author}</p>
@@ -996,7 +996,7 @@ export const KnowledgeBase: React.FC = () => {
                   <div className="p-6 border-b border-slate-200 dark:border-white/10 flex items-start justify-between gap-4 bg-slate-50 dark:bg-theme-bg-primary/60">
                     <div>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="px-2.5 py-0.5 rounded-md text-xxs font-mono font-medium bg-slate-500/10 text-slate-700 dark:text-slate-300 border border-slate-500/20">
+                        <span className="px-2.5 py-0.5 rounded-md text-xxs font-mono font-medium bg-slate-500/10 text-slate-700 dark:text-theme-text-secondary border border-slate-500/20">
                           {selectedArticle.category}
                         </span>
                         <span className="text-xxs font-mono text-emerald-700 dark:text-emerald-400 flex items-center gap-1">

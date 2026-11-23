@@ -113,7 +113,7 @@ export const OfficerCopilot: React.FC<OfficerCopilotProps> = ({ conversationId, 
           aria-label="AI draft reply"
           className="rounded-lg border border-slate-200 dark:border-slate-400/20 bg-slate-50 dark:bg-theme-bg-primary/40 p-3 space-y-2"
         >
-          <p className="text-xxs font-medium text-slate-800 dark:text-slate-200">
+          <p className="text-xxs font-medium text-slate-800 dark:text-theme-text-primary">
             {t('ui_officer_copilot_ai_draft_only_you_can_see_this_check')}
           </p>
           <p className="text-xs text-slate-800 dark:text-white/90 whitespace-pre-line">{draft.text}</p>

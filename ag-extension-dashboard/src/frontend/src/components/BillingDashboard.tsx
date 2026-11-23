@@ -53,11 +53,11 @@ const AdminVaultSection: React.FC<AdminVaultProps> = ({ billing }) => {
         className="backdrop-blur-xl bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl relative overflow-hidden"
       >
         <div className="absolute top-0 end-0 p-6 opacity-5 pointer-events-none">
-          <Settings className="w-32 h-32 text-slate-700 dark:text-slate-400" />
+          <Settings className="w-32 h-32 text-slate-700 dark:text-theme-text-muted" />
         </div>
         <div className="flex items-center gap-4 mb-6">
           <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center">
-            <Shield className="w-5 h-5 text-slate-700 dark:text-slate-400" />
+            <Shield className="w-5 h-5 text-slate-700 dark:text-theme-text-muted" />
           </div>
           <div>
             <h3
@@ -407,7 +407,7 @@ export const BillingDashboard: React.FC = () => {
           {/* Card 2: Renewal Timeline */}
           <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between">
             <div className="flex items-center gap-3.5">
-              <div className="p-2.5 bg-slate-500/10 border border-slate-500/20 rounded-xl text-slate-700 dark:text-slate-400">
+              <div className="p-2.5 bg-slate-500/10 border border-slate-500/20 rounded-xl text-slate-700 dark:text-theme-text-muted">
                 <Clock className="w-5 h-5" />
               </div>
               <div>
@@ -487,7 +487,7 @@ export const BillingDashboard: React.FC = () => {
             className="space-y-6"
           >
             {billing.plans.length === 0 && (
-              <p className="p-5 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-white/[0.03] text-sm text-slate-600 dark:text-slate-300">
+              <p className="p-5 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-white/[0.03] text-sm text-slate-600 dark:text-theme-text-secondary">
                 {t('billing_no_plans', {
                   defaultValue: 'No plans can be bought online right now. Your current plan keeps working; contact your organisation to change it.',
                 })}

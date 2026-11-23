@@ -102,7 +102,7 @@ export const SymptomInputPanel: React.FC<{
                 className={`text-xs px-2.5 py-1 rounded border transition-colors ${
                   isSelected
                     ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50'
-                    : 'bg-white dark:bg-theme-bg-primary text-slate-400 border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] hover:text-slate-800 dark:hover:text-slate-200'
+                    : 'bg-white dark:bg-theme-bg-primary text-slate-400 border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] hover:text-slate-800 dark:hover:text-theme-text-primary'
                 }`}
               >
                 {preset}

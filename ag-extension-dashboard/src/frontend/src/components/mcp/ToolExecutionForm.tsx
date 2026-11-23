@@ -99,7 +99,7 @@ export function MCPToolsToolExecutionForm({
       <div className="space-y-6">
         <div className={`p-4 bg-gray-50 dark:bg-theme-bg-tertiary/50 ${radiusClass}`}>
           <h4 className="font-medium text-gray-900 dark:text-white mb-1">{tool.name}</h4>
-          <p className="text-sm text-gray-600 dark:text-gray-400">{tool.description}</p>
+          <p className="text-sm text-gray-600 dark:text-theme-text-muted">{tool.description}</p>
         </div>
 
         {propertyEntries.length > 0 && (
@@ -107,7 +107,7 @@ export function MCPToolsToolExecutionForm({
             <h5 className="font-medium text-gray-900 dark:text-white">Parameters</h5>
             {propertyEntries.map(([propName, propSchema]) => (
               <div key={propName}>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-1">
                   {propName}
                   {tool.inputSchema.required?.includes(propName) && (
                     <span className="text-red-500 ms-1">*</span>
@@ -115,7 +115,7 @@ export function MCPToolsToolExecutionForm({
                 </label>
                 {renderInputField(propName, propSchema)}
                 {propSchema.description && (
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-theme-text-muted mt-1">
                     {propSchema.description}
                   </p>
                 )}

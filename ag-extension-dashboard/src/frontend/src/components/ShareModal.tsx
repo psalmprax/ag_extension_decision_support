@@ -178,11 +178,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                       />
                       <div>
                         <p
-                          className={`text-sm font-medium ${settings.accessType === option.id ? 'text-primary-900 dark:text-white' : 'text-gray-700 dark:text-gray-300'}`}
+                          className={`text-sm font-medium ${settings.accessType === option.id ? 'text-primary-900 dark:text-white' : 'text-gray-700 dark:text-theme-text-secondary'}`}
                         >
                           {option.label}
                         </p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400">{option.desc}</p>
+                        <p className="text-xs text-gray-500 dark:text-theme-text-muted">{option.desc}</p>
                       </div>
                     </button>
                   ))}
@@ -293,7 +293,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               <div className="flex gap-3">
                 <button
                   onClick={() => setShareData(null)}
-                  className="flex-1 py-4 bg-gray-100 dark:bg-theme-bg-tertiary hover:bg-gray-200 dark:hover:bg-white/[0.08] text-gray-700 dark:text-gray-300 font-medium rounded-xl transition-all"
+                  className="flex-1 py-4 bg-gray-100 dark:bg-theme-bg-tertiary hover:bg-gray-200 dark:hover:bg-white/[0.08] text-gray-700 dark:text-theme-text-secondary font-medium rounded-xl transition-all"
                 >
                   {t('ui_share_modal_regenerate')}
                 </button>

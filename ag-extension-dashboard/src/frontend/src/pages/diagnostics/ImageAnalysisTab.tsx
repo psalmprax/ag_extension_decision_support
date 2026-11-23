@@ -169,7 +169,7 @@ export const AnalysisResultsHUD: React.FC<{
           <CloudOff className="w-4 h-4 text-amber-400 shrink-0" />
           <span>{t('ui_image_analysis_tab_offline_diagnosis_pending_connectivi')}</span>
         </div>
-        <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p className="text-xs text-slate-700 dark:text-theme-text-secondary leading-relaxed">
           {t('ui_image_analysis_tab_there_is_no_on_device_ai_model_so_no')}
         </p>
         <p className="text-[11px] text-slate-400 leading-relaxed">
@@ -207,7 +207,7 @@ export const AnalysisResultsHUD: React.FC<{
     <div className="p-5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-4">
       <div className="rounded-lg p-2 bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08]">
         <div className="px-2 py-1 mb-2 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
-          <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+          <span className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">
             {t('ui_image_analysis_tab_specimen_photo_review')}
           </span>
         </div>
@@ -254,7 +254,7 @@ export const AnalysisResultsHUD: React.FC<{
       {!analysisUnavailable && Boolean(imageAnalysis.nutrientDeficiencies?.length) && (
         <div className="space-y-2">
           <h4 className="text-xs font-medium text-slate-900 dark:text-white">{t('ui_image_analysis_tab_possible_nutrient_issues_unconfirmed')}</h4>
-          <ul className="list-disc ps-4 space-y-1 text-xs text-slate-700 dark:text-slate-300">
+          <ul className="list-disc ps-4 space-y-1 text-xs text-slate-700 dark:text-theme-text-secondary">
             {imageAnalysis.nutrientDeficiencies?.map((observation, index) => (
               <li key={index}>{observation}</li>
             ))}
@@ -293,7 +293,7 @@ export const AnalysisResultsHUD: React.FC<{
                 <p className="text-xs text-emerald-400 tabular-nums">
                   {t('ui_image_analysis_tab_model_reported_confidence')} {(disease.confidence * 100).toFixed(1)}%
                 </p>
-                <p className="mt-1 text-xs text-slate-700 dark:text-slate-300">{disease.description}</p>
+                <p className="mt-1 text-xs text-slate-700 dark:text-theme-text-secondary">{disease.description}</p>
                 {Array.isArray(disease.symptoms) && disease.symptoms.length > 0 && (
                   <p className="mt-1 text-xs text-slate-400">{t('ui_image_analysis_tab_reported_symptoms')} {disease.symptoms.join('; ')}</p>
                 )}
@@ -316,7 +316,7 @@ export const AnalysisResultsHUD: React.FC<{
             {imageAnalysis.recommendations.map((rec, index) => (
               <div
                 key={index}
-                className="p-2 rounded-lg bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-slate-300 flex items-start gap-2"
+                className="p-2 rounded-lg bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-theme-text-secondary flex items-start gap-2"
               >
                 <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                 <span>{rec}</span>

@@ -34,7 +34,7 @@ export function MCPToolsExecutionHistory({
               )}
               <div>
                 <p className="font-medium text-gray-900 dark:text-white">{execution.tool}</p>
-                <p className="text-sm text-gray-600 dark:text-gray-400">
+                <p className="text-sm text-gray-600 dark:text-theme-text-muted">
                   {Object.keys(execution.args).length > 0
                     ? `${Object.keys(execution.args).length} parameters`
                     : 'No parameters'}
@@ -42,7 +42,7 @@ export function MCPToolsExecutionHistory({
               </div>
             </div>
             <div className="text-end">
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-600 dark:text-theme-text-muted">
                 {new Date(execution.timestamp).toLocaleString()}
               </p>
             </div>

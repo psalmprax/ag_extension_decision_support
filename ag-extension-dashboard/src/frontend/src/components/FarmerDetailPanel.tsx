@@ -79,7 +79,7 @@ const HistoryTabContent = ({
                 {log.status as string}
               </span>
             </div>
-            <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed">
+            <p className="text-xs text-gray-600 dark:text-theme-text-secondary leading-relaxed">
               {getLogContent(log)}
             </p>
           </div>

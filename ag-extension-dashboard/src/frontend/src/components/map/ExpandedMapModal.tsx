@@ -158,7 +158,7 @@ export const ExpandedMapModal: React.FC<ExpandedMapModalProps> = ({
                     className="w-2.5 h-2.5 rounded-full"
                     style={{ backgroundColor: theme.primary[cropColors[idx]] }}
                   />
-                  <span className="text-xs sm:text-sm font-medium capitalize text-gray-600 dark:text-gray-300">
+                  <span className="text-xs sm:text-sm font-medium capitalize text-gray-600 dark:text-theme-text-secondary">
                     {crop}: <span className="font-normal text-gray-400">{stats.cropCounts[crop]}</span>
                   </span>
                 </div>

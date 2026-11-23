@@ -24,7 +24,7 @@ export function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
         <div className="pb-2 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
           <div className="text-slate-900 dark:text-white font-medium text-[12px] flex items-center justify-between">
             <span>{t('ui_advisory_studio_page_field_scouting_pwa')}</span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.07] text-slate-700 dark:text-slate-300">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.07] text-slate-700 dark:text-theme-text-secondary">
               {t('advisory_preview_offline', { defaultValue: 'Works offline' })}
             </span>
           </div>
@@ -120,7 +120,7 @@ export function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
                 <label className="text-[10px] text-emerald-400 font-medium block mb-0.5">
                   {t('ui_advisory_studio_page_step')} {idx + 1}{t('ui_advisory_studio_page_automated_recommendation')}
                 </label>
-                <p className="text-[10px] text-slate-700 dark:text-slate-300 leading-snug">{dosagePreviewText(step.config, Boolean(isLime))}</p>
+                <p className="text-[10px] text-slate-700 dark:text-theme-text-secondary leading-snug">{dosagePreviewText(step.config, Boolean(isLime))}</p>
               </div>
             );
           }

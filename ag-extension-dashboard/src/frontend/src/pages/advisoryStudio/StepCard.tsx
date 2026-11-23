@@ -39,7 +39,7 @@ export function StepCard({
           <span className="w-6 h-6 rounded-md bg-slate-100 dark:bg-white/[0.07] border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center justify-center shrink-0">
             {renderStepIcon(step.type)}
           </span>
-          <h4 className="text-xs font-medium text-slate-800 dark:text-slate-100">{step.title}</h4>
+          <h4 className="text-xs font-medium text-slate-800 dark:text-theme-text-primary">{step.title}</h4>
         </div>
 
         <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition">
@@ -73,7 +73,7 @@ export function StepCard({
       </div>
 
       {step.condition && !isEditingCondition && (
-        <div className="mt-2.5 flex items-center justify-between gap-2 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-white/[0.07] border border-slate-900/[0.08] dark:border-white/[0.08] text-[11px] text-slate-700 dark:text-slate-300">
+        <div className="mt-2.5 flex items-center justify-between gap-2 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-white/[0.07] border border-slate-900/[0.08] dark:border-white/[0.08] text-[11px] text-slate-700 dark:text-theme-text-secondary">
           <div className="flex items-center gap-1.5 font-mono">
             <span className="font-medium text-amber-400">IF:</span>
             <span>{step.condition}</span>
@@ -100,7 +100,7 @@ export function StepCard({
           <button
             type="button"
             onClick={handleSaveCondition}
-            className="px-2.5 py-1 text-xs rounded bg-slate-100 dark:bg-white/[0.07] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-800 dark:text-slate-200 border border-slate-900/[0.08] dark:border-white/[0.08] font-medium transition-colors"
+            className="px-2.5 py-1 text-xs rounded bg-slate-100 dark:bg-white/[0.07] hover:bg-slate-200 dark:hover:bg-white/[0.1] text-slate-800 dark:text-theme-text-primary border border-slate-900/[0.08] dark:border-white/[0.08] font-medium transition-colors"
           >
             {t('common_save')}
           </button>
@@ -111,13 +111,13 @@ export function StepCard({
         <button
           type="button"
           onClick={() => setIsEditingCondition(true)}
-          className="mt-2 text-[11px] text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 inline-flex items-center gap-1 transition-colors"
+          className="mt-2 text-[11px] text-slate-500 hover:text-slate-700 dark:hover:text-theme-text-secondary inline-flex items-center gap-1 transition-colors"
         >
           <span>{t('ui_advisory_studio_page_add_conditional_logic')}</span>
         </button>
       )}
 
-      <div className="mt-3 p-2.5 rounded-lg bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-slate-300">
+      <div className="mt-3 p-2.5 rounded-lg bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-theme-text-secondary">
         {step.type === 'crop_select' && (
           <div className="grid grid-cols-2 gap-2 text-[11px]">
             <div>
@@ -126,7 +126,7 @@ export function StepCard({
             </div>
             <div>
               <span className="text-slate-500 block text-[10px]">{t('ui_advisory_studio_page_growth_stage')}</span>
-              <span className="font-medium text-slate-800 dark:text-slate-200">{String(step.config.stage || 'Vegetative')}</span>
+              <span className="font-medium text-slate-800 dark:text-theme-text-primary">{String(step.config.stage || 'Vegetative')}</span>
             </div>
           </div>
         )}
