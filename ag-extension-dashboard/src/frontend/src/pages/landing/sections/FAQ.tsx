@@ -54,7 +54,7 @@ export function FAQ() {
                       className="w-full p-6 text-start flex items-center justify-between gap-4 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
                     >
                       <span className="text-base sm:text-lg font-medium text-white/90 leading-snug">
-                        {item.question}
+                        {t(item.question)}
                       </span>
                       <div className="w-8 h-8 rounded-full bg-white/[0.04] border border-white/[0.06] flex items-center justify-center flex-shrink-0 text-white/60 group-hover:text-emerald-400">
                         {isOpen ? (
@@ -74,7 +74,7 @@ export function FAQ() {
                           transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
                         >
                           <div className="px-6 pb-6 pt-1 text-sm sm:text-base text-white/65 leading-relaxed font-normal border-t border-white/[0.03]">
-                            {item.answer}
+                            {t(item.answer)}
                           </div>
                         </motion.div>
                       )}

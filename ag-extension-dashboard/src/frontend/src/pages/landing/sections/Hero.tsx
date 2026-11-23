@@ -4,14 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import type { MotionValue } from 'framer-motion';
 import { GlobalConstellationVisualization } from '@/components/landing/Visuals';
 import {
-  Camera, Leaf, CheckCircle2,
-  BookOpenCheck,
+  Camera, Leaf, CheckCircle2, BookOpenCheck,
   AlertCircle, Droplets,
 } from 'lucide-react';
 import { stagger, fadeUp, scaleIn } from '../variants';
 import { globalTelemetryNodes } from '../data';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useLanguage } from '@/lib/LanguageContext';
+import { HeroHighlights } from './HeroHighlights';
 
 export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroOpacity: MotionValue<number> }) {
   const { t } = useLanguage();
@@ -92,7 +92,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
           >
             {t('ui_hero_share_a_crop_photo_or_symptoms_for_a')}
           </motion.p>
-
+          <HeroHighlights />
           {/* Action CTAs */}
           <motion.div variants={fadeUp} className="flex flex-col sm:flex-row gap-3 pt-1">
             <button

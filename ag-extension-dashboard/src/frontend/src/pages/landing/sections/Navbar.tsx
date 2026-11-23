@@ -10,11 +10,16 @@ const TALKING_ASSISTANT_HASH = '#talking-assistant';
 const NAV_LINKS = [
   { href: '#services', labelKey: 'ui_navbar_services', fallback: 'Services' },
   { href: '#how-it-works', labelKey: 'ui_footer_how_it_works', fallback: 'How it works' },
+  { href: '#problem', labelKey: 'ui_navbar_why_gpexts', fallback: 'Why GPExts' },
   { href: '#features', labelKey: 'ui_navbar_built_for_fields', fallback: 'Who it is for' },
   { href: '#trust-safety', labelKey: 'ui_navbar_trust_safety', fallback: 'Trust & safety' },
+  { href: '#agent-os', labelKey: 'ui_navbar_for_organisations', fallback: 'For organisations' },
   { href: TALKING_ASSISTANT_HASH, labelKey: 'ui_navbar_voice_advisor', fallback: 'Voice advisor' },
   { href: '#faq', labelKey: 'ui_navbar_faq', fallback: 'FAQ' },
 ] as const;
+
+/** Shown in the top bar only where all eight links fit on one line; always in the phone menu. */
+const WIDE_SCREEN_ONLY = new Set<string>(['#problem', '#agent-os']);
 
 export function Navbar() {
   const { t } = useLanguage();
@@ -50,7 +55,7 @@ export function Navbar() {
               key={link.href}
               href={link.href}
               onClick={e => handleLinkClick(e, link.href)}
-              className="text-sm text-[#9db2a6] hover:text-white transition-colors"
+              className={`${WIDE_SCREEN_ONLY.has(link.href) ? 'hidden xl:inline' : ''} text-sm text-[#9db2a6] hover:text-white transition-colors`}
             >
               {link.label}
             </a>

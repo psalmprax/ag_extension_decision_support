@@ -74,7 +74,11 @@ const LANGUAGE_NAMES = {
   ur: 'Urdu',
 };
 
-const PROTECTED_TERMS = ['FAOSTAT', 'NASA POWER', 'SoilGrids', 'ISRIC', 'Stripe', 'PayPal'];
+const PROTECTED_TERMS = [
+  'FAOSTAT', 'NASA POWER', 'SoilGrids', 'ISRIC', 'Stripe', 'PayPal',
+  // Names on the landing page: products, data sources, institutions and channels.
+  'GPExts', 'Sentinel-2', 'NDVI', 'USSD', 'WhatsApp', 'Telegram', 'IITA', 'CIMMYT', 'EUDR', 'SAP/NetSuite',
+];
 const UNIVERSAL_TERMS = new Set(['AI', 'API', 'GPS', 'ID', 'PDF', 'SMS', 'USD', 'KES', 'MWK']);
 
 function extractTokens(value) {
@@ -153,7 +157,7 @@ async function translateChunk(chunk, langCode, langName) {
 CRITICAL CONSTRAINTS:
 1. Preserve every key exactly as given.
 2. Preserve all interpolation tokens (e.g., {count}, {date}, {reason}, {location}, {{name}}) exactly unchanged. Do NOT translate inside curly braces.
-3. Preserve protected terms unchanged: FAOSTAT, NASA POWER, SoilGrids, ISRIC, Stripe, PayPal, GPS, SMS, AI, API.
+3. Preserve protected terms unchanged: ${PROTECTED_TERMS.join(', ')}, GPS, SMS, AI, API.
 4. Translate agronomic and software terminology accurately and naturally for ${langName}.
 5. Return ONLY a valid JSON object with the exact same keys and the translated values.
 
