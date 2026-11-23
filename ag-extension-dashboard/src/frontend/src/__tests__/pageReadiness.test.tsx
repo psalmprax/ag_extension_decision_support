@@ -45,6 +45,18 @@ describe('Page readiness — Accessibility & smoke', () => {
     expectNoOrphanButtons(container);
   }, 15000);
 
+  it('LandingPage links only to sections that exist on it', async () => {
+    const { container } = render(wrap(<LandingPage />));
+    await settleLanguage();
+    // The voice advisor is a floating panel that the menu opens in place, not a section.
+    const anchors = [...container.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')]
+      .map(link => link.getAttribute('href') as string)
+      .filter(href => href !== '#talking-assistant');
+    expect(anchors.length).toBeGreaterThan(10);
+    const missing = [...new Set(anchors)].filter(href => !container.querySelector(href));
+    expect(missing).toEqual([]);
+  }, 15000);
+
   it('VisitsPage renders a table with column headers when given empty data', async () => {
     const noop = () => {};
     const { container } = render(

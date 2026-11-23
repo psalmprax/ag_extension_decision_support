@@ -6,13 +6,23 @@ import { useLanguage } from '@/lib/LanguageContext';
 
 const FOOTER_LINK = 'text-[#9db2a6] hover:text-white transition-colors';
 
-/** Footer anchors: the landing sections that exist, in page order. */
+/** Footer anchors to the landing sections, in page order. */
 const FOOTER_SECTION_LINKS = [
   { href: '#services', labelKey: 'ui_navbar_services', fallback: 'Services' },
   { href: '#how-it-works', labelKey: 'ui_footer_how_it_works', fallback: 'How it works' },
   { href: '#features', labelKey: 'ui_navbar_built_for_fields', fallback: 'Who it is for' },
   { href: '#trust-safety', labelKey: 'ui_navbar_trust_safety', fallback: 'Trust & safety' },
+  { href: '#agent-os', labelKey: 'ui_goal_mode_campaign_modal_agent_os', fallback: 'Agent OS' },
+  { href: '#capabilities', labelKey: 'ui_footer_ecosystem_soil', fallback: 'Ecosystem & soil' },
+  { href: '#architecture', labelKey: 'ui_footer_architecture', fallback: 'Architecture' },
+  { href: '#roi', labelKey: 'ui_footer_impact_roi', fallback: 'Impact & ROI' },
   { href: '#faq', labelKey: 'ui_navbar_faq', fallback: 'FAQ' },
+] as const;
+
+/** The "why" and mission sections, listed under overview. */
+const FOOTER_OVERVIEW_LINKS = [
+  { href: '#problem', labelKey: 'ui_footer_why_us', fallback: 'Why us' },
+  { href: '#mission', labelKey: 'ui_footer_our_mission', fallback: 'Our mission' },
 ] as const;
 
 export function Footer() {
@@ -69,6 +79,11 @@ export function Footer() {
                 {t('ui_footer_overview_contact')}
               </h4>
               <ul className="space-y-2.5 sm:space-y-3 text-sm">
+                {FOOTER_OVERVIEW_LINKS.map(link => (
+                  <li key={link.href}>
+                    <a href={link.href} className={FOOTER_LINK}>{t(link.labelKey, { defaultValue: link.fallback })}</a>
+                  </li>
+                ))}
                 <li>
                   <button
                     type="button"
