@@ -48,8 +48,9 @@ export function isEmptyAnswer(result: unknown): boolean {
     if (!result || typeof result !== 'object') return false;
     const value = result as { text?: unknown; answer?: unknown; toolCalls?: unknown };
     const hasToolCalls = Array.isArray(value.toolCalls) && value.toolCalls.length > 0;
+    if (Object.prototype.hasOwnProperty.call(value, 'text') && value.text === null) return !hasToolCalls;
     if (typeof value.text === 'string') return !hasToolCalls && value.text.trim() === '';
-    if (typeof value.answer === 'string') return value.answer.trim() === '';
+    if (typeof value.answer === 'string') return !hasToolCalls && value.answer.trim() === '';
     return false;
 }
 
@@ -139,7 +140,7 @@ export class AIProviderFactory {
         }
 
         const omniResult = await this.tryOmniRouteFallback(telemetryContext?.promptText);
-        if (omniResult) {
+        if (omniResult && !isEmptyAnswer(omniResult)) {
             return omniResult;
         }
 

@@ -59,6 +59,19 @@ describe('AI provider failure scope', () => {
         getProvider.mockRestore();
     });
 
+    it('does not return an empty OmniRoute fallback as a successful answer', async () => {
+        const getProvider = jest.spyOn(AIProviderFactory, 'getProvider')
+          .mockImplementation(async type => fakeProvider(type ?? 'openai', false));
+        const { OmniRouteService } = await import('@/services/omniRouteService');
+        const executeWithFailover = jest.spyOn(OmniRouteService, 'executeWithFailover')
+          .mockResolvedValue({ text: '  ', providerUsed: 'groq', modelUsed: 'empty-model', isFreeModel: true });
+
+        await expect(AIRouter.routeRequest('generate', { prompt: 'Question' })).rejects.toThrow('All AI providers failed');
+
+        executeWithFailover.mockRestore();
+        getProvider.mockRestore();
+    });
+
     it('moves to the next provider when one answers with nothing', async () => {
         const blank = jest.fn<ReturnType<AICapability['generateText']>, Parameters<AICapability['generateText']>>()
             .mockResolvedValue({ text: '  ', model: 'reasoning-model', finishReason: 'length' });
@@ -94,13 +107,16 @@ describe('empty transcripts', () => {
 });
 
 describe('isEmptyAnswer', () => {
-    it('counts blank text without tool calls, and a blank reasoning answer, as empty', async () => {
+    it('counts blank or null text without tool calls, and a blank reasoning answer, as empty', async () => {
         const { isEmptyAnswer } = await import('@/services/aiProvider/aiProvider');
         expect(isEmptyAnswer({ text: '' })).toBe(true);
+        expect(isEmptyAnswer({ text: null })).toBe(true);
+        expect(isEmptyAnswer({})).toBe(false);
         expect(isEmptyAnswer({ text: '', toolCalls: [{ name: 'weather' }] })).toBe(false);
+        expect(isEmptyAnswer({ text: null, toolCalls: [{ name: 'weather' }] })).toBe(false);
         expect(isEmptyAnswer({ reasoning: 'thinking', answer: ' ' })).toBe(true);
+        expect(isEmptyAnswer({ reasoning: 'thinking', answer: '', toolCalls: [{ name: 'weather' }] })).toBe(false);
         expect(isEmptyAnswer({ embedding: [0.1] })).toBe(false);
         expect(isEmptyAnswer(null)).toBe(false);
     });
 });
-

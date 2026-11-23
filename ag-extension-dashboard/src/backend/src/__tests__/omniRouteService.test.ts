@@ -1,4 +1,5 @@
 import { OmniRouteService } from '../services/omniRouteService';
+import type { AICapability } from '../services/aiProvider/types';
 
 jest.mock('../services/aiProvider/providers/ollama', () => ({
   OllamaProvider: jest.fn().mockImplementation(() => ({
@@ -26,6 +27,32 @@ describe('OmniRouteService (Ported from money_time_revenue)', () => {
       throw new Error('expected executeWithFailover to reject');
     } catch (err) {
       expect((err as Error).message).not.toMatch(/fungal leaf spot|fallback diagnostic/i);
+    }
+  });
+
+  it('tries another candidate after receiving an empty response', async () => {
+    const candidates = [
+      { providerName: 'ollama' as const, model: 'empty-model', score: 2, isFree: true },
+      { providerName: 'ollama' as const, model: 'answer-model', score: 1, isFree: true },
+    ];
+    const ollama = Reflect.get(OmniRouteService, 'ollama') as Pick<AICapability, 'generateText'>;
+    const generateText = jest.spyOn(ollama, 'generateText').mockImplementation(async (_messages, options) => ({
+      text: options?.model === 'answer-model' ? 'A useful answer.' : '  ',
+      model: options?.model,
+      finishReason: 'stop',
+    }));
+    OmniRouteService.initializeDynamicSwitching(candidates);
+
+    try {
+      const result = await OmniRouteService.executeWithFailover(
+        [{ role: 'user', content: 'Question' }],
+        candidates,
+      );
+
+      expect(result).toMatchObject({ text: 'A useful answer.', modelUsed: 'answer-model' });
+      expect(generateText).toHaveBeenCalledTimes(3);
+    } finally {
+      generateText.mockRestore();
     }
   });
 });
