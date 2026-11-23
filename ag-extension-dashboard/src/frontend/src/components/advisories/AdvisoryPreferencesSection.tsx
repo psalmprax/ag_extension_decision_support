@@ -44,7 +44,7 @@ export function AdvisoryPreferencesSection({ farmerId }: { farmerId: string }) {
     const dirty = draft !== null;
 
     return (
-        <section className="border-t border-gray-100 dark:border-gray-800 pt-4 mt-4" aria-label="Proactive advisory preferences">
+        <section className="border-t border-gray-100 dark:border-white/[0.08] pt-4 mt-4" aria-label="Proactive advisory preferences">
             <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                     <Radio className="w-4 h-4 text-primary-500" />
@@ -69,7 +69,7 @@ export function AdvisoryPreferencesSection({ farmerId }: { farmerId: string }) {
                                 key={c.key}
                                 onClick={() => setDraft({ ...prefs, channels: toggle(prefs.channels, c.key) })}
                                 aria-pressed={prefs.channels.includes(c.key)}
-                                className={`px-2.5 py-1 rounded-lg text-xxs font-medium border ${prefs.channels.includes(c.key) ? 'bg-primary-500/10 border-primary-500/30 text-primary-600 dark:text-primary-400' : 'border-gray-200 dark:border-gray-700 opacity-60'}`}
+                                className={`px-2.5 py-1 rounded-lg text-xxs font-medium border ${prefs.channels.includes(c.key) ? 'bg-primary-500/10 border-primary-500/30 text-primary-600 dark:text-primary-400' : 'border-gray-200 dark:border-white/[0.12] opacity-60'}`}
                             >
                                 {c.label}
                             </button>
@@ -81,7 +81,7 @@ export function AdvisoryPreferencesSection({ farmerId }: { farmerId: string }) {
                                 key={c.key}
                                 onClick={() => setDraft({ ...prefs, categories: toggle(prefs.categories, c.key) })}
                                 aria-pressed={prefs.categories.includes(c.key)}
-                                className={`px-2.5 py-1 rounded-lg text-xxs font-medium border ${prefs.categories.includes(c.key) ? 'bg-primary-500/10 border-primary-500/30 text-primary-600 dark:text-primary-400' : 'border-gray-200 dark:border-gray-700 opacity-60'}`}
+                                className={`px-2.5 py-1 rounded-lg text-xxs font-medium border ${prefs.categories.includes(c.key) ? 'bg-primary-500/10 border-primary-500/30 text-primary-600 dark:text-primary-400' : 'border-gray-200 dark:border-white/[0.12] opacity-60'}`}
                             >
                                 {c.label}
                             </button>

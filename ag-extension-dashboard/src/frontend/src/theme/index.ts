@@ -9,6 +9,7 @@
 
 import {
   themes,
+  DEFAULT_DARK_BACKGROUND,
   errorScale,
   semanticTokens,
   surfaceTokens,
@@ -51,8 +52,11 @@ function pushBackgroundVars(out: string[], background: ThemeColors['background']
   out.push(`--color-bg-primary: ${background.primary};`);
   out.push(`--color-bg-secondary: ${background.secondary};`);
   out.push(`--color-bg-card: ${background.card};`);
+  // Light mode has no third depth: controls sit on the secondary background.
+  out.push(`--color-bg-tertiary: ${background.secondary};`);
   out.push(`--color-bg-primary-rgb: ${colorToRgb(background.primary)};`);
   out.push(`--color-bg-secondary-rgb: ${colorToRgb(background.secondary)};`);
+  out.push(`--color-bg-tertiary-rgb: ${colorToRgb(background.secondary)};`);
   out.push(`--color-bg-card-rgb: ${colorToRgb(background.card)};`);
 }
 
@@ -139,14 +143,18 @@ export function getDarkThemeCSS(themeName: ThemeName): string {
   pushScaleVars(vars, 'accent', theme.accent);
   pushScaleVars(vars, 'error', invertScale(errorScale));
 
-  vars.push('--color-bg-primary: #0a0f1e;');
-  vars.push('--color-bg-secondary: #111827;');
+  const dark = theme.darkBackground ?? DEFAULT_DARK_BACKGROUND;
+  vars.push(`--color-bg-primary: ${dark.primary};`);
+  vars.push(`--color-bg-secondary: ${dark.secondary};`);
+  vars.push(`--color-bg-tertiary: ${dark.tertiary};`);
   vars.push('--color-bg-card: rgba(255, 255, 255, 0.05);');
-  vars.push('--color-bg-primary-rgb: 10 15 30;');
-  vars.push('--color-bg-secondary-rgb: 17 24 39;');
+  vars.push(`--color-bg-primary-rgb: ${colorToRgb(dark.primary)};`);
+  vars.push(`--color-bg-secondary-rgb: ${colorToRgb(dark.secondary)};`);
+  vars.push(`--color-bg-tertiary-rgb: ${colorToRgb(dark.tertiary)};`);
   vars.push('--color-bg-card-rgb: 255 255 255;');
 
-  pushSurfaceVars(vars, surfaceTokens.dark);
+  // The surface follows the theme's panels, so a themed page has no navy surfaces in it.
+  pushSurfaceVars(vars, theme.darkBackground ? { ...surfaceTokens.dark, surface: dark.secondary } : surfaceTokens.dark);
   return vars.join('\n');
 }
 

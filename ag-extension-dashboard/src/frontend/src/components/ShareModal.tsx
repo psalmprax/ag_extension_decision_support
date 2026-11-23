@@ -170,7 +170,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                       className={`flex items-start gap-4 p-4 rounded-xl border transition-all text-start ${
                         settings.accessType === option.id
                           ? 'bg-primary-50 dark:bg-primary-900/10 border-primary-200 dark:border-primary-800 ring-2 ring-primary-500/20'
-                          : 'bg-gray-50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800 hover:border-gray-200 dark:hover:border-gray-700'
+                          : 'bg-gray-50 dark:bg-theme-bg-tertiary/50 border-gray-100 dark:border-white/[0.08] hover:border-gray-200 dark:hover:border-white/[0.12]'
                       }`}
                     >
                       <option.icon
@@ -198,7 +198,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   <select
                     value={settings.expiresIn}
                     onChange={e => setSettings({ ...settings, expiresIn: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800 text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20"
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-theme-bg-tertiary border border-gray-100 dark:border-white/[0.08] text-sm font-medium outline-none focus:ring-2 focus:ring-primary-500/20"
                   >
                     <option value="1">{t('ui_share_modal_24_hours')}</option>
                     <option value="7">{t('ui_share_modal_7_days')}</option>
@@ -215,7 +215,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                     className={`w-full px-4 py-3 rounded-xl border text-sm font-medium transition-all ${
                       settings.allowExport
                         ? 'bg-emerald-50 dark:bg-emerald-900/10 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400'
-                        : 'bg-gray-50 dark:bg-gray-800 border-gray-100 dark:border-gray-800 text-gray-400'
+                        : 'bg-gray-50 dark:bg-theme-bg-tertiary border-gray-100 dark:border-white/[0.08] text-gray-400'
                     }`}
                   >
                     {t('ui_share_modal_allow_export')}
@@ -267,11 +267,11 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                   <input
                     readOnly
                     value={shareData.shareUrl}
-                    className="w-full px-4 py-4 rounded-xl bg-gray-50 dark:bg-gray-800 border border-gray-100 dark:border-gray-800 text-sm font-mono pe-12 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/50"
+                    className="w-full px-4 py-4 rounded-xl bg-gray-50 dark:bg-theme-bg-tertiary border border-gray-100 dark:border-white/[0.08] text-sm font-mono pe-12 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-400/50"
                   />
                   <button
                     onClick={copyToClipboard}
-                    className="absolute end-3 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all"
+                    className="absolute end-3 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-200 dark:hover:bg-white/[0.08] rounded-xl transition-all"
                   >
                     {copied ? (
                       <Check className="w-4 h-4 text-emerald-500" />
@@ -293,7 +293,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
               <div className="flex gap-3">
                 <button
                   onClick={() => setShareData(null)}
-                  className="flex-1 py-4 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 font-medium rounded-xl transition-all"
+                  className="flex-1 py-4 bg-gray-100 dark:bg-theme-bg-tertiary hover:bg-gray-200 dark:hover:bg-white/[0.08] text-gray-700 dark:text-gray-300 font-medium rounded-xl transition-all"
                 >
                   {t('ui_share_modal_regenerate')}
                 </button>

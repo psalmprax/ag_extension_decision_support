@@ -68,28 +68,28 @@ const VARIANT_CONFIG: Record<
     icon: Info,
     iconClass: 'text-slate-500 dark:text-slate-400',
     borderClass: 'border-slate-500/20 dark:border-slate-400/25',
-    bgClass: 'bg-white/95 dark:bg-slate-900/95',
+    bgClass: 'bg-white/95 dark:bg-theme-bg-secondary/95',
     textClass: 'text-slate-700 dark:text-slate-200',
   },
   tip: {
     icon: Lightbulb,
     iconClass: 'text-emerald-600 dark:text-emerald-400',
     borderClass: 'border-emerald-500/20 dark:border-emerald-400/25',
-    bgClass: 'bg-white/95 dark:bg-slate-900/95',
+    bgClass: 'bg-white/95 dark:bg-theme-bg-secondary/95',
     textClass: 'text-slate-700 dark:text-slate-200',
   },
   guidance: {
     icon: Compass,
     iconClass: 'text-slate-600 dark:text-slate-400',
     borderClass: 'border-slate-500/20 dark:border-slate-400/25',
-    bgClass: 'bg-white/95 dark:bg-slate-900/95',
+    bgClass: 'bg-white/95 dark:bg-theme-bg-secondary/95',
     textClass: 'text-slate-700 dark:text-slate-200',
   },
   neutral: {
     icon: HelpCircle,
     iconClass: 'text-slate-500 dark:text-slate-400',
-    borderClass: 'border-slate-200 dark:border-slate-800',
-    bgClass: 'bg-white/95 dark:bg-slate-900/95 shadow-black/5',
+    borderClass: 'border-slate-200 dark:border-white/[0.08]',
+    bgClass: 'bg-white/95 dark:bg-theme-bg-secondary/95 shadow-black/5',
     textClass: 'text-slate-700 dark:text-slate-300',
   },
 };
@@ -158,7 +158,7 @@ const PromptUpgradeFooter: React.FC<PromptUpgradeFooterProps> = ({
   upgradeLabel,
   onUpgradeClick,
 }) => (
-  <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex items-center justify-between gap-2">
+  <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-white/[0.08] flex items-center justify-between gap-2">
     <span className="text-xxs text-slate-400">
       Current: <strong className="text-slate-600 dark:text-slate-300">{planName}</strong>
     </span>
@@ -323,11 +323,11 @@ export const InfoPrompt: React.FC<InfoPromptProps> = ({
                   )}
 
                   {showDismiss && isTierMet && (
-                    <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-slate-800/80 flex justify-end">
+                    <div className="mt-2.5 pt-2 border-t border-slate-200/60 dark:border-white/[0.08] flex justify-end">
                       <button
                         type="button"
                         onClick={handleClose}
-                        className="px-2.5 py-1 text-xxs font-medium rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors"
+                        className="px-2.5 py-1 text-xxs font-medium rounded-md bg-slate-100 hover:bg-slate-200 dark:bg-theme-bg-tertiary dark:hover:bg-white/[0.08] text-slate-700 dark:text-slate-200 transition-colors"
                       >
                         {t('ui_info_prompt_got_it')}
                       </button>

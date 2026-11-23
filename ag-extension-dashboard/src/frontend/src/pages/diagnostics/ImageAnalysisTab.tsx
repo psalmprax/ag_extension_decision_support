@@ -80,11 +80,11 @@ const ImageUploadViewfinder: React.FC<{
             value={cropType}
             onChange={e => setCropType(e.target.value)}
             placeholder={t('diagnosis_photo_crop_placeholder', { defaultValue: 'For example maize, coffee or tomato' })}
-            className="w-full px-3 py-2 bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-md text-xs text-slate-900 dark:text-white placeholder-slate-600 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40 transition-colors"
+            className="w-full px-3 py-2 bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-md text-xs text-slate-900 dark:text-white placeholder-slate-600 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40 transition-colors"
           />
         </div>
 
-        <div className="relative rounded-lg border-2 border-dashed border-slate-900/[0.08] dark:border-white/[0.08] hover:border-emerald-500/60 bg-white dark:bg-[#0d1a14] p-5 text-center transition-colors group overflow-hidden">
+        <div className="relative rounded-lg border-2 border-dashed border-slate-900/[0.08] dark:border-white/[0.08] hover:border-emerald-500/60 bg-white dark:bg-theme-bg-primary p-5 text-center transition-colors group overflow-hidden">
           {imagePreview ? (
             <div className="space-y-3 relative z-10">
               <div className="relative max-w-xs mx-auto rounded-md overflow-hidden border border-emerald-500/40">
@@ -187,7 +187,7 @@ export const AnalysisResultsHUD: React.FC<{
             {t('diagnosis_result_title', { defaultValue: 'Result' })}
           </span>
         </div>
-        <div className="rounded-lg overflow-hidden border border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#0d1a14]">
+        <div className="rounded-lg overflow-hidden border border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-theme-bg-primary">
           <DiseaseSaliencyCanvas />
         </div>
         <p className="text-xs text-center text-slate-400">
@@ -205,7 +205,7 @@ export const AnalysisResultsHUD: React.FC<{
 
   return (
     <div className="p-5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-4">
-      <div className="rounded-lg p-2 bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08]">
+      <div className="rounded-lg p-2 bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08]">
         <div className="px-2 py-1 mb-2 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
           <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
             {t('ui_image_analysis_tab_specimen_photo_review')}
@@ -275,7 +275,7 @@ export const AnalysisResultsHUD: React.FC<{
             {imageAnalysis.diseases.map(disease => (
               <div
                 key={disease.disease}
-                className="p-3 rounded-lg bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] transition-colors"
+                className="p-3 rounded-lg bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] transition-colors"
               >
                 <div className="flex items-center justify-between mb-1">
                   <h5 className="text-xs font-medium text-slate-900 dark:text-white">
@@ -316,7 +316,7 @@ export const AnalysisResultsHUD: React.FC<{
             {imageAnalysis.recommendations.map((rec, index) => (
               <div
                 key={index}
-                className="p-2 rounded-lg bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-slate-300 flex items-start gap-2"
+                className="p-2 rounded-lg bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-slate-300 flex items-start gap-2"
               >
                 <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                 <span>{rec}</span>

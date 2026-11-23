@@ -20,7 +20,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
 
   if (!billing.user?.isSystemAdmin) {
     return (
-      <section className="bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 flex items-start gap-3">
+      <section className="bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 flex items-start gap-3">
         <ShieldCheck className="w-5 h-5 text-slate-500 dark:text-white/50 shrink-0 mt-0.5" />
         <p className="text-sm text-slate-600 dark:text-white/70">
           {t(
@@ -35,7 +35,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
   return (
     <>
       {/* Admin Mobile Money Verification Queue */}
-      <section className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
+      <section className="backdrop-blur-xl bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
         <div className="flex items-center gap-4 mb-6">
           <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center">
             <AlertCircle className="w-5 h-5 text-amber-700 dark:text-amber-400" />
@@ -126,7 +126,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
       </section>
 
       {/* Admin Voucher Generator */}
-      <section className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
+      <section className="backdrop-blur-xl bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl overflow-hidden">
         <div className="flex items-center gap-4 mb-6">
           <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-200 dark:border-white/10 flex items-center justify-center">
             <Ticket className="w-5 h-5 text-slate-400" />
@@ -153,7 +153,7 @@ export const ManualPlanGrants: React.FC<ManualPlanGrantsProps> = ({ billing }) =
                 { value: 'price_pro_yearly', label: 'Pro Officer (Yearly)' },
                 { value: 'price_enterprise_monthly', label: 'Enterprise Cooperative' },
               ]}
-              className="font-medium bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
+              className="font-medium bg-white dark:bg-theme-bg-secondary border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
             />
           </div>
           <div>

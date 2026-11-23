@@ -20,6 +20,9 @@ const RULES = [
   { name: 'coloured glow', pattern: new RegExp(`shadow-(${COLOURS})-\\d|shadow-\\[0_0_`) },
   { name: 'blurred blob', pattern: /(?<!backdrop-)blur-(2xl|3xl|\[\d{2,}px\])/ },
   { name: 'emoji', pattern: /(?![©®™°±·←-⇿✓✗])\p{Extended_Pictographic}/u },
+  // Dark mode takes its backgrounds from the theme (bg-theme-bg-primary/secondary/tertiary)
+  // and its lines from white hairlines, so every page sits on the theme's own dark colour.
+  { name: 'dark background or line not from the theme', pattern: /dark:(?:[a-z-]+:)*(?:bg|border|divide)(?:-[trblxy])?-(?:slate|gray|zinc|neutral)-(?:[6-9]00|950)\b|dark:(?:[a-z-]+:)*bg-\[#/ },
 ];
 /** Agronomic visualisations and loading placeholders may use colour ramps. */
 const EXEMPT_PATHS = [/[\\/]canvas-ui[\\/]/, /[\\/]map[\\/]/, /[\\/]Skeleton\.tsx$/, /[\\/]__tests__[\\/]/, /\.test\.tsx?$/, /[\\/]a11y\.ts$/];
@@ -47,4 +50,4 @@ if (problems.length > 0) {
   console.error(`${problems.length} design-rule breaks (see CLAUDE.md, Unslop):\n${problems.join('\n')}`);
   process.exit(1);
 }
-console.log('Design rules OK: no heavy weights, tracked caps, decorative gradients, glows, blobs or emoji.');
+console.log('Design rules OK: no heavy weights, tracked caps, decorative gradients, glows, blobs, emoji or off-theme dark backgrounds.');

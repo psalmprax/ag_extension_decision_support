@@ -15,7 +15,7 @@ function getStatusClass(status: string): string {
     harvested: 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20',
     failed: 'bg-red-500/10 text-red-700 dark:text-red-400 border border-red-500/20',
   };
-  return map[status] ?? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400';
+  return map[status] ?? 'bg-slate-100 text-slate-700 dark:bg-theme-bg-tertiary dark:text-slate-400';
 }
 
 function formatHarvestDate(cycle: { actualHarvestDate?: string | null; expectedHarvestDate?: string | null }): string {
@@ -82,7 +82,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-slate-950/40 p-2.5 rounded-lg border border-slate-200 dark:border-white/5">
+                <div className="grid grid-cols-2 gap-2 text-xs bg-slate-50 dark:bg-theme-bg-primary/40 p-2.5 rounded-lg border border-slate-200 dark:border-white/5">
                   <div>
                     <span className="text-xxs text-slate-500 dark:text-slate-400 font-medium block">{t('ui_crop_cycles_table_variety')}</span>
                     <span className="text-slate-700 dark:text-slate-300 font-medium">{cycle.variety || 'N/A'}</span>
@@ -110,7 +110,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
           <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-start border-collapse text-sm">
               <thead>
-                <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-950/40 text-xs font-medium text-slate-500 dark:text-slate-400">
+                <tr className="border-b border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-theme-bg-primary/40 text-xs font-medium text-slate-500 dark:text-slate-400">
                   <th className="p-4 ps-6">{t('ui_crop_cycles_table_sector_name')}</th>
                   <th className="p-4">{t('ui_crop_cycles_table_crop_name')}</th>
                   <th className="p-4">{t('ui_crop_cycles_table_variety')}</th>

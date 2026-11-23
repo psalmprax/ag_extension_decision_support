@@ -52,8 +52,8 @@ export const ResetPassword: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-gray-900 flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-lg shadow-2xl overflow-hidden">
+    <div className="min-h-screen bg-slate-50 dark:bg-theme-bg-secondary flex items-center justify-center p-4">
+      <div className="w-full max-w-md bg-white dark:bg-theme-bg-tertiary rounded-lg shadow-2xl overflow-hidden">
         <div className="p-8 bg-primary-700 text-white">
           <h1 className="text-2xl font-medium">{t('ui_reset_password_choose_a_new_password')}</h1>
           <p className="text-sm opacity-90 mt-1">{t('ui_reset_password_at_least_characters_with_a_letter_an', { MIN_LEN })}</p>
@@ -88,7 +88,7 @@ export const ResetPassword: React.FC = () => {
                     value={password}
                     onChange={e => setPassword(e.target.value)}
                     autoComplete="new-password"
-                    className="w-full ps-9 pe-3 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm"
+                    className="w-full ps-9 pe-3 py-3 rounded-lg border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-theme-bg-secondary text-sm"
                     required
                   />
                 </div>
@@ -103,7 +103,7 @@ export const ResetPassword: React.FC = () => {
                   value={confirm}
                   onChange={e => setConfirm(e.target.value)}
                   autoComplete="new-password"
-                  className="w-full mt-1 px-3 py-3 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-900 text-sm"
+                  className="w-full mt-1 px-3 py-3 rounded-lg border border-gray-300 dark:border-white/[0.12] bg-white dark:bg-theme-bg-secondary text-sm"
                   required
                 />
                 {confirm && confirm !== password && <p className="text-xs text-amber-600 mt-1">{t('register_passwords_not_match')}</p>}

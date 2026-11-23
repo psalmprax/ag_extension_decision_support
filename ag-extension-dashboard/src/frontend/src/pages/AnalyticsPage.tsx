@@ -96,7 +96,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
           </div>
         </>
       ) : (
-        <div className="flex flex-col items-center justify-center py-20 text-center backdrop-blur-xl bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-white/10 rounded-xl p-8 shadow-sm">
+        <div className="flex flex-col items-center justify-center py-20 text-center backdrop-blur-xl bg-white/80 dark:bg-theme-bg-secondary/40 border border-slate-200 dark:border-white/10 rounded-xl p-8 shadow-sm">
           <BarChart3 className="w-14 h-14 text-slate-300 dark:text-white/20 mb-4" />
           <h3 className="text-base font-medium text-slate-900 dark:text-white mb-2">
             {t('analytics_no_data') || 'No analytics data available'}

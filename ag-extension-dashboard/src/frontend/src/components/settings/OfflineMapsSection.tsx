@@ -36,7 +36,7 @@ export function OfflineMapsSection() {
 
     return (
         <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+            <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/[0.04] rounded-xl">
                 <div className="flex items-center gap-3 min-w-0">
                     <MapIcon className="w-4 h-4 text-primary-500 shrink-0" />
                     <div className="min-w-0">
@@ -76,7 +76,7 @@ export function OfflineMapsSection() {
                     {(['minLat','minLng','maxLat','maxLng'] as const).map(k => (
                         <label key={k} className="text-xs text-gray-500 flex flex-col gap-1">
                             {k}
-                            <input type="number" step="0.1" value={bbox[k]} onChange={e => setBbox(prev => ({ ...prev, [k]: parseFloat(e.target.value) || prev[k] }))} className="px-2 py-1 rounded bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 text-xs" />
+                            <input type="number" step="0.1" value={bbox[k]} onChange={e => setBbox(prev => ({ ...prev, [k]: parseFloat(e.target.value) || prev[k] }))} className="px-2 py-1 rounded bg-white dark:bg-theme-bg-tertiary border border-gray-200 dark:border-white/[0.12] text-xs" />
                         </label>
                     ))}
                 </div>

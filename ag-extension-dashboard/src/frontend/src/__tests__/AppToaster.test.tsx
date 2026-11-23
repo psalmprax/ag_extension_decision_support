@@ -2,7 +2,7 @@ import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import toast from 'react-hot-toast';
 import { AppToaster } from '@/components/AppToaster';
-import { getDarkThemeCSS, getThemeCSS, surfaceTokens, themes, type ThemeName } from '@/theme';
+import { getDarkThemeCSS, getThemeCSS, themes, type ThemeName } from '@/theme';
 
 vi.unmock('react-hot-toast');
 
@@ -51,13 +51,15 @@ describe('AppToaster', () => {
   it.each(Object.keys(themes) as ThemeName[])(
     'keeps toast text at WCAG AA contrast in both modes of the %s theme',
     theme => {
-      for (const [css, surface] of [
-        [getThemeCSS(theme), surfaceTokens.light],
-        [getDarkThemeCSS(theme), surfaceTokens.dark],
-      ] as const) {
-        expect(css).toContain(`--color-surface: ${surface.surface};`);
-        expect(css).toContain(`--color-on-surface: ${surface.onSurface};`);
-        expect(contrast(surface.surface, surface.onSurface)).toBeGreaterThanOrEqual(4.5);
+      // Read the colours the theme actually emits: a theme with its own dark background
+      // (forest, sage) puts its surfaces on that background rather than the default navy.
+      const emitted = (css: string, name: string) => css.match(new RegExp(`--color-${name}: (#[0-9a-f]{6});`, 'i'))?.[1];
+      for (const css of [getThemeCSS(theme), getDarkThemeCSS(theme)]) {
+        const surface = emitted(css, 'surface');
+        const onSurface = emitted(css, 'on-surface');
+        expect(surface).toBeDefined();
+        expect(onSurface).toBeDefined();
+        expect(contrast(surface!, onSurface!)).toBeGreaterThanOrEqual(4.5);
       }
     }
   );

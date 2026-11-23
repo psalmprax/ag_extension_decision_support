@@ -55,7 +55,7 @@ export const ChurnReasons: React.FC = () => {
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       aria-labelledby="churn-reasons-title"
-      className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl"
+      className="backdrop-blur-xl bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl"
     >
       <div className="flex items-start gap-4 mb-6">
         <div className="w-12 h-12 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center shrink-0">

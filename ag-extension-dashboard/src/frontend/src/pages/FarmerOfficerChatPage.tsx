@@ -123,7 +123,7 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
         </span>
       </div>
 
-      <div className="flex-1 min-h-0 flex flex-col bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl">
+      <div className="flex-1 min-h-0 flex flex-col bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/10 rounded-xl">
         <div className="flex-1 overflow-y-auto p-4 space-y-3" aria-live="polite">
           {farmerChatMessages.length === 0 ? (
             <p className="text-sm text-slate-500 dark:text-white/50 text-center py-12">
@@ -175,7 +175,7 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
                 realtime.notifyTyping();
               }}
               placeholder="Write to your officer…"
-              className="flex-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-white"
+              className="flex-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-theme-bg-primary px-3 py-2 text-sm text-slate-900 dark:text-white"
             />
             <button
               type="submit"

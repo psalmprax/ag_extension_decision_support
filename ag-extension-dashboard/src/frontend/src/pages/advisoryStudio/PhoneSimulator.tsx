@@ -15,7 +15,7 @@ export function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
   const isLimeVisible = soilPh < 5.5;
 
   return (
-    <div className="w-full max-w-[280px] aspect-[9/18] rounded-[28px] border-2 border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-[#0d1a14] shadow-xl p-3 flex flex-col relative overflow-hidden">
+    <div className="w-full max-w-[280px] aspect-[9/18] rounded-[28px] border-2 border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-theme-bg-primary shadow-xl p-3 flex flex-col relative overflow-hidden">
       <div className="w-20 h-4 bg-slate-100 dark:bg-white/[0.07] rounded-full mx-auto mb-2 shrink-0 flex items-center justify-center">
         <div className="w-2 h-2 rounded-full bg-slate-50 dark:bg-white/[0.04]" />
       </div>
@@ -42,7 +42,7 @@ export function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
                   id={`sim-${step.id}`}
                   value={selectedCrop}
                   onChange={(e) => setSelectedCrop(e.target.value)}
-                  className="w-full bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] rounded px-1.5 py-1 text-slate-900 dark:text-white text-[11px]"
+                  className="w-full bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] rounded px-1.5 py-1 text-slate-900 dark:text-white text-[11px]"
                 >
                   <option value="Maize">{t('ui_advisory_studio_page_maize_mahindi')}</option>
                   <option value="Cassava">{t('ui_advisory_studio_page_cassava_mhogo')}</option>
@@ -103,7 +103,7 @@ export function PhoneSimulator({ steps }: { steps: WorkflowStep[] }) {
             return (
               <div key={step.id} className="p-2 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08]">
                 <label className="text-[10px] text-slate-400 block mb-1">{t('ui_advisory_studio_page_step')} {idx + 1}{t('ui_advisory_studio_page_leaf_diagnostic')}</label>
-                <div className="p-2 rounded bg-white dark:bg-[#0d1a14] border border-dashed border-slate-900/[0.08] dark:border-white/[0.08] flex flex-col items-center text-center">
+                <div className="p-2 rounded bg-white dark:bg-theme-bg-primary border border-dashed border-slate-900/[0.08] dark:border-white/[0.08] flex flex-col items-center text-center">
                   <Camera className="w-4 h-4 text-slate-400 mb-0.5" />
                   <span className="text-[9px] text-slate-400">{t('ui_advisory_studio_page_tap_to_scan_whorl_with_camera')}</span>
                 </div>

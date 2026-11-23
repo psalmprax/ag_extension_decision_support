@@ -213,7 +213,7 @@ function Memory() {
             <select
               value={selectedCategory}
               onChange={e => setSelectedCategory(e.target.value)}
-              className="w-full appearance-none ps-3.5 pe-9 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-white focus:ring-1 focus:ring-slate-400 outline-none"
+              className="w-full appearance-none ps-3.5 pe-9 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-theme-bg-secondary text-slate-900 dark:text-white focus:ring-1 focus:ring-slate-400 outline-none"
             >
               <option value="all">{t('ui_memory_all_vector_categories', { length: memories.length })}</option>
               {categories.map(c => (
@@ -332,7 +332,7 @@ function Memory() {
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-700 dark:text-white/70 leading-relaxed bg-white dark:bg-slate-950/40 p-3 rounded-xl border border-slate-200 dark:border-white/5 font-mono">
+                <p className="text-xs text-slate-700 dark:text-white/70 leading-relaxed bg-white dark:bg-theme-bg-primary/40 p-3 rounded-xl border border-slate-200 dark:border-white/5 font-mono">
                   {memory.value}
                 </p>
 
@@ -399,7 +399,7 @@ function Memory() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="backdrop-blur-2xl bg-white dark:bg-slate-900/95 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8 space-y-6 text-slate-900 dark:text-white"
+              className="backdrop-blur-2xl bg-white dark:bg-theme-bg-secondary/95 border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl w-full max-w-lg p-6 sm:p-8 space-y-6 text-slate-900 dark:text-white"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/10 pb-4">

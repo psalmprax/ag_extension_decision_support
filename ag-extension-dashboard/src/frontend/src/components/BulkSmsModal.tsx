@@ -56,9 +56,9 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-lg bg-white dark:bg-gray-800 rounded-xl shadow-2xl overflow-hidden flex flex-col"
+            className="relative w-full max-w-lg bg-white dark:bg-theme-bg-tertiary rounded-xl shadow-2xl overflow-hidden flex flex-col"
           >
-            <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+            <div className="p-6 border-b border-gray-100 dark:border-white/[0.12]">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
@@ -75,7 +75,7 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-white/[0.08] rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5 text-gray-400" />
                 </button>
@@ -94,7 +94,7 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
                       key={tpl.id}
                       type="button"
                       onClick={() => setMessage(tpl.text)}
-                      className="text-start p-3 rounded-xl border border-gray-100 dark:border-gray-700 hover:border-primary-500/50 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-all group"
+                      className="text-start p-3 rounded-xl border border-gray-100 dark:border-white/[0.12] hover:border-primary-500/50 hover:bg-primary-50/50 dark:hover:bg-primary-900/10 transition-all group"
                     >
                       <p className="text-xs text-gray-600 dark:text-gray-300 line-clamp-2 group-hover:text-primary-600 dark:group-hover:text-primary-400">
                         {tpl.text}
@@ -119,7 +119,7 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
                   value={message}
                   onChange={e => setMessage(e.target.value)}
                   placeholder="Type your message here..."
-                  className="w-full h-32 bg-gray-50 dark:bg-gray-900/50 border border-gray-100 dark:border-gray-700 rounded-xl p-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500/30 focus:border-primary-500 transition-all resize-none dark:text-white"
+                  className="w-full h-32 bg-gray-50 dark:bg-theme-bg-secondary/50 border border-gray-100 dark:border-white/[0.12] rounded-xl p-4 text-sm focus:outline-none focus:ring-1 focus:ring-primary-500/30 focus:border-primary-500 transition-all resize-none dark:text-white"
                 />
                 {message.length > 160 && (
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-100 dark:border-amber-800">
@@ -132,10 +132,10 @@ export const BulkSmsModal: React.FC<BulkSmsModalProps> = ({
               </div>
             </div>
 
-            <div className="p-6 bg-gray-50 dark:bg-gray-800/50 border-t border-gray-100 dark:border-gray-700 flex gap-3">
+            <div className="p-6 bg-gray-50 dark:bg-theme-bg-tertiary/50 border-t border-gray-100 dark:border-white/[0.12] flex gap-3">
               <button
                 onClick={onClose}
-                className="flex-1 px-4 py-2.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium text-xs rounded-xl border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                className="flex-1 px-4 py-2.5 bg-white dark:bg-theme-bg-tertiary text-gray-700 dark:text-gray-300 font-medium text-xs rounded-xl border border-gray-200 dark:border-white/[0.12] hover:bg-gray-50 dark:hover:bg-white/[0.08] transition-colors"
               >
                 {t('nav_cancel') || 'Cancel'}
               </button>

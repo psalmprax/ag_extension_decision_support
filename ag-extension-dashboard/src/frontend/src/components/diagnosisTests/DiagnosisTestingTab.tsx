@@ -129,7 +129,7 @@ export function DiagnosisTestingTab() {
           <ul className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
             {mistakes.map(item => (
               <li key={item.imageId} className="text-xs space-y-1">
-                <img src={item.url} alt={`${item.crop}, ${item.label}`} loading="lazy" className="w-full aspect-square object-cover rounded-md bg-slate-100 dark:bg-slate-800" />
+                <img src={item.url} alt={`${item.crop}, ${item.label}`} loading="lazy" className="w-full aspect-square object-cover rounded-md bg-slate-100 dark:bg-theme-bg-tertiary" />
                 <p className="text-slate-900 dark:text-white">{item.label}</p>
                 <p className="text-slate-500 dark:text-white/60">{t('diag_test_said', { predicted: item.predicted ?? '—', defaultValue: 'Said: {predicted}' })}</p>
               </li>

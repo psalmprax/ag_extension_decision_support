@@ -35,7 +35,7 @@ export const FarmerYieldChart: React.FC<FarmerYieldChartProps> = ({ farmer, radi
         </Badge>
       </div>
       <div
-        className={`h-48 w-full ${radiusClass} p-4 border bg-gray-50/50 dark:bg-gray-800/50 border-gray-100 dark:border-gray-800`}
+        className={`h-48 w-full ${radiusClass} p-4 border bg-gray-50/50 dark:bg-theme-bg-tertiary/50 border-gray-100 dark:border-white/[0.08]`}
       >
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={farmer.yieldHistory || []}>

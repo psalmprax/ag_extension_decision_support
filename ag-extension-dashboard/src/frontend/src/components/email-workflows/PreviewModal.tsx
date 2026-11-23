@@ -61,7 +61,7 @@ export function EmailWorkflowsPreviewModal({
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             {t('email_workflows_subject')}
           </label>
-          <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded border font-medium">
+          <div className="p-3 bg-gray-50 dark:bg-white/[0.08] rounded border font-medium">
             {preview.subject}
           </div>
         </div>
@@ -70,7 +70,7 @@ export function EmailWorkflowsPreviewModal({
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             {t('ui_edit_modal_body')}
           </label>
-          <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded border whitespace-pre-wrap font-mono text-sm">
+          <div className="p-4 bg-gray-50 dark:bg-white/[0.08] rounded border whitespace-pre-wrap font-mono text-sm">
             {preview.body}
           </div>
         </div>

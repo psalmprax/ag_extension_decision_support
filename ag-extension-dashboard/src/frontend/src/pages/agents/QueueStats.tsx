@@ -21,7 +21,7 @@ function QueueStatCard({
   valueClass,
 }: QueueStatCardProps) {
   return (
-    <div className="p-4 rounded-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
+    <div className="p-4 rounded-xl bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/[0.08] shadow-sm space-y-1">
       <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 text-xs font-medium">
         <Icon className={`w-3.5 h-3.5 ${iconClass}`} />
         <span>{label}</span>

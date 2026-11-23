@@ -18,7 +18,7 @@ export function NotificationPreferencesSection({ prefs, saving, toggle }: Return
       </h3>
       <div className="space-y-2">
         {rows.map(({ key, label }) => (
-          <div key={key} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700/50 rounded-xl">
+          <div key={key} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/[0.04] rounded-xl">
             <div className="flex items-center gap-3">
               <Bell className="w-4 h-4 text-gray-400" aria-hidden="true" />
               <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</span>

@@ -29,7 +29,7 @@ export const MessagePhotos: React.FC<{ photos?: ChatAttachment[]; label: string 
                   src={photo.url}
                   alt={`${label} ${index + 1}: ${photo.name}`}
                   loading="lazy"
-                  className="w-28 h-28 object-cover bg-slate-100 dark:bg-slate-800"
+                  className="w-28 h-28 object-cover bg-slate-100 dark:bg-theme-bg-tertiary"
                 />
               </button>
             </li>

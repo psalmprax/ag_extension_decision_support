@@ -140,7 +140,7 @@ export const AppSidebar: React.FC<AppSidebarProps> = ({
               'fixed flex flex-col px-3',
               isPhone
                 ? 'inset-x-0 bottom-0 max-h-[86dvh] rounded-t-[28px] ios-sheet pt-2 pb-[calc(1rem+env(safe-area-inset-bottom))] z-[1101]'
-                : 'start-0 top-16 bottom-0 pt-3 pb-4 border-e border-slate-900/[0.08] dark:border-white/[0.08] w-64 z-40 bg-white dark:bg-[#0d1a14]'
+                : 'start-0 top-16 bottom-0 pt-3 pb-4 border-e border-slate-900/[0.08] dark:border-white/[0.08] w-64 z-40 bg-white dark:bg-theme-bg-primary'
             )}
           >
             {isPhone && <span className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-slate-900/20 dark:bg-white/25" aria-hidden="true" />}

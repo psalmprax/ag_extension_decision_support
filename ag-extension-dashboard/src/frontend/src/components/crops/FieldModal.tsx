@@ -57,7 +57,7 @@ export const FieldModal: React.FC<FieldModalProps> = ({
         aria-modal="true"
         aria-labelledby="field-modal-title"
         onClick={event => event.stopPropagation()}
-        className="bg-white dark:bg-[#13241b] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-t-2xl sm:rounded-xl max-w-lg w-full max-h-[90dvh] overflow-y-auto"
+        className="bg-white dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-t-2xl sm:rounded-xl max-w-lg w-full max-h-[90dvh] overflow-y-auto"
       >
         <form
           className="p-6 space-y-5"

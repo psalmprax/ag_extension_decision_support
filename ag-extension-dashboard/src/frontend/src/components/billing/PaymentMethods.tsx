@@ -64,7 +64,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
   return (
     <section
       aria-labelledby="payment-methods-title"
-      className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl overflow-hidden relative"
+      className="backdrop-blur-xl bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl overflow-hidden relative"
     >
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6 relative z-10">
         <div className="flex items-center gap-4">
@@ -138,7 +138,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                     { value: 'airtel', label: 'Airtel Money' },
                     { value: 'bank', label: 'Direct bank wire' },
                   ]}
-                  className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
+                  className="bg-white dark:bg-theme-bg-secondary border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
                 />
                 <Select
                   value={mobilePayData.planId}
@@ -159,7 +159,7 @@ export const PaymentMethods: React.FC<PaymentMethodsProps> = ({
                         label: `${p.name} ($${(p.price / 100).toFixed(2)}/mo)`,
                       })),
                   ]}
-                  className="bg-white dark:bg-slate-900 border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
+                  className="bg-white dark:bg-theme-bg-secondary border-slate-200 dark:border-white/10 text-slate-900 dark:text-white rounded-xl text-xs"
                 />
               </div>
               <Input

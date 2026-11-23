@@ -84,7 +84,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 border border-gray-200 dark:border-gray-700 shadow-sm space-y-6">
+    <div className="bg-white dark:bg-theme-bg-tertiary rounded-2xl p-6 border border-gray-200 dark:border-white/[0.12] shadow-sm space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-white">
@@ -100,7 +100,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
       </div>
 
       {/* Metrics Bar */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-gray-50 dark:bg-theme-bg-secondary/50 rounded-xl border border-gray-100 dark:border-white/[0.08]">
         <div>
           <span className="text-xs text-gray-500 font-medium">{t('ui_parcel_polygon_drawer_measured_acreage')}</span>
           <p className="text-xl font-medium text-emerald-600 dark:text-emerald-400 mt-1">
@@ -137,7 +137,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
             type="text"
             value={parcelName}
             onChange={e => setParcelName(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-800 dark:border-gray-600"
+            className="w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-theme-bg-tertiary dark:border-white/[0.12]"
           />
         </div>
         <div>
@@ -148,7 +148,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
             type="text"
             value={cropType}
             onChange={e => setCropType(e.target.value)}
-            className="w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-gray-800 dark:border-gray-600"
+            className="w-full px-3 py-2 border rounded-lg text-sm bg-white dark:bg-theme-bg-tertiary dark:border-white/[0.12]"
           />
         </div>
       </div>
@@ -183,7 +183,7 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
           type="button"
           onClick={handleClear}
           disabled={vertices.length === 0}
-          className="py-3 px-4 border border-gray-300 hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition"
+          className="py-3 px-4 border border-gray-300 hover:bg-gray-50 dark:border-white/[0.12] dark:hover:bg-white/[0.08] text-gray-700 dark:text-gray-300 text-sm font-medium rounded-xl transition"
         >
           {t('ui_parcel_polygon_drawer_clear_points')}
         </button>
@@ -191,9 +191,9 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
 
       {/* Vertex Table */}
       {vertices.length > 0 && (
-        <div className="max-h-40 overflow-y-auto border border-gray-100 dark:border-gray-800 rounded-xl">
+        <div className="max-h-40 overflow-y-auto border border-gray-100 dark:border-white/[0.08] rounded-xl">
           <table className="min-w-full text-xs text-start">
-            <thead className="bg-gray-50 dark:bg-gray-900 text-gray-500">
+            <thead className="bg-gray-50 dark:bg-theme-bg-secondary text-gray-500">
               <tr>
                 <th className="p-2">#</th>
                 <th className="p-2">{t('latitude')}</th>
@@ -201,9 +201,9 @@ export const ParcelPolygonDrawer: React.FC<ParcelPolygonDrawerProps> = ({
                 <th className="p-2">{t('ui_parcel_polygon_drawer_accuracy')}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            <tbody className="divide-y divide-gray-100 dark:divide-white/[0.08]">
               {vertices.map((v, i) => (
-                <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-gray-900/50">
+                <tr key={i} className="hover:bg-gray-50/50 dark:hover:bg-theme-bg-secondary/50">
                   <td className="p-2 font-medium">{i + 1}</td>
                   <td className="p-2 font-mono">{v.lat.toFixed(6)}</td>
                   <td className="p-2 font-mono">{v.lng.toFixed(6)}</td>

@@ -32,7 +32,7 @@ export function MCPToolsToolListSidebar({
               className={`p-4 border ${radiusClass} cursor-pointer transition-all ${
                 isSelected
                   ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-                  : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700'
+                  : 'border-gray-200 dark:border-white/[0.12] hover:border-primary-300 dark:hover:border-primary-700'
               }`}
               onClick={() => onSelect(tool)}
             >

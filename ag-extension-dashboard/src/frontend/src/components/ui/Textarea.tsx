@@ -12,7 +12,7 @@ const textareaVariants = cva(
       },
       design: {
         modern: 'rounded-xl bg-white/5 border placeholder-slate-400',
-        classic: 'rounded-none border bg-white dark:bg-slate-800 placeholder-slate-500',
+        classic: 'rounded-none border bg-white dark:bg-theme-bg-tertiary placeholder-slate-500',
       },
     },
     defaultVariants: {

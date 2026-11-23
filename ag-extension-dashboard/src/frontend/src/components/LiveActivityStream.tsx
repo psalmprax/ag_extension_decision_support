@@ -126,8 +126,8 @@ const ActivityCard: React.FC<ActivityCardProps> = React.memo(({
         activity.isClaimed
           ? 'bg-emerald-50 dark:bg-emerald-950/20 border-emerald-500/40 shadow-sm'
           : isCritical
-          ? 'bg-white dark:bg-slate-900/90 border-rose-300 dark:border-rose-500/30 hover:border-rose-500/50 shadow-sm'
-          : 'bg-white dark:bg-slate-900/80 border-slate-200 dark:border-slate-800/80 hover:border-slate-400 dark:hover:border-slate-700'
+          ? 'bg-white dark:bg-theme-bg-secondary/90 border-rose-300 dark:border-rose-500/30 hover:border-rose-500/50 shadow-sm'
+          : 'bg-white dark:bg-theme-bg-secondary/80 border-slate-200 dark:border-white/[0.08] hover:border-slate-400 dark:hover:border-white/[0.12]'
       }`}
     >
       <div className="flex flex-wrap items-center justify-between gap-2 mb-2">

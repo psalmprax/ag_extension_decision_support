@@ -86,10 +86,10 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
 
   if (state === 'error') {
     return (
-      <section role="alert" className="mb-8 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700 dark:border-white/10 dark:bg-slate-900 dark:text-slate-200">
+      <section role="alert" className="mb-8 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-700 dark:border-white/10 dark:bg-theme-bg-secondary dark:text-slate-200">
         <AlertTriangle className="h-4 w-4 text-amber-600" aria-hidden="true" />
         <span>{t('ui_recommendation_review_queue_could_not_load_recommendations_await')}</span>
-        <button type="button" onClick={() => void loadReviews()} className="ms-auto inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium dark:border-slate-700">
+        <button type="button" onClick={() => void loadReviews()} className="ms-auto inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium dark:border-white/[0.12]">
           <RefreshCw className="h-3 w-3" aria-hidden="true" /> {t('users_access_plans_retry')}
         </button>
       </section>
@@ -111,7 +111,7 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
           const busy = activeId === item.id;
           const reasonId = `review-reason-${item.id}`;
           return (
-            <article key={item.id} aria-label="Recommendation awaiting review" className="rounded-xl border border-amber-200/80 bg-white/80 p-4 dark:border-amber-800/60 dark:bg-slate-900/60">
+            <article key={item.id} aria-label="Recommendation awaiting review" className="rounded-xl border border-amber-200/80 bg-white/80 p-4 dark:border-amber-800/60 dark:bg-theme-bg-secondary/60">
               <div className="flex items-start justify-between gap-3">
                 <p className="whitespace-pre-line text-sm text-slate-800 dark:text-slate-100">{item.recommendation}</p>
                 <span className="shrink-0 text-xs font-medium text-amber-700 dark:text-amber-300">
@@ -129,7 +129,7 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
                 value={reasons[item.id] || ''}
                 onChange={e => setReasons(current => ({ ...current, [item.id]: e.target.value }))}
                 placeholder="What you checked and what the farmer should be told"
-                className="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                className="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 text-xs text-slate-800 dark:border-white/[0.12] dark:bg-theme-bg-primary dark:text-slate-100"
               />
               <div className="mt-3 flex flex-wrap gap-2">
                 <button type="button" disabled={busy} onClick={() => void decide(item, 'approved')} className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50">
@@ -138,7 +138,7 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
                 <button type="button" disabled={busy} onClick={() => void decide(item, 'escalated')} className="inline-flex items-center gap-1 rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-800 disabled:opacity-50 dark:border-amber-700 dark:text-amber-200">
                   <ChevronUp className="h-3 w-3" aria-hidden="true" /> {t('ui_recommendation_review_queue_escalate')}
                 </button>
-                <button type="button" disabled={busy} onClick={() => void decide(item, 'dismissed')} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 disabled:opacity-50 dark:border-slate-700 dark:text-slate-200">
+                <button type="button" disabled={busy} onClick={() => void decide(item, 'dismissed')} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 disabled:opacity-50 dark:border-white/[0.12] dark:text-slate-200">
                   <X className="h-3 w-3" aria-hidden="true" /> {t('ui_recommendation_review_queue_dismiss')}
                 </button>
               </div>

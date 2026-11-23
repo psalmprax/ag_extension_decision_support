@@ -20,7 +20,7 @@ interface VisitReportModalProps {
   onSaved: (message: string) => void;
 }
 
-const FIELD = 'w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-950 px-3 py-2 text-sm text-slate-900 dark:text-white';
+const FIELD = 'w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-theme-bg-primary px-3 py-2 text-sm text-slate-900 dark:text-white';
 const LABEL = 'block text-xs font-medium text-slate-700 dark:text-white/70 mb-1';
 
 /**
@@ -87,7 +87,7 @@ export const VisitReportModal: React.FC<VisitReportModalProps> = ({ target, onCl
         aria-modal="true"
         aria-labelledby="visit-report-title"
         onSubmit={e => void submit(e)}
-        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-5 space-y-4"
+        className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-theme-bg-secondary border border-slate-200 dark:border-white/10 p-5 space-y-4"
       >
         <div className="flex items-start justify-between gap-3">
           <h2 id="visit-report-title" className="text-base font-medium text-slate-900 dark:text-white flex items-center gap-2">

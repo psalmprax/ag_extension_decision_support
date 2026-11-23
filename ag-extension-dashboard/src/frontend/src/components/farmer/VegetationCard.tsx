@@ -58,7 +58,7 @@ function VegetationFigures({ data }: { data: { data: NDVIPoint[]; dataStatus: st
         <span>{points[points.length - 1]?.date.slice(5) || ''}</span>
       </div>
 
-      <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700 flex items-center justify-between">
+      <div className="mt-4 pt-3 border-t border-gray-100 dark:border-white/[0.12] flex items-center justify-between">
         <span className="text-xxs text-gray-400 dark:text-gray-500 capitalize">{data.reason || ''}</span>
         <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
           {data.dataStatus === 'live' ? 'NASA POWER' : data.dataStatus ? DATA_STATUS_LABELS[data.dataStatus as MarketDataStatus] : null}

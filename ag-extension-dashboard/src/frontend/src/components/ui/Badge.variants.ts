@@ -4,7 +4,7 @@ export const badgeVariants = cva('inline-flex items-center font-medium', {
   variants: {
     variant: {
       default:
-        'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700',
+        'bg-slate-100 text-slate-700 dark:bg-theme-bg-tertiary dark:text-slate-300 border border-slate-200 dark:border-white/[0.12]',
       success: 'bg-emerald-50 text-emerald-800 dark:bg-emerald-400/[0.12] dark:text-emerald-200 border border-emerald-700/15',
       warning: 'bg-amber-50 text-amber-800 dark:bg-amber-400/[0.12] dark:text-amber-200 border border-amber-700/15',
       danger: 'bg-red-50 text-red-800 dark:bg-red-400/[0.12] dark:text-red-200 border border-red-700/15',

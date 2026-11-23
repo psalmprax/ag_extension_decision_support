@@ -101,7 +101,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
     <BaseModal isOpen={isOpen} onClose={onClose} title="Security & Authentication Settings">
       <div className="space-y-6">
         {/* Tab Headers */}
-        <div className="flex border-b border-gray-200 dark:border-gray-700">
+        <div className="flex border-b border-gray-200 dark:border-white/[0.12]">
           <button
             type="button"
             className={`pb-2 px-4 text-sm font-medium border-b-2 transition-colors ${
@@ -141,7 +141,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
         {/* Tab 1: MFA */}
         {activeTab === 'mfa' && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-theme-bg-tertiary/50 rounded-xl border border-gray-200 dark:border-white/[0.12]">
               <div>
                 <h4 className="text-sm font-medium text-gray-900 dark:text-white">
                   {t('ui_security_settings_modal_authenticator_app_totp')}
@@ -154,7 +154,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                 className={`px-2.5 py-1 text-xs font-medium rounded-full ${
                   mfaEnabled
                     ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
-                    : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
+                    : 'bg-gray-100 text-gray-600 dark:bg-white/[0.08] dark:text-gray-300'
                 }`}
               >
                 {mfaEnabled ? 'Enabled' : 'Disabled'}
@@ -178,7 +178,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                   <p className="text-xs font-medium text-emerald-800 dark:text-emerald-300 mb-2">
                     {t('ui_security_settings_modal_enter_this_secret_key_in_your_authen')}
                   </p>
-                  <code className="px-3 py-1.5 bg-white dark:bg-gray-800 text-emerald-700 dark:text-emerald-300 font-mono text-sm rounded border ">
+                  <code className="px-3 py-1.5 bg-white dark:bg-theme-bg-tertiary text-emerald-700 dark:text-emerald-300 font-mono text-sm rounded border ">
                     {setupData.secret}
                   </code>
                 </div>
@@ -193,7 +193,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                     placeholder="000000"
                     value={totpCode}
                     onChange={e => setTotpCode(e.target.value.replace(/\D/g, ''))}
-                    className="w-full px-3 py-2 border rounded-lg text-center font-mono text-lg bg-white dark:bg-gray-800 dark:border-gray-600"
+                    className="w-full px-3 py-2 border rounded-lg text-center font-mono text-lg bg-white dark:bg-theme-bg-tertiary dark:border-white/[0.12]"
                   />
                 </div>
 
@@ -205,7 +205,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                     {setupData.backupCodes.map((code, idx) => (
                       <span
                         key={idx}
-                        className="px-2 py-1 bg-white dark:bg-gray-800 border rounded text-xs font-mono text-center text-gray-600 dark:text-gray-300"
+                        className="px-2 py-1 bg-white dark:bg-theme-bg-tertiary border rounded text-xs font-mono text-center text-gray-600 dark:text-gray-300"
                       >
                         {code}
                       </span>
@@ -241,9 +241,9 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
               </button>
             </div>
 
-            <div className="divide-y divide-gray-100 dark:divide-gray-800 border rounded-xl overflow-hidden">
+            <div className="divide-y divide-gray-100 dark:divide-white/[0.08] border rounded-xl overflow-hidden">
               {sessions.map(s => (
-                <div key={s.id} className="p-3.5 flex items-center justify-between bg-white dark:bg-gray-800">
+                <div key={s.id} className="p-3.5 flex items-center justify-between bg-white dark:bg-theme-bg-tertiary">
                   <div>
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium text-gray-900 dark:text-white">

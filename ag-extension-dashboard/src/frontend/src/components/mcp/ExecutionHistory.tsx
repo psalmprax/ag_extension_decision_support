@@ -24,7 +24,7 @@ export function MCPToolsExecutionHistory({
             key={index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 ${radiusClass}`}
+            className={`flex items-center justify-between p-3 bg-gray-50 dark:bg-theme-bg-tertiary/50 ${radiusClass}`}
           >
             <div className="flex items-center gap-3">
               {execution.result?.isError ? (

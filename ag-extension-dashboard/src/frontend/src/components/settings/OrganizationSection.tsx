@@ -68,7 +68,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
             <Globe className="w-4 h-4" />
             {t('ui_organization_section_organization_region')}
           </h3>
-          <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-3">
+          <div className="p-4 bg-gray-50 dark:bg-white/[0.04] rounded-xl space-y-3">
             {isOrganizationLoading ? (
               <p className="text-sm text-gray-500">{t('ui_organization_section_loading_organization_settings')}</p>
             ) : (
@@ -81,7 +81,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                     onChange={e =>
                       setOrganizationForm({ ...organizationForm, name: e.target.value })
                     }
-                    className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-white disabled:opacity-60"
+                    className="mt-1 w-full rounded-lg border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-theme-bg-tertiary px-3 py-2 text-sm dark:text-white disabled:opacity-60"
                   />
                 </label>
                 <div className="grid grid-cols-2 gap-3">
@@ -93,7 +93,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                       onChange={e =>
                         setOrganizationForm({ ...organizationForm, region: e.target.value })
                       }
-                      className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-white disabled:opacity-60"
+                      className="mt-1 w-full rounded-lg border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-theme-bg-tertiary px-3 py-2 text-sm dark:text-white disabled:opacity-60"
                     />
                   </label>
                   <label className="block text-xs font-medium text-gray-500">
@@ -104,7 +104,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                       onChange={e =>
                         setOrganizationForm({ ...organizationForm, currency: e.target.value })
                       }
-                      className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-white disabled:opacity-60"
+                      className="mt-1 w-full rounded-lg border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-theme-bg-tertiary px-3 py-2 text-sm dark:text-white disabled:opacity-60"
                     >
                       {CURRENCIES.map(
                         currency => (
@@ -122,7 +122,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                     onChange={e =>
                       setOrganizationForm({ ...organizationForm, language: e.target.value })
                     }
-                    className="mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-white disabled:opacity-60"
+                    className="mt-1 w-full rounded-lg border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-theme-bg-tertiary px-3 py-2 text-sm dark:text-white disabled:opacity-60"
                   >
                     {['en', 'fr', 'sw', 'es', 'de', 'pt'].map(language => (
                       <option key={language}>{language}</option>
@@ -146,7 +146,7 @@ export const OrganizationSection: React.FC<{ active: boolean }> = ({ active }) =
                       .then(() => toast.success('Offline knowledge pack downloaded'))
                       .catch(() => toast.error('Could not download knowledge pack'))
                   }
-                  className="w-full rounded-lg border border-gray-200 dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200"
+                  className="w-full rounded-lg border border-gray-200 dark:border-white/[0.12] px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200"
                 >
                   {t('ui_organization_section_download_offline_knowledge_pack')}
                 </button>

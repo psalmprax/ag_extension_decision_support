@@ -358,7 +358,7 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
               className={`px-2.5 py-1 rounded-lg font-medium text-xxs transition-all cursor-pointer ${
                 activeCategory === cat
                   ? 'bg-primary-600 text-white'
-                  : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800'
+                  : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-theme-bg-tertiary'
               }`}
             >
               {cat}
@@ -373,12 +373,12 @@ export const RagKnowledgeGraphCanvas: React.FC<RagKnowledgeGraphCanvasProps> = (
             placeholder="Search RAG memory..."
             value={searchTerm}
             onChange={e => setSearchTerm(e.target.value)}
-            className="ps-8 pe-3 py-1 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg text-xs w-44 text-gray-900 dark:text-white"
+            className="ps-8 pe-3 py-1 bg-gray-100 dark:bg-theme-bg-tertiary border border-gray-200 dark:border-white/[0.12] rounded-lg text-xs w-44 text-gray-900 dark:text-white"
           />
         </div>
       </div>
 
-      <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-950 shadow-inner">
+      <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-white/[0.08] bg-gray-950 shadow-inner">
         <canvas
           ref={canvasRef}
           onMouseDown={handleMouseDown}

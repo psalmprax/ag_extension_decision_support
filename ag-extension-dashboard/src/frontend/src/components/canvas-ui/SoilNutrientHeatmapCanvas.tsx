@@ -467,7 +467,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Layer selector tabs */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-gray-800 pb-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-gray-200 dark:border-white/[0.08] pb-3">
         <div className={TAB_ROW}>
           {(Object.keys(LAYER_CONFIG) as SoilLayerType[]).map(layerKey => {
             const cfg = LAYER_CONFIG[layerKey];
@@ -499,7 +499,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
       </p>
 
       {/* Main Canvas Frame */}
-      <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-950 shadow-inner">
+      <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-white/[0.08] bg-gray-950 shadow-inner">
         {hasNoData ? (
           <div className="w-full h-[280px] flex flex-col items-center justify-center p-6 text-center bg-slate-900">
             <Layers className="w-10 h-10 text-white/20 mb-2" />

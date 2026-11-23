@@ -44,7 +44,7 @@ export function EmailWorkflowsApprovalModal({
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {t('email_workflows_content')}
           </label>
-          <div className="border border-gray-300 dark:border-gray-600 rounded-lg p-4 max-h-60 overflow-y-auto">
+          <div className="border border-gray-300 dark:border-white/[0.12] rounded-lg p-4 max-h-60 overflow-y-auto">
             <div
               className="prose prose-sm max-w-none dark:prose-invert"
               dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(approval.emailData.html) }}
@@ -61,7 +61,7 @@ export function EmailWorkflowsApprovalModal({
             onChange={e => onCommentChange(e.target.value)}
             placeholder={t('email_workflows_add_comment')}
             rows={3}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white resize-none"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-white/[0.12] rounded-lg bg-white dark:bg-theme-bg-tertiary text-gray-900 dark:text-white resize-none"
           />
         </div>
 

@@ -60,14 +60,14 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
 
           // Style tables (Important for agricultural data)
           table: ({ children }) => (
-            <div className="overflow-x-auto my-6 border-2 border-gray-200 dark:border-gray-800 rounded-xl">
-              <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-800">
+            <div className="overflow-x-auto my-6 border-2 border-gray-200 dark:border-white/[0.08] rounded-xl">
+              <table className="min-w-full divide-y divide-gray-200 dark:divide-white/[0.08]">
                 {children}
               </table>
             </div>
           ),
           thead: ({ children }) => (
-            <thead className="bg-gray-50 dark:bg-gray-900/50">{children}</thead>
+            <thead className="bg-gray-50 dark:bg-theme-bg-secondary/50">{children}</thead>
           ),
           th: ({ children }) => (
             <th className="px-4 py-3 text-start text-xs font-medium text-gray-500 dark:text-gray-400">
@@ -75,7 +75,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
             </th>
           ),
           td: ({ children }) => (
-            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-gray-800">
+            <td className="px-4 py-3 text-sm text-gray-700 dark:text-gray-300 border-t border-gray-100 dark:border-white/[0.08]">
               {children}
             </td>
           ),
@@ -131,7 +131,7 @@ export const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, cla
             };
             return inline ? (
               <code
-                className="bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded text-primary-600 dark:text-primary-400 font-mono text-xs"
+                className="bg-gray-100 dark:bg-theme-bg-tertiary px-1 py-0.5 rounded text-primary-600 dark:text-primary-400 font-mono text-xs"
                 {...rest}
               >
                 {children}

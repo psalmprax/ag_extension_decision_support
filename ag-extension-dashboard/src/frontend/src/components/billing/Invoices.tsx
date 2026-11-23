@@ -24,7 +24,7 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
   return (
     <section
       aria-labelledby="invoices-title"
-      className="backdrop-blur-xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl overflow-hidden relative"
+      className="backdrop-blur-xl bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/10 rounded-xl p-6 shadow-xl overflow-hidden relative"
     >
       <div className="flex flex-wrap justify-between items-center gap-4 pb-6 border-b border-slate-200 dark:border-white/10 relative z-10">
         <div className="flex items-center gap-4">

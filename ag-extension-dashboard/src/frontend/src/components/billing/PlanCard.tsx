@@ -41,7 +41,7 @@ export const PlanCard: React.FC<PlanCardProps> = ({
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.12 }}
-      className={`relative group p-6 backdrop-blur-xl bg-white dark:bg-slate-900/60 border rounded-xl shadow-xl flex flex-col justify-between overflow-hidden transition-all duration-300 ${
+      className={`relative group p-6 backdrop-blur-xl bg-white dark:bg-theme-bg-secondary/60 border rounded-xl shadow-xl flex flex-col justify-between overflow-hidden transition-all duration-300 ${
         isCurrentPlan
           ? 'ring-2 ring-emerald-500/80 border-emerald-500/60'
           : isPro

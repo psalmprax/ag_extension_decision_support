@@ -125,7 +125,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-5 backdrop-blur-xl bg-white dark:bg-slate-900/80 border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-sm space-y-3"
+          className="p-5 backdrop-blur-xl bg-white dark:bg-theme-bg-secondary/80 border border-slate-200 dark:border-white/[0.08] rounded-xl shadow-sm space-y-3"
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -163,7 +163,7 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
 
       {/* ── Farmer Bento Grid ── */}
       {filteredFarmers.length === 0 ? (
-        <div className="p-12 text-center backdrop-blur-xl bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-white/[0.08] rounded-xl space-y-4 shadow-sm">
+        <div className="p-12 text-center backdrop-blur-xl bg-white/80 dark:bg-theme-bg-secondary/40 border border-slate-200 dark:border-white/[0.08] rounded-xl space-y-4 shadow-sm">
           <div className="w-16 h-16 rounded-xl bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/[0.08] text-slate-700 dark:text-slate-300 flex items-center justify-center mx-auto">
             <Users className="w-8 h-8 opacity-70" />
           </div>

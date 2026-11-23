@@ -153,7 +153,7 @@ const MediaAssetsSection = ({
           key={`img-${idx}`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden cursor-pointer"
+          className="bg-white/50 dark:bg-theme-bg-secondary/40 p-4 rounded-xl border border-gray-100 dark:border-white/[0.12] backdrop-blur-xl group overflow-hidden cursor-pointer"
           onClick={() => setSelectedImage(img.url)}
         >
           <div className="relative aspect-video rounded-xl overflow-hidden mb-3">
@@ -191,7 +191,7 @@ const MediaAssetsSection = ({
           key={`vid-${idx}`}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white/50 dark:bg-gray-900/40 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50 backdrop-blur-xl group overflow-hidden"
+          className="bg-white/50 dark:bg-theme-bg-secondary/40 p-4 rounded-xl border border-gray-100 dark:border-white/[0.12] backdrop-blur-xl group overflow-hidden"
         >
           <div className="relative aspect-video rounded-xl overflow-hidden mb-3 bg-black flex items-center justify-center shadow-inner">
             {vid.url && (vid.url.includes('youtube.com') || vid.url.includes('youtu.be')) ? (
@@ -336,7 +336,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
     return (
       <motion.div
         whileHover={{ y: -5 }}
-        className="bg-white/40 dark:bg-gray-900/30 p-8 rounded-xl border border-white/20 dark:border-white/5 shadow-[0_20px_50px_var(--color-outline)] backdrop-blur-3xl h-[350px] flex flex-col group transition-all"
+        className="bg-white/40 dark:bg-theme-bg-secondary/30 p-8 rounded-xl border border-white/20 dark:border-white/5 shadow-[0_20px_50px_var(--color-outline)] backdrop-blur-3xl h-[350px] flex flex-col group transition-all"
       >
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
@@ -387,7 +387,7 @@ export const ReasoningVisuals: React.FC<ReasoningVisualsProps> = ({ visuals, aud
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: idx * 0.1 }}
-              className="p-5 bg-white shadow-lg shadow-gray-200/50 dark:bg-gray-800 dark:shadow-none border border-gray-100 dark:border-gray-700/50 rounded-xl flex flex-col items-center text-center gap-2 group hover:border-primary-500/50 transition-all cursor-default"
+              className="p-5 bg-white shadow-lg shadow-gray-200/50 dark:bg-theme-bg-tertiary dark:shadow-none border border-gray-100 dark:border-white/[0.12] rounded-xl flex flex-col items-center text-center gap-2 group hover:border-primary-500/50 transition-all cursor-default"
             >
               <div
                 className={`p-2 rounded-xl mb-1 ${

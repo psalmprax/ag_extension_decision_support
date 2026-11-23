@@ -7,7 +7,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { UnreadCount } from '@/components/chat/UnreadCount';
 import { useDashboardZone, zoneOf } from '@/hooks/useDashboardZone';
 
-const ACTION = 'flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900/60 text-sm text-slate-800 dark:text-white/85 hover:border-emerald-500/40 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors';
+const ACTION = 'flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-theme-bg-secondary/60 text-sm text-slate-800 dark:text-white/85 hover:border-emerald-500/40 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 transition-colors';
 
 /**
  * Field-staff shortcuts at the top of the dashboard: diagnose a crop photo,
@@ -59,7 +59,7 @@ export const DashboardToolbar: React.FC<{ farmers: Farmer[] }> = ({ farmers }) =
           <select
             value={zone}
             onChange={e => setZone(e.target.value)}
-            className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-2 py-1.5 text-sm text-slate-900 dark:text-white"
+            className="rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-theme-bg-secondary px-2 py-1.5 text-sm text-slate-900 dark:text-white"
           >
             <option value="">{t('dash_zone_all', 'All villages')}</option>
             {zones.map(z => <option key={z} value={z}>{z}</option>)}

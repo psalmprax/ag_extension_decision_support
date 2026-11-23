@@ -23,7 +23,7 @@ const SymptomResultCard: React.FC<{
   <motion.div
     initial={{ opacity: 0, y: 8 }}
     animate={{ opacity: 1, y: 0 }}
-    className="p-4 rounded-lg bg-white dark:bg-[#0d1a14] border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] transition-colors space-y-2.5"
+    className="p-4 rounded-lg bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] transition-colors space-y-2.5"
   >
     <div className="flex items-center justify-between">
       <h4 className="text-xs font-medium text-slate-900 dark:text-white">

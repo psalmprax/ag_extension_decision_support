@@ -14,7 +14,7 @@ const TIME_ZONES: string[] = (() => {
 })();
 
 const inputClass =
-  'mt-1 w-full rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm dark:text-white';
+  'mt-1 w-full rounded-lg border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-theme-bg-tertiary px-3 py-2 text-sm dark:text-white';
 
 function NumberField({ label, hint, value, min, max, onChange }: {
   label: string; hint: string; value: number; min: number; max: number; onChange: (n: number) => void;
@@ -75,7 +75,7 @@ export const ChatTurnTakingSection: React.FC<{ tenantId?: string }> = ({ tenantI
         <MessageSquare className="w-4 h-4" />
         {t('ui_chat_turn_taking_section_farmer_chat_officer_and_ai')}
       </h3>
-      <div className="p-4 bg-gray-50 dark:bg-gray-700/50 rounded-xl space-y-3">
+      <div className="p-4 bg-gray-50 dark:bg-white/[0.04] rounded-xl space-y-3">
         <p className="text-xs text-gray-500 dark:text-gray-400">
           {t('ui_chat_turn_taking_section_farmers_can_ask_the_ai_at_any_time_i')}
         </p>
@@ -100,7 +100,7 @@ export const ChatTurnTakingSection: React.FC<{ tenantId?: string }> = ({ tenantI
               <button key={label} type="button" aria-pressed={hours.days.includes(day)} onClick={() => toggleDay(day)}
                 className={`px-2.5 py-1 rounded-lg text-xs border ${hours.days.includes(day)
                   ? 'bg-primary-600 border-primary-600 text-white'
-                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200'}`}>
+                  : 'bg-white dark:bg-theme-bg-tertiary border-gray-200 dark:border-white/[0.12] text-gray-700 dark:text-gray-200'}`}>
                 {label}
               </button>
             ))}

@@ -268,7 +268,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
               className={`px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-all cursor-pointer ${
                 showHeatmap
                   ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                  : 'bg-gray-100 dark:bg-theme-bg-tertiary text-gray-500'
               }`}
             >
               <Eye className="w-3.5 h-3.5" />
@@ -303,7 +303,7 @@ export const DiseaseSaliencyCanvas: React.FC<DiseaseSaliencyCanvasProps> = ({
         )}
       </div>
 
-      <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-gray-800 bg-gray-950 shadow-lg">
+      <div className="relative rounded-xl overflow-hidden border border-gray-200 dark:border-white/[0.08] bg-gray-950 shadow-lg">
         <canvas
           ref={canvasRef}
           onMouseMove={handleMouseMove}

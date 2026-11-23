@@ -21,7 +21,7 @@ export const MapLegend: React.FC<MapLegendProps> = ({ show, crops, t }) => {
       className="leaflet-bottom leaflet-left"
       style={{ marginBottom: '30px', marginLeft: '10px' }}
     >
-      <div className="leaflet-control bg-white/95 dark:bg-[#0d1a14]/95 text-slate-900 dark:text-slate-100 rounded-md shadow-sm border border-slate-900/[0.08] dark:border-white/[0.1] p-2.5 sm:p-3 min-w-[120px] sm:min-w-[150px]">
+      <div className="leaflet-control bg-white/95 dark:bg-theme-bg-primary/95 text-slate-900 dark:text-slate-100 rounded-md shadow-sm border border-slate-900/[0.08] dark:border-white/[0.1] p-2.5 sm:p-3 min-w-[120px] sm:min-w-[150px]">
         <button
           onClick={() => setIsOpen(!isOpen)}
           className="flex items-center justify-between w-full text-xs font-medium text-slate-600 dark:text-slate-300 gap-1.5"

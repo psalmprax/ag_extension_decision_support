@@ -43,7 +43,7 @@ export function AdminDemoRecords() {
   if (!isAdmin) return null;
 
   return (
-    <section className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 p-5 space-y-4 text-slate-900 dark:text-white">
+    <section className="rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-theme-bg-secondary p-5 space-y-4 text-slate-900 dark:text-white">
       <button
         type="button"
         aria-expanded={open}

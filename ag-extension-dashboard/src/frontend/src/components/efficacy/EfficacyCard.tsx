@@ -60,8 +60,8 @@ function OutcomeModal({ item, onClose }: { item: { visitId: string; farmerName: 
                 </p>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <input value={crop} onChange={e => setCrop(e.target.value)} placeholder="Crop (e.g. maize) *" className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
-                    <input value={category} onChange={e => setCategory(e.target.value)} placeholder="Advice category (e.g. pest) *" className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+                    <input value={crop} onChange={e => setCrop(e.target.value)} placeholder="Crop (e.g. maize) *" className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-theme-bg-tertiary text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+                    <input value={category} onChange={e => setCategory(e.target.value)} placeholder="Advice category (e.g. pest) *" className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-theme-bg-tertiary text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
                 </div>
 
                 <div className="flex flex-wrap gap-2">
@@ -70,7 +70,7 @@ function OutcomeModal({ item, onClose }: { item: { visitId: string; farmerName: 
                             key={v.key}
                             onClick={() => setVerdict(v.key)}
                             aria-pressed={verdict === v.key}
-                            className={`px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${verdict === v.key ? `${v.tone} ring-2 ring-offset-1 ring-current` : 'border-gray-200 dark:border-gray-700 opacity-70 hover:opacity-100'}`}
+                            className={`px-3 py-2 rounded-xl text-xs font-medium border transition-colors ${verdict === v.key ? `${v.tone} ring-2 ring-offset-1 ring-current` : 'border-gray-200 dark:border-white/[0.12] opacity-70 hover:opacity-100'}`}
                         >
                             {v.label}
                         </button>
@@ -82,7 +82,7 @@ function OutcomeModal({ item, onClose }: { item: { visitId: string; farmerName: 
                     onChange={e => setNotes(e.target.value)}
                     placeholder="Officer notes (optional)"
                     rows={3}
-                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                    className="w-full px-3 py-2 rounded-xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-theme-bg-tertiary text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
                 />
 
                 <button
@@ -113,7 +113,7 @@ export function EfficacyCard() {
             </div>
 
             {summary.isLoading ? (
-                <div className="h-16 animate-pulse bg-gray-100 dark:bg-gray-800 rounded-xl" data-testid="efficacy-skeleton" />
+                <div className="h-16 animate-pulse bg-gray-100 dark:bg-theme-bg-tertiary rounded-xl" data-testid="efficacy-skeleton" />
             ) : summary.data ? (
                 <div className="flex items-center gap-4 mb-3">
                     <div className="flex items-center gap-2">
@@ -130,7 +130,7 @@ export function EfficacyCard() {
             ) : null}
 
             {(followups.data?.length ?? 0) > 0 && (
-                <div className="border-t border-gray-100 dark:border-gray-800 pt-3 mt-3">
+                <div className="border-t border-gray-100 dark:border-white/[0.08] pt-3 mt-3">
                     <div className="flex items-center gap-2 mb-2">
                         <ClipboardList className="w-3.5 h-3.5 text-amber-500" />
                         <p className="text-xs font-medium">

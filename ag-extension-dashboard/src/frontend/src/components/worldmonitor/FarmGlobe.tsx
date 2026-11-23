@@ -72,7 +72,7 @@ export function FarmGlobe({ layers, toggles }: { layers: GlobeLayers | null; tog
           {t('globe_unsupported', { defaultValue: 'This device cannot show the 3D globe. The counts above are the same data.' })}
         </p>
       }
-      className="h-[520px] rounded-xl border border-slate-900/[0.08] dark:border-white/[0.08] bg-[#f3f6f4] dark:bg-[#0d1a14]"
+      className="h-[520px] rounded-xl border border-slate-900/[0.08] dark:border-white/[0.08] bg-[#f3f6f4] dark:bg-theme-bg-primary"
     />
   );
 }
