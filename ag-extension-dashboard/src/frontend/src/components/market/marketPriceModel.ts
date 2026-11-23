@@ -1,4 +1,5 @@
 import type { MarketPricesResponse, PriceHistorySeries } from '@/api/priceService';
+import { sortedCopy } from '@/lib/sortedCopy';
 
 export interface PriceChartRow {
   crop: string;
@@ -48,7 +49,7 @@ export interface HistoryChartModel {
 }
 
 export function mergeHistorySeries(historyData?: PriceHistorySeries[]): HistoryChartModel {
-  const series = [...(historyData ?? [])].sort((a, b) => a.crop.localeCompare(b.crop));
+  const series = sortedCopy(historyData ?? [], (a, b) => a.crop.localeCompare(b.crop));
   const dateMap = new Map<string, Record<string, string | number>>();
   for (const s of series) {
     for (const point of s.series) {

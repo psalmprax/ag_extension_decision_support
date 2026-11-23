@@ -1,6 +1,7 @@
 import React from 'react';
 import { formatNumber } from './chartFormat';
 import { seriesColor } from './chartConfig';
+import { sortedCopy } from '@/lib/sortedCopy';
 
 export interface RankedBarRow {
   label: string;
@@ -26,7 +27,7 @@ interface RankedBarsProps {
  * hides behind a hover.
  */
 export const RankedBars: React.FC<RankedBarsProps> = ({ rows, label, formatValue = value => formatNumber(value, 1), sort = true }) => {
-  const ordered = sort ? [...rows].sort((a, b) => b.value - a.value) : rows;
+  const ordered = sort ? sortedCopy(rows, (a, b) => b.value - a.value) : rows;
   const max = Math.max(1, ...ordered.map(row => row.value));
   return (
     <ul aria-label={label} className="space-y-3">

@@ -116,12 +116,14 @@ describe('ChartFrame', () => {
 
 describe('RankedBars', () => {
   it('lists rows largest first with every value printed', () => {
-    render(<RankedBars label="Crops" rows={[{ label: 'Beans', value: 2 }, { label: 'Maize', value: 5, detail: '62%' }]} />);
+    const rows = [{ label: 'Beans', value: 2 }, { label: 'Maize', value: 5, detail: '62%' }];
+    render(<RankedBars label="Crops" rows={rows} />);
     const items = screen.getAllByRole('listitem');
     expect(items[0]).toHaveTextContent('Maize');
     expect(items[0]).toHaveTextContent('5');
     expect(items[0]).toHaveTextContent('62%');
     expect(items[1]).toHaveTextContent('Beans');
+    expect(rows.map(row => row.label)).toEqual(['Beans', 'Maize']);
   });
 
   it('keeps a fixed order when asked, and draws no bar for zero', () => {
