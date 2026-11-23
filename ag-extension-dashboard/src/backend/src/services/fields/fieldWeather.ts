@@ -27,7 +27,7 @@ export async function fieldWeather(latitude: number, longitude: number, days = F
         solarMjM2: valueOrNull(point, 'ALLSKY_SFC_SW_DWN'),
         rainMm: valueOrNull(point, 'PRECTOTCORR'),
     }));
-    const latest = [...daily].reverse().find(day => day.solarMjM2 !== null || day.rainMm !== null);
+    const latest = daily.findLast(day => day.solarMjM2 !== null || day.rainMm !== null);
     return {
         source: 'NASA POWER',
         location: { latitude, longitude },

@@ -82,7 +82,7 @@ export const SoilTestsPanel: React.FC<{ fieldId: string; fieldName: string }> = 
               </tr>
             </thead>
             <tbody>
-              {[...tests].reverse().map(test => (
+              {tests.toReversed().map(test => (
                 <tr key={test.id} className="border-b border-slate-900/[0.06] dark:border-white/[0.06] text-slate-800 dark:text-theme-text-primary">
                   <td className="py-2 pe-3 whitespace-nowrap">{formatDate(test.testedAt)}</td>
                   <td className="py-2 pe-3">{test.labName || '—'}</td>
