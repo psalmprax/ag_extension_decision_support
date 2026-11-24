@@ -1,3 +1,5 @@
+import { readFileSync } from 'fs';
+import { join } from 'path';
 /**
  * The audit log hash chain: each entry links to the previous one, and the check reports the
  * first entry where the chain breaks. The SQL itself runs against Postgres in the real-backend
@@ -48,9 +50,19 @@ describe('appendChainedAuditEntry', () => {
     });
 
     it('hashes every stored column, including the previous hash and the time', () => {
-        for (const column of ['chain_seq', 'prev_hash', 'actor_id', 'action', 'path', 'request_body', 'created_at']) {
+        for (const column of ['chain_seq', 'prev_hash', 'actor_key', 'action', 'path', 'request_body', 'created_at']) {
             expect(entryHashSql('a')).toContain(`a.${column}`);
         }
+    });
+
+    it('hashes the actor as written, not the account link that deleting the account clears', () => {
+        expect(entryHashSql('a')).not.toContain('a.actor_id');
+    });
+
+    it('lists already-orphaned entries in the migration with the same hash the check uses', () => {
+        const migration = readFileSync(join(__dirname, '../../prisma/migrations/20261203090000_audit_actor_key/migration.sql'), 'utf8');
+        const columns = (sql: string) => /jsonb_build_array\(([^)]*)\)/.exec(sql.replace(/\s+/g, ' '))?.[1].split(',').map(c => c.trim());
+        expect(columns(migration)).toEqual(columns(entryHashSql('a')));
     });
 });
 

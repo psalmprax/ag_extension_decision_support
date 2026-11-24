@@ -5,6 +5,8 @@ export interface AuditChainCheck {
   status: 'intact' | 'broken' | 'empty';
   checkedEntries: number;
   unchainedEntries: number;
+  /** From before 3 December 2026, with their account since deleted: their content cannot be checked. */
+  unverifiableEntries: number;
   firstChainedAt: string | null;
   head: { seq: number; hash: string; at: string } | null;
   problem: { seq: number; kind: 'changed' | 'missing'; at: string } | null;

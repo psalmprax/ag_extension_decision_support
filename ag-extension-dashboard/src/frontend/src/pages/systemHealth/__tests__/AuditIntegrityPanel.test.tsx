@@ -8,7 +8,7 @@ import { checkAuditChain, type AuditChainCheck } from '@/api/auditService';
 vi.mock('@/api/auditService', () => ({ checkAuditChain: vi.fn() }));
 
 const base: AuditChainCheck = {
-  status: 'intact', checkedEntries: 1204, unchainedEntries: 2934, firstChainedAt: '2026-12-02T09:00:00Z',
+  status: 'intact', checkedEntries: 1204, unchainedEntries: 2934, unverifiableEntries: 0, firstChainedAt: '2026-12-02T09:00:00Z',
   head: { seq: 1204, hash: 'ab'.repeat(32), at: '2026-12-03T10:00:00Z' }, problem: null,
 };
 
@@ -30,6 +30,13 @@ describe('AuditIntegrityPanel', () => {
     expect(await screen.findByText(/Intact: all 1,204 entries since/)).toBeInTheDocument();
     expect(screen.getByText(/2,934 older entries were written before the chain began/)).toBeInTheDocument();
     expect(screen.getByText('ab'.repeat(32))).toBeInTheDocument();
+  });
+
+  it('counts entries whose deleted account left them uncheckable apart, without calling them changed', async () => {
+    check({ ...base, unverifiableEntries: 163 });
+    expect(await screen.findByText(/Intact: the 1,041 entries since .* that can be checked/)).toBeInTheDocument();
+    expect(screen.getByText(/163 entries from before 3 December 2026 cannot be checked: their account was deleted/)).toBeInTheDocument();
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('names the entry where an edit broke the chain', async () => {

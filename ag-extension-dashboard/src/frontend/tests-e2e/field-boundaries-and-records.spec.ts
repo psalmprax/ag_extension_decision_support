@@ -127,7 +127,10 @@ test.describe('field boundaries and records', () => {
     const { context, page } = await signedIn(browser, E2E_SYSTEM_ADMIN.email, E2E_SYSTEM_ADMIN.password());
     await page.goto('/system-health');
     await page.getByRole('button', { name: 'Check the audit log' }).click();
-    await expect(page.getByText(/^Intact: all [\d,]+ entries since/).or(page.getByText(/No entries are chained yet/))).toBeVisible();
+    // Entries whose account a fixture reset deleted before the actor_key fix are counted apart as
+    // uncheckable; nothing may be reported as changed or missing.
+    await expect(page.getByText(/^Intact: (all [\d,]+ entries|the [\d,]+ entries .* that can be checked)/).or(page.getByText(/No entries are chained yet/))).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Audit log integrity' }).getByRole('alert')).toHaveCount(0);
     await context.close();
   });
 });

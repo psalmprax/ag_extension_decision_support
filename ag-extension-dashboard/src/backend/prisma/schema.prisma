@@ -452,6 +452,9 @@ model Report {
 model AuditLog {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   actorId      String?   @map("actor_id") @db.Uuid
+  /// The actor as written, with no foreign key: the hash chain covers this, not actorId, which
+  /// becomes null when the account is deleted
+  actorKey     String?   @map("actor_key") @db.Uuid
   actorRole    String?   @map("actor_role") @db.VarChar(50)
   action       String    @db.VarChar(120)
   method       String    @db.VarChar(10)
@@ -473,6 +476,14 @@ model AuditLog {
   @@index([action, createdAt])
   @@index([resourceType, resourceId])
   @@map("audit_logs")
+}
+
+/// Facts about the audit hash chain that migrations fix, such as the first entry with actor_key
+model AuditChainMeta {
+  key   String @id @db.VarChar(64)
+  value String
+
+  @@map("audit_chain_meta")
 }
 
 model AnalyticsEvent {

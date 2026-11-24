@@ -18,7 +18,8 @@ const AUDIT_CHAIN_LOCK = 727_011_001;
  * they can never disagree on what an unchanged entry hashes to.
  */
 export function entryHashSql(alias: string): string {
-    const columns = ['chain_seq', 'prev_hash', 'actor_id', 'actor_role', 'action', 'method', 'path', 'resource_type', 'resource_id', 'status_code', 'ip_address', 'user_agent', 'request_body', 'created_at'];
+    // actor_key, not actor_id: deleting an account sets actor_id to NULL, which is not tampering.
+    const columns = ['chain_seq', 'prev_hash', 'actor_key', 'actor_role', 'action', 'method', 'path', 'resource_type', 'resource_id', 'status_code', 'ip_address', 'user_agent', 'request_body', 'created_at'];
     return `encode(sha256(convert_to(jsonb_build_array(${columns.map(c => `${alias}.${c}`).join(', ')})::text, 'UTF8')), 'hex')`;
 }
 
@@ -48,9 +49,9 @@ export async function appendChainedAuditEntry(values: AuditRowValues): Promise<v
         const seq = previous ? (BigInt(previous.chain_seq) + 1n).toString() : '1';
         const inserted = await client.query<{ id: string }>(
             `INSERT INTO audit_logs
-               (actor_id, actor_role, action, method, path, resource_type, resource_id, status_code, ip_address, user_agent, request_body,
-                created_at, chain_seq, prev_hash)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), $12, $13)
+               (actor_id, actor_key, actor_role, action, method, path, resource_type, resource_id, status_code, ip_address, user_agent,
+                request_body, created_at, chain_seq, prev_hash)
+             VALUES ($1, $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), $12, $13)
              RETURNING id`,
             [...values, seq, previous?.entry_hash ?? null]
         );
@@ -70,6 +71,11 @@ export interface ChainCheck {
     head: { seq: number; hash: string; at: string } | null;
     /** The first entry where the chain breaks: its content changed, or entries before it are gone. */
     problem: { seq: number; kind: ChainProblem; at: string } | null;
+    /**
+     * Entries whose account was deleted before 3 December 2026: the hash then covered the account
+     * link, which deletion clears, so their content can no longer be checked. Their links still are.
+     */
+    unverifiableEntries: number;
 }
 
 interface ChainRow {
@@ -81,6 +87,14 @@ interface ChainRow {
     gap: boolean;
 }
 
+/**
+ * An entry whose account was deleted before actor_key existed: the migration that added it listed
+ * every entry that had already stopped matching its hash with no account named. Only those
+ * qualify, so an entry that stops matching later is reported as changed.
+ */
+const ACTOR_LOST_SQL = `(a.actor_key IS NULL AND a.chain_seq = ANY(COALESCE(
+    (SELECT string_to_array(NULLIF(value, ''), ',')::bigint[] FROM audit_chain_meta WHERE key = 'actor_lost_seqs'), '{}')))`;
+
 /** Walks the whole chain in order and reports the first break, if any. */
 export async function checkAuditChain(): Promise<ChainCheck> {
     const [{ rows }, counts] = await Promise.all([
@@ -89,7 +103,8 @@ export async function checkAuditChain(): Promise<ChainCheck> {
                 SELECT a.chain_seq, a.prev_hash, a.entry_hash, a.created_at,
                        ${entryHashSql('a')} AS recomputed,
                        LAG(a.entry_hash) OVER (ORDER BY a.chain_seq) AS previous_hash,
-                       LAG(a.chain_seq) OVER (ORDER BY a.chain_seq) AS previous_seq
+                       LAG(a.chain_seq) OVER (ORDER BY a.chain_seq) AS previous_seq,
+                       ${ACTOR_LOST_SQL} AS actor_lost
                   FROM audit_logs a
                  WHERE a.chain_seq IS NOT NULL
             )
@@ -98,20 +113,21 @@ export async function checkAuditChain(): Promise<ChainCheck> {
                    prev_hash IS NOT DISTINCT FROM previous_hash AS link_ok,
                    chain_seq <> COALESCE(previous_seq, 0) + 1 AS gap
               FROM chained
-             WHERE NOT (entry_hash IS NOT NULL AND recomputed = entry_hash)
+             WHERE NOT (entry_hash IS NOT NULL AND (recomputed = entry_hash OR actor_lost))
                 OR prev_hash IS DISTINCT FROM previous_hash
                 OR chain_seq <> COALESCE(previous_seq, 0) + 1
              ORDER BY chain_seq
              LIMIT 1`
         ),
-        query<{ chained: string; unchained: string; first_at: Date | null; head_seq: string | null; head_hash: string | null; head_at: Date | null }>(
+        query<{ chained: string; unchained: string; unverifiable: string; first_at: Date | null; head_seq: string | null; head_hash: string | null; head_at: Date | null }>(
             `SELECT COUNT(*) FILTER (WHERE chain_seq IS NOT NULL) AS chained,
+                    COUNT(*) FILTER (WHERE chain_seq IS NOT NULL AND ${ACTOR_LOST_SQL} AND entry_hash IS DISTINCT FROM ${entryHashSql('a')}) AS unverifiable,
                     COUNT(*) FILTER (WHERE chain_seq IS NULL) AS unchained,
                     MIN(created_at) FILTER (WHERE chain_seq IS NOT NULL) AS first_at,
                     (SELECT chain_seq FROM audit_logs WHERE chain_seq IS NOT NULL ORDER BY chain_seq DESC LIMIT 1) AS head_seq,
                     (SELECT entry_hash FROM audit_logs WHERE chain_seq IS NOT NULL ORDER BY chain_seq DESC LIMIT 1) AS head_hash,
                     (SELECT created_at FROM audit_logs WHERE chain_seq IS NOT NULL ORDER BY chain_seq DESC LIMIT 1) AS head_at
-               FROM audit_logs`
+               FROM audit_logs a`
         ),
     ]);
     const count = counts.rows[0];
@@ -121,6 +137,7 @@ export async function checkAuditChain(): Promise<ChainCheck> {
         status: checkedEntries === 0 ? 'empty' : broken ? 'broken' : 'intact',
         checkedEntries,
         unchainedEntries: Number(count?.unchained ?? 0),
+        unverifiableEntries: Number(count?.unverifiable ?? 0),
         firstChainedAt: count?.first_at ? new Date(count.first_at).toISOString() : null,
         head: count?.head_seq && count.head_hash
             ? { seq: Number(count.head_seq), hash: count.head_hash, at: new Date(count.head_at as Date).toISOString() }

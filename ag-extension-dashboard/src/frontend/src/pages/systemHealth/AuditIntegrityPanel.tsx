@@ -19,7 +19,9 @@ function Verdict({ check }: { check: AuditChainCheck }) {
     return (
       <p className="flex items-start gap-2 text-sm text-slate-800 dark:text-theme-text-primary">
         <CheckCircle className="w-4 h-4 mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-        {t('audit_chain_intact', { defaultValue: 'Intact: all {count} entries since {date} match their hashes and links.', count: formatNumber(check.checkedEntries, 0), date: check.firstChainedAt ? when(check.firstChainedAt) : '—' })}
+        {check.unverifiableEntries > 0
+          ? t('audit_chain_intact_checkable', { defaultValue: 'Intact: the {count} entries since {date} that can be checked match their hashes, and every link matches.', count: formatNumber(check.checkedEntries - check.unverifiableEntries, 0), date: check.firstChainedAt ? when(check.firstChainedAt) : '—' })
+          : t('audit_chain_intact', { defaultValue: 'Intact: all {count} entries since {date} match their hashes and links.', count: formatNumber(check.checkedEntries, 0), date: check.firstChainedAt ? when(check.firstChainedAt) : '—' })}
       </p>
     );
   }
@@ -78,6 +80,11 @@ export const AuditIntegrityPanel: React.FC = () => {
           {data.unchainedEntries > 0 && (
             <p className="text-xs text-slate-600 dark:text-theme-text-muted">
               {t('audit_chain_unchained', { defaultValue: '{count} older entries were written before the chain began and cannot be checked.', count: formatNumber(data.unchainedEntries, 0) })}
+            </p>
+          )}
+          {data.unverifiableEntries > 0 && (
+            <p className="text-xs text-slate-600 dark:text-theme-text-muted">
+              {t('audit_chain_unverifiable', { defaultValue: '{count} entries from before 3 December 2026 cannot be checked: their account was deleted, and the log did not yet keep its own copy of who wrote them. Their place in the chain is still checked.', count: formatNumber(data.unverifiableEntries, 0) })}
             </p>
           )}
           {data.head && (
