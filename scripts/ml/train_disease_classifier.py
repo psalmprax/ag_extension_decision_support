@@ -40,6 +40,7 @@ numbers mean nothing and its manifest entry is marked as a smoke run.
 from __future__ import annotations
 
 import argparse
+import io
 import json
 import random
 import re
@@ -81,9 +82,27 @@ def plantdoc_label(row: dict) -> str:
 
 @dataclass
 class Sample:
-    image: object  # PIL image
+    jpeg: bytes  # shrunk to a little over the training size, so ~25k photos fit in a runner's memory
     label: str
     source: str
+
+    @property
+    def image(self):
+        from PIL import Image
+
+        return Image.open(io.BytesIO(self.jpeg)).convert("RGB")
+
+
+def compact(image, size: int) -> bytes:
+    """RGB, shorter side at most 1.15 x the training size, stored as JPEG."""
+    image = image.convert("RGB")
+    short = round(size * 1.15)
+    if min(image.size) > short:
+        scale = short / min(image.size)
+        image = image.resize((max(1, round(image.width * scale)), max(1, round(image.height * scale))))
+    buffer = io.BytesIO()
+    image.save(buffer, format="JPEG", quality=92)
+    return buffer.getvalue()
 
 
 @dataclass
@@ -107,7 +126,7 @@ def holdout(samples: list[Sample], share: float, seed: int) -> tuple[list[Sample
     return train, test
 
 
-def load_sources(names: list[str], max_per_source: int | None, seed: int) -> Splits:
+def load_sources(names: list[str], max_per_source: int | None, seed: int, size: int) -> Splits:
     from datasets import load_dataset
 
     splits = Splits()
@@ -117,13 +136,13 @@ def load_sources(names: list[str], max_per_source: int | None, seed: int) -> Spl
         if name == "plantdoc":
             data = load_dataset(repo, split="train")
             for row in data.select(range(min(len(data), max_per_source or len(data)))):
-                sample = Sample(row["image"].convert("RGB"), plantdoc_label(row), name)
+                sample = Sample(compact(row["image"], size), plantdoc_label(row), name)
                 (splits.test if row["split"] == "test" else splits.train).append(sample)
         elif name == "maize":
             data = load_dataset(repo, split="train")
             names_ = data.features["label"].names
             rows = data.select(range(min(len(data), max_per_source or len(data))))
-            samples = [Sample(r["image"].convert("RGB"), MAIZE_LABELS[names_[r["label"]]], name) for r in rows]
+            samples = [Sample(compact(r["image"], size), MAIZE_LABELS[names_[r["label"]]], name) for r in rows]
             train, test = holdout(samples, 0.15, seed)
             splits.train += train
             splits.test += test
@@ -132,7 +151,7 @@ def load_sources(names: list[str], max_per_source: int | None, seed: int) -> Spl
                 data = load_dataset(repo, split=split_name)
                 names_ = data.features["label"].names
                 for r in data.select(range(min(len(data), max_per_source or len(data)))):
-                    target.append(Sample(r["image"].convert("RGB"), CASSAVA_LABELS[names_[r["label"]]], name))
+                    target.append(Sample(compact(r["image"], size), CASSAVA_LABELS[names_[r["label"]]], name))
     return splits
 
 
@@ -149,7 +168,7 @@ def smoke_sources(seed: int) -> Splits:
             base = colours[label]
             pixel = tuple(min(255, max(0, c + rng.randint(-20, 20))) for c in base)
             image = Image.new("RGB", (96, 96), pixel)
-            (splits.test if i < 6 else splits.train).append(Sample(image, label, "smoke"))
+            (splits.test if i < 6 else splits.train).append(Sample(compact(image, 96), label, "smoke"))
     return splits
 
 
@@ -363,7 +382,7 @@ def main() -> int:
     args.out.mkdir(parents=True, exist_ok=True)
 
     sources = ["smoke"] if args.smoke else [s.strip() for s in args.sources.split(",") if s.strip()]
-    splits = smoke_sources(args.seed) if args.smoke else load_sources(sources, args.max_per_source, args.seed)
+    splits = smoke_sources(args.seed) if args.smoke else load_sources(sources, args.max_per_source, args.seed, args.size)
     counts: dict[str, int] = {}
     for sample in splits.train:
         counts[sample.label] = counts.get(sample.label, 0) + 1
