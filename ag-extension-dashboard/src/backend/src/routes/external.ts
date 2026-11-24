@@ -58,17 +58,17 @@ router.get('/satellite', validate(soilDataQuerySchema), async (req: Request, res
     }
 });
 
-// Get vegetation (NDVI proxy) time series — NASA POWER agroclimatology
-router.get('/ndvi-timeseries', validate(soilDataQuerySchema), async (req: Request, res: Response) => {
+// Daily rain and mean temperature measured by NASA POWER at a point
+router.get('/recent-weather', validate(soilDataQuerySchema), async (req: Request, res: Response) => {
     try {
         const lat = parseFloat(req.query.lat as string);
         const lng = parseFloat(req.query.lng as string);
-        const days = Math.min(Math.max(parseInt(req.query.days as string, 10) || 90, 7), 365);
-        const series = await SatelliteService.getNDVITimeSeries(lat, lng, days);
+        const days = Math.min(Math.max(parseInt(req.query.days as string, 10) || 14, 7), 365);
+        const series = await SatelliteService.getDailyWeather(lat, lng, days);
         res.json({ success: true, data: series });
     } catch (error) {
-        logger.error('NDVI time series route error:', error);
-        safeError(res, 500, 'Failed to fetch vegetation time series');
+        logger.error('Recent weather route error:', error);
+        safeError(res, 500, 'Failed to fetch recent weather');
     }
 });
 

@@ -14,12 +14,16 @@ export interface SpectralData {
     resolution: string;
 }
 
-export interface VegetationVigorEstimateResult {
-    data: Array<{ date: string; vigor: number }>;
-    source: 'nasa-power-agroclimate-proxy';
-    dataStatus: 'estimated' | 'unavailable';
+/** Daily rain and mean air temperature that NASA POWER reports for a point: weather, not the crop. */
+export interface DailyWeatherResult {
+    data: Array<{ date: string; rainMm: number; tempC: number }>;
+    source: 'nasa-power';
+    dataStatus: 'live' | 'unavailable';
     reason: string;
 }
+
+/** NASA POWER marks a missing value with -999. */
+const isMeasured = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value > -900;
 
 export interface SatelliteImagery {
     url: string;
@@ -88,34 +92,31 @@ export class SatelliteService {
         return [this.toSpectralData(ndvi, lat, lng, 'nasa-gibs', '250m')];
     }
 
-    static async getNDVITimeSeries(lat: number, lng: number, days = 90): Promise<VegetationVigorEstimateResult> {
+    /**
+     * Daily rain (mm) and mean temperature (°C) from NASA POWER for the last `days` days. These are
+     * measurements of the weather, not of the crop: they replace a vegetation score that was a
+     * formula of the app's own on these two values, with no source.
+     */
+    static async getDailyWeather(lat: number, lng: number, days = 14): Promise<DailyWeatherResult> {
+        const source = 'nasa-power' as const;
         try {
-            // NASA POWER provides agroclimatology data that drives vegetation models.
-            // While not NDVI, temperature and precipitation trends are the actual
-            // biophysical inputs that correlate with crop vigor.
             const { NasaPowerService } = await import('./nasaPowerService');
             const endDate = new Date().toISOString().split('T')[0];
             const startDate = new Date(Date.now() - days * 86400000).toISOString().split('T')[0];
             const daily = await NasaPowerService.getDaily(lat, lng, startDate, endDate, ['T2M', 'PRECTOTCORR']);
-            if (!Array.isArray(daily) || daily.length === 0) {
-                return { data: [], source: 'nasa-power-agroclimate-proxy', dataStatus: 'unavailable', reason: 'NASA POWER returned no data for the requested window.' };
-            }
-            const validDaily = daily.filter(d => typeof d.T2M === 'number' && Number(d.T2M) > -900);
-            if (validDaily.length === 0) {
-                return { data: [], source: 'nasa-power-agroclimate-proxy', dataStatus: 'unavailable', reason: 'NASA POWER returned no valid observations for the requested window.' };
-            }
-            const ndviApprox = validDaily.map(d => {
-                const temp = Number(d.T2M ?? 20);
-                const precip = Number(d.PRECTOTCORR ?? 0);
-                const score = 0.35 + Math.min(0.4, (precip / 10) * 0.3) - 0.015 * Math.abs(temp - 24);
-                return {
+            const data = (Array.isArray(daily) ? daily : [])
+                .filter(d => isMeasured(d.T2M) && isMeasured(d.PRECTOTCORR))
+                .map(d => ({
                     date: String(d.date || '').slice(0, 10),
-                    vigor: Math.round(Math.min(0.85, Math.max(0.15, score)) * 1000) / 1000,
-                };
-            });
-            return { data: ndviApprox, source: 'nasa-power-agroclimate-proxy', dataStatus: 'estimated', reason: 'Estimated vegetation vigor proxy from NASA POWER temperature and precipitation; this is not satellite NDVI.' };
+                    rainMm: Math.round(Number(d.PRECTOTCORR) * 10) / 10,
+                    tempC: Math.round(Number(d.T2M) * 10) / 10,
+                }));
+            if (data.length === 0) {
+                return { data, source, dataStatus: 'unavailable', reason: 'NASA POWER has no measurements for these days yet.' };
+            }
+            return { data, source, dataStatus: 'live', reason: 'Daily rain and mean air temperature from NASA POWER for this location.' };
         } catch {
-            return { data: [], source: 'nasa-power-agroclimate-proxy', dataStatus: 'unavailable', reason: 'NASA POWER agroclimatology service unreachable.' };
+            return { data: [], source, dataStatus: 'unavailable', reason: 'NASA POWER could not be reached.' };
         }
     }
 

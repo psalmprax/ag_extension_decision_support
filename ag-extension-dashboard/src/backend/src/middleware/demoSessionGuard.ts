@@ -24,7 +24,7 @@ export const DEMO_READS: ReadonlySet<string> = new Set([
   '/campaigns/outreach-stats', // demo-linked messages only
   '/efficacy/followups', // the demo officer's own queue
   '/efficacy/summary',
-  '/external/ndvi-timeseries',
+  '/external/recent-weather',
   '/external/weather',
   '/knowledge/quota',
   '/knowledge/stats',

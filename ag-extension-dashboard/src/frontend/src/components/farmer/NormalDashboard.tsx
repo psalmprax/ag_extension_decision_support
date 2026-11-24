@@ -4,9 +4,9 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { MessageSquare, Loader2, Globe } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { fetchMarketPrices, MarketPrice, MarketDataStatus } from '@/api/priceService';
-import { fetchUsdaBenchmark, fetchNDVITimeSeries } from '@/api/agriDataService';
+import { fetchUsdaBenchmark, fetchRecentWeather } from '@/api/agriDataService';
 import type { UsdaBenchmarkResult } from '@/api/agriDataService';
-import { VegetationCard } from './VegetationCard';
+import { RecentWeather } from '@/components/weather/RecentWeather';
 import { dataStatusLabel } from './dataStatusLabels';
 import type { FarmerStats } from '@/api/farmerService';
 import { MetricCardSkeleton, ChartSkeleton } from '../Skeleton';
@@ -120,9 +120,9 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
     staleTime: 12 * 60 * 60 * 1000,
   });
 
-  const { data: ndviData, isLoading: ndviLoading, isError: ndviError } = useQuery({
-    queryKey: ['farmer-vegetation', farmLocation?.lat, farmLocation?.lng],
-    queryFn: () => fetchNDVITimeSeries(farmLocation!.lat, farmLocation!.lng, 14),
+  const { data: weatherData, isLoading: weatherLoading, isError: weatherError } = useQuery({
+    queryKey: ['farmer-recent-weather', farmLocation?.lat, farmLocation?.lng],
+    queryFn: () => fetchRecentWeather(farmLocation!.lat, farmLocation!.lng, 14),
     enabled: !!user && !!farmLocation,
     staleTime: 6 * 60 * 60 * 1000,
   });
@@ -239,9 +239,11 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
         </div>
       </div>
 
-      {/* Row 2 — Vegetation Health + USDA Benchmarks */}
+      {/* Row 2 — Recent weather + USDA Benchmarks */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <VegetationCard data={ndviData} loading={ndviLoading} isError={ndviError} hasLocation={!!farmLocation} />
+        <div className="bg-white dark:bg-white/[0.03] p-5 sm:p-6 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08]">
+          <RecentWeather data={weatherData} loading={weatherLoading} isError={weatherError} hasLocation={!!farmLocation} scope="farm" />
+        </div>
         {renderUsdaCard(usdaData, usdaLoading, t)}
       </div>
     </div>

@@ -58,11 +58,22 @@ describe('production data truthfulness', () => {
     expect(result.score).toBeLessThan(calculateWeatherScore(weather, 'maize').score);
   });
 
-  it('does not generate historical NDVI values without a provider history query', async () => {
-    const result = await SatelliteService.getNDVITimeSeries(-1.28, 36.82);
+  it('gives no weather rather than made-up values when NASA POWER does not answer', async () => {
+    const result = await SatelliteService.getDailyWeather(-1.28, 36.82);
 
     expect(result.data).toEqual([]);
     expect(result.dataStatus).toBe('unavailable');
+  });
+
+  it('reports NASA POWER rain and temperature as measured, leaving out its missing-value marks', async () => {
+    const { NasaPowerService } = await import('@/services/nasaPowerService');
+    const spy = jest.spyOn(NasaPowerService, 'getDaily').mockResolvedValue([
+      { date: '2026-11-20', T2M: 21.44, PRECTOTCORR: 3.27 },
+      { date: '2026-11-21', T2M: -999, PRECTOTCORR: 1 },
+    ] as never);
+    const result = await SatelliteService.getDailyWeather(-1.28, 36.82, 14);
+    expect(result).toMatchObject({ source: 'nasa-power', dataStatus: 'live', data: [{ date: '2026-11-20', rainMm: 3.3, tempC: 21.4 }] });
+    spy.mockRestore();
   });
 
   it('returns explicit unavailable soil data after provider failure', async () => {

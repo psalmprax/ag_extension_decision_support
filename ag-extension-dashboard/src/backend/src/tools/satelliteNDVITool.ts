@@ -10,25 +10,24 @@ const satelliteNDVISchema = z.object({
 
 export const satelliteNDVITool: Tool<typeof satelliteNDVISchema> = {
   name: 'satellite_ndvi_analysis',
-  description: 'Returns satellite spectral indices when Sentinel Hub is configured, plus a *climate-derived vegetation vigor proxy* time series (NOT satellite NDVI) from NASA POWER temperature/precipitation. Always tell the user which of the two you are quoting; the proxy cannot detect disease, pests or field-level stress.',
+  description: 'Returns satellite spectral indices (NDVI) when Sentinel Hub is configured, and the daily rain and mean temperature NASA POWER measured at the point. Rain and temperature are weather, not a measure of the crop: never present them as vegetation health, disease, pests or field-level stress.',
   schema: satelliteNDVISchema,
   execute: async ({ latitude, longitude, daysBack }) => {
     try {
       const [current, timeSeries, imagery] = await Promise.all([
         SatelliteService.getSpectralIndices(latitude, longitude),
-        SatelliteService.getNDVITimeSeries(latitude, longitude, daysBack),
+        SatelliteService.getDailyWeather(latitude, longitude, Math.min(daysBack, 30)),
         SatelliteService.getImageryUrl(latitude, longitude),
       ]);
 
       const result = {
         location: { latitude, longitude },
         current: current[0] || null,
-        timeSeries: timeSeries.data.slice(-12),
-        timeSeriesStatus: timeSeries.dataStatus,
-        timeSeriesType: 'estimated_vegetation_vigor_proxy',
-        timeSeriesReason: timeSeries.reason,
+        recentWeather: timeSeries.data,
+        recentWeatherStatus: timeSeries.dataStatus,
+        recentWeatherSource: 'NASA POWER daily rain (mm) and mean air temperature (°C)',
         imagery,
-        interpretation: interpretNDVI(current[0]?.ndvi, timeSeries.data, timeSeries.dataStatus),
+        interpretation: interpret(current[0]?.ndvi, timeSeries.data),
         currentStatus: current[0] ? 'live_satellite' : 'unavailable',
         generatedAt: new Date().toISOString(),
       };
@@ -43,60 +42,13 @@ export const satelliteNDVITool: Tool<typeof satelliteNDVISchema> = {
   },
 };
 
-function interpretNDVI(
-  current: number | undefined,
-  series: Array<{ date: string; vigor: number }>,
-  seriesStatus: 'estimated' | 'unavailable'
-): string {
-  const proxyNote = seriesStatus === 'estimated'
-    ? ' (trend is a climate-derived vigor proxy from NASA POWER, not satellite NDVI)'
-    : '';
-  if (current === undefined || current === null) {
-    return interpretMissingNDVI(series, seriesStatus, proxyNote);
-  }
-  return interpretCurrentNDVI(current, series, proxyNote);
-}
-
-function interpretMissingNDVI(
-  series: Array<{ date: string; vigor: number }>,
-  seriesStatus: 'estimated' | 'unavailable',
-  proxyNote: string
-): string {
-  if (series.length >= 2 && seriesStatus === 'estimated') {
-    const recent = series.slice(-3);
-    const trend = recent[recent.length - 1].vigor - recent[0].vigor;
-    const dir = trend > 0.05 ? 'improving' : trend < -0.05 ? 'declining' : 'stable';
-    return `No live satellite NDVI available. Climate-derived vegetation vigor proxy trend: ${dir}${proxyNote}.`;
-  }
-  return 'No NDVI data available (Sentinel Hub not configured or returned no scene; climate proxy unavailable).';
-}
-
-function interpretCurrentNDVI(
-  current: number,
-  series: Array<{ date: string; vigor: number }>,
-  proxyNote: string
-): string {
-  let interpretation = `Current NDVI (satellite): ${current.toFixed(3)} — `;
-  interpretation += categorizeNDVI(current);
-
-  if (series.length >= 2) {
-    const recent = series.slice(-3);
-    const trend = recent[recent.length - 1].vigor - recent[0].vigor;
-    interpretation += getTrendMessage(trend, proxyNote);
-  }
-
-  return interpretation;
-}
-
-function categorizeNDVI(current: number): string {
-  if (current < 0.2) return 'bare soil or dead vegetation';
-  if (current < 0.4) return 'sparse or stressed vegetation';
-  if (current < 0.6) return 'moderate vegetation health';
-  return 'healthy, dense vegetation';
-}
-
-function getTrendMessage(trend: number, proxyNote: string): string {
-  if (trend > 0.05) return `. Proxy trend: improving${proxyNote}.`;
-  if (trend < -0.05) return `. Proxy trend: declining — verify with field scouting${proxyNote}.`;
-  return `. Proxy trend: stable${proxyNote}.`;
+/** Says what was measured, with no bands of the app's own for what an NDVI value means for a crop. */
+function interpret(current: number | undefined, weather: Array<{ date: string; rainMm: number; tempC: number }>): string {
+  const ndvi = current === undefined || current === null
+    ? 'No satellite NDVI for this point (Sentinel Hub not configured or no clear scene).'
+    : `Satellite NDVI: ${current.toFixed(3)}. Compare it with earlier scenes of the same field rather than with a fixed scale.`;
+  if (weather.length === 0) return `${ndvi} No NASA POWER weather for these days.`;
+  const rain = weather.reduce((sum, day) => sum + day.rainMm, 0);
+  const temps = weather.map(day => day.tempC);
+  return `${ndvi} NASA POWER, last ${weather.length} days: ${Math.round(rain * 10) / 10} mm of rain, daily mean temperature ${Math.min(...temps)}–${Math.max(...temps)} °C.`;
 }

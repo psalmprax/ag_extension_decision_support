@@ -24,7 +24,7 @@ import { findFarmer } from '@/lib/farmerMatch';
 import { farmerCoordinates } from '@/lib/farmerLocation';
 import apiClient from '@/api/client';
 import { LiveActivityStream } from '@/components/LiveActivityStream';
-import { VegetationHealthCard } from '@/components/VegetationHealthCard';
+import { RecentWeatherCard } from '@/components/RecentWeatherCard';
 import { EfficacyCard } from '@/components/efficacy/EfficacyCard';
 import { AdvisoriesCard } from '@/components/advisories/AdvisoriesCard';
 import { FieldToolsCard } from '@/components/fieldtools/FieldToolsCard';
@@ -543,7 +543,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         />
 
         <div className="space-y-4 sm:space-y-6">
-          <VegetationHealthCard cardClass={cardClass} />
+          <RecentWeatherCard cardClass={cardClass} />
           <SupportEfficiencyCard performanceData={performanceData} t={t} cardClass={cardClass} />
         </div>
       </div>
