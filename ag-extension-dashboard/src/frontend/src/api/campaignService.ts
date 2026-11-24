@@ -8,7 +8,7 @@ export interface CampaignStepTrace {
   timestamp: string;
 }
 
-interface GoalCampaignResult {
+export interface GoalCampaignResult {
   success: boolean;
   campaignId: string;
   summary: string;
@@ -17,7 +17,28 @@ interface GoalCampaignResult {
   scheduledVisitsCount: number;
   executionTrace: CampaignStepTrace[];
   error?: string;
+  /** What the safety check stopped: a rate, dose or waiting period. */
+  violations?: string[];
 }
+
+/** Who would receive a campaign, and the AI's draft for the officer to edit. Nothing is sent. */
+export interface GoalCampaignDraft {
+  success: boolean;
+  draftText: string;
+  affectedFarmersCount: number;
+  violations: string[];
+}
+
+export interface CampaignTarget {
+  goalPrompt: string;
+  targetRegion?: string;
+  targetCrop?: string;
+}
+
+export const draftGoalCampaign = async (payload: CampaignTarget): Promise<GoalCampaignDraft> => {
+  const response = await apiClient.post<GoalCampaignDraft>('/campaigns/goal/draft', payload);
+  return response.data;
+};
 
 export interface CampaignHistoryItem {
   id: string;
@@ -46,12 +67,11 @@ export interface RegionalSkillCard {
   created_at: string;
 }
 
-export const executeGoalCampaign = async (payload: {
-  goalPrompt: string;
-  targetRegion?: string;
-  targetCrop?: string;
+export const executeGoalCampaign = async (payload: CampaignTarget & {
   channel?: 'all' | 'sms' | 'whatsapp' | 'telegram';
   autoScheduleVisits?: boolean;
+  /** The message the officer read and approved. */
+  message: string;
 }): Promise<GoalCampaignResult> => {
   const response = await apiClient.post<GoalCampaignResult>('/campaigns/goal', payload);
   return response.data;

@@ -3050,5 +3050,19 @@
     "veg_band_bare": "Bare",
     "data_status_live": "Live",
     "data_status_estimated": "Estimated",
-    "data_status_unavailable": "Unavailable"
+    "data_status_unavailable": "Unavailable",
+    "edge_model_none": "None installed",
+    "edge_model_failed_gate": "The latest trained model was not installed: it had the right disease in its top three for {top3}% of {images} field photos, and {floor}% is needed.",
+    "edge_model_none_passed": "No trained model has passed field testing yet.",
+    "campaign_needs_goal": "Say what the campaign is for first.",
+    "campaign_draft_failed": "The draft could not be written. Try again.",
+    "campaign_send_failed": "The campaign could not be sent. Try again.",
+    "campaign_drafting": "Writing a draft…",
+    "campaign_write_draft": "Write a draft to check",
+    "campaign_review_label": "Read and edit before it goes to {count} farmers",
+    "campaign_write_yourself": "The AI wrote no draft. Write the message yourself.",
+    "campaign_has_rate": "This gives a rate, dose or waiting period, which a campaign cannot carry. Remove it and tell farmers to ask their officer, who checks the label.",
+    "campaign_discard": "Discard",
+    "campaign_send_to": "Send to {count} farmers",
+    "campaign_sent": "Campaign sent."
 }

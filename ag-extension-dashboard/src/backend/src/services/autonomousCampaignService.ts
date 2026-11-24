@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { query } from './databaseService';
 import { logger } from '../utils/logger';
 import { smsService } from './smsService';
@@ -9,6 +8,22 @@ import { AIProviderFactory } from './aiProvider/aiProvider';
 import type { AutonomousCampaignRunRow, RegionalAgronomySkillRow } from '../types/rowTypes';
 import { demoSql } from '@/services/demoScope';
 import { farmerScopeSql, type ScopePrincipal } from '@/services/access/farmerScope';
+import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
+
+/** The farmer columns a campaign reads (the query selects f.*). */
+interface CampaignFarmer {
+    id: string;
+    phone: string | null;
+    sms_opt_out: boolean | null;
+    notes: string | null;
+    first_name: string | null;
+    last_name: string | null;
+    vital_score: number | null;
+    assigned_officer_id: string | null;
+}
+
+/** Longest campaign message, so it stays within a few SMS parts. */
+export const CAMPAIGN_MESSAGE_MAX = 600;
 
 interface GoalCampaignInput {
     goalPrompt: string;
@@ -20,6 +35,19 @@ interface GoalCampaignInput {
     userId?: string | null;
     /** Who launched it: the campaign reaches only farmers this person may see. */
     principal: ScopePrincipal;
+    /** The message the officer read and approved; the AI's draft is never sent unread. */
+    message: string;
+}
+
+type DraftInput = Omit<GoalCampaignInput, 'message' | 'channel' | 'autoScheduleVisits'>;
+
+export interface GoalCampaignDraft {
+    success: true;
+    /** Empty when the AI could not write one; the officer then writes it. */
+    draftText: string;
+    affectedFarmersCount: number;
+    /** What the safety check would stop in this draft; the officer must remove it before sending. */
+    violations: string[];
 }
 
 interface CampaignStepTrace {
@@ -39,6 +67,12 @@ interface GoalCampaignResult {
     scheduledVisitsCount: number;
     executionTrace: CampaignStepTrace[];
     error?: string;
+    violations?: string[];
+}
+
+/** Rates, doses and product waiting periods the safety check stops; a campaign never carries them. */
+export function campaignMessageViolations(message: string): string[] {
+    return agronomicSafetyGuard.scanGeneratedAdvice(message).violations;
 }
 
 class AutonomousCampaignService {
@@ -48,7 +82,7 @@ class AutonomousCampaignService {
     ): Promise<{ skillsContext: string; count: number }> {
         try {
             let skillSql = `SELECT * FROM regional_agronomy_skills WHERE 1=1`;
-            const skillParams: any[] = [];
+            const skillParams: unknown[] = [];
             if (targetRegion) {
                 skillParams.push(`%${targetRegion}%`);
                 skillSql += ` AND region ILIKE $${skillParams.length}`;
@@ -81,11 +115,11 @@ class AutonomousCampaignService {
         tenantId?: string | null,
         targetRegion?: string | null,
         targetCrop?: string | null
-    ): Promise<any[]> {
+    ): Promise<CampaignFarmer[]> {
         const scope = await farmerScopeSql(principal, 'f', 1);
         // The shared rule also keeps demo farmers out.
         let farmerSql = `SELECT f.* FROM farmers f WHERE ${scope.sql}`;
-        const farmerParams: any[] = [...scope.params];
+        const farmerParams: unknown[] = [...scope.params];
 
         if (tenantId) {
             farmerParams.push(tenantId);
@@ -101,7 +135,7 @@ class AutonomousCampaignService {
         }
 
         farmerSql += ` ORDER BY f.vital_score ASC NULLS LAST LIMIT 100`;
-        const { rows } = await query<any>(farmerSql, farmerParams);
+        const { rows } = await query<CampaignFarmer>(farmerSql, farmerParams);
         return rows;
     }
 
@@ -113,24 +147,27 @@ class AutonomousCampaignService {
     ): Promise<string> {
         try {
             const ai = await AIProviderFactory.getProvider();
-            const prompt = `You are the Agricultural Extension Autonomous Campaign Agent.
-User Objective: "${goalPrompt}"
-Target Region: ${targetRegion || 'Regional Hub'}
-Target Crop: ${targetCrop || 'General Crops'}
-Regional Knowledge Skills Context:
-${skillsContext || 'No regional overrides found; use standard agronomic best practices.'}
+            const prompt = `Draft a text message from an extension officer to smallholder farmers. The officer will read and edit it before it is sent.
+Officer's aim: "${goalPrompt}"
+Region: ${targetRegion || 'not given'}
+Crop: ${targetCrop || 'not given'}
+Notes from the officer's own field reports:
+${skillsContext || 'none'}
 
-Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 words) suitable for smallholder farmers. Include key action items and emoji indicators.`;
+Rules: under ${CAMPAIGN_MESSAGE_MAX} characters, plain words, no emoji, no headings.
+Say what to look for, when to check and whom to tell. Do not name a product, dose, rate, mixing amount or waiting period, and do not invent figures; where a treatment may be needed, tell farmers to ask their extension officer, who will check the registered label.
+Use only the notes above and general, safe practice; if the aim needs more than that, ask farmers to contact their officer.`;
 
             const aiResponse = await ai.generateText(prompt);
-            return (aiResponse.text || '').trim();
-        } catch {
-            return `Crop advisory about ${goalPrompt}. Please inspect your crops, monitor soil moisture, and contact your extension officer for guidance.`;
+            return (aiResponse.text || '').trim().slice(0, CAMPAIGN_MESSAGE_MAX);
+        } catch (error) {
+            logger.warn('Campaign draft could not be written by the AI; the officer writes it:', error);
+            return '';
         }
     }
 
     private async dispatchToFarmer(
-        farmer: any,
+        farmer: CampaignFarmer,
         personalizedMsg: string,
         channel: string,
         userId?: string | null
@@ -143,10 +180,10 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
         const wantsTelegram = channel === 'all' || channel === 'telegram';
 
         if (wantsSms && farmerPhone) {
-            dispatched.sms = await this.dispatchSms(farmer, personalizedMsg, userId);
+            dispatched.sms = await this.dispatchSms(farmer, farmerPhone, personalizedMsg, userId);
         }
         if (wantsWhatsapp && farmerPhone) {
-            dispatched.whatsapp = await this.dispatchWhatsApp(farmer, personalizedMsg, userId);
+            dispatched.whatsapp = await this.dispatchWhatsApp(farmer, farmerPhone, personalizedMsg, userId);
         }
         if (wantsTelegram && farmer.notes?.includes('tg:')) {
             dispatched.telegram = await this.dispatchTelegram(farmer, personalizedMsg, userId);
@@ -171,11 +208,11 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
         await usageService.incrementUsage(userId, type).catch(err => logger.warn(`Failed to meter campaign ${type} usage:`, err));
     }
 
-    private async dispatchSms(farmer: any, message: string, userId?: string | null): Promise<number> {
+    private async dispatchSms(farmer: CampaignFarmer, to: string, message: string, userId?: string | null): Promise<number> {
         try {
             if (!(await this.withinQuota(userId, 'sms'))) return 0;
             const sent = await smsService.sendSMS({
-                to: farmer.phone,
+                to,
                 message,
                 farmerId: farmer.id,
                 senderId: userId || undefined,
@@ -188,11 +225,11 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
         }
     }
 
-    private async dispatchWhatsApp(farmer: any, message: string, userId?: string | null): Promise<number> {
+    private async dispatchWhatsApp(farmer: CampaignFarmer, to: string, message: string, userId?: string | null): Promise<number> {
         try {
             if (!(await this.withinQuota(userId, 'whatsapp'))) return 0;
             const result = await whatsappService.sendMessage({
-                to: farmer.phone,
+                to,
                 message,
                 farmerId: farmer.id,
                 senderId: userId || undefined,
@@ -205,7 +242,7 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
         }
     }
 
-    private async dispatchTelegram(farmer: any, message: string, userId?: string | null): Promise<number> {
+    private async dispatchTelegram(farmer: CampaignFarmer, message: string, userId?: string | null): Promise<number> {
         const tgChatId = farmer.notes?.match(/tg:(\d+)/)?.[1];
         if (!tgChatId) return 0;
         try {
@@ -226,7 +263,7 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
     }
 
     private async dispatchToFarmerCohort(
-        farmers: any[],
+        farmers: CampaignFarmer[],
         advisoryText: string,
         channel: string,
         userId?: string | null
@@ -249,7 +286,7 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
     }
 
     private async scheduleAtRiskVisits(
-        farmers: any[],
+        farmers: CampaignFarmer[],
         goalPrompt: string,
         tenantId?: string | null,
         userId?: string | null
@@ -322,7 +359,33 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
     /**
      * Executes an autonomous goal-driven campaign end-to-end
      */
+    /**
+     * Step one: who would receive it and an AI draft for the officer to read and edit. Nothing is
+     * sent. The draft is checked with the same rules that the send applies.
+     */
+    async draftGoalCampaign(input: DraftInput): Promise<GoalCampaignDraft> {
+        const { skillsContext } = await this.fetchRegionalSkillsContext(input.targetRegion, input.targetCrop);
+        const farmers = await this.queryTargetFarmers(input.principal, input.tenantId, input.targetRegion, input.targetCrop);
+        const draftText = farmers.length > 0
+            ? await this.synthesizeAdvisoryText(input.goalPrompt, input.targetRegion, input.targetCrop, skillsContext)
+            : '';
+        return { success: true, draftText, affectedFarmersCount: farmers.length, violations: draftText ? campaignMessageViolations(draftText) : [] };
+    }
+
     async executeGoalCampaign(input: GoalCampaignInput): Promise<GoalCampaignResult> {
+        const message = input.message.trim();
+        const violations = campaignMessageViolations(message);
+        if (!message || message.length > CAMPAIGN_MESSAGE_MAX || violations.length > 0) {
+            return {
+                success: false, campaignId: 'none', summary: '', affectedFarmersCount: 0, dispatchedMessagesCount: 0,
+                scheduledVisitsCount: 0, executionTrace: [], violations,
+                error: !message
+                    ? 'Write the message before sending.'
+                    : message.length > CAMPAIGN_MESSAGE_MAX
+                        ? `Keep the message under ${CAMPAIGN_MESSAGE_MAX} characters.`
+                        : 'The message gives a rate, dose or waiting period. Remove it and tell farmers to ask their officer, who checks the label.',
+            };
+        }
         const {
             goalPrompt,
             targetRegion,
@@ -347,12 +410,6 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
         // 1. Analyze Goal
         addTrace('Intent Analysis', `Parsing objective: "${goalPrompt}"`);
 
-        // 2. Fetch Regional Skills
-        const { skillsContext, count: skillCount } = await this.fetchRegionalSkillsContext(targetRegion, targetCrop);
-        if (skillCount > 0) {
-            addTrace('Closed-Loop Knowledge Retrieval', `Injected ${skillCount} regional agronomy skill card(s) from field reports.`);
-        }
-
         // 3. Query Farmers
         const farmers = await this.queryTargetFarmers(input.principal, tenantId, targetRegion, targetCrop);
         const affectedFarmersCount = farmers.length;
@@ -373,9 +430,9 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
             };
         }
 
-        // 4. Synthesize Advisory Message
-        const advisoryText = await this.synthesizeAdvisoryText(goalPrompt, targetRegion, targetCrop, skillsContext);
-        addTrace('Advisory Synthesis', 'Generated contextualized advisory message.');
+        // 4. The officer's approved message
+        const advisoryText = message;
+        addTrace('Approved message', 'Using the message the officer read and approved.');
 
         // 5. Multi-Channel Dispatch
         const { total: dispatchedMessagesCount, byChannel } = await this.dispatchToFarmerCohort(farmers, advisoryText, channel, userId);
@@ -429,7 +486,7 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
     async getCampaignHistory(tenantId?: string | null): Promise<AutonomousCampaignRunRow[]> {
         try {
             let sql = `SELECT * FROM autonomous_campaign_runs WHERE 1=1`;
-            const params: any[] = [];
+            const params: unknown[] = [];
             if (tenantId) {
                 params.push(tenantId);
                 sql += ` AND (tenant_id = $1 OR tenant_id IS NULL)`;
@@ -447,7 +504,7 @@ Generate a concise, actionable, and warm advisory SMS/WhatsApp message (max 150 
     private async getDefaultOfficerId(tenantId?: string | null): Promise<string | null> {
         try {
             let sql = `SELECT id FROM users WHERE role IN ('extension_officer', 'regional_manager', 'admin') AND ${demoSql('users')}`;
-            const params: any[] = [];
+            const params: unknown[] = [];
             if (tenantId) {
                 params.push(tenantId);
                 sql += ` AND (tenant_id = $1 OR tenant_id IS NULL)`;

@@ -20,16 +20,45 @@ async function resolveTenantId(req: Request): Promise<string | null> {
 
 router.use(authorize(['admin', 'regional_manager', 'extension_officer']));
 
+const principalOf = (req: AuthRequest) =>
+    ({ userId: req.user!.userId, role: req.user!.role, isDemo: (req.user as { isDemo?: boolean }).isDemo });
+
 /**
- * POST /api/campaigns/goal — Execute an autonomous goal-driven campaign
+ * POST /api/campaigns/goal/draft — Who would receive it, and an AI draft for the officer to edit.
+ * Nothing is sent. One AI generation, metered here.
  */
-// A paid feature: one AI generation per run (metered here), then each message is
-// charged to the launching officer's SMS/WhatsApp quota as it is sent.
-router.post('/goal', requirePaidPlan('campaigns'), checkUsageLimit('ai_chat'), async (req: AuthRequest, res: Response) => {
+router.post('/goal/draft', requirePaidPlan('campaigns'), checkUsageLimit('ai_chat'), async (req: AuthRequest, res: Response) => {
     try {
-        const { goalPrompt, targetRegion, targetCrop, channel, autoScheduleVisits } = req.body;
+        const { goalPrompt, targetRegion, targetCrop } = req.body;
         if (!goalPrompt || typeof goalPrompt !== 'string') {
             return res.status(400).json({ success: false, error: 'goalPrompt is required' });
+        }
+        const draft = await autonomousCampaignService.draftGoalCampaign({
+            goalPrompt, targetRegion, targetCrop,
+            tenantId: await resolveTenantId(req),
+            userId: req.user?.userId,
+            principal: principalOf(req),
+        });
+        return res.json(draft);
+    } catch (error) {
+        logger.error('Goal campaign draft failed:', error);
+        return safeError(res, 500, 'Goal campaign draft failed');
+    }
+});
+
+/**
+ * POST /api/campaigns/goal — Send the message the officer approved. Each message is charged to
+ * the launching officer's SMS/WhatsApp quota as it is sent; a message with a rate, dose or
+ * waiting period is refused.
+ */
+router.post('/goal', requirePaidPlan('campaigns'), async (req: AuthRequest, res: Response) => {
+    try {
+        const { goalPrompt, targetRegion, targetCrop, channel, autoScheduleVisits, message } = req.body;
+        if (!goalPrompt || typeof goalPrompt !== 'string') {
+            return res.status(400).json({ success: false, error: 'goalPrompt is required' });
+        }
+        if (typeof message !== 'string') {
+            return res.status(400).json({ success: false, error: 'message is required: send the draft after reading it' });
         }
 
         const tenantId = await resolveTenantId(req);
@@ -41,10 +70,11 @@ router.post('/goal', requirePaidPlan('campaigns'), checkUsageLimit('ai_chat'), a
             autoScheduleVisits: autoScheduleVisits !== false,
             tenantId,
             userId: req.user?.userId,
-            principal: { userId: req.user!.userId, role: req.user!.role, isDemo: (req.user as { isDemo?: boolean }).isDemo },
+            principal: principalOf(req),
+            message,
         });
 
-        return res.json(result);
+        return res.status(result.success ? 200 : 422).json(result);
     } catch (error) {
         logger.error('Goal campaign execution failed:', error);
         return safeError(res, 500, 'Goal campaign execution failed');

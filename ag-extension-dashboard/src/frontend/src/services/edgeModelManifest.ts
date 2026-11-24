@@ -48,23 +48,48 @@ export function meetsFieldFloor(entry: EdgeModelEntry): boolean {
   );
 }
 
-let released: Promise<EdgeModelEntry[]> | null = null;
+/** The latest trained model that was scored, kept in the manifest even when it failed the gate. */
+export interface ModelCandidate {
+  name: string;
+  fieldEvaluation: FieldEvaluation;
+}
 
-/** The models in the manifest that passed the field evaluation; none when it cannot be read. */
-export function releasedEdgeModels(): Promise<EdgeModelEntry[]> {
-  released ??= fetch('/models/manifest.json', { signal: AbortSignal.timeout(5_000) })
-    .then(response => (response.ok ? (response.json() as Promise<{ models?: EdgeModelEntry[] }>) : { models: [] }))
-    .then(manifest => (manifest.models ?? []).filter(meetsFieldFloor))
+interface Manifest {
+  models?: EdgeModelEntry[];
+  lastCandidate?: ModelCandidate;
+}
+
+let manifest: Promise<Manifest> | null = null;
+
+function readManifest(): Promise<Manifest> {
+  manifest ??= fetch('/models/manifest.json', { signal: AbortSignal.timeout(5_000) })
+    .then(response => (response.ok ? (response.json() as Promise<Manifest>) : {}))
     .catch((error: unknown) => {
       console.warn('No on-device disease model manifest; using the colour check only.', error);
-      return [];
+      return {};
     });
-  return released;
+  return manifest;
+}
+
+/** The models in the manifest that passed the field evaluation; none when it cannot be read. */
+export async function releasedEdgeModels(): Promise<EdgeModelEntry[]> {
+  return ((await readManifest()).models ?? []).filter(meetsFieldFloor);
+}
+
+/**
+ * The latest trained model when it was scored on field photos and fell short of the gate, so the
+ * app can say why no disease model runs. Null when there is none, or it was only a smoke run.
+ */
+export async function rejectedCandidate(): Promise<ModelCandidate | null> {
+  const candidate = (await readManifest()).lastCandidate;
+  if (!candidate?.fieldEvaluation || candidate.fieldEvaluation.smoke) return null;
+  const passes = meetsFieldFloor({ file: '', name: candidate.name, labels: ['a', 'b'], output: 'probabilities', inputSize: 0, fieldEvaluation: candidate.fieldEvaluation });
+  return passes ? null : candidate;
 }
 
 /** Forgets the manifest that was read, so the next call reads it again. */
 export function resetEdgeModelManifest(): void {
-  released = null;
+  manifest = null;
 }
 
 /** Turns raw model output into probabilities that add up to 1. */

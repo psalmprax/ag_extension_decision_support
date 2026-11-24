@@ -32,6 +32,7 @@ import { CROP_PRESETS } from './cropPresets';
 import { useLanguage } from '@/lib/LanguageContext';
 import { copyWithToast } from '@/lib/copyText';
 import { safeStorage } from '@/lib/safeStorage';
+import { DiseaseModelStatus } from '@/components/edgeVision/DiseaseModelStatus';
 
 interface CropPillScrubberProps {
   selectedCrop: string;
@@ -197,9 +198,7 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
           </div>
           <div className="p-1.5 rounded bg-slate-900/80 border border-slate-500/20 text-slate-300">
             <span className="text-slate-400 block text-[9px]">Disease model</span>
-            {result.origin === 'onnx'
-              ? <><strong>{result.twoStage.stage2Classifier.model}</strong> ({Math.round(result.twoStage.stage2Classifier.confidence * 100)}%)</>
-              : <strong>None installed</strong>}
+            <DiseaseModelStatus model={result.origin === 'onnx' ? result.twoStage.stage2Classifier.model : null} confidence={result.twoStage.stage2Classifier.confidence} />
           </div>
         </div>
       </div>

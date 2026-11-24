@@ -9,7 +9,7 @@ const ort = vi.hoisted(() => ({
 }));
 vi.mock('onnxruntime-web/wasm', () => ort);
 
-import { FIELD_EVALUATION_FLOOR, meetsFieldFloor, releasedEdgeModels, resetEdgeModelManifest, toProbabilities, type EdgeModelEntry } from '@/services/edgeModelManifest';
+import { FIELD_EVALUATION_FLOOR, meetsFieldFloor, rejectedCandidate, releasedEdgeModels, resetEdgeModelManifest, toProbabilities, type EdgeModelEntry } from '@/services/edgeModelManifest';
 import { diagnosePlantOffline, resetEdgeModel } from '@/services/edgePlantVisionClassifier';
 
 const LABELS = ['cassava___mosaic', 'corn___common_rust', 'corn___healthy'];
@@ -77,6 +77,20 @@ describe('which on-device models may run', () => {
 
   it('never runs a smoke run of the training script', () => {
     expect(meetsFieldFloor(withEvaluation({ smoke: true }))).toBe(false);
+  });
+
+  it('names the latest trained model that failed field testing, so the app can say why none runs', async () => {
+    const failed = { name: 'mobilenetv3_small_100, field photos', fieldEvaluation: { ...passing.fieldEvaluation!, top3Accuracy: 0.4 } };
+    const serve = (body: unknown) => vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve(body) }));
+    serve({ models: [], lastCandidate: failed });
+    expect(await rejectedCandidate()).toEqual(failed);
+    expect(await releasedEdgeModels()).toEqual([]);
+    resetEdgeModelManifest();
+    serve({ models: [], lastCandidate: { ...failed, fieldEvaluation: { ...failed.fieldEvaluation, smoke: true } } });
+    expect(await rejectedCandidate()).toBeNull();
+    resetEdgeModelManifest();
+    serve({ models: [passing], lastCandidate: { name: passing.name, fieldEvaluation: passing.fieldEvaluation } });
+    expect(await rejectedCandidate()).toBeNull();
   });
 
   it('runs none when the manifest cannot be read', async () => {

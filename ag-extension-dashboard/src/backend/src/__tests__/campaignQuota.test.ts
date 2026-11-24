@@ -7,7 +7,7 @@ jest.mock('@/services/usageService', () => ({
   usageService: { hasAllowance: jest.fn(), incrementUsage: jest.fn().mockResolvedValue(undefined) },
 }));
 
-import { autonomousCampaignService } from '@/services/autonomousCampaignService';
+import { autonomousCampaignService, campaignMessageViolations } from '@/services/autonomousCampaignService';
 import { smsService } from '@/services/smsService';
 import { whatsappService } from '@/services/whatsappService';
 import { telegramService } from '@/services/telegramService';
@@ -116,3 +116,26 @@ describe('who a campaign reaches', () => {
   });
 });
 
+describe('a campaign sends only what the officer approved', () => {
+  it('refuses a message that gives a rate, before anything is selected or sent', async () => {
+    const result = await autonomousCampaignService.executeGoalCampaign({
+      goalPrompt: 'armyworm', principal: { userId: 'officer-1', role: 'extension_officer' },
+      message: 'Spray insecticide at 200 ml per 20 litres of water this week.',
+    });
+    expect(result.success).toBe(false);
+    expect(result.violations?.length).toBeGreaterThan(0);
+    expect(query).not.toHaveBeenCalled();
+    expect(smsService.sendSMS).not.toHaveBeenCalled();
+  });
+
+  it('refuses an empty message', async () => {
+    const result = await autonomousCampaignService.executeGoalCampaign({
+      goalPrompt: 'armyworm', principal: { userId: 'officer-1', role: 'extension_officer' }, message: '  ',
+    });
+    expect(result).toMatchObject({ success: false, error: 'Write the message before sending.' });
+  });
+
+  it('passes a plain scouting message', () => {
+    expect(campaignMessageViolations('Check your maize for fresh leaf damage this week and tell your officer what you find.')).toEqual([]);
+  });
+});

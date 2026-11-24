@@ -6,7 +6,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Zap, Target, Layers, CheckCircle2, RefreshCw, BookOpen, History, Award, MapPin, Sprout } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
-  executeGoalCampaign,
   fetchCampaignHistory,
   fetchRegionalSkills,
   fetchOutreachStats,
@@ -15,7 +14,9 @@ import {
   RegionalSkillCard,
   OutreachDeliveryStats,
   type CampaignStepTrace,
+  type GoalCampaignResult,
 } from '@/api/campaignService';
+import { CampaignLaunch } from './CampaignLaunch';
 import { OutreachDeliveryStatusCard } from './OutreachDeliveryStatusCard';
 import { useLanguage } from '@/lib/LanguageContext';
 
@@ -26,25 +27,27 @@ interface GoalModeCampaignModalProps {
 
 type TabType = 'launcher' | 'skills' | 'history';
 
+// Scouting and reporting prompts: a campaign tells farmers what to look for and whom to tell,
+// never a product or a rate.
 const GOAL_PRESETS = [
   {
-    title: 'Fall armyworm response',
-    prompt: 'Alert maize farmers about early-stage fall armyworm infestation after a rise in humidity. Advise on pheromone traps and the timing of bio-pesticides.',
+    title: 'Fall armyworm scouting',
+    prompt: 'Ask maize farmers to check their crop this week for fresh fall armyworm damage in the whorl, and to tell their officer what they find.',
     crop: 'Maize',
   },
   {
-    title: 'Nitrogen loss after heavy rain',
-    prompt: 'Advise maize and bean farmers on re-applying top-dressing fertilizer after three days of heavy rain.',
+    title: 'After heavy rain',
+    prompt: 'After heavy rain, ask maize and bean farmers to check for waterlogging and yellowing leaves, and to talk to their officer before buying more fertilizer.',
     crop: 'Maize',
   },
   {
-    title: 'Potato late blight prevention',
-    prompt: 'Remind potato growers about preventive copper-based fungicide spraying before a damp, overcast week.',
+    title: 'Potato late blight watch',
+    prompt: 'Warn potato growers that damp, overcast weather favours late blight; describe the first signs and ask them to report them to their officer.',
     crop: 'Potato',
   },
   {
     title: 'Coffee berry borer scouting',
-    prompt: 'Send pruning and sanitation guidance to coffee farmers to break the berry borer lifecycle during cherry development.',
+    prompt: 'Remind coffee farmers to collect fallen and overripe berries, and to report berries with small holes to their officer.',
     crop: 'Coffee',
   },
 ];
@@ -142,45 +145,11 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
     toast.success(`Preset loaded: ${preset.title}`);
   };
 
-  const handleExecuteCampaign = async () => {
-    if (!goalPrompt.trim()) {
-      toast.error('Please enter a goal objective');
-      return;
-    }
-
-    setIsExecuting(true);
-    setExecutionTrace([
-      {
-        step: 'Initializing Agent',
-        status: 'in_progress',
-        detail: 'Connecting to multi-channel broadcast engine and agronomy intelligence core...',
-        timestamp: new Date().toISOString(),
-      },
-    ]);
-    setCampaignResultSummary(null);
-
-    try {
-      const result = await executeGoalCampaign({
-        goalPrompt,
-        targetRegion: targetRegion === 'all' ? undefined : targetRegion,
-        targetCrop: targetCrop === 'all' ? undefined : targetCrop,
-        channel,
-        autoScheduleVisits,
-      });
-
-      if (result.success) {
-        setExecutionTrace(result.executionTrace);
-        setCampaignResultSummary(result.summary);
-        toast.success('Autonomous campaign completed successfully!');
-        loadHistory();
-      } else {
-        toast.error(result.error || 'Campaign execution failed');
-      }
-    } catch {
-      toast.error('An error occurred during campaign execution');
-    } finally {
-      setIsExecuting(false);
-    }
+  const handleCampaignSent = (result: GoalCampaignResult) => {
+    setExecutionTrace(result.executionTrace);
+    setCampaignResultSummary(result.summary);
+    toast.success(t('campaign_sent', { defaultValue: 'Campaign sent.' }));
+    void loadHistory();
   };
 
   const handleSynthesizeSkill = async (e: React.FormEvent) => {
@@ -382,7 +351,7 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-1">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
                     <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-700 dark:text-theme-text-secondary">
                       <input
                         type="checkbox"
@@ -393,18 +362,13 @@ export const GoalModeCampaignModal: React.FC<GoalModeCampaignModalProps> = ({ is
                       <span>{t('ui_goal_mode_campaign_modal_auto_schedule_physical_field_inspect')}</span>
                     </label>
 
-                    <button
-                      onClick={handleExecuteCampaign}
-                      disabled={isExecuting}
-                      className="px-5 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-medium flex items-center gap-2 transition-colors disabled:opacity-50"
-                    >
-                      {isExecuting ? (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Zap className="w-4 h-4" />
-                      )}
-                      <span>{isExecuting ? 'Agent Executing...' : 'Launch autonomous campaign'}</span>
-                    </button>
+                    <CampaignLaunch
+                      target={{ goalPrompt, targetRegion: targetRegion === 'all' ? undefined : targetRegion, targetCrop: targetCrop === 'all' ? undefined : targetCrop }}
+                      channel={channel}
+                      autoScheduleVisits={autoScheduleVisits}
+                      onBusy={busy => { setIsExecuting(busy); if (busy) setCampaignResultSummary(null); }}
+                      onSent={handleCampaignSent}
+                    />
                   </div>
                 </div>
 

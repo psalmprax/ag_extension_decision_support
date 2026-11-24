@@ -13,7 +13,6 @@
   "src/services/aiProvider/providers/openAI.ts": 13,
   "src/services/aiProvider/toolCalling.ts": 5,
   "src/services/apiClientService.ts": 1,
-  "src/services/autonomousCampaignService.ts": 12,
   "src/services/db/query.ts": 1,
   "src/services/diagnosticsHelpers.ts": 2,
   "src/services/onboardingEngine.ts": 10,
