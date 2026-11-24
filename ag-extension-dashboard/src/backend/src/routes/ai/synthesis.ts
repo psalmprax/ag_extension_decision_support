@@ -78,14 +78,17 @@ router.post('/synthesize-visit', [checkUsageLimit('ai_chat', { meter: false }), 
         const { notes } = req.body;
         const userId = req.user!.userId;
 
-        // 1. Check Semantic Cache first
-        const cachedResult = await SemanticCacheService.findSimilar(notes);
+        // 1. The same officer sending the same notes again (a retry or a double tap) gets the summary
+        //    already made. Only an exact match by the same user: a summary of similar notes would be
+        //    another visit's, possibly another officer's, with another farmer's details in it.
+        const cacheKey = `visit-synthesis:${userId}:${notes}`;
+        const cachedResult = await SemanticCacheService.findExact(cacheKey);
         if (cachedResult) {
-            return res.json({
-                success: true,
-                data: JSON.parse(cachedResult.answer),
-                source: 'cache'
-            });
+            try {
+                return res.json({ success: true, data: JSON.parse(cachedResult.answer), source: 'cache' });
+            } catch (parseError) {
+                logger.warn('Cached visit summary was not valid JSON; making a new one.', parseError);
+            }
         }
 
         const prompt = `
@@ -129,7 +132,7 @@ router.post('/synthesize-visit', [checkUsageLimit('ai_chat', { meter: false }), 
             });
         }
 
-        await SemanticCacheService.save(notes, JSON.stringify(structuredData), { userId, type: 'visit_synthesis' });
+        await SemanticCacheService.save(cacheKey, JSON.stringify(structuredData), { userId, type: 'visit_synthesis' });
         await usageService.incrementUsage(userId, 'ai_chat');
 
         res.json({
