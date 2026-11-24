@@ -107,6 +107,9 @@ function checkProtectedTerms(original, translated) {
   return true;
 }
 
+/** The provider refused for a reason a retry cannot fix (no credit, bad key): stop the run. */
+class ProviderRefused extends Error {}
+
 async function callModel(prompt, retries = 3) {
   for (let i = 0; i < retries; i++) {
     try {
@@ -135,6 +138,9 @@ async function callModel(prompt, retries = 3) {
       if (!res.ok) {
         const errText = await res.text();
         console.warn(`  [${PROVIDER.name} HTTP ${res.status}] ${errText.slice(0, 150)}`);
+        if ([401, 402, 403].includes(res.status)) {
+          throw new ProviderRefused(`${PROVIDER.name} refused with HTTP ${res.status}: ${errText.slice(0, 200)}`);
+        }
         await new Promise(r => setTimeout(r, 2000 * (i + 1)));
         continue;
       }
@@ -144,6 +150,7 @@ async function callModel(prompt, retries = 3) {
       // Some models wrap the object in a ```json fence despite response_format.
       return JSON.parse(content.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, ''));
     } catch (e) {
+      if (e instanceof ProviderRefused) throw e;
       console.warn(`  [${PROVIDER.name} error, attempt ${i + 1}] ${e.message}`);
       await new Promise(r => setTimeout(r, 2000 * (i + 1)));
     }
@@ -218,6 +225,7 @@ async function translateLanguage(code, onlyKeys = null) {
   // CHUNK_SIZE env override allows smaller, reliable batches (default 30).
   const CHUNK_SIZE = Math.max(1, Number(process.env.TRANSLATE_CHUNK_SIZE ?? 30) || 30);
   let translatedCount = 0;
+  let refused = null;
 
   for (let i = 0; i < pendingKeys.length; i += CHUNK_SIZE) {
     const chunkKeys = pendingKeys.slice(i, i + CHUNK_SIZE);
@@ -226,7 +234,14 @@ async function translateLanguage(code, onlyKeys = null) {
       chunk[k] = en[k];
     });
 
-    const translated = await translateChunk(chunk, code, langName);
+    let translated;
+    try {
+      translated = await translateChunk(chunk, code, langName);
+    } catch (e) {
+      if (!(e instanceof ProviderRefused)) throw e;
+      refused = e; // keep what was translated, then stop
+      break;
+    }
     for (const [k, v] of Object.entries(translated)) {
       locale[k] = v;
       translatedCount++;
@@ -242,6 +257,10 @@ async function translateLanguage(code, onlyKeys = null) {
   });
 
   fs.writeFileSync(filePath, JSON.stringify(sorted, null, 4) + '\n');
+  if (refused) {
+    console.error(`[${code} - ${langName}] Stopped after ${translatedCount} of ${pendingKeys.length} keys: ${refused.message}`);
+    throw refused;
+  }
   console.log(`✅ [${code} - ${langName}] Done! Saved with ${translatedCount} translated keys.`);
 }
 
@@ -262,6 +281,10 @@ async function main() {
 }
 
 main().catch(err => {
+  if (err instanceof ProviderRefused) {
+    console.error(`\nStopped: ${err.message}\nNothing more can be translated until the provider accepts requests again (for example, its account is topped up).`);
+    process.exit(2);
+  }
   console.error('Fatal error:', err);
   process.exit(1);
 });
