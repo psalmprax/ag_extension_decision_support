@@ -69,6 +69,7 @@ RUN rm /etc/nginx/conf.d/default.conf
 
 # Copy custom nginx config with CSP headers
 COPY ag-extension-dashboard/src/frontend/nginx.conf /etc/nginx/conf.d/default.conf
+COPY ag-extension-dashboard/src/frontend/security-headers.conf /etc/nginx/snippets/security-headers.conf
 
 # Copy built assets from build stage
 COPY --from=build /workspace/ag-extension-dashboard/src/frontend/dist /usr/share/nginx/html
