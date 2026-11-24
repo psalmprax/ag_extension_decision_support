@@ -48,8 +48,27 @@ describe('nginx security headers', () => {
     for (const block of withHeaders) expect({ location: block.head, includes: block.body.includes(INCLUDE) }).toEqual({ location: block.head, includes: true });
   });
 
-  it('allows the map tile servers the app draws from', () => {
+  // The page draws tiles as images (img-src), and the service worker fetches the same tiles to
+  // cache them for offline use, which counts as a connection (connect-src). The service worker
+  // file gets this policy too, so a tile host missing from connect-src fails every tile.
+  it('allows the map tile servers both as images and as connections from the service worker', () => {
     const csp = snippet.match(/Content-Security-Policy "([^"]+)"/)![1];
-    for (const host of ['https://*.tile.openstreetmap.org', 'https://server.arcgisonline.com', 'https://*.tile.opentopomap.org']) expect(csp).toContain(host);
+    const directive = (name: string) => csp.split(';').map(part => part.trim()).find(part => part.startsWith(`${name} `))!.split(/\s+/);
+    for (const host of ['https://tile.openstreetmap.org', 'https://*.tile.openstreetmap.org', 'https://server.arcgisonline.com', 'https://*.tile.opentopomap.org']) {
+      expect(directive('img-src')).toContain(host);
+      expect(directive('connect-src')).toContain(host);
+    }
+  });
+
+  it('never caches the service worker as immutable', () => {
+    const worker = locationBlocks(conf).find(block => block.head.endsWith('= /sw.js'));
+    expect(worker?.body).toContain('add_header Cache-Control "no-cache";');
+  });
+
+  it('draws the street map from the host the offline download stores tiles under', async () => {
+    const { TILE_LAYERS } = await import('@/components/map/mapConstants');
+    const offline = readFileSync(resolve(__dirname, '../lib/offlineTiles.ts'), 'utf8');
+    expect(TILE_LAYERS.street.url).toBe('https://tile.openstreetmap.org/{z}/{x}/{y}.png');
+    expect(offline).toContain('https://tile.openstreetmap.org/${z}/${x}/${y}.png');
   });
 });

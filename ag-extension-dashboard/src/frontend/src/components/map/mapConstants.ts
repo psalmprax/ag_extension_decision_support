@@ -27,7 +27,9 @@ export interface TileLayerConfig {
 export const TILE_LAYERS: Record<MapLayer, TileLayerConfig> = {
   street: {
     name: 'Street',
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    // One host, as OpenStreetMap asks (the a/b/c subdomains are retired), and the same address
+    // the offline download stores tiles under (lib/offlineTiles.ts), so downloaded tiles are found.
+    url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution: '&copy; OpenStreetMap',
     maxZoom: 19,
   },
