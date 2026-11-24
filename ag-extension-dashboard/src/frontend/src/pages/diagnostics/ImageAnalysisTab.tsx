@@ -7,6 +7,7 @@ import {
 } from '../../api/diseaseService';
 import { OnDevicePhotoResult } from '@/components/edgeVision/OnDevicePhotoResult';
 import { usePhotoCheck } from './usePhotoCheck';
+import { CropField } from '@/components/edgeVision/CropField';
 import { DiseaseSaliencyCanvas } from '@/components/canvas-ui/DiseaseSaliencyCanvas';
 import { useLanguage } from '@/lib/LanguageContext';
 import { DiagnosisValidationNote, type DiagnosisValidation } from '@/components/diagnosisTests/DiagnosisValidationNote';
@@ -69,19 +70,7 @@ const ImageUploadViewfinder: React.FC<{
       </div>
 
       <div className="space-y-3">
-        <div>
-          <label htmlFor="diagnosis-photo-crop" className="block text-sm text-slate-400 mb-1">
-            {t('diagnosis_photo_crop', { defaultValue: 'Crop (optional)' })}
-          </label>
-          <input
-            id="diagnosis-photo-crop"
-            type="text"
-            value={cropType}
-            onChange={e => setCropType(e.target.value)}
-            placeholder={t('diagnosis_photo_crop_placeholder', { defaultValue: 'For example maize, coffee or tomato' })}
-            className="w-full px-3 py-2 bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-md text-xs text-slate-900 dark:text-white placeholder-slate-600 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40 transition-colors"
-          />
-        </div>
+        <CropField value={cropType} onChange={setCropType} />
 
         <div className="relative rounded-lg border-2 border-dashed border-slate-900/[0.08] dark:border-white/[0.08] hover:border-emerald-500/60 bg-white dark:bg-theme-bg-primary p-5 text-center transition-colors group overflow-hidden">
           {imagePreview ? (

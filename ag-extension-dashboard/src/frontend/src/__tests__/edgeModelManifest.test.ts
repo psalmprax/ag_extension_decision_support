@@ -166,6 +166,22 @@ describe('an offline photo check', () => {
     expect(unsure.confidentEnough).toBe(false);
   });
 
+  it('is never sure when no crop is named: a crop the model never saw can still get a confident answer', async () => {
+    serveModelAnswer(calibrated, [0.05, 0.9, 0.05]);
+    const result = await diagnosePlantOffline(leafCanvas());
+    expect(result.origin).toBe('onnx');
+    expect(result.confidentEnough).toBe(false);
+  });
+
+  it("is sure only for crops whose own test photos met the target, when the manifest lists them", async () => {
+    serveModelAnswer({ ...calibrated, calibration: { ...calibrated.calibration!, cropsMeetingTarget: ['cassava'] } }, [0.05, 0.9, 0.05]);
+    expect((await diagnosePlantOffline(leafCanvas(), 'Maize')).confidentEnough).toBe(false);
+    resetEdgeModelManifest();
+    resetEdgeModel();
+    serveModelAnswer({ ...calibrated, calibration: { ...calibrated.calibration!, cropsMeetingTarget: ['corn'] } }, [0.05, 0.9, 0.05]);
+    expect((await diagnosePlantOffline(leafCanvas(), 'Maize')).confidentEnough).toBe(true);
+  });
+
   it('is never sure without a calibration in the manifest', async () => {
     serveModelAnswer(passing, [0.01, 0.98, 0.01]);
     expect((await diagnosePlantOffline(leafCanvas(), 'Maize')).confidentEnough).toBe(false);

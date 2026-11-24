@@ -3034,6 +3034,7 @@
     "on_device_queued": "Queued for the online check",
     "on_device_check_online": "Check with the online model",
     "on_device_toast": "Checked on this phone.",
+    "diagnosis_photo_crop_hint": "Name the crop so this phone can answer without the online check when it is sure.",
     "campaign_needs_goal": "Say what the campaign is for first.",
     "campaign_draft_failed": "The draft could not be written. Try again.",
     "campaign_send_failed": "The campaign could not be sent. Try again.",

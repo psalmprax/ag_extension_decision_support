@@ -37,7 +37,8 @@ The app loads the model only when the field evaluation meets the acceptance gate
 docs/specs/PHASE2-OFFLINE-DIAGNOSIS-MODEL.md (>= 300 field photos, top-3 >= 70%, crop top-1
 >= 60%). This script reports the numbers; it does not decide to ship.
 
-Run on a GitHub runner (CPU, two to three hours at the defaults) with the "Train disease model"
+Run on a GitHub runner (CPU, four to five hours with every source; the workflow passes a time
+budget and the epochs are cut to fit) with the "Train disease model"
 workflow, locally with `uv run scripts/ml/train_disease_classifier.py --out out/`, or on
 Hugging Face Jobs (paid; needs the owner's approval):
   hf jobs uv run --flavor t4-small scripts/ml/train_disease_classifier.py --epochs 15 --out /data/out
@@ -103,6 +104,33 @@ def tom2024_label(row: dict, label_name: str) -> str | None:
     return f"{crop}___{TOM2024_DISEASES.get(disease, snake(disease))}" if crop else None
 
 
+HEALTHY_NAMES = {"healthy", "normal", "fresh_leaf", "healthy_leaf", "healthy_leaves", "healthy_sample", "healthy_rice_leaf"}
+
+
+def one_crop(crop: str, rename: dict[str, str] | None = None, skip: tuple[str, ...] = ()) -> LabelFn:
+    """For a set of one crop: its class names in snake case, without the crop's own name or a
+    trailing "disease" ("Rice Blast" → rice___blast, "Leaf Spot Disease" → leaf_spot), healthy
+    classes as healthy, renames for the rest, and the classes in `skip` left out."""
+    rename = rename or {}
+    words = {snake(crop), snake(crop.replace("_", " ").split()[-1])}
+
+    def label(_row: dict, label_name: str) -> str | None:
+        name = snake(label_name)
+        if name in skip:
+            return None
+        short = name
+        for word in words:
+            if short.startswith(word + "_"):
+                short = short[len(word) + 1:]
+        short = re.sub(r"_disease$", "", short)
+        if name in rename or short in rename:
+            return f"{crop}___{rename.get(name) or rename[short]}"
+        if name in HEALTHY_NAMES or short in HEALTHY_NAMES or name.startswith("healthy"):
+            return f"{crop}___healthy"
+        return f"{crop}___{short}" if short else None
+    return label
+
+
 # Same crop or disease under different names in different sources. Maize is "corn" (PlantDoc's
 # name). Rust is one label: several sources do not say which maize rust a photo shows.
 CROP_ALIASES = {"maize": "corn", "soyabean": "soybean"}
@@ -164,11 +192,71 @@ SOURCES: dict[str, Source] = {
                               "Virus": "potato___virus"}), "holdout"),
     "tom2024": Source("Project-AgML/TOM2024_disease_classification", "CC-BY-4.0", "TOM2024 tomato, onion and maize set (original photos only)",
                       tom2024_label, "holdout", config="raw", min_side=96),
+    # Single-crop sets, each with its original photos only (never a set's "augmented" copies).
+    "rice": Source("Project-AgML/rice_disease_classification_bangladesh", "CC-BY-4.0", "Rice disease set, Bangladesh, original photos",
+                   one_crop("rice", {"insect": "insect_damage", "leaffolder": "leaf_folder"}, skip=("rice",)), "holdout", config="raw"),
+    "groundnut": Source("Project-AgML/groundnut_leaf_disease_classification", "CC-BY-4.0", "Sasmal et al. 2024, groundnut leaves",
+                        one_crop("groundnut"), "holdout"),
+    "cotton": Source("Project-AgML/cotton_leaf_disease_classification_bangladesh_2", "CC-BY-4.0", "Cotton leaf set, Bangladesh, original photos",
+                     one_crop("cotton", {"leaf_redding": "leaf_reddening", "herbicide_growth_damage": "herbicide_damage",
+                                         "leaf_hopper_jassids": "leafhopper_jassids"}), "holdout", config="raw"),
+    "sugarcane": Source("Project-AgML/sugarcane_leaf_disease_classification", "CC-BY-4.0", "Sugarcane leaf disease set",
+                        one_crop("sugarcane", {"brownrust": "brown_rust", "viral_disease": "viral"}), "holdout"),
+    "soybean": Source("Project-AgML/soybean_leaf_disease_classification", "CC-BY-4.0", "Soybean leaf disease set",
+                      one_crop("soybean", skip=("root_images",)), "holdout"),
+    "soybean_mh": Source("Project-AgML/MH_SoyaHealthVision_disease_classification_leaf", "CC-BY-4.0", "MH SoyaHealthVision soybean leaves, India",
+                         one_crop("soybean", {"spectoria_brown_spot": "septoria_brown_spot", "frog_leaf_eye": "frogeye_leaf_spot",
+                                              "caterpillar_semilooper_pest": "semilooper"}), "holdout"),
+    "sunflower": Source("Project-AgML/sunflower_disease_classification", "CC-BY-4.0", "Sara et al. 2022, sunflower leaves",
+                        one_crop("sunflower"), "holdout"),
+    "orange": Source("Project-AgML/citrusuat_disease_classification", "CC-BY-4.0", "CitrusUAT orange leaves, incl. nutrient deficiencies",
+                     one_crop("orange", {"fe": "iron_deficiency", "mg": "magnesium_deficiency", "mn": "manganese_deficiency",
+                                         "n": "nitrogen_deficiency", "zn": "zinc_deficiency", "hlb": "huanglongbing"}), "holdout"),
+    "lemon": Source("Project-AgML/lemon_leaf_disease_classification", "CC-BY-4.0", "Lemon leaf set, original photos",
+                    one_crop("lemon", {"deficiency_leaf": "nutrient_deficiency"}), "holdout", config="raw"),
+    "papaya": Source("Project-AgML/papaya_leaf_disease_classification_bangladesh", "CC-BY-4.0", "Papaya leaf set, Bangladesh, original photos",
+                     one_crop("papaya"), "holdout", config="raw"),
+    "guava": Source("Project-AgML/guava_disease_classification", "CC-BY-4.0", "Guava leaves and fruit, original photos",
+                    one_crop("guava", {"styler_end_root": "styler_end_rot"}), "holdout", config="raw"),
+    "okra": Source("Project-AgML/OkraDiseaseNet_disease_classification", "CC-BY-4.0", "OkraDiseaseNet okra leaves",
+                   one_crop("okra", {"leaf_curly_virus": "leaf_curl_virus"}), "holdout"),
+    "chili": Source("Project-AgML/COLD_chili_leaf_disease_classification", "CC-BY-4.0", "COLD chili leaves, original photos",
+                    one_crop("chili", {"mites_and_trips": "mites_and_thrips", "nutritional": "nutrient_deficiency"}), "holdout", config="raw"),
+    "onion": Source("Project-AgML/COLD_onion_leaf_disease_classification", "CC-BY-4.0", "COLD onion leaves, original photos",
+                    one_crop("onion", {"stemphylium_leaf_blight_and_collectrichum_leaf_blight": "leaf_blight"}), "holdout", config="raw"),
+    "watermelon": Source("Project-AgML/watermelon_disease_classification", "CC-BY-4.0", "Watermelon set, original photos",
+                         one_crop("watermelon"), "holdout", config="raw"),
+    "pepper": Source("Project-AgML/pepper_disease_pest_classification", "CC-BY-4.0", "Pepper plants in the field, Shouguang, China",
+                     one_crop("pepper", {"alternaria_boltch": "alternaria_blotch"}), "holdout"),
+    "cauliflower": Source("Project-AgML/cauliflower_leaf_disease_classification", "CC-BY-4.0", "Durjoy et al. 2025, cauliflower leaves",
+                          one_crop("cauliflower"), "holdout"),
+    "date_palm": Source("Project-AgML/date_palm_leaf_disease_classification", "CC-BY-4.0", "Date palm leaves, incl. nutrient deficiencies",
+                        one_crop("date_palm", {"parlatoria_blanchardi": "parlatoria_scale"}), "holdout"),
+    "tea": Source("Project-AgML/teaLeafBD_disease_classification", "CC-BY-4.0", "TeaLeafBD tea leaves, Bangladesh",
+                  one_crop("tea", {"tea_algal_leaf_spot": "algal_leaf_spot"}), "holdout"),
+    "tea_bd": Source("Project-AgML/tea_leaf_disease_classification_bangladesh", "CC-BY-4.0", "Bormon et al. 2025, tea leaves, Bangladesh",
+                     one_crop("tea"), "holdout"),
+    "black_gram": Source("Project-AgML/blackgram_plant_leaf_disease_classification", "CC-BY-4.0", "Talasila et al. 2022, black gram leaves",
+                         one_crop("black_gram", {"leaf_crinckle": "leaf_crinkle"}), "holdout"),
+    "lentil": Source("Project-AgML/lentil_disease_classification", "CC-BY-4.0", "Mahamud et al. 2025, lentil plants",
+                     one_crop("lentil"), "holdout"),
+    "pomegranate": Source("Project-AgML/pomegranate_disease_classification_india", "CC-BY-4.0", "Pakruddin et al. 2024, pomegranate fruit, India",
+                          one_crop("pomegranate"), "holdout"),
+    "grape": Source("Project-AgML/grape_leaf_disease_classification", "CC-BY-4.0", "Dharrao et al. 2025, grape leaves",
+                    one_crop("grape"), "holdout"),
+    "eggplant": Source("Project-AgML/eggplant_disease_classification", "CC-BY-4.0", "Eggplant set, original photos",
+                       one_crop("eggplant", {"insect_pest_disease": "insect_pest"}), "holdout", config="raw"),
 }
 # Left out on purpose: Project-AgML/corn_maize_leaf_disease re-uses PlantDoc photos (it would put
 # PlantDoc test photos into training); Project-AgML/bean_disease_uganda (iBean) comes from the
 # same lab as beans_ug and may share photos with its test split; TOM2024's "augmented" config
 # holds edited copies; the Kaggle cassava competition set is licensed for non-commercial use only.
+# Also left out: sets marked non-commercial (cotton_leaf_disease_classification, tea_leaf_disease_classification,
+# eggplant_leaf_disease_classification, MoringaLeafNet) and copies with no licence on record (rice_leaf_disease_classification,
+# paddy_disease_classification, orange_leaf_disease_classification, mango_leaf_disease_classification,
+# cucumber_disease_classification, coconut_tree_disease_classification, plant_village_classification). The CCMT set
+# (cashew, cassava, maize, tomato from Ghanaian farms, CC BY 4.0, Mendeley bwh3zbpkpv) has no copy on the Hub with the
+# crop of each photo, so it waits for a loader of its own.
 
 
 @dataclass
@@ -201,6 +289,8 @@ def compact(image, size: int) -> bytes:
 class Splits:
     train: list[Sample] = field(default_factory=list)
     test: list[Sample] = field(default_factory=list)
+    # Sources that could not be used, with the reason; the model card lists them.
+    skipped: dict[str, str] = field(default_factory=dict)
 
 
 def copy_id(sample: Sample) -> int:
@@ -363,9 +453,18 @@ def load_sources(names: list[str], args) -> Splits:
     for name in names:
         started = time.time()
         print(f"Loading {name} from {SOURCES[name].repo}", flush=True)
-        train, test = load_source(name, args, rng)
+        # One source that cannot be read (moved, renamed labels, a network failure) is skipped and
+        # reported, so a long run over many sources still produces a model.
+        try:
+            train, test = load_source(name, args, rng)
+        except Exception as error:
+            splits.skipped[name] = f"{type(error).__name__}: {error}"[:300]
+            print(f"  WARNING: skipped {name}: {splits.skipped[name]}", flush=True)
+            continue
         if not train or not test:
-            raise SystemExit(f"{name} gave {len(train)} training and {len(test)} test photos; check its labels and splits")
+            splits.skipped[name] = f"{len(train)} training and {len(test)} test photos"
+            print(f"  WARNING: skipped {name}: {splits.skipped[name]}; check its labels and splits", flush=True)
+            continue
         splits.train += train
         splits.test += test
         print(f"  {name}: {len(train)} training and {len(test)} test photos in {time.time() - started:.0f}s", flush=True)
@@ -412,7 +511,42 @@ def transforms(size: int, train: bool):
     return T.Compose([T.Resize((size, size)), T.ToTensor(), T.Normalize(MEAN, STD)])
 
 
-def train(model, samples: list[Sample], labels: list[str], args) -> None:
+def seconds_per_batch(model, loader, loss_fn, lr: float, device: str) -> float:
+    """Times training steps on a copy of the model, so the real model is untouched."""
+    import copy
+
+    import torch
+
+    probe = copy.deepcopy(model).to(device).train()
+    optimiser = torch.optim.AdamW(probe.parameters(), lr=lr)
+    timed, started = 0, None
+    for step, (images, targets) in enumerate(loader):
+        if step == 5:  # the first batches include starting the loader's workers
+            started = time.time()
+        loss = loss_fn(probe(images.to(device)), targets.to(device))
+        optimiser.zero_grad()
+        loss.backward()
+        optimiser.step()
+        if started is not None:
+            timed += 1
+        if timed >= 20:
+            break
+    del probe
+    return (time.time() - started) / max(1, timed) if started else 0.0
+
+
+def epochs_that_fit(args, batches_per_epoch: int, per_batch: float, test_photos: int) -> int:
+    """As many of the requested epochs as fit before the deadline, keeping time to export and score."""
+    if not getattr(args, "deadline", None) or per_batch <= 0:
+        return args.epochs
+    reserve = 300 + 0.03 * test_photos
+    remaining = args.deadline - time.time() - reserve
+    fit = int(remaining // (per_batch * batches_per_epoch * 1.05))
+    return max(1, min(args.epochs, fit))
+
+
+def train(model, samples: list[Sample], labels: list[str], args, test_photos: int = 0) -> int:
+    """Trains in place and returns the number of epochs run."""
     import torch
     from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
@@ -435,13 +569,19 @@ def train(model, samples: list[Sample], labels: list[str], args) -> None:
         Photos(), batch_size=args.batch_size, num_workers=args.workers,
         sampler=WeightedRandomSampler(weights, num_samples=len(samples), replacement=True),
     )
-    optimiser = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.05)
-    steps = args.epochs * len(loader)
-    schedule = torch.optim.lr_scheduler.OneCycleLR(optimiser, max_lr=args.lr, total_steps=max(1, steps))
     loss_fn = torch.nn.CrossEntropyLoss(label_smoothing=0.1)
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    epochs = args.epochs
+    if not args.smoke:
+        per_batch = seconds_per_batch(model, loader, loss_fn, args.lr, device)
+        epochs = epochs_that_fit(args, len(loader), per_batch, test_photos)
+        print(f"{per_batch:.2f}s per batch, {len(loader)} batches per epoch: training {epochs} of {args.epochs} epochs "
+              f"to finish within the time budget", flush=True)
+    optimiser = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=0.05)
+    steps = epochs * len(loader)
+    schedule = torch.optim.lr_scheduler.OneCycleLR(optimiser, max_lr=args.lr, total_steps=max(1, steps))
     model.to(device).train()
-    for epoch in range(args.epochs):
+    for epoch in range(epochs):
         started, total, seen = time.time(), 0.0, 0
         for step, (images, targets) in enumerate(loader):
             images, targets = images.to(device), targets.to(device)
@@ -454,8 +594,9 @@ def train(model, samples: list[Sample], labels: list[str], args) -> None:
             seen += len(targets)
             if args.smoke and step >= 2:
                 break
-        print(f"epoch {epoch + 1}/{args.epochs}: loss {total / max(1, seen):.3f} in {time.time() - started:.0f}s", flush=True)
+        print(f"epoch {epoch + 1}/{epochs}: loss {total / max(1, seen):.3f} in {time.time() - started:.0f}s", flush=True)
     model.to("cpu").eval()
+    return epochs
 
 
 def export_onnx(model, labels: list[str], size: int, out: Path) -> tuple[Path, Path]:
@@ -581,6 +722,29 @@ def calibrate(predictions: list[Prediction]) -> dict:
     return {"basis": "published test splits", "target": CONFIDENT_TARGET, "confidentAt": sure, "points": points}
 
 
+# A crop counts as sure at confidentAt only with this many test photos at or above it.
+MIN_CROP_PHOTOS = 20
+
+
+def calibrate_crops(calibration: dict, predictions: list[Prediction]) -> None:
+    """Adds, per crop, how the answers at or above confidentAt did on all test photos (published
+    and holdout), and the crops where they met the target. Most crops have no published test
+    split, so the overall threshold is checked crop by crop before the app relies on it."""
+    sure_at = calibration["confidentAt"]
+    by_crop: dict[str, list[Prediction]] = {}
+    for p in predictions:
+        by_crop.setdefault(crop_of(p.label), []).append(p)
+    crops = {}
+    for crop, preds in sorted(by_crop.items()):
+        above = [p for p in preds if sure_at is not None and p.confidence >= sure_at]
+        crops[crop] = {"images": len(preds), "imagesAtConfidentAt": len(above),
+                       "top1AccuracyAtConfidentAt": rate(sum(p.ranked[0] == p.label for p in above), len(above))}
+    calibration["crops"] = crops
+    calibration["cropsMeetingTarget"] = sorted(
+        crop for crop, c in crops.items()
+        if c["imagesAtConfidentAt"] >= MIN_CROP_PHOTOS and c["top1AccuracyAtConfidentAt"] >= CONFIDENT_TARGET)
+
+
 def evaluation_entry(scores: dict, dataset: str) -> dict:
     return {
         "dataset": dataset,
@@ -597,7 +761,8 @@ def evaluation_entry(scores: dict, dataset: str) -> dict:
 
 
 def write_outputs(out: Path, labels: list[str], headline: dict, holdout_scores: dict | None, calibration: dict, args,
-                  sources: list[str], counts: dict, precision: str, float_top3: float, int8_top3: float, train_scores: dict) -> None:
+                  sources: list[str], counts: dict, precision: str, float_top3: float, int8_top3: float, train_scores: dict,
+                  skipped: dict[str, str] | None = None) -> None:
     published = [s for s in sources if s == "smoke" or SOURCES[s].test != "holdout"]
     held = [s for s in sources if s != "smoke" and SOURCES[s].test == "holdout"]
     entry = {
@@ -624,7 +789,8 @@ def write_outputs(out: Path, labels: list[str], headline: dict, holdout_scores: 
     lines = [
         f"# Plant disease classifier: {entry['name']}",
         "",
-        f"Architecture: `{args.arch}` from timm, ImageNet weights, fine-tuned {args.epochs} epochs at {args.size}px.",
+        f"Architecture: `{args.arch}` from timm, ImageNet weights, fine-tuned {getattr(args, 'epochs_run', args.epochs)} epochs "
+        f"(of {args.epochs} asked) at {args.size}px.",
         f"Output: softmax probabilities over {len(labels)} labels on {len({crop_of(label) for label in labels})} crops (manifest.json).",
         f"Shipped as {precision}; every number below is for the shipped file. Float32 top-3 {float_top3:.1%}, int8 top-3 "
         f"{int8_top3:.1%}; int8 ships only within {QUANTISATION_TOLERANCE:.0%} of float.",
@@ -669,6 +835,16 @@ def write_outputs(out: Path, labels: list[str], headline: dict, holdout_scores: 
         "|---:|---:|---:|",
         *[f"| {pt['minConfidence']:.2f} | {pt['share']:.1%} | {pt['top1Accuracy']:.1%} |" for pt in calibration["points"]],
         "",
+        "Most crops have no published test split, so the same threshold is checked on each crop's test photos (published",
+        f"and holdout). The app skips the online check only for crops where answers at that confidence were right at least",
+        f"{CONFIDENT_TARGET:.0%} of the time on {MIN_CROP_PHOTOS}+ photos: "
+        + (", ".join(calibration.get("cropsMeetingTarget") or []) or "none") + ".",
+        "",
+        "| Crop | Test photos | At or above the threshold | Top-1 among them |",
+        "|---|---:|---:|---:|",
+        *[f"| {crop} | {c['images']} | {c['imagesAtConfidentAt']} | {c['top1AccuracyAtConfidentAt']:.1%} |"
+          for crop, c in (calibration.get("crops") or {}).items()],
+        "",
         "## Per label",
         "",
         "| Label | Train photos | Test photos | Top-1 |",
@@ -683,6 +859,10 @@ def write_outputs(out: Path, labels: list[str], headline: dict, holdout_scores: 
         c = per_class[label]
         lines.append(f"| {label} | {counts.get(label, 0)} | {c['images']} | {c['top1'] / max(1, c['images']):.1%} |")
     lines += ["", "## Data and licences", ""]
+    if skipped:
+        lines += ["Sources that could not be used in this run:", ""]
+        lines += [f"- {name}: {reason}" for name, reason in skipped.items()]
+        lines.append("")
     for name in sources:
         source = SOURCES.get(name)
         if source is None:
@@ -712,18 +892,21 @@ def main() -> int:
     parser.add_argument("--sources", default=",".join(SOURCES), help=f"Comma-separated, from: {', '.join(SOURCES)}")
     parser.add_argument("--arch", default="mobilenetv3_small_100")
     parser.add_argument("--size", type=int, default=224)
-    parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--epochs", type=int, default=10, help="At most this many; fewer when the time budget needs it")
+    parser.add_argument("--time-budget-minutes", type=float, default=None,
+                        help="Finish within this many minutes of starting (the workflow sets it below the job's limit)")
     parser.add_argument("--batch-size", type=int, default=48)
     parser.add_argument("--lr", type=float, default=2e-3)
     parser.add_argument("--workers", type=int, default=2)
-    parser.add_argument("--max-train-per-label", type=int, default=1500, help="Training photos kept per label and source")
-    parser.add_argument("--max-test-per-label", type=int, default=300, help="Holdout test photos kept per label and source")
+    parser.add_argument("--max-train-per-label", type=int, default=1000, help="Training photos kept per label and source")
+    parser.add_argument("--max-test-per-label", type=int, default=200, help="Holdout test photos kept per label and source")
     parser.add_argument("--min-photos-per-label", type=int, default=20, help="Drop labels with fewer training photos")
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--push-to", help="Hugging Face model repo to upload the outputs to, e.g. org/plant-disease-edge")
     parser.add_argument("--smoke", action="store_true", help="Run every step on generated images; the numbers mean nothing")
     args = parser.parse_args()
+    args.deadline = time.time() + args.time_budget_minutes * 60 if args.time_budget_minutes else None
 
     import torch
 
@@ -757,7 +940,7 @@ def main() -> int:
         return 1
 
     model = build_model(args.arch, len(labels), pretrained=not args.smoke)
-    train(model, splits.train, labels, args)
+    args.epochs_run = train(model, splits.train, labels, args, len(splits.test))
     float_path, quantised = export_onnx(model, labels, args.size, args.out)
     float_predictions = predict(float_path, splits.test, labels, args.size)
     int8_predictions = predict(quantised, splits.test, labels, args.size)
@@ -773,13 +956,15 @@ def main() -> int:
     headline = summarise(headline_predictions, labels)
     holdout_scores = summarise(holdout_predictions, labels) if holdout_predictions else None
     calibration = calibrate(headline_predictions)
+    calibrate_crops(calibration, shipped)
     print(f"Shipping the {precision} model", flush=True)
     for name, scores in (("published test splits", headline), ("holdouts", holdout_scores)):
         if scores:
             print(name, json.dumps({k: v for k, v in scores.items() if k != "perClass"}, indent=2), flush=True)
     print("calibration", json.dumps(calibration, indent=2), flush=True)
-    write_outputs(args.out, labels, headline, holdout_scores, calibration, args, sources, counts, precision,
-                  float_all["top3Accuracy"], int8_all["top3Accuracy"], train_scores)
+    used = [s for s in sources if s not in splits.skipped]
+    write_outputs(args.out, labels, headline, holdout_scores, calibration, args, used, counts, precision,
+                  float_all["top3Accuracy"], int8_all["top3Accuracy"], train_scores, splits.skipped)
 
     if args.push_to:
         from huggingface_hub import HfApi

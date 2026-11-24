@@ -35,7 +35,7 @@
   "pages/PortfolioPage.tsx": 343,
   "pages/SystemHealth.tsx": 712,
   "pages/UserManagementPage.tsx": 651,
-  "pages/diagnostics/ImageAnalysisTab.tsx": 368,
+  "pages/diagnostics/ImageAnalysisTab.tsx": 357,
   "pages/diagnostics/SoilDiagnosticsTab.tsx": 421,
   "pages/landing/sections/FarmerServices.tsx": 355,
   "pages/landing/sections/Hero.tsx": 366,

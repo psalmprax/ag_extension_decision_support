@@ -6,46 +6,16 @@ import { checkPhotoOnDevice, type OnDeviceCheck } from '@/services/onDevicePhoto
 import type { OfflineDiagnosisResult } from '@/services/edgePlantVisionClassifier';
 import type { OnDeviceReason } from '@/components/edgeVision/OnDevicePhotoResult';
 import { useLanguage } from '@/lib/LanguageContext';
+import { shrinkForVision } from '@/lib/visionPhoto';
 import type { ImageAnalysisData } from './ImageAnalysisTab';
 
-function getBoundedDimensions(width: number, height: number, maxDim: number): { width: number; height: number } {
-  if (width <= maxDim && height <= maxDim) {
-    return { width, height };
-  }
-  if (width > height) {
-    return { width: maxDim, height: Math.round((height * maxDim) / width) };
-  }
-  return { width: Math.round((width * maxDim) / height), height: maxDim };
-}
-
-function downscaleImageCanvas(img: HTMLImageElement, rawFallback: string): string {
-  const maxDim = 1920;
-  const { width, height } = getBoundedDimensions(img.width, img.height, maxDim);
-  if (width === img.width && height === img.height) {
-    return rawFallback;
-  }
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return rawFallback;
-  ctx.drawImage(img, 0, 0, width, height);
-  return canvas.toDataURL('image/jpeg', 0.88);
-}
-
+/** The chosen photo as a data URL, shrunk for the online check (see visionPhoto.ts). */
 function processImageFile(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = e => {
       const rawResult = (e.target?.result as string) || '';
-      if (!rawResult) {
-        resolve('');
-        return;
-      }
-      const img = new Image();
-      img.onload = () => resolve(downscaleImageCanvas(img, rawResult));
-      img.onerror = () => resolve(rawResult);
-      img.src = rawResult;
+      void shrinkForVision(rawResult).then(resolve);
     };
     reader.onerror = err => reject(err);
     reader.readAsDataURL(file);

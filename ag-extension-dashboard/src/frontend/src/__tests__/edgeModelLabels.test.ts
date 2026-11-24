@@ -8,6 +8,8 @@ describe('on-device model labels', () => {
     expect(labelDisplayName('banana___fusarium_wilt')).toBe('Banana Fusarium wilt');
     expect(labelDisplayName('corn___healthy')).toBe('Healthy maize leaf');
     expect(labelDisplayName('tomato___healthy_fruit')).toBe('Healthy tomato fruit');
+    expect(labelDisplayName('date_palm___parlatoria_scale')).toBe('Date palm Parlatoria scale');
+    expect(labelDisplayName('orange___zinc_deficiency')).toBe('Orange zinc deficiency');
   });
 
   it('knows a healthy label', () => {
@@ -22,6 +24,13 @@ describe('on-device model labels', () => {
     expect(matchCrop('Soybeans', crops)).toBe('soybean');
     expect(matchCrop('cowpea', crops)).toBe('cowpea');
     expect(matchCrop('Rice', crops)).toBeNull();
+    const peppers = modelCrops(['pepper___rust', 'chili___cercospora', 'bell_pepper___healthy', 'rice___blast', 'eggplant___wilt']);
+    expect(matchCrop('Bell pepper', peppers)).toBe('bell_pepper');
+    expect(matchCrop('chilli', peppers)).toBe('chili');
+    expect(matchCrop('hot pepper', peppers)).toBe('chili');
+    expect(matchCrop('pepper', peppers)).toBe('pepper');
+    expect(matchCrop('paddy field', peppers)).toBe('rice');
+    expect(matchCrop('brinjal', peppers)).toBe('eggplant');
     expect(matchCrop('', crops)).toBeNull();
   });
 

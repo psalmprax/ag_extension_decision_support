@@ -44,16 +44,32 @@ const CROP_NAMES: Readonly<Record<string, string>> = {
   soybean: 'Soybean',
 };
 
-/** Other words people use for a crop, beside its display name and label name. */
+/**
+ * Other words people use for a crop, beside its display name and label name. Only names that
+ * mean the same crop: "pepper" is the model's own Capsicum crop, so bell pepper and chili keep theirs.
+ */
 const CROP_ALIASES: Readonly<Record<string, string[]>> = {
   corn: ['maize', 'corn'],
   soybean: ['soybean', 'soyabean', 'soya', 'soy'],
   bean: ['bean', 'common bean'],
-  bell_pepper: ['bell pepper', 'pepper', 'capsicum'],
+  bell_pepper: ['bell pepper'],
+  pepper: ['pepper', 'capsicum', 'sweet pepper'],
+  chili: ['chili', 'chilli', 'chile', 'hot pepper'],
+  rice: ['rice', 'paddy'],
+  groundnut: ['groundnut', 'peanut'],
+  eggplant: ['eggplant', 'brinjal', 'aubergine'],
+  papaya: ['papaya', 'pawpaw'],
+  sugarcane: ['sugarcane', 'sugar cane'],
+  black_gram: ['black gram', 'urad'],
+  date_palm: ['date palm'],
+  cassava: ['cassava', 'manioc'],
 };
 
-// Genus and disease names that keep a capital letter.
-const PROPER_NAMES = new Set(['fusarium', 'sigatoka', 'xanthomonas', 'cercospora', 'septoria', 'phoma', 'alternaria', 'tuta', 'helicoverpa', 'curvularia']);
+// Genus, place and disease names that keep a capital letter.
+const PROPER_NAMES = new Set([
+  'fusarium', 'sigatoka', 'xanthomonas', 'cercospora', 'septoria', 'phoma', 'alternaria', 'tuta', 'helicoverpa', 'curvularia',
+  'phyllosticta', 'ascochyta', 'helopeltis', 'parlatoria', 'iris', 'texas', 'pokkah',
+]);
 
 function words(snake: string): string {
   return snake.split('_').filter(Boolean).map(word => (PROPER_NAMES.has(word) ? word[0].toUpperCase() + word.slice(1) : word)).join(' ');

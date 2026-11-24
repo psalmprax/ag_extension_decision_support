@@ -7,11 +7,12 @@
  *  2) A disease classifier runs only when /models/manifest.json lists one that passed an
  *     evaluation on field photos (see edgeModelManifest.ts). Until one is installed, every
  *     offline result is the colour check, and the photo can be queued for the cloud analysis.
- *     When the model's answer is as sure as the manifest's calibration says is right at least
- *     nine times in ten (confidentEnough), the photo check can skip the online model.
+ *     When a crop is named and the model's answer is as sure as the manifest's calibration says is
+ *     right at least nine times in ten for that crop (confidentEnough), the photo check can skip
+ *     the online model.
  */
 
-import { confidentThreshold, modelUrl, releasedEdgeModels, toProbabilities, type EdgeModelEntry } from './edgeModelManifest';
+import { confidentThreshold, cropMaySkipOnlineCheck, modelUrl, releasedEdgeModels, toProbabilities, type EdgeModelEntry } from './edgeModelManifest';
 import { LABEL_CONDITIONS, cropDisplayName, cropOfLabel, isHealthyLabel, labelDisplayName, matchCrop, modelCrops } from './edgeModelLabels';
 
 export interface EdgeVisualMetrics {
@@ -263,8 +264,10 @@ export function rankModelOutput(probabilities: number[], model: EdgeModelEntry, 
   return {
     candidates: [top, ...alternatives].map(r => labelCandidate(r.label, r.p)),
     model,
-    // Sure only when the crop filter did not change the model's own first answer.
-    confidentEnough: sureAt !== null && top.p >= sureAt && top.label === ranked[0].label,
+    // Sure only for a named crop the model has shown it handles, and only when the crop filter
+    // did not change the model's own first answer. A photo of a crop the model never saw can
+    // still get a confident answer, so an unnamed crop always goes to the online check.
+    confidentEnough: sureAt !== null && top.p >= sureAt && top.label === ranked[0].label && cropMaySkipOnlineCheck(model, crop),
   };
 }
 

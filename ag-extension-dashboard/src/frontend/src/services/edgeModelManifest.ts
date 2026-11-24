@@ -32,6 +32,12 @@ export interface ModelCalibration {
   /** The lowest confidence from which answers met the target; null when none did. */
   confidentAt: number | null;
   points: Array<{ minConfidence: number; share: number; top1Accuracy: number; images: number }>;
+  /**
+   * Crops whose own test photos met the target at confidentAt (most crops have no published test
+   * split, so the overall threshold is checked crop by crop). Absent in older manifests.
+   */
+  cropsMeetingTarget?: string[];
+  crops?: Record<string, { images: number; imagesAtConfidentAt: number; top1AccuracyAtConfidentAt: number }>;
 }
 
 export interface EdgeModelEntry {
@@ -66,6 +72,16 @@ export function confidentThreshold(entry: EdgeModelEntry): number | null {
   if (typeof sureAt !== 'number' || !Number.isFinite(sureAt) || sureAt > 1) return null;
   if ((entry.fieldEvaluation?.images ?? 0) < MIN_CALIBRATION_IMAGES || calibration!.target < 0.9) return null;
   return Math.max(sureAt, MIN_CONFIDENT_AT);
+}
+
+/**
+ * Whether the online check may be skipped for this crop: the person named it, the model knows
+ * it, and (when the manifest says) its own test photos met the target at the sure threshold.
+ */
+export function cropMaySkipOnlineCheck(entry: EdgeModelEntry, crop: string | null): boolean {
+  if (!crop) return false;
+  const listed = entry.calibration?.cropsMeetingTarget;
+  return !Array.isArray(listed) || listed.includes(crop);
 }
 
 /** A short, stable hash of a string (djb2), for a version tag when no SHA-256 was recorded. */

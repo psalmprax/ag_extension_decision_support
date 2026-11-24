@@ -24,10 +24,14 @@ That passed the gate as it stood then. Read the PlantDoc row as the honest estim
 from new fields: the maize photos come from the same set the model trained on, so they score high.
 The int8 file from the same run scored top-3 40%, so the float32 file (about 6 MB) is the one to ship.
 
-The training script now streams twelve sources, adding among others maize lethal necrosis and
-streak virus, bean anthracnose and rust, banana Fusarium and Xanthomonas wilt, coffee leaf rust
-and potato late blight, and the gate is scored on published test splits only. The run's model
-card gives the photo counts. Install that run's model rather than run 45370280118's.
+The training script now streams 37 openly licensed sources covering close to 40 crops: field
+crops (maize, rice, cassava, beans, cowpea, groundnut, soybean, lentil, black gram, sunflower),
+cash crops (coffee, tea, cotton, sugarcane), bananas, fruit (orange, lemon, papaya, guava, grape,
+pomegranate, date palm, watermelon and PlantDoc's temperate fruit) and vegetables (tomato, potato,
+pepper, chili, eggplant, okra, onion, cauliflower, squash). Wheat, sorghum, millet, sweet potato,
+yam, cocoa, cashew and mango have no openly licensed leaf-disease set on Hugging Face yet; the
+CCMT set (cashew, cassava, maize and tomato from Ghana, CC BY 4.0) needs a loader of its own. The gate is scored on published test splits only, and the
+run's model card gives the photo counts. Install that run's model rather than run 45370280118's.
 
 Until November 2026 this folder held three files described as EfficientNet-Lite0, MobileViT-XXS
 and YOLOv8n. They were scaffolds with random weights (a pooled colour average into a small
@@ -40,7 +44,7 @@ in fact the colour check, and are now labelled as such.
 1. Train it: the "Train disease model" workflow (it runs when `scripts/ml/train_disease_classifier.py`
    changes on stage; two to three hours), or the script itself. It streams photos from the sources
    listed in `SOURCES` in the script (all CC0, CC-BY or CC-BY-SA; each source's licence and credit
-   is in the model card), keeps at most 1,500 training photos per label and source, fine-tunes an
+   is in the model card), keeps at most 1,000 training photos per label and source, fine-tunes an
    ImageNet MobileNetV3, exports ONNX with softmax output, and keeps int8 only within 2 points of
    float32 top-3.
 2. Download the run's `plant-disease-model` artifact and read its `MODEL_CARD.md`. It reports
@@ -78,7 +82,12 @@ Each online call costs an AI vision request and counts against the plan's vision
 phone's answer is shown instead, and the online call skipped, only when:
 
 - a released model is installed (it passed the gate),
-- the crop typed, if any, is one the model was trained on (otherwise the online check runs),
+- a crop is named and it is one the model was trained on. With no crop named, the online check
+  runs: a photo of a crop the model never saw can still get a confident answer. The crop field
+  suggests the model's crops,
+- the crop is in the manifest's `calibration.cropsMeetingTarget`: on its own test photos, answers
+  at the sure threshold were right at least 90% of the time (most crops have no published test
+  split, so the overall threshold is checked crop by crop),
 - the top answer's confidence is at least the manifest's `calibration.confidentAt`: the lowest
   confidence from which, on at least 50 published test photos, the top answer was right at least
   90% of the time. The app ignores a calibration measured on fewer than 300 photos or with a
@@ -89,6 +98,11 @@ withheld until an extension officer confirms. Offline, the photo is queued for t
 the phone's answer, if any, is shown meanwhile. How many online calls this saves depends on how
 often field photos clear that confidence; the model card's confidence table gives the share for
 the test photos.
+
+Every photo that does go online, from any screen, is first shrunk to 1,024 pixels on its long side
+(`src/lib/visionPhoto.ts`). Vision models bill by photo size: Claude by pixel area and Gemini per
+768-pixel tile. That cuts the photo's share of each call's input tokens by about a third (Claude)
+to two thirds (Gemini) compared with the 1,920-pixel photos sent before, for every crop.
 
 ## Manifest entry
 
