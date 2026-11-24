@@ -10,14 +10,15 @@ const CRON_EXPRESSION = process.env.ADVISORY_CRON || '0 4 * * *'; // 04:00 serve
 let _worker: Worker | null = null;
 
 /**
- * Starts the repeatable daily advisory cycle. Enabled by default in non-test
- * environments. Disable with ADVISORY_ENGINE_ENABLED=false.
+ * Starts the repeatable daily advisory cycle, which texts opted-in farmers. Off unless
+ * ADVISORY_ENGINE_ENABLED=true: its weather thresholds are the app team's own (see
+ * seasonalAdvisoryService), so an agronomist should set them for the district first.
  * Idempotent: BullMQ upserts the repeatable job by jobId.
  */
 export const startAdvisoryScheduler = async (): Promise<void> => {
     if (config.nodeEnv === 'test') return;
-    if (process.env.ADVISORY_ENGINE_ENABLED === 'false') {
-        logger.info('Advisory engine disabled via ADVISORY_ENGINE_ENABLED=false');
+    if (process.env.ADVISORY_ENGINE_ENABLED !== 'true') {
+        logger.info('Advisory engine off: set ADVISORY_ENGINE_ENABLED=true once district thresholds are agreed');
         return;
     }
     if (!redisConnection) return;

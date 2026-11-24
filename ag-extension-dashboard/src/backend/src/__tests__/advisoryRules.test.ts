@@ -43,7 +43,8 @@ describe('advisory rules (pure)', () => {
     it('planting_window fires after ≥25mm over the trailing week', () => {
         const verdict = advisoryRules.planting_window({ district: 'Lilongwe', daily: wetWeek });
         expect(verdict.shouldDispatch).toBe(true);
-        expect(verdict.message).toMatch(/Planting window/);
+        expect(verdict.message).toMatch(/Ask your extension officer whether it is time to plant/);
+        expect(verdict.message).not.toMatch(/Plant now/);
     });
 
     it('planting_window stays quiet in a dry week', () => {
@@ -69,7 +70,8 @@ describe('advisory rules (pure)', () => {
         const humid = wetWeek.map((d, i) => ({ ...d, humidityPct: i >= 28 ? 95 : 60, tempMinC: 12, tempMaxC: 22 }));
         const verdict = advisoryRules.late_blight_risk({ district: 'X', daily: humid });
         expect(verdict.shouldDispatch).toBe(true);
-        expect(verdict.severity).toBe('urgent');
+        expect(verdict.severity).toBe('warning');
+        expect(verdict.message).not.toMatch(/fungicide/);
     });
 
     it('handles insufficient data without firing', () => {

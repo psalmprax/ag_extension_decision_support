@@ -50,9 +50,15 @@ export const toDailyClimate = (points: DailyPoint[]): DailyClimate[] =>
 /**
  * Pure rule evaluation — no I/O. Each rule reads the trailing climate window
  * and decides whether farmers in the district should be messaged.
+ *
+ * The thresholds below (25 mm in 7 days, 5 mm in 5 days, 380 degree-days above 13.8 °C, two
+ * days at RH >= 90%) are the app team's own, not taken from a published model, so the
+ * messages only report the measured weather and send farmers to their officer: no planting
+ * date, product, action threshold or spray. The engine is off unless ADVISORY_ENGINE_ENABLED
+ * is "true", for an agronomist to set district thresholds first.
  */
 export const advisoryRules: Record<AdvisoryRuleKey, (snap: ClimateSnapshot) => RuleVerdict> = {
-    // ≥25mm accumulated rain across the trailing week with warm mean temps = planting window opening.
+    // A wet, warm week: worth asking the officer about planting.
     planting_window: snap => {
         const window = snap.daily.slice(-7);
         if (window.length < 7) return no('insufficient data');
@@ -63,13 +69,13 @@ export const advisoryRules: Record<AdvisoryRuleKey, (snap: ClimateSnapshot) => R
             shouldDispatch: should,
             severity: 'info',
             message: should
-                ? `Planting window opening in ${snap.district}: ${Math.round(rainTotal)}mm of rain over the last 7 days with warm soils (${Math.round(meanTemp)}°C average). Plant now to make the most of the moisture.`
+                ? `${Math.round(rainTotal)} mm of rain fell in ${snap.district} over the last 7 days, average ${Math.round(meanTemp)}°C (NASA POWER). Ask your extension officer whether it is time to plant your crop.`
                 : 'insufficient rain',
             params: { rainTotalMm: Math.round(rainTotal * 10) / 10, meanTempC: Math.round(meanTemp * 10) / 10 },
         };
     },
 
-    // <5mm forecast-equivalent over the trailing 5 days during the season = dry spell.
+    // Little rain over five days.
     dry_spell_warning: snap => {
         const window = snap.daily.slice(-5);
         if (window.length < 5) return no('insufficient data');
@@ -79,14 +85,13 @@ export const advisoryRules: Record<AdvisoryRuleKey, (snap: ClimateSnapshot) => R
             shouldDispatch: should,
             severity: 'warning',
             message: should
-                ? `Dry spell warning for ${snap.district}: only ${Math.round(rainTotal * 10) / 10}mm of rain in the last 5 days. Conserve soil moisture — mulch where possible and delay top-dressing until rain returns.`
+                ? `Only ${Math.round(rainTotal * 10) / 10} mm of rain fell in ${snap.district} in the last 5 days (NASA POWER). Ask your extension officer how to look after your crop in dry weather.`
                 : 'adequate rain',
             params: { rainTotalMm: Math.round(rainTotal * 10) / 10 },
         };
     },
 
-    // Fall armyworm development accelerates above ~13.8°C base; cumulative degree-days
-    // above 380 over the trailing 30 days signal elevated larval pressure.
+    // A warm month: a reminder to scout for fall armyworm, not a risk estimate.
     faw_degree_day: snap => {
         const window = snap.daily.slice(-30);
         if (window.length < 20) return no('insufficient data');
@@ -96,14 +101,13 @@ export const advisoryRules: Record<AdvisoryRuleKey, (snap: ClimateSnapshot) => R
             shouldDispatch: should,
             severity: 'warning',
             message: should
-                ? `Fall armyworm risk is high in ${snap.district} (accumulated heat ${Math.round(gdd)} degree-days). Scout maize fields early in the morning; treat when 2 in 10 plants show fresh leaf damage.`
+                ? `The last month in ${snap.district} was warm (NASA POWER). Check your maize for fresh fall armyworm damage in the leaf funnel, and tell your extension officer what you find.`
                 : 'below threshold',
             params: { degreeDays: Math.round(gdd) },
         };
     },
 
-    // Simplified BLITECAST: two consecutive days with mean RH ≥90% and mean temp 10–25°C
-    // favour late blight sporulation on potato/tomato.
+    // Two cool, very humid days: a reminder to look for late blight, not a forecast of it.
     late_blight_risk: snap => {
         const window = snap.daily.slice(-2);
         if (window.length < 2) return no('insufficient data');
@@ -111,9 +115,9 @@ export const advisoryRules: Record<AdvisoryRuleKey, (snap: ClimateSnapshot) => R
         const should = favourable === 2;
         return {
             shouldDispatch: should,
-            severity: 'urgent',
+            severity: 'warning',
             message: should
-                ? `Late blight risk is severe in ${snap.district} (2 consecutive days of cool, humid conditions). Inspect potato and tomato fields today; apply a protective fungicide before symptoms spread.`
+                ? `The last 2 days in ${snap.district} were cool and very humid (NASA POWER). Check potato and tomato leaves for dark, spreading patches, and tell your extension officer if you see them.`
                 : 'conditions not favourable',
             params: { favourableDays: favourable },
         };
