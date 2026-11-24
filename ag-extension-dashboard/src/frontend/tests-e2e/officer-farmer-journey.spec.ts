@@ -136,7 +136,7 @@ test.describe.serial('officer and farmer through a season', () => {
   test('on the farm, the officer files the visit report and books the follow-up from it', async () => {
     const followUp = daysFromNow(16);
     await openMenu(officerPage, 'Visits');
-    await officerPage.getByRole('button', { name: `Mark visit for ${JOURNEY.farmer.name} as completed` }).first().click();
+    await officerPage.getByRole('button', { name: `Complete (${JOURNEY.farmer.name})` }).first().click();
 
     const report = officerPage.getByRole('dialog', { name: new RegExp(`Visit report: ${JOURNEY.farmer.name}`) });
     await report.getByLabel('Findings *').fill('Nitrogen deficiency on lower leaves across the maize; beans waterlogged in the lower corner.');

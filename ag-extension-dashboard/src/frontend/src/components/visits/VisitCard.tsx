@@ -100,7 +100,8 @@ export const VisitCard: React.FC<VisitCardProps> = ({
         {isOpen && (
           <>
             <button
-              aria-label={`Mark visit for ${farmerDisplayName} as completed`}
+              // The visible word leads the name, so voice control ("click Complete") finds it in any language.
+              aria-label={`${t('ui_farmer_visit_timeline_complete')} (${farmerDisplayName})`}
               onClick={e => {
                 e.stopPropagation();
                 onComplete(visit, farmerDisplayName);
@@ -110,7 +111,7 @@ export const VisitCard: React.FC<VisitCardProps> = ({
               {t('ui_farmer_visit_timeline_complete')}
             </button>
             <button
-              aria-label={`Cancel visit for ${farmerDisplayName}`}
+              aria-label={`${t('common_cancel')} (${farmerDisplayName})`}
               onClick={e => {
                 e.stopPropagation();
                 onCancel(visit.id, farmerDisplayName);

@@ -22,8 +22,9 @@ export function farmerChatSender(role: ChatMessage['role']): SenderPresentation 
       sender: 'officer',
       label: 'Officer',
       align: 'end',
-      bubbleClass: 'bg-emerald-600 text-white rounded-se-none border border-emerald-500/20',
-      metaClass: 'text-white/75 border-white/20',
+      // emerald-700 keeps white text, even the small time stamp, above 4.5:1.
+      bubbleClass: 'bg-emerald-700 text-white rounded-se-none border border-emerald-600/20',
+      metaClass: 'text-white border-white/25',
     };
   }
   if (role === 'assistant') {
