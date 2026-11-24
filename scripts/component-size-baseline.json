@@ -5,7 +5,7 @@
   "components/AppModals.tsx": 488,
   "components/BillingDashboard.tsx": 659,
   "components/Cyber/AlphaAI.tsx": 425,
-  "components/EdgeVisionScannerModal.tsx": 1011,
+  "components/EdgeVisionScannerModal.tsx": 1001,
   "components/FarmerDetailPanel.tsx": 477,
   "components/FarmerMap.tsx": 488,
   "components/FloatingAIPill.tsx": 811,

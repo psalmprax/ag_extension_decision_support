@@ -1,53 +1,72 @@
-# Edge Agri-Vision ONNX Models — Two-Stage On-Device Diagnosis
+# On-device plant disease models
 
-This directory houses the on-device Edge AI models running via `onnxruntime-web` (single-thread WASM) inside the browser and Capacitor webview.
+This folder is served at `/models/` (nginx `location /models/`, copied by the Dockerfile) and
+holds the disease classifier the app may run on a phone with no connection.
 
-## Architecture: Two-Stage Pipeline
+## What runs today
 
+No model. `manifest.json` lists none, so every offline plant photo gets the colour and spot
+check in `src/services/edgePlantVisionClassifier.ts`. That check finds the leaf, marks
+discoloured areas and suggests what they may be; it is labelled as a colour check, always needs
+confirming and never gives treatment advice. Photos can be queued for the cloud analysis.
+
+Until November 2026 this folder held three files described as EfficientNet-Lite0, MobileViT-XXS
+and YOLOv8n. They were scaffolds with random weights (a pooled colour average into a small
+dense layer, 227 to 1.09M parameters) produced by `scripts/ml/export_*_onnx.py`, never trained
+on plant photos. They and those scripts were removed; the YOLO "detections" shown to users were
+in fact the colour check, and are now labelled as such.
+
+## How a model gets here
+
+1. Train it: `scripts/ml/train_disease_classifier.py`, or the "Train disease model" workflow.
+   It fine-tunes an ImageNet MobileNetV3 on field photos (PlantDoc, handheld maize photos,
+   Ugandan cassava), exports ONNX with softmax output, quantises to int8 and scores the
+   quantised file on each source's held-out field photos.
+2. Read `MODEL_CARD.md` from the run: per-source and per-label results, and the data licences
+   (one source is CC-BY-SA).
+3. Copy `plant-disease.onnx` here and add its entry from the run's `manifest.json` to this
+   folder's `manifest.json`.
+
+The app loads a model only when its manifest entry passes the acceptance gate in
+`docs/specs/PHASE2-OFFLINE-DIAGNOSIS-MODEL.md`, checked in `src/services/edgeModelManifest.ts`:
+
+| Measure, on held-out field photos | Floor |
+|---|---|
+| Photos scored | 300 |
+| Right label in the top three | 70% |
+| Right crop as the first answer | 60% |
+
+A score on lab photos such as PlantVillage does not count: a model that scores 94% there scored
+18.5% on PlantDoc field photos in the study cited in the spec. Smoke runs of the training script
+are marked and never load. Before widening use beyond guidance, also score photos taken by the
+app's own officers, as the spec asks.
+
+## Manifest entry
+
+```json
+{
+  "file": "plant-disease.onnx",
+  "name": "mobilenetv3_small_100, field photos 2026-12-01",
+  "labels": ["cassava___brown_streak", "cassava___healthy", "corn___common_rust", "..."],
+  "output": "probabilities",
+  "inputSize": 224,
+  "fieldEvaluation": {
+    "dataset": "plantdoc test split, maize test split, cassava test split",
+    "images": 2100,
+    "top1Accuracy": 0.61,
+    "top3Accuracy": 0.83,
+    "cropTop1Accuracy": 0.9,
+    "evaluatedOn": "2026-12-01"
+  }
+}
 ```
-[User Camera / Foliage Photo]
-            │
-            ▼
-┌───────────────────────────────────────────────┐
-│ Stage 1: YOLO Detector (yolo-detector.onnx)   │
-│ • Detects: crop_leaf, foliar_lesion,          │
-│   pest_damage, non_plant_background           │
-│ • "Not a leaf" Rejection Guard                │
-│ • Foliar Saliency & Bounding Box Overlays     │
-└──────────────────────┬────────────────────────┘
-                       │ Valid Foliage
-                       ▼
-┌───────────────────────────────────────────────┐
-│ Stage 2: MobileViT (mobilevit-classifier.onnx)│
-│ • Hybrid ViT Transformer + Inverted Residual  │
-│ • High accuracy on complex crop textures      │
-│ • 38 PlantVillage + Regional Crop Classes     │
-└──────────────────────┬────────────────────────┘
-                       │
-                       ▼
-[Ranked Diagnostics + Agronomic Treatments]
-```
 
-### 1. Stage 1 Detector: `yolo-detector.onnx`
-- **Architecture:** YOLOv8n / YOLOv11n Agri-Vision
-- **Input:** `1x3x320x320` float32 NCHW, normalized `[0, 1]`
-- **Output:** `output0` `[1, 8, num_anchors]` (4 box coordinates + 4 class probabilities)
-- **Classes:** `crop_leaf` (0), `foliar_lesion` (1), `pest_damage` (2), `non_plant_background` (3)
-- **Role:** Localizes lesions, isolates leaf lamina from background, rejects non-foliar photos.
-- **Export script:** `python3 scripts/ml/export_yolo_onnx.py --imgsz 320 --int8`
+The numbers above only show the shape; they are not results. Labels are `<crop>___<disease>`;
+the app maps the ones it knows to its conditions and ignores the rest. Input is 1x3xNxN float32,
+ImageNet-normalised.
 
-### 2. Stage 2 Classifier: `mobilevit-classifier.onnx`
-- **Architecture:** MobileViT-XXS (~1.3M parameters, ~5.2MB FP32 / ~1.8MB INT8)
-- **Input:** `1x3x224x224` float32 NCHW, ImageNet normalized `mean=[0.485,0.456,0.406] std=[0.229,0.224,0.225]`
-- **Output:** `logits` `[1, 38]` softmax probabilities (PlantVillage 38 classes)
-- **Role:** High-accuracy disease classification leveraging self-attention and CNN blocks.
-- **Export script:** `python3 scripts/ml/export_mobilevit_onnx.py --model mobilevit_xxs --int8`
+## Runtime
 
-### 3. Legacy / Fallback Classifier: `plant-disease.onnx`
-- **Architecture:** EfficientNet-Lite0 (4.2MB float32, 1.1MB INT8)
-- **Role:** Fast lightweight fallback if MobileViT is not present.
-
-## Runtime & Offline Caching
-- **Runtime:** `onnxruntime-web@1.19` WASM `numThreads: 1`, `simd: true`
-- **Cache:** Workbox `CacheFirst` on `/\/models\/.*\.onnx$/i` for 30 days. Never precached during install to prevent APK/PWA bloat; downloaded on first use and cached permanently for offline field operations.
-- **Safety Gate:** `ONNX_MIN_PROBABILITY = 0.55`. Candidates below threshold fall back to calibrated heuristic triage (HSV/LAB + Sobel edge density) with an invitation to verify via Cloud Multimodal Vision AI when online.
+`onnxruntime-web` WASM, one thread, served from `/models/ort/`. The service worker keeps `.onnx`
+files once downloaded (CacheFirst, 30 days) and the manifest's last copy for offline use
+(NetworkFirst). Models are never precached, to keep the install small.

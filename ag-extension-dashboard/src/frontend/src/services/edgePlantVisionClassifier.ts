@@ -1,16 +1,15 @@
 /**
- * Edge Plant Vision Classifier — Hybrid On-Device Diagnosis Engine
+ * On-device plant photo check, for when there is no connection.
  *
- * Architecture:
- *  1) Preferred: ONNX Runtime Web inference (PlantVillage EfficientNet-B0, 38 classes, ~4.2MB quantized)
- *     Model: /models/plant-disease.onnx (fetched on first use, cached in Cache Storage + IndexedDB)
- *     If model unavailable or WebGL/WASM init fails → fallback to
- *  2) Improved heuristic triage (HSV + LAB chromaticity, NGRDI, texture Sobel, lesion morphology)
- *
- * Offline triage is clearly labeled `heuristic` and must be confirmed when confidence <0.8
- * or severity >= moderate. Cloud verification via POST /api/ai/diseases/analyze is offered
- * when `navigator.onLine`.
+ *  1) A colour and spot check (HSV + LAB chromaticity, NGRDI, Sobel texture, lesion shape) finds
+ *     the leaf, marks discoloured areas and suggests what they may be. It is labelled
+ *     `heuristic`, always needs confirming, and never gives treatment advice.
+ *  2) A disease classifier runs only when /models/manifest.json lists one that passed an
+ *     evaluation on field photos (see edgeModelManifest.ts). None does yet, so today every
+ *     offline result is the colour check, and the photo can be queued for the cloud analysis.
  */
+
+import { releasedEdgeModels, toProbabilities, type EdgeModelEntry } from './edgeModelManifest';
 
 export interface EdgeVisualMetrics {
   greenCanopyIndex: number;
@@ -40,7 +39,7 @@ export interface EdgeDiagnosisCandidate {
   chemicalIntervention: string;
 }
 
-export type InferenceOrigin = 'onnx' | 'mobilevit-onnx' | 'heuristic';
+export type InferenceOrigin = 'onnx' | 'heuristic';
 
 export interface DetectedBoundingBox {
   id: string;
@@ -52,13 +51,15 @@ export interface DetectedBoundingBox {
 
 export interface TwoStagePipelineResult {
   stage1Detector: {
-    model: 'yolo-v8n-agri' | 'heuristic-saliency';
+    /** The colour check finds the leaf; no detection model runs. */
+    model: 'heuristic-saliency';
     detectedLeaf: boolean;
     boxes: DetectedBoundingBox[];
     rejectionReason?: string;
   };
   stage2Classifier: {
-    model: 'mobilevit-xxs' | 'efficientnet-lite0' | 'heuristic-v2';
+    /** The released model's name, 'heuristic-v2' for the colour check, or 'none' when the photo was rejected. */
+    model: string;
     primaryCondition: string;
     confidence: number;
   };
@@ -93,18 +94,10 @@ export function shouldConfirmEdgeDiagnosis(
   return severity === 'moderate' || severity === 'severe';
 }
 
-// ── ONNX loaders (lazy, cached) ───────────────────────────────────────────
-let onnxSession: unknown | null = null;
-let onnxLoadAttempted = false;
-
-let yoloSession: unknown | null = null;
-let yoloLoadAttempted = false;
-
-let mobileVitSession: unknown | null = null;
-let mobileVitLoadAttempted = false;
-
+// ── Released on-device model (lazy, loaded once) ───────────────────────────
+type OrtSession = { inputNames?: string[]; run: (feeds: Record<string, unknown>) => Promise<Record<string, { data: Float32Array }>> };
 type OrtModule = {
-  InferenceSession: { create: (path: string, opts: unknown) => Promise<{ run: (feeds: Record<string, unknown>) => Promise<Record<string, { data: Float32Array }>> }> };
+  InferenceSession: { create: (path: string, opts: unknown) => Promise<OrtSession> };
   Tensor: new (type: string, data: Float32Array, dims: number[]) => unknown;
   env: { wasm: Record<string, unknown> };
 };
@@ -115,7 +108,8 @@ async function getOrtModule(): Promise<OrtModule | null> {
       return (window as unknown as { ort: OrtModule }).ort;
     }
     return (await import('onnxruntime-web/wasm')) as unknown as OrtModule;
-  } catch {
+  } catch (error) {
+    console.warn('ONNX Runtime could not load; using the colour check.', error);
     return null;
   }
 }
@@ -130,68 +124,38 @@ function configureOrtWasm(ort: OrtModule) {
   }
 }
 
-async function tryLoadOnnxModel(): Promise<OrtModule['InferenceSession'] extends { create: (...a: unknown[]) => Promise<infer T> } ? T : unknown | null> {
-  if (onnxLoadAttempted) return onnxSession as never;
-  onnxLoadAttempted = true;
-  try {
+type LoadedModel = { session: OrtSession; ort: OrtModule; model: EdgeModelEntry };
+let loadedModel: Promise<LoadedModel | null> | null = null;
+
+/** The first model in the manifest that passed the field evaluation; null when there is none. */
+function loadReleasedModel(): Promise<LoadedModel | null> {
+  loadedModel ??= (async () => {
+    const [model] = await releasedEdgeModels();
+    if (!model) return null;
     const ort = await getOrtModule();
     if (!ort) return null;
     configureOrtWasm(ort);
-    onnxSession = await ort.InferenceSession.create('/models/plant-disease.onnx', {
-      executionProviders: ['wasm'],
-      graphOptimizationLevel: 'basic',
-    });
-    return onnxSession as never;
-  } catch {
-    return null;
-  }
+    try {
+      const session = await ort.InferenceSession.create(`/models/${model.file}`, { executionProviders: ['wasm'], graphOptimizationLevel: 'basic' });
+      return { session, ort, model };
+    } catch (error) {
+      console.warn(`On-device model ${model.file} could not load; using the colour check.`, error);
+      return null;
+    }
+  })();
+  return loadedModel;
 }
 
-async function tryLoadYoloModel(): Promise<OrtModule['InferenceSession'] extends { create: (...a: unknown[]) => Promise<infer T> } ? T : unknown | null> {
-  if (yoloLoadAttempted) return yoloSession as never;
-  yoloLoadAttempted = true;
-  try {
-    const ort = await getOrtModule();
-    if (!ort) return null;
-    configureOrtWasm(ort);
-    yoloSession = await ort.InferenceSession.create('/models/yolo-detector.onnx', {
-      executionProviders: ['wasm'],
-      graphOptimizationLevel: 'basic',
-    });
-    return yoloSession as never;
-  } catch {
-    return null;
-  }
+/** For tests: forget the loaded model so the next photo reads the manifest again. */
+export function resetEdgeModel(): void {
+  loadedModel = null;
 }
 
-async function tryLoadMobileVitModel(): Promise<OrtModule['InferenceSession'] extends { create: (...a: unknown[]) => Promise<infer T> } ? T : unknown | null> {
-  if (mobileVitLoadAttempted) return mobileVitSession as never;
-  mobileVitLoadAttempted = true;
-  try {
-    const ort = await getOrtModule();
-    if (!ort) return null;
-    configureOrtWasm(ort);
-    mobileVitSession = await ort.InferenceSession.create('/models/mobilevit-classifier.onnx', {
-      executionProviders: ['wasm'],
-      graphOptimizationLevel: 'basic',
-    });
-    return mobileVitSession as never;
-  } catch {
-    return null;
-  }
-}
-
-// ImageNet normalization for MobileViT / EfficientNet
+// ImageNet normalisation, which the training script uses too
 const IMAGENET_MEAN = [0.485, 0.456, 0.406];
 const IMAGENET_STD = [0.229, 0.224, 0.225];
 
-function canvasToNchwTensor(
-  canvas: HTMLCanvasElement,
-  ort: OrtModule,
-  targetWidth = 224,
-  targetHeight = 224,
-  normMode: 'imagenet' | 'zero_one' = 'imagenet'
-): unknown {
+function canvasToNchwTensor(canvas: HTMLCanvasElement, ort: OrtModule, targetWidth = 224, targetHeight = 224): unknown {
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   if (!ctx) throw new Error('no ctx');
   let src: HTMLCanvasElement = canvas;
@@ -211,30 +175,12 @@ function canvasToNchwTensor(
     const r = data[i * 4] / 255;
     const g = data[i * 4 + 1] / 255;
     const b = data[i * 4 + 2] / 255;
-    if (normMode === 'zero_one') {
-      floatData[i] = r;
-      floatData[plane + i] = g;
-      floatData[plane * 2 + i] = b;
-    } else {
-      floatData[i] = (r - IMAGENET_MEAN[0]) / IMAGENET_STD[0];
-      floatData[plane + i] = (g - IMAGENET_MEAN[1]) / IMAGENET_STD[1];
-      floatData[plane * 2 + i] = (b - IMAGENET_MEAN[2]) / IMAGENET_STD[2];
-    }
+    floatData[i] = (r - IMAGENET_MEAN[0]) / IMAGENET_STD[0];
+    floatData[plane + i] = (g - IMAGENET_MEAN[1]) / IMAGENET_STD[1];
+    floatData[plane * 2 + i] = (b - IMAGENET_MEAN[2]) / IMAGENET_STD[2];
   }
   return new ort.Tensor('float32', floatData, [1, 3, targetWidth, targetHeight]);
 }
-
-const PLANTVILLAGE_LABELS: string[] = [
-  'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
-  'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew', 'Cherry_(including_sour)___healthy',
-  'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 'Corn_(maize)___Common_rust_', 'Corn_(maize)___Northern_Leaf_Blight', 'Corn_(maize)___healthy',
-  'Grape___Black_rot', 'Grape___Esca_(Black_Measles)', 'Grape___Leaf_blight_(Isariopsis_Leaf_Spot)', 'Grape___healthy',
-  'Orange___Haunglongbing_(Citrus_greening)', 'Peach___Bacterial_spot', 'Peach___healthy',
-  'Pepper,_bell___Bacterial_spot', 'Pepper,_bell___healthy', 'Potato___Early_blight', 'Potato___Late_blight', 'Potato___healthy',
-  'Raspberry___healthy', 'Soybean___healthy', 'Squash___Powdery_mildew', 'Strawberry___Leaf_scorch', 'Strawberry___healthy',
-  'Tomato___Bacterial_spot', 'Tomato___Early_blight', 'Tomato___Late_blight', 'Tomato___Leaf_Mold', 'Tomato___Septoria_leaf_spot',
-  'Tomato___Spider_mites Two-spotted_spider_mite', 'Tomato___Target_Spot', 'Tomato___Tomato_Yellow_Leaf_Curl_Virus', 'Tomato___Tomato_mosaic_virus', 'Tomato___healthy',
-];
 
 function buildCandidateFromRule(found: NonNullable<ReturnType<typeof findConditionRule>>, prob?: number): EdgeDiagnosisCandidate {
   return {
@@ -256,7 +202,7 @@ function findConditionRule(condition: string) {
 
 function mapLabelToCondition(label: string, _cropHint: string | undefined, prob?: number): EdgeDiagnosisCandidate | null {
   const lower = label.toLowerCase();
-  // Mapping policy: only map a PlantVillage label to a KNOWN_CONDITIONS entry when the
+  // Mapping policy: only map a model label to a KNOWN_CONDITIONS entry when the
   // crop AND disease genuinely align. Cross-crop substitution (e.g. corn rust → Fall
   // Armyworm, apple rust → Coffee Leaf Rust) presents farmers with wrong diagnoses and
   // is prohibited. Unmappable labels return null and fall back to heuristic triage.
@@ -279,66 +225,39 @@ function mapLabelToCondition(label: string, _cropHint: string | undefined, prob?
   return found ? buildCandidateFromRule(found, prob) : null;
 }
 
-async function runClassifierSession(
-  sessionPromise: Promise<unknown>,
-  canvas: HTMLCanvasElement,
-  ort: OrtModule,
-  inputNames: string[]
-): Promise<EdgeDiagnosisCandidate[] | null> {
-  const session = (await sessionPromise) as { run: (feeds: Record<string, unknown>) => Promise<Record<string, { data: Float32Array }>> } | null;
-  if (!session) return null;
+/** Runs the released model on the photo; null when there is none or it cannot run. */
+async function runReleasedModel(canvas: HTMLCanvasElement): Promise<{ candidates: EdgeDiagnosisCandidate[]; model: EdgeModelEntry } | null> {
+  const loaded = await loadReleasedModel();
+  if (!loaded) return null;
   try {
-    const tensor = canvasToNchwTensor(canvas, ort, 224, 224, 'imagenet');
-    const feeds: Record<string, unknown> = {};
-    for (const name of inputNames) feeds[name] = tensor;
-    const results = await session.run(feeds);
-    const output = (results.logits || results.output || results.output0 || Object.values(results)[0]);
+    const { session, ort, model } = loaded;
+    const tensor = canvasToNchwTensor(canvas, ort, model.inputSize, model.inputSize);
+    const results = await session.run({ [session.inputNames?.[0] ?? 'input']: tensor });
+    const output = Object.values(results)[0];
     if (!output?.data) return null;
-    const candidates = mapOnnxOutputToCandidates(output.data);
-    return candidates && candidates.length > 0 ? candidates : null;
-  } catch {
+    const candidates = mapOutputToCandidates(toProbabilities(output.data, model.output), model.labels);
+    return candidates && candidates.length > 0 ? { candidates, model } : null;
+  } catch (error) {
+    console.warn('On-device model failed on this photo; using the colour check.', error);
     return null;
   }
 }
 
-async function tryMobileVitInference(canvas: HTMLCanvasElement): Promise<{ candidates: EdgeDiagnosisCandidate[]; model: 'mobilevit-xxs' | 'efficientnet-lite0' } | null> {
-  const ort = await getOrtModule();
-  if (!ort) return null;
-
-  const mvCandidates = await runClassifierSession(tryLoadMobileVitModel(), canvas, ort, ['image', 'images', 'input']);
-  if (mvCandidates) return { candidates: mvCandidates, model: 'mobilevit-xxs' };
-
-  const effCandidates = await runClassifierSession(tryLoadOnnxModel(), canvas, ort, ['input']);
-  if (effCandidates) return { candidates: effCandidates, model: 'efficientnet-lite0' };
-
-  return null;
-}
-
-/** Rank softmax outputs and map top labels to known conditions (null when nothing mappable). */
-function mapOnnxOutputToCandidates(data: Float32Array): EdgeDiagnosisCandidate[] | null {
-  const indexed = Array.from(data).map((p, i) => ({ p, i })).sort((a, b) => b.p - a.p);
+/** Rank the probabilities and map top labels to known conditions (null when nothing maps). */
+function mapOutputToCandidates(probabilities: number[], labels: string[]): EdgeDiagnosisCandidate[] | null {
+  const ranked = probabilities.map((p, i) => ({ p, label: labels[i] ?? `class_${i}` })).sort((a, b) => b.p - a.p);
   const candidates: EdgeDiagnosisCandidate[] = [];
-  for (let rank = 0; rank < Math.min(5, indexed.length); rank++) {
-    const { p, i } = indexed[rank];
-    const label = PLANTVILLAGE_LABELS[i] || `class_${i}`;
-    if (label.toLowerCase().includes('healthy')) {
-      // Healthy should not be returned as disease; let fallback handle
-      continue;
-    }
+  for (const { p, label } of ranked.slice(0, 5)) {
+    // A healthy label is not a disease; the colour check reports healthy leaves.
+    if (label.toLowerCase().includes('healthy')) continue;
     const mapped = mapLabelToCondition(label, undefined, p);
     if (mapped) candidates.push(mapped);
     if (candidates.length >= 3) break;
   }
-  // If model predicts healthy with high prob, return empty to trigger healthy fallback
-  if (candidates.length === 0 && indexed[0]?.p > 0.6 && PLANTVILLAGE_LABELS[indexed[0].i]?.includes('healthy')) return [];
   return candidates.length > 0 ? candidates : null;
 }
 
-/**
- * Minimum softmax probability for an ONNX candidate to be trusted over heuristic triage.
- * An untrained surrogate yields ~1/38 ≈ 0.03, so this gate keeps noise out of the UI;
- * trained weights (top-1 typically > 0.8) pass through automatically.
- */
+/** Minimum probability for a released model's answer to be shown instead of the colour check. */
 const ONNX_MIN_PROBABILITY = 0.55;
 
 // ── Color science helpers ─────────────────────────────────────────────────
@@ -814,20 +733,8 @@ function generateLesionBoundingBoxes(m: EdgeVisualMetrics): DetectedBoundingBox[
   return boxes;
 }
 
-async function probeYoloModelGraph(canvas: HTMLCanvasElement): Promise<void> {
-  try {
-    const yolo = await tryLoadYoloModel();
-    if (!yolo) return;
-    const ort = await getOrtModule();
-    if (!ort) return;
-    const tensor = canvasToNchwTensor(canvas, ort, 320, 320, 'zero_one');
-    await (yolo as { run: (f: Record<string, unknown>) => Promise<unknown> }).run({ images: tensor });
-  } catch {
-    // Non-blocking probe
-  }
-}
-
-export async function runYoloStage1Detection(
+/** Finds the leaf and marks discoloured areas from the colour check; no detection model runs. */
+export async function detectLeafAndSpots(
   canvas: HTMLCanvasElement,
   metrics?: EdgeVisualMetrics
 ): Promise<TwoStagePipelineResult['stage1Detector']> {
@@ -835,7 +742,7 @@ export async function runYoloStage1Detection(
 
   if (isFoliageRejected(m)) {
     return {
-      model: 'yolo-v8n-agri',
+      model: 'heuristic-saliency',
       detectedLeaf: false,
       boxes: [
         {
@@ -846,7 +753,7 @@ export async function runYoloStage1Detection(
           color: '#ef4444',
         },
       ],
-      rejectionReason: 'Non-foliage detected: YOLOv8 could not find recognizable crop leaf blades or foliar tissue. Please center camera directly on crop leaves.',
+      rejectionReason: 'This does not look like a leaf. Hold the camera close to one leaf so it fills the frame.',
     };
   }
 
@@ -861,10 +768,8 @@ export async function runYoloStage1Detection(
     ...generateLesionBoundingBoxes(m),
   ];
 
-  await probeYoloModelGraph(canvas);
-
   return {
-    model: 'yolo-v8n-agri',
+    model: 'heuristic-saliency',
     detectedLeaf: true,
     boxes,
   };
@@ -891,8 +796,8 @@ function createRejectionDiagnosis(
   return {
     isOfflineInference: true,
     origin: 'heuristic',
-    modelVersion: 'yolo-v8n-agri',
-    heuristicDisclaimer: 'Specimen rejected by Stage 1 YOLO detector: Non-foliage background.',
+    modelVersion: 'heuristic-saliency',
+    heuristicDisclaimer: 'The photo was not checked: it does not look like a leaf.',
     isRejectedNonFoliage: true,
     rejectionMessage: stage1.rejectionReason,
     primaryDiagnosis: {
@@ -911,7 +816,7 @@ function createRejectionDiagnosis(
     twoStage: {
       stage1Detector: stage1,
       stage2Classifier: {
-        model: 'mobilevit-xxs',
+        model: 'none',
         primaryCondition: 'Non-Foliage',
         confidence: 0.1,
       },
@@ -920,15 +825,11 @@ function createRejectionDiagnosis(
   };
 }
 
-async function resolveStage2Onnx(canvas: HTMLCanvasElement): Promise<{ candidates: EdgeDiagnosisCandidate[]; model: 'mobilevit-xxs' | 'efficientnet-lite0' } | null> {
-  try {
-    const rawRes = await tryMobileVitInference(canvas);
-    if (!rawRes) return null;
-    const filtered = rawRes.candidates.filter(c => c.confidence >= ONNX_MIN_PROBABILITY);
-    return filtered.length > 0 ? { candidates: filtered, model: rawRes.model } : null;
-  } catch {
-    return null;
-  }
+async function resolveReleasedModel(canvas: HTMLCanvasElement): Promise<{ candidates: EdgeDiagnosisCandidate[]; model: EdgeModelEntry } | null> {
+  const result = await runReleasedModel(canvas);
+  if (!result) return null;
+  const confident = result.candidates.filter(c => c.confidence >= ONNX_MIN_PROBABILITY);
+  return confident.length > 0 ? { candidates: confident, model: result.model } : null;
 }
 
 function runHeuristicStage2(metrics: EdgeVisualMetrics, cropHint?: string): { primary: EdgeDiagnosisCandidate; alternatives: EdgeDiagnosisCandidate[] } {
@@ -983,26 +884,27 @@ export async function diagnosePlantOffline(
 ): Promise<OfflineDiagnosisResult> {
   const canvas = createAnalysisCanvas(imageSource);
   const metrics = await extractVisualMetricsFromCanvas(canvas);
-  const stage1 = await runYoloStage1Detection(canvas, metrics);
+  const stage1 = await detectLeafAndSpots(canvas, metrics);
 
   if (!stage1.detectedLeaf) {
     return createRejectionDiagnosis(stage1, cropHint, metrics);
   }
 
-  const onnxResult = await resolveStage2Onnx(canvas);
+  const onnxResult = await resolveReleasedModel(canvas);
   if (onnxResult) {
+    const { name, fieldEvaluation } = onnxResult.model;
     return {
       isOfflineInference: true,
-      origin: onnxResult.model === 'mobilevit-xxs' ? 'mobilevit-onnx' : 'onnx',
-      modelVersion: `${onnxResult.model}-v1`,
-      heuristicDisclaimer: `Two-Stage Edge AI: Stage 1 YOLOv8n detector + Stage 2 ${onnxResult.model.toUpperCase()} classifier. All results require expert confirmation.`,
+      origin: 'onnx',
+      modelVersion: name,
+      heuristicDisclaimer: `On-device model ${name}: the right answer was in its top three for ${Math.round((fieldEvaluation?.top3Accuracy ?? 0) * 100)}% of ${fieldEvaluation?.images ?? 0} field photos, and first for ${Math.round((fieldEvaluation?.top1Accuracy ?? 0) * 100)}%. Confirm with an extension officer before acting.`,
       primaryDiagnosis: withholdEdgeAdvice(onnxResult.candidates[0]),
       alternatives: onnxResult.candidates.slice(1, 3).map(withholdEdgeAdvice),
       metrics,
       twoStage: {
         stage1Detector: stage1,
         stage2Classifier: {
-          model: onnxResult.model,
+          model: name,
           primaryCondition: onnxResult.candidates[0].condition,
           confidence: onnxResult.candidates[0].confidence,
         },
@@ -1015,7 +917,7 @@ export async function diagnosePlantOffline(
   return {
     isOfflineInference: true,
     origin: 'heuristic',
-    heuristicDisclaimer: 'Heuristic triage, not a confirmed diagnosis. Consult a laboratory or extension officer.',
+    heuristicDisclaimer: 'Colour check only, not a diagnosis: no field-tested disease model is on this device. Send the photo for a full check when you are back online, or ask an extension officer.',
     primaryDiagnosis: withholdEdgeAdvice(primary),
     alternatives: alternatives.map(withholdEdgeAdvice),
     metrics,

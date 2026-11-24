@@ -1,6 +1,6 @@
 import { precacheAndRoute } from 'workbox-precaching';
 import { registerRoute } from 'workbox-routing';
-import { CacheFirst, NetworkOnly } from 'workbox-strategies';
+import { CacheFirst, NetworkFirst, NetworkOnly } from 'workbox-strategies';
 import { CacheableResponsePlugin } from 'workbox-cacheable-response';
 import { ExpirationPlugin } from 'workbox-expiration';
 import { purgePrivateApiCache } from './lib/privateApiCache';
@@ -26,6 +26,12 @@ registerRoute(
 registerRoute(
   ({ url }: { url: URL }) => url.pathname.startsWith('/api/'),
   new NetworkOnly({ fetchOptions: { cache: 'no-store' } })
+);
+// The list of released models: fresh when online, the last copy when not, so a model that was
+// downloaded keeps working offline.
+registerRoute(
+  ({ url }: { url: URL }) => url.origin === self.location.origin && url.pathname === '/models/manifest.json',
+  new NetworkFirst({ cacheName: 'ml-models-manifest', networkTimeoutSeconds: 4, plugins: [new CacheableResponsePlugin({ statuses: [200] })] })
 );
 registerRoute(
   ({ url }: { url: URL }) => url.origin === self.location.origin && /^\/models\/.*\.onnx$/.test(url.pathname),

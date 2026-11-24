@@ -181,11 +181,11 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
       </span>
     </div>
 
-    {/* Two-Stage Edge AI Pipeline Telemetry */}
+    {/* What ran on the device */}
     {result.twoStage && (
       <div className="p-2.5 bg-slate-950/80 border border-white/10 rounded-xl space-y-1.5">
         <div className="flex justify-between items-center text-[10px] font-mono">
-          <span className="text-slate-400">Two-Stage Edge AI Pipeline:</span>
+          <span className="text-slate-400">On this device:</span>
           <span className="text-emerald-400 font-medium">
             {result.twoStage.stage1Detector.detectedLeaf ? 'Leaf found' : 'No leaf found'}
           </span>
@@ -193,11 +193,13 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
         <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
           <div className="p-1.5 rounded bg-slate-900/80 border border-emerald-500/20 text-emerald-300">
             <span className="text-slate-400 block text-[9px]">Leaf check</span>
-            <strong>{result.twoStage.stage1Detector.model.toUpperCase()}</strong> ({result.twoStage.stage1Detector.boxes.filter(b => b.label !== 'crop_leaf').length} lesions)
+            <strong>Colour check</strong> ({result.twoStage.stage1Detector.boxes.filter(b => b.label !== 'crop_leaf').length} spots)
           </div>
           <div className="p-1.5 rounded bg-slate-900/80 border border-slate-500/20 text-slate-300">
             <span className="text-slate-400 block text-[9px]">Disease model</span>
-            <strong>{result.twoStage.stage2Classifier.model.toUpperCase()}</strong> ({Math.round(result.twoStage.stage2Classifier.confidence * 100)}%)
+            {result.origin === 'onnx'
+              ? <><strong>{result.twoStage.stage2Classifier.model}</strong> ({Math.round(result.twoStage.stage2Classifier.confidence * 100)}%)</>
+              : <strong>None installed</strong>}
           </div>
         </div>
       </div>
@@ -508,22 +510,10 @@ const getEngineTelemetryLabels = (
       subtitle: 'Sobel Physics v1',
     };
   }
-  if (origin === 'mobilevit-onnx') {
-    return {
-      title: 'Two-Stage: YOLOv8n + MobileViT-XXS',
-      subtitle: 'MobileViT WASM',
-    };
-  }
   if (origin === 'onnx') {
-    return {
-      title: 'Two-Stage: YOLOv8n + EfficientNet-Lite0',
-      subtitle: 'ONNX Runtime Web',
-    };
+    return { title: 'Colour check and field-tested disease model', subtitle: 'On this device' };
   }
-  return {
-    title: 'Two-Stage: YOLO Saliency + Heuristic Triage',
-    subtitle: 'Heuristic v2',
-  };
+  return { title: 'Colour and spot check, not a diagnosis', subtitle: 'On this device' };
 };
 
 const EngineTelemetry: React.FC<{
@@ -848,7 +838,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
                   onLoad={updateRenderedBounds}
                 />
 
-                {/* Stage 1: YOLO Bounding Boxes Overlay (SVG Low-RAM mode AD-003 or Standard HTML5) */}
+                {/* Spots marked by the colour check (SVG in low-RAM mode AD-003, or HTML) */}
                 {showBoxes && scanMode === 'crop' && cropResult?.twoStage?.stage1Detector.boxes && !analyzing && (
                   lowRamSvgMode ? (
                     <SvgBoundingBoxesOverlay
@@ -884,7 +874,7 @@ export const EdgeVisionScannerModal: React.FC<EdgeVisionScannerModalProps> = ({
               )}
             </div>
 
-            {/* YOLO Bounding Box & Saliency Toggle & Low-RAM Mode (AD-003) */}
+            {/* Spot overlay toggle and low-RAM mode (AD-003) */}
             {scanMode === 'crop' && cropResult?.twoStage?.stage1Detector.boxes && (
               <div className="flex flex-wrap justify-between items-center gap-2 text-xs px-1">
                 <span className="text-slate-400 font-mono text-[11px]">

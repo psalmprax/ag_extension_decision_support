@@ -150,7 +150,7 @@ export const RESEARCH_SCENARIOS: ResearchScenario[] = [
     title: 'Maize Foliar Rust & Chlorosis Pathology',
     crop: 'Maize',
     category: 'Pathology & Vision AI',
-    badge: 'YOLOv8 Foliar Saliency',
+    badge: 'Leaf colour check',
     query: 'How to diagnose and mitigate Common Rust (Puccinia sorghi) versus Southern Corn Rust (Puccinia polysora)?',
     canvasMode: 'pathology',
     sampleAnswer: `### Verified Agro-RAG Synthesis: Foliar Rust Pathology Saliency & Protocol

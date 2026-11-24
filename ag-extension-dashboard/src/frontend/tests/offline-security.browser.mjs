@@ -15,6 +15,16 @@ let browser;
 let server;
 let origin;
 const requests = new Set();
+// No released model ships, so the server stands in one: a three-output test fixture (not a
+// plant model) with a manifest entry that passes the app's field-evaluation gate.
+const fixtureModel = path.join(root, 'tests/fixtures/test-classifier.onnx');
+const fixtureManifest = {
+  models: [{
+    file: 'plant-disease.onnx', name: 'test fixture', labels: ['corn___common_rust', 'corn___healthy', 'cassava___mosaic'],
+    output: 'probabilities', inputSize: 224,
+    fieldEvaluation: { dataset: 'test fixture', images: 300, top1Accuracy: 0.7, top3Accuracy: 0.9, cropTop1Accuracy: 0.8, evaluatedOn: '2026-11-24' },
+  }],
+};
 
 before(async () => {
   const worker = await build({
@@ -43,9 +53,12 @@ before(async () => {
       } else if (/^\/models\/ort\/[^/]+\.(wasm|mjs)$/.test(pathname)) {
         res.setHeader('Content-Type', pathname.endsWith('.wasm') ? 'application/wasm' : 'text/javascript');
         res.end(await readFile(path.join(runtimeDirectory, path.basename(pathname))));
-      } else if (/^\/models\/[^/]+\.onnx$/.test(pathname)) {
+      } else if (pathname === '/models/manifest.json') {
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify(fixtureManifest));
+      } else if (pathname === '/models/plant-disease.onnx') {
         res.setHeader('Content-Type', 'application/octet-stream');
-        res.end(await readFile(path.join(root, 'models', path.basename(pathname))));
+        res.end(await readFile(fixtureModel));
       } else {
         res.setHeader('Content-Type', 'text/html');
         res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:");
@@ -128,9 +141,9 @@ for (const viewport of [{ width: 1280, height: 800 }, { width: 390, height: 844 
         }
       });
       assert.equal(await execute(), true);
-      assert.ok(requests.has('/models/mobilevit-classifier.onnx'), `the classifier must reach the real model loader; requests: ${[...requests].join(', ')}`);
+      assert.ok(requests.has('/models/manifest.json') && requests.has('/models/plant-disease.onnx'), `the classifier must read the manifest and load the released model; requests: ${[...requests].join(', ')}`);
       assert.ok(requests.has('/models/ort/ort-wasm-simd-threaded.wasm'), 'WASM must load from the self-hosted runtime');
-      await page.waitForFunction(async () => Boolean(await caches.match('/models/plant-disease.onnx')) && Boolean(await caches.match('/models/ort/ort-wasm-simd-threaded.wasm')));
+      await page.waitForFunction(async () => Boolean(await caches.match('/models/plant-disease.onnx')) && Boolean(await caches.match('/models/manifest.json')) && Boolean(await caches.match('/models/ort/ort-wasm-simd-threaded.wasm')));
       await context.setOffline(true);
       await page.reload();
       assert.equal(await execute(), true, 'model execution must survive an offline page reload');

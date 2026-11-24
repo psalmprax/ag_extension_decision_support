@@ -1,0 +1,80 @@
+name: Train disease model
+
+# Trains the on-device plant disease classifier on field photos from Hugging Face datasets
+# (scripts/ml/train_disease_classifier.py), on this runner's CPU. The run uploads the int8
+# ONNX file, its manifest entry and MODEL_CARD.md as an artifact for review. It never commits:
+# a model reaches the app only when someone copies it into ag-extension-dashboard/src/frontend/models
+# and its field evaluation passes the gate the app checks (src/services/edgeModelManifest.ts).
+# Dispatch only; a full run takes about an hour.
+on:
+  workflow_dispatch:
+    inputs:
+      epochs:
+        description: 'Training epochs'
+        required: false
+        default: '8'
+      max_per_source:
+        description: 'Cap on photos per source, for a quicker trial (empty = all)'
+        required: false
+        default: ''
+      sources:
+        description: 'Datasets to use, comma-separated: plantdoc, maize, cassava'
+        required: false
+        default: 'plantdoc,maize,cassava'
+      smoke:
+        description: 'Only check the pipeline on generated images (numbers mean nothing)'
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: train-disease-model
+  cancel-in-progress: false
+
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Setup Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.12'
+
+      - name: Install CPU PyTorch and the export tools
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision
+          python -m pip install 'timm>=1.0' 'datasets>=3.0' pillow numpy 'onnx>=1.16' 'onnxruntime>=1.18' onnxscript huggingface_hub
+
+      - name: Train, export and score on held-out field photos
+        env:
+          EPOCHS: ${{ inputs.epochs }}
+          MAX_PER_SOURCE: ${{ inputs.max_per_source }}
+          SOURCES: ${{ inputs.sources }}
+          SMOKE: ${{ inputs.smoke }}
+        run: |
+          args=(--out out --epochs "$EPOCHS" --sources "$SOURCES" --workers 4)
+          if [ -n "$MAX_PER_SOURCE" ]; then args+=(--max-per-source "$MAX_PER_SOURCE"); fi
+          if [ "$SMOKE" = "true" ]; then args+=(--smoke --size 96 --batch-size 8 --workers 0); fi
+          python scripts/ml/train_disease_classifier.py "${args[@]}"
+
+      - name: Summary
+        if: always()
+        run: |
+          if [ -f out/MODEL_CARD.md ]; then cat out/MODEL_CARD.md >> "$GITHUB_STEP_SUMMARY"; fi
+
+      - name: Upload the model, manifest entry and model card
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: plant-disease-model
+          path: out/
+          if-no-files-found: warn
+          retention-days: 30

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-// Keep inference offline and deterministic: a stub runtime reports the model
-// files as unavailable so every call exercises the heuristic fallback.
+// Keep inference offline and deterministic: no manifest can be read here, and a stub runtime
+// reports any model file as unavailable, so every call exercises the colour check.
 vi.mock('onnxruntime-web/wasm', () => ({
   InferenceSession: { create: vi.fn().mockRejectedValue(new Error('model unavailable')) },
   Tensor: class {
@@ -16,7 +16,7 @@ import {
   shouldConfirmEdgeDiagnosis,
   withholdEdgeAdvice,
   extractVisualMetricsFromCanvas,
-  runYoloStage1Detection,
+  detectLeafAndSpots,
   diagnosePlantOffline,
   diagnoseSoilOffline,
   type EdgeDiagnosisCandidate,
@@ -143,12 +143,10 @@ describe('shouldConfirmEdgeDiagnosis', () => {
   it('requires confirmation below the 0.8 confidence threshold', () => {
     expect(EDGE_CONFIRM_CONFIDENCE_THRESHOLD).toBe(0.8);
     expect(shouldConfirmEdgeDiagnosis('onnx', 0.79, 'mild')).toBe(true);
-    expect(shouldConfirmEdgeDiagnosis('mobilevit-onnx', 0.5, 'mild')).toBe(true);
   });
 
   it('does not require confirmation at the threshold for mild severity', () => {
     expect(shouldConfirmEdgeDiagnosis('onnx', 0.8, 'mild')).toBe(false);
-    expect(shouldConfirmEdgeDiagnosis('mobilevit-onnx', 0.95, 'mild')).toBe(false);
   });
 
   it('requires confirmation for moderate and severe crop damage regardless of confidence', () => {
@@ -233,11 +231,11 @@ describe('extractVisualMetricsFromCanvas', () => {
   });
 });
 
-describe('runYoloStage1Detection', () => {
+describe('detectLeafAndSpots', () => {
   it('accepts healthy foliage and labels a full-frame crop leaf box', async () => {
-    const stage1 = await runYoloStage1Detection(healthyCanvas());
+    const stage1 = await detectLeafAndSpots(healthyCanvas());
 
-    expect(stage1.model).toBe('yolo-v8n-agri');
+    expect(stage1.model).toBe('heuristic-saliency');
     expect(stage1.detectedLeaf).toBe(true);
     expect(stage1.rejectionReason).toBeUndefined();
     expect(stage1.boxes[0].label).toBe('crop_leaf');
@@ -246,18 +244,18 @@ describe('runYoloStage1Detection', () => {
   });
 
   it('rejects a non-foliage specimen so no disease is reported', async () => {
-    const stage1 = await runYoloStage1Detection(
+    const stage1 = await detectLeafAndSpots(
       canvasPaintedWith(32, 32, solid(SKY_BLUE))
     );
 
     expect(stage1.detectedLeaf).toBe(false);
     expect(stage1.boxes).toHaveLength(1);
     expect(stage1.boxes[0].label).toBe('non_plant_background');
-    expect(stage1.rejectionReason).toMatch(/Non-foliage detected/);
+    expect(stage1.rejectionReason).toMatch(/does not look like a leaf/);
   });
 
   it('adds lesion boxes for an affected leaf, capped at four', async () => {
-    const stage1 = await runYoloStage1Detection(
+    const stage1 = await detectLeafAndSpots(
       canvasPaintedWith(32, 32, halves(HEALTHY_GREEN, NECROTIC_BROWN))
     );
 
@@ -273,7 +271,7 @@ describe('runYoloStage1Detection', () => {
   });
 
   it('uses precomputed metrics instead of re-reading the canvas', async () => {
-    const stage1 = await runYoloStage1Detection(
+    const stage1 = await detectLeafAndSpots(
       healthyCanvas(),
       metrics({ greenCanopyIndex: 0.03, excessGreen: -1, necrosisRatio: 0, textureVariance: 0, edgeDensity: 0 })
     );
@@ -332,7 +330,7 @@ describe('diagnosePlantOffline', () => {
     );
 
     expect(result.isRejectedNonFoliage).toBe(true);
-    expect(result.rejectionMessage).toMatch(/Non-foliage detected/);
+    expect(result.rejectionMessage).toMatch(/does not look like a leaf/);
     expect(result.primaryDiagnosis.condition).toBe('Non-Foliage Detected (Specimen Rejected)');
     expect(result.primaryDiagnosis.crop).toBe('Tomato');
     expect(result.primaryDiagnosis.chemicalIntervention).toBe('No intervention required.');
