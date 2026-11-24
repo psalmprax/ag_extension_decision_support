@@ -68,7 +68,7 @@ test.describe('@e2e Officer dashboard and farmer chat', () => {
     await chatView.click();
 
     // The click lands somewhere visible: the farmer chat with the opening farmer message.
-    const composer = page.getByPlaceholder('Type a message to the farmer...');
+    const composer = page.getByPlaceholder('Message the farmer');
     await expect(composer).toBeVisible({ timeout: 30_000 });
     const farmerMessage = page.getByRole('group', { name: 'Farmer message' }).first();
     await expect(farmerMessage).toBeVisible();
