@@ -61,6 +61,36 @@ function tagProvider(result: unknown, providerType: AIProviderType): void {
     if (!tagged.provider) tagged.provider = providerType === 'aihubmix' ? 'AIMixHub' : providerType;
 }
 
+/** A provider's error body as text, for matching; empty when it cannot be serialised. */
+function responseText(data: unknown): string {
+    try {
+        return JSON.stringify(data ?? '').slice(0, 500);
+    } catch {
+        return '';
+    }
+}
+
+const OUT_OF_SERVICE_COOLDOWN_MS = 15 * 60_000;
+const RATE_LIMIT_COOLDOWN_MS = 2 * 60_000;
+const DEFAULT_COOLDOWN_MS = 45_000;
+
+/**
+ * How long one kind of request skips a provider after it failed. An account out of credit or
+ * quota, or a rejected key, fails the same way minutes later, and trying it first would add a
+ * failed round trip to every request; a rate limit clears within minutes; anything else may be
+ * a passing fault.
+ */
+export function failureCooldownMs(error: unknown): number {
+    const err = error as { message?: string; status?: number; response?: { status?: number; data?: unknown } };
+    const status = err?.response?.status ?? err?.status;
+    const text = `${err?.message ?? ''} ${responseText(err?.response?.data)}`;
+    if (status === 402 || status === 401 || /QUOTA_EXCEEDED|insufficient|balance|quota limit|out of credit|recharge/i.test(text)) {
+        return OUT_OF_SERVICE_COOLDOWN_MS;
+    }
+    if (status === 429 || /\b429\b|rate limit/i.test(text)) return RATE_LIMIT_COOLDOWN_MS;
+    return DEFAULT_COOLDOWN_MS;
+}
+
 /** What the OmniRoute free-model fallback returns when every provider failed. */
 export interface OmniRouteFallbackResult {
     text: string;
@@ -217,7 +247,11 @@ export class AIProviderFactory {
             tagProvider(result, providerType);
             return { success: true, result };
         } catch (error) {
-            this.operationFailures.set(failureKey, Date.now() + 45_000);
+            const cooldown = failureCooldownMs(error);
+            this.operationFailures.set(failureKey, Date.now() + cooldown);
+            if (cooldown >= OUT_OF_SERVICE_COOLDOWN_MS) {
+                logger.warn(`AI provider ${providerType} is out of credit, out of quota or rejecting its key; ${context.failureScope} requests skip it for ${cooldown / 60_000} minutes.`);
+            }
             const err = error instanceof Error ? error : new Error(String(error));
             await this.recordProviderAttempt(providerType, attempt, startedAt, context, 'error', err.message);
             logger.warn(`AI provider ${providerType} failed:`, error);

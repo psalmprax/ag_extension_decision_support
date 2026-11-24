@@ -11,6 +11,8 @@ import {
   ReasoningResult,
   ClassificationOptions,
   ClassificationResult,
+  ImageAnalysisOptions,
+  ImageAnalysisResult,
 } from '../types';
 import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt } from '../assetLibrary';
 
@@ -22,9 +24,12 @@ import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt }
  */
 export const OPENROUTER_FREE_ROUTER = 'openrouter/free';
 
+/** A message part: text, or a photo as a data URL. */
+export type OpenRouterContentPart = { type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string } };
+
 export interface OpenRouterRequest {
   model?: string;
-  messages: Array<{ role: string; content: string | null; [k: string]: unknown }>;
+  messages: Array<{ role: string; content: string | null | OpenRouterContentPart[]; [k: string]: unknown }>;
   temperature?: number;
   max_tokens?: number;
   tools?: unknown[];
@@ -50,7 +55,7 @@ export interface OpenRouterResponse {
  */
 export class OpenRouterProvider extends BaseAIProvider {
   readonly provider: AIProviderType = 'openrouter';
-  readonly capabilities: string[] = ['text', 'chat', 'reasoning'];
+  readonly capabilities: string[] = ['text', 'chat', 'reasoning', 'vision'];
 
   private apiKey: string;
   private baseUrl: string;
@@ -96,7 +101,7 @@ export class OpenRouterProvider extends BaseAIProvider {
   }
 
   /** Full chat completion including tool_calls (OpenAI-compatible). */
-  public async chatRaw(req: OpenRouterRequest): Promise<OpenRouterResponse> {
+  public async chatRaw(req: OpenRouterRequest, timeoutMs = 30000): Promise<OpenRouterResponse> {
     const key = this.getApiKey();
     if (!key) {
       throw new Error('OpenRouter API key not configured (OPENROUTER_API_KEY missing).');
@@ -123,7 +128,7 @@ export class OpenRouterProvider extends BaseAIProvider {
             'X-Title': 'Ag-Extension Decision Support',
             'Content-Type': 'application/json',
           },
-          timeout: 30000,
+          timeout: timeoutMs,
         }
       );
 
@@ -145,6 +150,46 @@ export class OpenRouterProvider extends BaseAIProvider {
       logger.error(`OpenRouter API error (${status || 'Network'}):`, axiosError.message);
       throw err;
     }
+  }
+
+  /**
+   * A photo described by a free vision model. The free router picks a model that accepts images,
+   * so photo checks keep working when the main vision provider is out of credit. Set
+   * OPENROUTER_VISION_MODEL to pin one. The photo check marks every answer as needing an
+   * expert's review whichever model gave it.
+   */
+  public override async analyzeImage(
+    imageData: string | Buffer,
+    prompt?: string,
+    options?: ImageAnalysisOptions
+  ): Promise<ImageAnalysisResult> {
+    const base64 = Buffer.isBuffer(imageData)
+      ? imageData.toString('base64')
+      : imageData.startsWith('data:image/') ? imageData.split(',')[1] : imageData;
+    const model = options?.model || process.env.OPENROUTER_VISION_MODEL || OPENROUTER_FREE_ROUTER;
+    const raw = await this.chatRaw({
+      model,
+      messages: [{
+        role: 'user',
+        content: [
+          { type: 'text', text: prompt || 'Analyze this agricultural image.' },
+          { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64}` } },
+        ],
+      }],
+      temperature: options?.temperature ?? 0.2,
+      max_tokens: options?.maxTokens ?? 3000,
+    }, 45000); // photos take longer than text, as with the main vision provider
+    return {
+      analysis: raw.choices[0]?.message?.content ?? '',
+      // The router reports the model it chose.
+      model: raw.model || model,
+      provider: 'OpenRouter',
+      usage: raw.usage ? {
+        promptTokens: raw.usage.prompt_tokens ?? 0,
+        completionTokens: raw.usage.completion_tokens ?? 0,
+        totalTokens: raw.usage.total_tokens ?? 0,
+      } : undefined,
+    };
   }
 
   public override async generateText(
