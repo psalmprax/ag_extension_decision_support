@@ -155,6 +155,11 @@ class Source:
     splits: tuple[str, ...] = ("train",)
     test_splits: tuple[str, ...] = ()
     min_side: int = 0  # skip photos smaller than this many pixels on the short side
+    # Detection sets: each box category that becomes a photo (cut out of the image), by label.
+    boxes: dict[str, str] | None = None
+    # A box category that marks the whole fruit or leaf, sick or not: it counts as healthy only
+    # when no box of another category covers the same object.
+    plain_box: str | None = None
 
 
 SOURCES: dict[str, Source] = {
@@ -246,6 +251,25 @@ SOURCES: dict[str, Source] = {
                     one_crop("grape"), "holdout"),
     "eggplant": Source("Project-AgML/eggplant_disease_classification", "CC-BY-4.0", "Eggplant set, original photos",
                        one_crop("eggplant", {"insect_pest_disease": "insect_pest"}), "holdout", config="raw"),
+    # More rice: field photos from India and Bangladesh.
+    "rice_in": Source("Project-AgML/rice_leaf_disease_classification_india", "CC-BY-4.0", "Sethy et al. 2020, rice leaves, India",
+                      one_crop("rice", {"bacterialblight": "bacterial_leaf_blight", "brownspot": "brown_spot"}), "holdout"),
+    "rice_dhan": Source("Project-AgML/Dhan-Shomadhan_rice_leaf_disease_classification", "CC-BY-4.0",
+                        "Dhan-Shomadhan rice leaves in the field, Bangladesh",
+                        one_crop("rice", {"browon_spot": "brown_spot", "leaf_scaled": "leaf_scald", "turgro": "tungro",
+                                          "shath_blight": "sheath_blight"}), "holdout"),
+    "rice_2": Source("Project-AgML/rice_leaf_disease_classification_2", "CC-BY-4.0", "Rice leaves in the field (published split)",
+                     one_crop("rice", {"leaf_blast": "blast"}), "column"),
+    "rice_bd": Source("Project-AgML/rice_leaf_disease_classification_bd", "CC-BY-4.0", "Rice leaves, Aman 2025 season, Bangladesh, iPhone",
+                      one_crop("rice", {"leaf_blast": "blast"}), "holdout"),
+    # Cashew: the CCMT cashew photos (Mensah et al. 2023, Ghana, CC BY 4.0), re-shared on the Hub under MIT.
+    "cashew": Source("pt-sk/Cashew_Dataset", "CC-BY-4.0 (CCMT; this copy MIT)", "Mensah et al. 2023, CCMT cashew leaves, Ghana",
+                     one_crop("cashew", {"gumosis": "gummosis"}), "holdout"),
+    # Cocoa pods from Ghanaian farms: a detection set, so each box is cut out as a photo.
+    "cocoa": Source("Project-AgML/cocoa_pod_disease_gh_image_classification", "CC-BY-4.0",
+                    "Techie-Menson et al. 2026, cocoa pods in the field, Ghana (boxes cut out)", by_name({}), "column",
+                    boxes={"Cocoa": "cocoa___healthy_pod", "Pod Borer": "cocoa___pod_borer", "Black Pod Rot": "cocoa___black_pod_rot"},
+                    plain_box="Cocoa"),
 }
 # Left out on purpose: Project-AgML/corn_maize_leaf_disease re-uses PlantDoc photos (it would put
 # PlantDoc test photos into training); Project-AgML/bean_disease_uganda (iBean) comes from the
@@ -256,7 +280,9 @@ SOURCES: dict[str, Source] = {
 # paddy_disease_classification, orange_leaf_disease_classification, mango_leaf_disease_classification,
 # cucumber_disease_classification, coconut_tree_disease_classification, plant_village_classification). The CCMT set
 # (cashew, cassava, maize, tomato from Ghanaian farms, CC BY 4.0, Mendeley bwh3zbpkpv) has no copy on the Hub with the
-# crop of each photo, so it waits for a loader of its own.
+# crop of each photo, so it waits for a loader of its own. MangoLeafBD's Hub copy is CC BY-NC.
+# Project-AgML/wheat_disease_detection (CC BY 4.0) names its seven box classes only "0" to "6";
+# it waits until the class names are read from its Zenodo record (10.5281/zenodo.15621359).
 
 
 @dataclass
@@ -410,6 +436,13 @@ def sample_rows(name: str, source: Source, side_of: Callable[[str, dict], str], 
 def load_source(name: str, args, rng: random.Random) -> tuple[list[Sample], list[Sample]]:
     source = SOURCES[name]
     train_cap, test_cap = args.max_train_per_label, args.max_test_per_label
+    if source.boxes:
+        train, test = load_box_source(name, source, args)
+        if not test:
+            HOLDOUT_FALLBACK.add(name)
+            train, test = holdout(train, 0.15, args.seed)
+            test = cap_per_label(test, test_cap, rng)
+        return cap_per_label(train, train_cap, rng), test
     if source.test == "holdout":
         pool_cap = None if train_cap is None else round(train_cap / 0.85) + 1
         pool = sample_rows(name, source, lambda _split, _row: "pool", {"pool": pool_cap}, args.size, rng).get("pool", [])
@@ -423,7 +456,13 @@ def load_source(name: str, args, rng: random.Random) -> tuple[list[Sample], list
             return "test" if split in source.test_splits else "train"
     # A published test split is scored whole: it is the source's own choice of unseen photos.
     sides = sample_rows(name, source, side_of, {"train": train_cap, "test": None}, args.size, rng)
-    return sides.get("train", []), sides.get("test", [])
+    train, test = sides.get("train", []), sides.get("test", [])
+    if train and not test:
+        # The split column or test split was empty: hold out 15% instead, scored with the holdouts.
+        HOLDOUT_FALLBACK.add(name)
+        train, test = holdout(train, 0.15, args.seed)
+        test = cap_per_label(test, test_cap, rng)
+    return train, test
 
 
 def cap_per_label(samples: list[Sample], cap: int | None, rng: random.Random) -> list[Sample]:
@@ -437,6 +476,65 @@ def cap_per_label(samples: list[Sample], cap: int | None, rng: random.Random) ->
         rng.shuffle(group)
         out += group[:cap]
     return out
+
+
+# Sources whose published test split came back empty and fell back to a 15% holdout: their test
+# photos are scored with the holdouts, never in the headline.
+HOLDOUT_FALLBACK: set[str] = set()
+
+
+def share_inside(inner: list[float], outer: list[float]) -> float:
+    """How much of the `inner` [x, y, width, height] box lies inside `outer`, 0 to 1."""
+    w = min(inner[0] + inner[2], outer[0] + outer[2]) - max(inner[0], outer[0])
+    h = min(inner[1] + inner[3], outer[1] + outer[3]) - max(inner[1], outer[1])
+    area = inner[2] * inner[3]
+    return max(0.0, w) * max(0.0, h) / area if area > 0 else 0.0
+
+
+def cut_box(image, box: list[float], min_side: int = 48, margin: float = 0.1):
+    """The box with a little margin around it; None when it is too small to show anything."""
+    x, y, w, h = box
+    if min(w, h) < min_side:
+        return None
+    dx, dy = w * margin, h * margin
+    left, top = max(0, int(x - dx)), max(0, int(y - dy))
+    right, bottom = min(image.width, int(x + w + dx)), min(image.height, int(y + h + dy))
+    return image.crop((left, top, right, bottom)) if right > left and bottom > top else None
+
+
+def box_names(source: Source, data) -> list:
+    features = getattr(data, "features", None)
+    if features is None:
+        from datasets import load_dataset_builder
+
+        features = load_dataset_builder(source.repo, source.config).info.features
+    categories = features["objects"]["categories"]
+    return list(getattr(categories, "feature", categories).names)
+
+
+def load_box_source(name: str, source: Source, args) -> tuple[list[Sample], list[Sample]]:
+    """Each labelled box of a detection set as a photo; the set's own split column decides the side."""
+    from datasets import load_dataset
+
+    data = load_dataset(source.repo, source.config, split="train", streaming=True)
+    names = box_names(source, data)
+    train, test = [], []
+    for row in data:
+        boxes, categories = row["objects"]["bbox"], row["objects"]["categories"]
+        image = row["image"].convert("RGB")
+        for box, category in zip(boxes, categories):
+            category_name = names[category] if category is not None and 0 <= category < len(names) else None
+            label = (source.boxes or {}).get(category_name)
+            if not label:
+                continue
+            # A pod or leaf with a disease box (mostly) inside it is not a healthy one.
+            if category_name == source.plain_box and any(
+                    other != category and share_inside(other_box, box) >= 0.5 for other_box, other in zip(boxes, categories)):
+                continue
+            crop = cut_box(image, box)
+            if crop is not None:
+                (test if row.get("split") == "test" else train).append(Sample(compact(crop, args.size), canonical(label), name))
+    return train, test
 
 
 def drop_copies_of_test_photos(splits: Splits) -> int:
@@ -644,7 +742,7 @@ def crop_of(label: str) -> str:
 
 def is_published(sample: Sample) -> bool:
     """Test photos from a split the source published (or the smoke run's), not a 15% holdout."""
-    return sample.source == "smoke" or SOURCES[sample.source].test != "holdout"
+    return sample.source == "smoke" or (SOURCES[sample.source].test != "holdout" and sample.source not in HOLDOUT_FALLBACK)
 
 
 @dataclass
@@ -763,8 +861,8 @@ def evaluation_entry(scores: dict, dataset: str) -> dict:
 def write_outputs(out: Path, labels: list[str], headline: dict, holdout_scores: dict | None, calibration: dict, args,
                   sources: list[str], counts: dict, precision: str, float_top3: float, int8_top3: float, train_scores: dict,
                   skipped: dict[str, str] | None = None) -> None:
-    published = [s for s in sources if s == "smoke" or SOURCES[s].test != "holdout"]
-    held = [s for s in sources if s != "smoke" and SOURCES[s].test == "holdout"]
+    published = [s for s in sources if s == "smoke" or (SOURCES[s].test != "holdout" and s not in HOLDOUT_FALLBACK)]
+    held = [s for s in sources if s not in published]
     entry = {
         "file": "plant-disease.onnx",
         "name": f"{args.arch}, field photos {date.today().isoformat()}" + (" (smoke run, do not ship)" if args.smoke else ""),

@@ -63,6 +63,7 @@ const CROP_ALIASES: Readonly<Record<string, string[]>> = {
   black_gram: ['black gram', 'urad'],
   date_palm: ['date palm'],
   cassava: ['cassava', 'manioc'],
+  cocoa: ['cocoa', 'cacao'],
 };
 
 // Genus, place and disease names that keep a capital letter.

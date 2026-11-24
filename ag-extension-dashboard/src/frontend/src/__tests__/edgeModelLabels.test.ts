@@ -10,6 +10,7 @@ describe('on-device model labels', () => {
     expect(labelDisplayName('tomato___healthy_fruit')).toBe('Healthy tomato fruit');
     expect(labelDisplayName('date_palm___parlatoria_scale')).toBe('Date palm Parlatoria scale');
     expect(labelDisplayName('orange___zinc_deficiency')).toBe('Orange zinc deficiency');
+    expect(labelDisplayName('cocoa___healthy_pod')).toBe('Healthy cocoa pod');
   });
 
   it('knows a healthy label', () => {
