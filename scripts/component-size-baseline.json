@@ -12,7 +12,7 @@
   "components/HelpCenterModal.tsx": 412,
   "components/KnowledgeBase/AIResult.tsx": 837,
   "components/KnowledgeBase/ReasoningVisuals.tsx": 355,
-  "components/KnowledgeBase/index.tsx": 1078,
+  "components/KnowledgeBase/index.tsx": 885,
   "components/LiveActivityStream.tsx": 568,
   "components/NotificationPanel.tsx": 340,
   "components/ProfileModal.tsx": 696,
