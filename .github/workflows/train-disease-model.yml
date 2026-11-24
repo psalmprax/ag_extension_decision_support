@@ -5,8 +5,14 @@ name: Train disease model
 # ONNX file, its manifest entry and MODEL_CARD.md as an artifact for review. It never commits:
 # a model reaches the app only when someone copies it into ag-extension-dashboard/src/frontend/models
 # and its field evaluation passes the gate the app checks (src/services/edgeModelManifest.ts).
-# Dispatch only; a full run takes about an hour.
+# Runs when the training code changes on stage (GitHub only allows a manual start for workflows
+# already on master), or by hand. A full run takes about an hour on a free public-repo runner.
 on:
+  push:
+    branches: [stage]
+    paths:
+      - 'scripts/ml/train_disease_classifier.py'
+      - '.github/workflows/train-disease-model.yml'
   workflow_dispatch:
     inputs:
       epochs:
@@ -54,11 +60,12 @@ jobs:
           python -m pip install 'timm>=1.0' 'datasets>=3.0' pillow numpy 'onnx>=1.16' 'onnxruntime>=1.18' onnxscript huggingface_hub
 
       - name: Train, export and score on held-out field photos
+        # A push has no inputs, so each falls back to the dispatch default.
         env:
-          EPOCHS: ${{ inputs.epochs }}
-          MAX_PER_SOURCE: ${{ inputs.max_per_source }}
-          SOURCES: ${{ inputs.sources }}
-          SMOKE: ${{ inputs.smoke }}
+          EPOCHS: ${{ inputs.epochs || '8' }}
+          MAX_PER_SOURCE: ${{ inputs.max_per_source || '' }}
+          SOURCES: ${{ inputs.sources || 'plantdoc,maize,cassava' }}
+          SMOKE: ${{ inputs.smoke || 'false' }}
         run: |
           args=(--out out --epochs "$EPOCHS" --sources "$SOURCES" --workers 4)
           if [ -n "$MAX_PER_SOURCE" ]; then args+=(--max-per-source "$MAX_PER_SOURCE"); fi
