@@ -4,6 +4,7 @@ import type { ArmResult, PilotDetail } from './pilotsApi';
 
 const number = (value: number | null, unit = '') => (value === null ? '—' : `${value.toLocaleString(appLocale())}${unit}`);
 const share = (part: number, whole: number) => (whole ? `${Math.round((part / whole) * 100)}%` : '—');
+const of = (part: number, whole: number) => (whole ? `${share(part, whole)} of ${whole.toLocaleString(appLocale())}` : '—');
 
 /** The two groups side by side, and the difference with its range, said plainly. */
 export function PilotResults({ detail }: { detail: PilotDetail }) {
@@ -15,6 +16,17 @@ export function PilotResults({ detail }: { detail: PilotDetail }) {
     { label: t('pilot_row_before', { defaultValue: 'Last season, kg/ha' }), value: arm => number(arm.baselineKgPerHa) },
     { label: t('pilot_row_after', { defaultValue: 'This season, kg/ha' }), value: arm => number(arm.endlineKgPerHa) },
     { label: t('pilot_row_change', { defaultValue: 'Average change, kg/ha' }), value: arm => number(arm.meanChangeKgPerHa) },
+    {
+      label: t('pilot_row_visited', { defaultValue: 'Farmers visited at least once (visits)' }),
+      value: arm => `${of(arm.use.farmersVisited, arm.farmers)} (${number(arm.use.visits)})`,
+    },
+    {
+      label: t('pilot_row_messaged', { defaultValue: 'Farmers who sent a message (messages)' }),
+      value: arm => `${of(arm.use.farmersMessaging, arm.farmers)} (${number(arm.use.farmerMessages)})`,
+    },
+    { label: t('pilot_row_replies', { defaultValue: 'Replies from officers / from the AI' }), value: arm => `${number(arm.use.officerReplies)} / ${number(arm.use.aiReplies)}` },
+    { label: t('pilot_row_advice_recorded', { defaultValue: 'Advice recorded at visits' }), value: arm => number(arm.use.adviceRecorded) },
+    { label: t('pilot_row_advice_reviewed', { defaultValue: 'AI advice an officer checked first' }), value: arm => number(arm.use.adviceReviewed) },
     { label: t('pilot_row_reply', { defaultValue: 'Median time to an answer' }), value: arm => number(arm.medianReplyMinutes, ' min') },
     {
       label: t('pilot_row_followed', { defaultValue: 'Said they followed the advice (fully / partly)' }),
@@ -55,6 +67,8 @@ export function PilotResults({ detail }: { detail: PilotDetail }) {
       </p>
       <p className="text-xs text-slate-500 dark:text-white/60">
         {t('pilot_method_note', { defaultValue: 'Harvests are what farmers report by SMS; yields leave out farms without a recorded size. Have an independent evaluator check the method and the final numbers before you publish them.' })}
+        {' '}
+        {t('pilot_use_note', { defaultValue: 'Visits, messages and advice count only the season’s dates. Use in the comparison group shows how much ordinary extension it still received.' })}
       </p>
     </div>
   );

@@ -14,7 +14,9 @@ const pilot = {
 };
 const arm = (overrides: Record<string, unknown>) => ({
   farmers: 120, withBothHarvests: 12, baselineKgPerHa: 1500, endlineKgPerHa: 1800, meanChangeKgPerHa: 300,
-  medianReplyMinutes: 45, followups: { asked: 40, yes: 24, partly: 8, no: 8 }, ...overrides,
+  medianReplyMinutes: 45, followups: { asked: 40, yes: 24, partly: 8, no: 8 },
+  use: { visits: 150, farmersVisited: 90, farmerMessages: 300, farmersMessaging: 60, officerReplies: 210, aiReplies: 40, adviceRecorded: 70, adviceReviewed: 12 },
+  ...overrides,
 });
 
 describe('pilots', () => {
@@ -39,6 +41,8 @@ describe('pilots', () => {
     render(<PilotsSection />);
     expect(await screen.findByText('Mzuzu, maize, 2026-11-01 to 2027-04-30.')).toBeInTheDocument();
     expect(screen.getByText('60% / 20% of 40')).toBeInTheDocument();
+    expect(screen.getAllByText('75% of 120 (150)')).toHaveLength(2);
+    expect(screen.getAllByText('210 / 40')).toHaveLength(2);
     const status = screen.getByRole('status');
     expect(status).toHaveTextContent('changed by 200 kg/ha more than the comparison group’s (95% range 40 to 360)');
     expect(status).toHaveTextContent('Too early to draw a conclusion: each group needs at least 30 farmers');
