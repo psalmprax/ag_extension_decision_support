@@ -1,17 +1,6 @@
 import React, { useState } from 'react';
-import {
-  Brain,
-  Plus,
-  Search,
-  Edit,
-  Trash2,
-  Tag,
-  RefreshCw,
-  Filter,
-  Database,
-  X,
-  Layers,
-} from 'lucide-react';
+import { appLocale } from '@/lib/appLocale';
+import { Brain, Plus, Search, Edit, Trash2, Tag, RefreshCw, Filter, Database, X, Layers } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ScoreMeter } from '@/components/charts/ScoreMeter';
 import { useLanguage } from '../lib/LanguageContext';
@@ -342,7 +331,7 @@ function Memory() {
                   <div className="flex justify-between text-xs font-mono tabular-nums text-slate-500 dark:text-white/40">
                     <span>{t('ui_memory_importance')} {Number.isFinite(memory.importance) ? `${(memory.importance * 100).toFixed(0)}%` : '—'}</span>
                     <span>{t('ui_memory_accesses')} {memory.accessCount || 0}</span>
-                    <span>{new Date(memory.createdAt).toLocaleDateString()}</span>
+                    <span>{new Date(memory.createdAt).toLocaleDateString(appLocale())}</span>
                   </div>
                   <ScoreMeter value={memory.importance} max={1} />
                 </div>

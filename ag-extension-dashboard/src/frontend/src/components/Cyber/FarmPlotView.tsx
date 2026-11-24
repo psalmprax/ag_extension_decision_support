@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import apiClient from '@/api/client';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useAppStore } from '@/store/useAppStore';
@@ -48,7 +49,7 @@ const FarmPlotView: React.FC<FarmPlotViewProps> = ({ farmSize: givenSize = 0, cr
     const out = [`${crops[0] ?? t('farm_plot_farm', { defaultValue: 'Farm' })}${farmSize > 0 ? `, ${units.area(farmSize)}` : ''}`];
     if (reading?.ndvi !== undefined) out.push(`NDVI ${reading.ndvi.toFixed(2)}`);
     if (reading?.soilMoisture !== undefined) out.push(t('farm_plot_moisture', { value: reading.soilMoisture.toFixed(1), defaultValue: 'Soil moisture {value}%' }));
-    if (reading?.lastUpdated) out.push(t('farm_plot_updated', { date: new Date(reading.lastUpdated).toLocaleDateString(), defaultValue: 'Updated {date}' }));
+    if (reading?.lastUpdated) out.push(t('farm_plot_updated', { date: new Date(reading.lastUpdated).toLocaleDateString(appLocale()), defaultValue: 'Updated {date}' }));
     if (!reading) out.push(t('farm_plot_no_reading', { defaultValue: 'No satellite reading yet' }));
     return out;
   }, [crops, farmSize, reading, t, units]);

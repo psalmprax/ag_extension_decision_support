@@ -1,16 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { Activity, CheckCircle, AlertTriangle, XCircle, RotateCcw, RefreshCw, Shield, Server, Database, Zap, Wifi, Terminal, Cpu, Globe, Lock } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
 import { StatusMark } from './systemHealth/StatusMark';
 import { useAppStore } from '../store/useAppStore';
-import {
-  fetchHealthStatus,
-  fetchRecoveryLog,
-  triggerRecovery,
-  HealthCheck,
-  RecoveryAction,
-} from '../api/systemHealthService';
+import { fetchHealthStatus, fetchRecoveryLog, triggerRecovery, HealthCheck, RecoveryAction } from '../api/systemHealthService';
 import { runDiagnostics, DiagnosticResult } from '../api/diagnosticsService';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 import { SyncQueuePanel } from '@/components/SyncQueuePanel';
@@ -213,7 +208,7 @@ function SslSection({ ssl }: { ssl?: Record<string, unknown> }) {
             <p><span className="text-slate-500 dark:text-white/60">{t('ui_system_health_subject')}</span> {cert.subject ?? 'gpexts.com'}</p>
             {cert.validTo && (
               <p>
-                <span className="text-slate-500 dark:text-white/60">{t('ui_system_health_expires')}</span> {new Date(cert.validTo).toLocaleDateString()}{' '}
+                <span className="text-slate-500 dark:text-white/60">{t('ui_system_health_expires')}</span> {new Date(cert.validTo).toLocaleDateString(appLocale())}{' '}
                 <span className={cert.daysLeft != null && cert.daysLeft < CERT_EXPIRY_WARN_DAYS ? 'text-rose-700 dark:text-rose-300 font-medium' : 'text-emerald-700 dark:text-emerald-300 font-medium'}>
                   ({cert.daysLeft ?? '—'} {t('ui_system_health_days_remaining')}
                 </span>
@@ -291,7 +286,7 @@ function DiagnosticsPanel({ diagnostics }: { diagnostics: DiagnosticResult }) {
           )}
         </h3>
         <span className="text-xs text-slate-500 dark:text-white/40 font-mono">
-          {new Date(diagnostics.timestamp).toLocaleTimeString()}
+          {new Date(diagnostics.timestamp).toLocaleTimeString(appLocale())}
         </span>
       </div>
       <IssuesSummary issues={diagnostics.issues} summary={diagnostics.summary} />
@@ -385,13 +380,13 @@ function ComponentHealthCard({
       <div className="space-y-2 p-3 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 text-xs font-mono">
         <div className="flex justify-between text-slate-500 dark:text-white/60">
           <span>{t('system_health_last_check')}</span>
-          <span className="text-slate-900 dark:text-white">{new Date(check.lastCheck).toLocaleTimeString()}</span>
+          <span className="text-slate-900 dark:text-white">{new Date(check.lastCheck).toLocaleTimeString(appLocale())}</span>
         </div>
 
         {check.lastSuccess && (
           <div className="flex justify-between text-slate-500 dark:text-white/60">
             <span>{t('system_health_last_reply')}</span>
-            <span className="text-emerald-600 dark:text-emerald-400">{new Date(check.lastSuccess).toLocaleTimeString()}</span>
+            <span className="text-emerald-600 dark:text-emerald-400">{new Date(check.lastSuccess).toLocaleTimeString(appLocale())}</span>
           </div>
         )}
 
@@ -491,7 +486,7 @@ function RecoveryLogList({
                 <span className={`inline-block px-2 py-0.5 rounded-full font-medium text-xxs mb-1 ${action.success ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-300' : 'bg-rose-500/20 text-rose-700 dark:text-rose-300'}`}>
                   {action.success ? 'Success' : 'Failed'}
                 </span>
-                <div>{new Date(action.triggeredAt).toLocaleTimeString()}</div>
+                <div>{new Date(action.triggeredAt).toLocaleTimeString(appLocale())}</div>
               </div>
             </motion.div>
           ))

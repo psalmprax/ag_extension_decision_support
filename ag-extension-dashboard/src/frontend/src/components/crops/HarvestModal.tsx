@@ -41,21 +41,21 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
   if (!showHarvestModal || !selectedField || !selectedCycle) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div className="fixed inset-0 bg-slate-900/[0.04] dark:bg-black/40 backdrop-blur-sm flex items-center justify-center p-4 z-50">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="bg-slate-900 border border-white/10 rounded-xl max-w-lg w-full max-h-[90dvh] overflow-y-auto custom-scrollbar shadow-2xl"
+        className="bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl max-w-lg w-full max-h-[90dvh] overflow-y-auto custom-scrollbar shadow-2xl"
       >
         <div className="p-6 space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-white/5">
-            <h3 className="text-xl font-medium text-white flex items-center gap-2">
-              <CheckCircle className="w-5 h-5 text-emerald-400" />
+          <div className="flex items-center justify-between pb-2 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
+            <h3 className="text-xl font-medium text-slate-900 dark:text-theme-text-primary flex items-center gap-2">
+              <CheckCircle className="w-5 h-5 text-emerald-700 dark:text-emerald-400" />
               {t('ui_harvest_modal_conclude_cycle')} {selectedCycle.cropName}
             </h3>
             <button
               onClick={() => setShowHarvestModal(false)}
-              className="text-slate-400 hover:text-white text-xl font-medium"
+              className="text-slate-600 dark:text-theme-text-muted hover:text-slate-900 dark:hover:text-white text-xl font-medium"
             >
               {t('ui_field_modal_text')}
             </button>
@@ -103,7 +103,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
                   onChange={e =>
                     setHarvestForm(prev => ({ ...prev, actualHarvestDate: e.target.value }))
                   }
-                  className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-slate-200 focus:ring-2 focus:ring-primary-500 focus:outline-none`}
+                  className={`w-full px-4 py-2.5 bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] ${radiusClass} text-slate-700 dark:text-theme-text-secondary focus:ring-2 focus:ring-primary-500 focus:outline-none`}
                 />
               </div>
               <div>
@@ -116,7 +116,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
                   value={harvestForm.status === 'failed' ? '' : harvestForm.yieldKg}
                   onChange={e => setHarvestForm(prev => ({ ...prev, yieldKg: e.target.value }))}
                   placeholder="e.g. 4500"
-                  className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-primary-500 focus:outline-none disabled:opacity-50`}
+                  className={`w-full px-4 py-2.5 bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] ${radiusClass} text-slate-900 dark:text-theme-text-primary focus:ring-2 focus:ring-primary-500 focus:outline-none disabled:opacity-50`}
                 />
               </div>
             </div>
@@ -130,11 +130,11 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
                 onChange={e => setHarvestForm(prev => ({ ...prev, notes: e.target.value }))}
                 placeholder="Add concluding notes on yield, conditions, or causes of crop failure..."
                 rows={3}
-                className={`w-full px-4 py-2.5 bg-slate-950 border border-white/10 ${radiusClass} text-white focus:ring-2 focus:ring-primary-500 focus:outline-none resize-none`}
+                className={`w-full px-4 py-2.5 bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] ${radiusClass} text-slate-900 dark:text-theme-text-primary focus:ring-2 focus:ring-primary-500 focus:outline-none resize-none`}
               />
             </div>
 
-            <div className="flex gap-3 pt-4 border-t border-white/5">
+            <div className="flex gap-3 pt-4 border-t border-slate-900/[0.08] dark:border-white/[0.08]">
               <button
                 onClick={handleHarvestCycle}
                 className={`flex-1 px-5 py-2.5 font-medium transition-all rounded-xl ${
@@ -147,7 +147,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
               </button>
               <button
                 onClick={() => setShowHarvestModal(false)}
-                className="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-all rounded-xl"
+                className="px-5 py-2.5 bg-slate-100 dark:bg-theme-bg-tertiary hover:bg-slate-200 dark:hover:bg-white/[0.08] text-slate-700 dark:text-theme-text-secondary font-medium transition-all rounded-xl"
               >
                 {t('common_cancel')}
               </button>

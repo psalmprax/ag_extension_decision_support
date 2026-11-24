@@ -1,17 +1,6 @@
+import { formatDate } from '@/lib/appLocale';
 import React, { useState } from 'react';
-import {
-  CreditCard,
-  AlertCircle,
-  Settings,
-  Shield,
-  Layers,
-  Activity,
-  Receipt,
-  CheckCircle2,
-  Clock,
-  ExternalLink,
-  ShieldCheck,
-} from 'lucide-react';
+import { CreditCard, AlertCircle, Settings, Shield, Layers, Activity, Receipt, CheckCircle2, Clock, ExternalLink, ShieldCheck } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBillingActions } from '@/hooks/useBillingActions';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -405,34 +394,34 @@ export const BillingDashboard: React.FC = () => {
           </div>
 
           {/* Card 2: Renewal Timeline */}
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between">
-            <div className="flex items-center gap-3.5">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+            <div className="flex items-center gap-3.5 min-w-0">
               <div className="p-2.5 bg-slate-500/10 border border-slate-500/20 rounded-xl text-slate-700 dark:text-theme-text-muted">
                 <Clock className="w-5 h-5" />
               </div>
               <div>
-                <span className="text-xxs font-medium text-slate-500 dark:text-white/50 block mb-0.5">
-                  {t('billing_renews_on') || 'Billing Cycle'}
+                <span className="text-xs text-slate-500 dark:text-white/60 block mb-0.5">
+                  {t('billing_renews_on', { defaultValue: 'Renews on' })}
                 </span>
-                <span className="text-xs font-mono font-medium text-slate-900 dark:text-white">
+                <span className="text-sm font-medium tabular-nums text-slate-900 dark:text-white">
                   {billing.subscription?.currentPeriodEnd
-                    ? new Date(billing.subscription.currentPeriodEnd).toLocaleDateString()
-                    : 'Lifetime free starter'}
+                    ? formatDate(billing.subscription.currentPeriodEnd)
+                    : t('billing_free_no_renewal', { defaultValue: 'Free plan, nothing to renew' })}
                 </span>
               </div>
             </div>
-            <span className="text-xxs text-emerald-700 dark:text-emerald-400 font-mono font-medium">
-              {isAnnual ? 'Annual (-20%)' : 'Monthly Auto-Renew'}
+            <span className="text-xs text-emerald-800 dark:text-emerald-300">
+              {isAnnual ? t('billing_renews_yearly', { defaultValue: 'Yearly, renews automatically' }) : t('billing_renews_monthly', { defaultValue: 'Monthly, renews automatically' })}
             </span>
           </div>
 
           {/* Card 3: Instant Customer Portal Action */}
-          <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex items-center justify-between">
-            <div className="space-y-0.5">
-              <span className="text-xxs font-medium text-slate-500 dark:text-white/50 block">
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 flex flex-wrap items-center justify-between gap-3">
+            <div className="space-y-0.5 min-w-0 flex-1">
+              <span className="text-xs text-slate-500 dark:text-white/60 block">
                 {t('ui_billing_dashboard_stripe_customer_portal')}
               </span>
-              <span className="text-xs text-slate-600 dark:text-white/70 font-medium">{t('ui_billing_dashboard_manage_payment_methods_invoices')}</span>
+              <span className="text-sm text-slate-700 dark:text-white/80">{t('ui_billing_dashboard_manage_payment_methods_invoices')}</span>
             </div>
             <button
               onClick={() => {
@@ -440,7 +429,7 @@ export const BillingDashboard: React.FC = () => {
                 void billing.handlePortal();
               }}
               disabled={billing.actionLoading === 'portal'}
-              className="px-3.5 py-1.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 font-medium text-xxs transition-all flex items-center gap-1.5 shrink-0"
+              className="min-h-10 px-3.5 py-1.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] hover:bg-slate-100 dark:hover:bg-white/10 text-slate-900 dark:text-white border border-slate-200 dark:border-white/10 font-medium text-sm transition-all flex items-center gap-1.5 shrink-0"
             >
               {billing.actionLoading === 'portal' ? (
                 <div className="w-3.5 h-3.5 border-2 border-slate-300 dark:border-white/20 border-t-white rounded-full animate-spin" />

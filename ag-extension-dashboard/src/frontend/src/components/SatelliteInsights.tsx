@@ -144,7 +144,7 @@ const SpatialDataVisualization = ({
 
   return (
     <div className={`aspect-video rounded-xl relative overflow-hidden border ${isCyber ? 'bg-black/40 border-primary-500/20' : 'bg-gray-100 border-gray-200'}`}>
-      <div className="absolute inset-0 bg-slate-900/40" />
+      <div className="absolute inset-0 bg-slate-50 dark:bg-theme-bg-secondary" />
       {isCyber && <div className="absolute inset-0 cyber-grid-premium opacity-30" />}
 
       <div className="absolute inset-0 flex items-center justify-center">
@@ -159,7 +159,7 @@ const SpatialDataVisualization = ({
             >
               <div className={`w-full h-full rounded-full ${String(point.colorClass ?? '')} blur-md opacity-40 pulse-ring`} />
               <div className={`absolute inset-0 w-2 h-2 m-auto rounded-full ${String(point.pulseClass ?? '')} border border-white/40 shadow-lg`} />
-              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-medium text-white/60 whitespace-nowrap">
+              <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs font-medium text-slate-600 dark:text-theme-text-muted whitespace-nowrap">
                 NDVI {String(point.ndvi ?? 0)}
               </div>
             </motion.div>
@@ -172,7 +172,7 @@ const SpatialDataVisualization = ({
         </div>
       </div>
 
-      <div className="absolute top-4 start-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+      <div className="absolute top-4 start-4 bg-slate-900/[0.04] dark:bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-900/[0.08] dark:border-white/[0.08]">
         <p className="text-xs font-medium text-primary-400 flex items-center gap-2">
           <Layers className="w-3 h-3" />
           {t('ui_satellite_insights_spectral_layer_iv')}
@@ -180,7 +180,7 @@ const SpatialDataVisualization = ({
       </div>
 
       {priority && (
-        <div className="absolute top-4 end-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10">
+        <div className="absolute top-4 end-4 bg-slate-900/[0.04] dark:bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-xl border border-slate-900/[0.08] dark:border-white/[0.08]">
           <div className={`text-xs font-medium flex items-center gap-2 ${priorityTextClass}`}>
             {isHighOrCritical ? <AlertTriangle className="w-3 h-3" /> : <Shield className="w-3 h-3" />}
             {String(priority.level ?? 'unknown')} PRIORITY
@@ -189,10 +189,10 @@ const SpatialDataVisualization = ({
       )}
 
       <div className="absolute bottom-4 start-4">
-        <p className="text-xxs font-medium text-white/40  ">{gpsLabel}</p>
+        <p className="text-xxs font-medium text-slate-600 dark:text-theme-text-muted  ">{gpsLabel}</p>
       </div>
       <div className="absolute bottom-4 end-4 text-end">
-        <p className="text-xxs font-medium text-white/40  ">
+        <p className="text-xxs font-medium text-slate-600 dark:text-theme-text-muted  ">
           {dataPoints.length > 0 ? `Source: ${String(dataPoints[0].source ?? 'provider')}` : 'No satellite observation'}
         </p>
       </div>
@@ -214,7 +214,7 @@ const MetricsGrid = ({
   const containerClass = isCritical
     ? 'bg-red-500/5 border-red-500/20'
     : isCyber
-      ? 'bg-black/40 border-white/10'
+      ? 'bg-slate-900/[0.04] dark:bg-black/40 border-slate-900/[0.08] dark:border-white/[0.08]'
       : 'bg-white border-gray-100 shadow-sm';
   const reasons = priority?.reasons ?? [];
   const score = priority?.score ?? 0;

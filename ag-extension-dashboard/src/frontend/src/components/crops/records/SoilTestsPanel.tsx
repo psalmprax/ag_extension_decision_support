@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 import { fieldRecordsService, type SoilTest, type SoilTestInput } from '@/api/fieldRecordsService';
@@ -10,7 +11,7 @@ import { formatNumber } from '@/components/charts/chartFormat';
 import { SoilCarbonChart } from './SoilCarbonChart';
 import { SoilTestForm } from './SoilTestForm';
 
-const formatDate = (value: string | null) => (value ? new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
+const formatDate = (value: string | null) => (value ? new Date(`${value}T00:00:00`).toLocaleDateString(appLocale(), { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
 const value = (n: number | null, suffix = '') => (n === null ? '—' : `${formatNumber(n, 2)}${suffix}`);
 
 /** A field's soil test results: the organic carbon trend, every result, and a form to add one. */

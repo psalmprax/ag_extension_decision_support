@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { scrollListToEnd } from '@/lib/scrollListToEnd';
 import { Loader2, Send, UserCheck } from 'lucide-react';
 import { createConversation, sendThreadMessage } from '@/api/chatbotService';
 import { FarmerAskAi } from '@/components/chat/FarmerAskAi';
@@ -50,7 +51,7 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
   }, [threadId, activeFarmerConvId, setActiveFarmerConvId, loadFarmerMessages]);
 
   useEffect(() => {
-    endRef.current?.scrollIntoView?.({ block: 'end' });
+    scrollListToEnd(endRef.current, false);
   }, [farmerChatMessages.length]);
 
   const realtime = useConversationRealtime({

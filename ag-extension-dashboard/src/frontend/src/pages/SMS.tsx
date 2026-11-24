@@ -12,6 +12,7 @@ import type { Contact, SMSHistoryRecord, SMSMessage } from './sms/types';
 import { SMSComposerPanel } from './sms/ComposerPanel';
 import { SMSContactsPanel } from './sms/ContactsPanel';
 import { SMSRightPanel } from './sms/RightPanel';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export function SMSPage() {
   const { t, language } = useLanguage();
@@ -264,21 +265,12 @@ export function SMSPage() {
   }, [bulkSelectedIds, sendMode, recentContacts]);
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-[calc(100vh-80px)] lg:h-[calc(100vh-80px)] overflow-y-auto lg:overflow-hidden gap-4 p-3.5 sm:p-4 lg:p-6 bg-slate-50 dark:bg-theme-bg-primary pb-28 md:pb-6">
-      {/* LEFT PANEL: Contacts & Search */}
-      <SMSContactsPanel
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        sendMode={sendMode}
-        recentContacts={recentContacts}
-        isLoadingContacts={isLoadingContacts}
-        selectedContact={selectedContact}
-        bulkSelectedIds={bulkSelectedIds}
-        handleBulkSelectAll={handleBulkSelectAll}
-        selectContact={selectContact}
-        onAddRecipient={phone => setPhoneNumber(phone)}
-        radiusClass={radiusClass}
-      />
+    <div className="flex flex-col min-h-[calc(100vh-80px)] lg:h-[calc(100vh-80px)] bg-slate-50 dark:bg-theme-bg-primary">
+    <PageHeader className="px-3.5 sm:px-4 lg:px-6 pt-3.5 sm:pt-4 lg:pt-6" title={t('nav_sms', { defaultValue: 'SMS' })} description={t('sms_page_desc', { defaultValue: 'Send advice and alerts by text message to one farmer or many.' })} />
+    <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden gap-4 p-3.5 sm:p-4 lg:p-6 pb-28 md:pb-6">
+      <SMSContactsPanel searchQuery={searchQuery} setSearchQuery={setSearchQuery} sendMode={sendMode} recentContacts={recentContacts} isLoadingContacts={isLoadingContacts}
+        selectedContact={selectedContact} bulkSelectedIds={bulkSelectedIds} handleBulkSelectAll={handleBulkSelectAll} selectContact={selectContact}
+        onAddRecipient={phone => setPhoneNumber(phone)} radiusClass={radiusClass} />
 
       {/* MIDDLE PANEL: Composer */}
       <SMSComposerPanel
@@ -324,6 +316,7 @@ export function SMSPage() {
 
       {/* Goal Mode Autonomous Campaigns & Closed Loop Skills Modal */}
       <GoalModeCampaignModal isOpen={isGoalModeOpen} onClose={() => setIsGoalModeOpen(false)} />
+    </div>
     </div>
   );
 }

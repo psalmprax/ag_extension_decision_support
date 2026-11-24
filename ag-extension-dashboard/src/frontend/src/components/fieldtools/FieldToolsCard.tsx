@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { Calculator, FlaskConical, Sprout, Droplets } from 'lucide-react';
 import { tankMix, fertilizerBlend, plantingDensity, herbicideTankDose } from '@/lib/agCalculators';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -150,8 +151,8 @@ export function FieldToolsCard() {
                     </div>
                     {densityResult.ok && (
                         <div className="p-3 bg-primary-500/5 rounded-xl text-xs space-y-1">
-                            <p><span className="font-medium">{densityResult.plantsPerHa.toLocaleString()}</span> {t('ui_field_tools_card_plants_ha')}</p>
-                            <p className="text-gray-500 dark:text-theme-text-muted">{densityResult.plantsTotal.toLocaleString()} {t('ui_field_tools_card_plants')}{densityResult.seedKgApprox} {t('ui_field_tools_card_kg_seed_15_oversow')}</p>
+                            <p><span className="font-medium">{densityResult.plantsPerHa.toLocaleString(appLocale())}</span> {t('ui_field_tools_card_plants_ha')}</p>
+                            <p className="text-gray-500 dark:text-theme-text-muted">{densityResult.plantsTotal.toLocaleString(appLocale())} {t('ui_field_tools_card_plants')}{densityResult.seedKgApprox} {t('ui_field_tools_card_kg_seed_15_oversow')}</p>
                         </div>
                     )}
                 </div>

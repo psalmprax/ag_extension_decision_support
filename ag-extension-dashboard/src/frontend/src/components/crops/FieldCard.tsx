@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { CheckCircle, CloudSun, Edit, FlaskConical, Info, Sprout, Trash2 } from 'lucide-react';
 import type { Field, CropCycle } from '@/api/fieldService';
 import { FarmPlanSection } from '@/components/fieldtools/FarmPlanSection';
@@ -103,7 +104,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({ field, cardClass, onEdit, 
               <div className="flex items-center justify-between">
                 <span className="text-xs font-medium text-primary-600 dark:text-primary-400">{t('ui_crops_overview_tab_growing')}</span>
                 <span className="text-xxs font-medium text-slate-500 dark:text-theme-text-muted">
-                  {t('ui_crops_overview_tab_planted')} {new Date(currentCycle.plantingDate!).toLocaleDateString()}
+                  {t('ui_crops_overview_tab_planted')} {new Date(currentCycle.plantingDate!).toLocaleDateString(appLocale())}
                 </span>
               </div>
               <h4 className="text-sm font-medium text-slate-900 dark:text-theme-text-primary mt-1 truncate">

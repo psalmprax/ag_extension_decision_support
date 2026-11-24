@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { searchKnowledge, KnowledgeArticle } from '@/api/knowledgeService';
 import { Farmer, Visit, Report } from '../types/dashboard';
 import { useDemoMode, DEMO_FARMERS, DEMO_VISITS, DEMO_REPORTS } from '@/demo';
@@ -86,7 +87,7 @@ export const useAppSearch = (
           return {
             id: v.id,
             label: `${farmerName} — Visit`,
-            sublabel: scheduledAt ? new Date(scheduledAt).toLocaleDateString() : '',
+            sublabel: scheduledAt ? new Date(scheduledAt).toLocaleDateString(appLocale()) : '',
           };
         }),
       };
@@ -109,7 +110,7 @@ export const useAppSearch = (
         items: matchedReports.map(r => ({
           id: r.id,
           label: r.title,
-          sublabel: `Generated ${new Date(r.generatedAt).toLocaleDateString()}`,
+          sublabel: `Generated ${new Date(r.generatedAt).toLocaleDateString(appLocale())}`,
         })),
       };
     }

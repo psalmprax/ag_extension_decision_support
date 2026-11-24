@@ -83,15 +83,15 @@ function formatSecondsToMMSS(sec: number): string {
 function getStatusBadgeClass(status: string): string {
   switch (status.toLowerCase()) {
     case 'good':
-      return 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
+      return 'text-emerald-700 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10';
     case 'fair':
-      return 'text-slate-400 border-slate-500/30 bg-slate-500/10';
+      return 'text-slate-600 dark:text-theme-text-muted border-slate-500/30 bg-slate-500/10';
     case 'poor':
-      return 'text-amber-400 border-amber-500/30 bg-amber-500/10';
+      return 'text-amber-800 dark:text-amber-300 border-amber-500/30 bg-amber-500/10';
     case 'diseased':
-      return 'text-rose-400 border-rose-500/30 bg-rose-500/10';
+      return 'text-rose-700 dark:text-rose-400 border-rose-500/30 bg-rose-500/10';
     default:
-      return 'text-slate-400 border-white/10 bg-white/5';
+      return 'text-slate-600 dark:text-theme-text-muted border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-900/[0.03] dark:bg-white/[0.04]';
   }
 }
 
@@ -142,19 +142,19 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
   return (
     <div
       ref={containerRef}
-      className={`backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-5 shadow-xl space-y-3 relative transition-all duration-200 ${
+      className={`backdrop-blur-xl bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl p-5 shadow-xl space-y-3 relative transition-all duration-200 ${
         isDropdownOpen ? 'z-40' : 'z-10'
       }`}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <UserCheck className="w-4 h-4 text-emerald-400" />
-          <h2 className="text-xs font-medium text-white">
+          <UserCheck className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+          <h2 className="text-xs font-medium text-slate-900 dark:text-theme-text-primary">
             {t('ui_visit_synthesis_form_target_farmer_parcel')}
           </h2>
         </div>
         {selectedFarmer && (
-          <span className="text-xxs text-emerald-400 font-medium flex items-center gap-1">
+          <span className="text-xxs text-emerald-700 dark:text-emerald-400 font-medium flex items-center gap-1">
             <Check className="w-3 h-3" /> {t('ui_visit_synthesis_form_farmer_linked')}
           </span>
         )}
@@ -163,50 +163,50 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
       <div className="relative">
         <div
           onClick={onToggleDropdown}
-          className="w-full p-3 rounded-lg border border-white/10 bg-white/[0.03] hover:bg-white/[0.05] cursor-pointer flex items-center justify-between transition-colors"
+          className="w-full p-3 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-900/[0.03] dark:bg-white/[0.04] hover:bg-white/[0.05] cursor-pointer flex items-center justify-between transition-colors"
         >
           {selectedFarmer ? (
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-medium text-xs">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-700 dark:text-emerald-400 font-medium text-xs">
                 {selectedFarmer.firstName?.[0]}
                 {selectedFarmer.lastName?.[0]}
               </div>
               <div>
-                <div className="text-sm font-medium text-white">
+                <div className="text-sm font-medium text-slate-900 dark:text-theme-text-primary">
                   {selectedFarmer.firstName} {selectedFarmer.lastName}
                 </div>
-                <div className="text-xs text-white/50 flex items-center gap-3 mt-0.5">
+                <div className="text-xs text-slate-600 dark:text-theme-text-muted flex items-center gap-3 mt-0.5">
                   {selectedFarmer.village && (
                     <span className="flex items-center gap-1">
-                      <MapPin className="w-3 h-3 text-slate-400" /> {selectedFarmer.village}
+                      <MapPin className="w-3 h-3 text-slate-600 dark:text-theme-text-muted" /> {selectedFarmer.village}
                     </span>
                   )}
                   {selectedFarmer.phone && (
                     <span className="flex items-center gap-1">
-                      <Phone className="w-3 h-3 text-white/40" /> {selectedFarmer.phone}
+                      <Phone className="w-3 h-3 text-slate-600 dark:text-theme-text-muted" /> {selectedFarmer.phone}
                     </span>
                   )}
                 </div>
               </div>
             </div>
           ) : (
-            <span className="text-sm text-white/40">
+            <span className="text-sm text-slate-600 dark:text-theme-text-muted">
               {isLoadingFarmers ? 'Loading registered farmers...' : 'Select a registered farmer...'}
             </span>
           )}
-          <ChevronDown className={`w-4 h-4 text-white/50 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+          <ChevronDown className={`w-4 h-4 text-slate-600 dark:text-theme-text-muted transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
         </div>
 
         {isDropdownOpen && (
-          <div className="absolute top-full start-0 end-0 mt-2 z-50 bg-slate-900/95 border border-slate-500/30 rounded-xl shadow-2xl backdrop-blur-2xl p-2 max-h-60 overflow-y-auto">
+          <div className="absolute top-full start-0 end-0 mt-2 z-50 bg-slate-50 dark:bg-theme-bg-secondary border border-slate-500/30 rounded-xl shadow-2xl backdrop-blur-2xl p-2 max-h-60 overflow-y-auto">
             <div className="relative mb-2">
-              <Search className="w-3.5 h-3.5 text-white/40 absolute start-3 top-2.5" />
+              <Search className="w-3.5 h-3.5 text-slate-600 dark:text-theme-text-muted absolute start-3 top-2.5" />
               <input
                 type="text"
                 value={farmerSearch}
                 onChange={e => onSearchChange(e.target.value)}
                 placeholder="Search farmer by name, village, or phone..."
-                className="w-full ps-8 pe-3 py-1.5 rounded-lg bg-white/[0.04] border border-white/10 text-xs text-white placeholder-white/30 outline-none focus:border-slate-400"
+                className="w-full ps-8 pe-3 py-1.5 rounded-lg bg-slate-900/[0.03] dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-900 dark:text-theme-text-primary placeholder-white/30 outline-none focus:border-slate-400"
                 onClick={e => e.stopPropagation()}
               />
             </div>
@@ -221,13 +221,13 @@ const FarmerSelectorCard: React.FC<FarmerSelectorCardProps> = ({
                 >
                   <div>
                     <div>{f.firstName} {f.lastName}</div>
-                    <div className="text-xxs text-white/40">{f.village || f.region || 'Registered Farmer'}</div>
+                    <div className="text-xxs text-slate-600 dark:text-theme-text-muted">{f.village || f.region || 'Registered Farmer'}</div>
                   </div>
-                  {selectedFarmer?.id === f.id && <Check className="w-3.5 h-3.5 text-slate-400" />}
+                  {selectedFarmer?.id === f.id && <Check className="w-3.5 h-3.5 text-slate-600 dark:text-theme-text-muted" />}
                 </div>
               ))}
               {filteredFarmers.length === 0 && (
-                <div className="text-center py-3 text-xs text-white/40">{t('ui_visit_synthesis_form_no_matching_farmers_found')}</div>
+                <div className="text-center py-3 text-xs text-slate-600 dark:text-theme-text-muted">{t('ui_visit_synthesis_form_no_matching_farmers_found')}</div>
               )}
             </div>
           </div>
@@ -259,12 +259,12 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
       className="grid grid-cols-1 md:grid-cols-2 gap-6"
     >
       {/* Bento Card 1: Diagnostic Summary & Pathology */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-sm space-y-5 flex flex-col justify-between">
+      <div className="backdrop-blur-xl bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl p-6 shadow-sm space-y-5 flex flex-col justify-between">
         <div className="space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-white/5">
+          <div className="flex items-center justify-between pb-2 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
             <div className="flex items-center gap-2">
-              <Leaf className="w-4 h-4 text-emerald-400" />
-              <h3 className="text-sm font-medium text-white">
+              <Leaf className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+              <h3 className="text-sm font-medium text-slate-900 dark:text-theme-text-primary">
                 {t('ui_visit_synthesis_form_diagnostic_executive_summary')}
               </h3>
             </div>
@@ -273,34 +273,34 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
             </span>
           </div>
 
-          <p className="text-sm text-white/80 leading-relaxed font-normal p-3.5 rounded-lg bg-white/[0.02] border border-white/5">
+          <p className="text-sm text-slate-700 dark:text-theme-text-secondary leading-relaxed font-normal p-3.5 rounded-lg bg-slate-900/[0.03] dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08]">
             {result.summary}
           </p>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 space-y-1">
-              <span className="text-xs font-medium text-white/50">
+            <div className="p-3 rounded-lg bg-slate-900/[0.03] dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-1">
+              <span className="text-xs font-medium text-slate-600 dark:text-theme-text-muted">
                 {t('ui_visit_synthesis_form_follow_up_required')}
               </span>
-              <div className="text-sm font-medium text-white flex items-center gap-1.5">
+              <div className="text-sm font-medium text-slate-900 dark:text-theme-text-primary flex items-center gap-1.5">
                 <div className={`w-2 h-2 rounded-full ${result.followUpRequired ? 'bg-rose-400' : 'bg-emerald-400'}`} />
                 <span>{result.followUpRequired ? 'Yes (Urgent)' : 'No (Routine)'}</span>
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-white/[0.02] border border-white/5 space-y-1">
-              <span className="text-xs font-medium text-white/50">
+            <div className="p-3 rounded-lg bg-slate-900/[0.03] dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-1">
+              <span className="text-xs font-medium text-slate-600 dark:text-theme-text-muted">
                 {t('ui_visit_synthesis_form_next_visit_hint')}
               </span>
-              <div className="text-sm font-medium text-slate-300 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-slate-400" />
+              <div className="text-sm font-medium text-slate-700 dark:text-theme-text-secondary flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-slate-600 dark:text-theme-text-muted" />
                 <span>{result.nextVisitDateHint || '7–10 days'}</span>
               </div>
             </div>
           </div>
 
           <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/20 space-y-1">
-            <span className="text-xs font-medium text-amber-300 flex items-center gap-1">
+            <span className="text-xs font-medium text-amber-800 dark:text-amber-300 flex items-center gap-1">
               <AlertCircle className="w-3 h-3" />
               {t('ui_visit_synthesis_form_pest_disease_stress_index')}
             </span>
@@ -310,23 +310,23 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
       </div>
 
       {/* Bento Card 2: Key Observations & Action Itinerary */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-sm space-y-5 flex flex-col justify-between">
+      <div className="backdrop-blur-xl bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl p-6 shadow-sm space-y-5 flex flex-col justify-between">
         <div className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-white/5">
-            <Layers className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-sm font-medium text-white">
+          <div className="flex items-center gap-2 pb-2 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
+            <Layers className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+            <h3 className="text-sm font-medium text-slate-900 dark:text-theme-text-primary">
               {t('ui_visit_synthesis_form_observations_recommendations')}
             </h3>
           </div>
 
           <div>
-            <h4 className="text-xs font-medium text-white/50 mb-2">
+            <h4 className="text-xs font-medium text-slate-600 dark:text-theme-text-muted mb-2">
               {t('ui_visit_synthesis_form_key_agronomic_observations')}
             </h4>
             <ul className="space-y-1.5">
               {result.keyObservations.map((obs, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-white/80">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 mt-0.5 shrink-0" />
+                <li key={i} className="flex items-start gap-2 text-xs text-slate-700 dark:text-theme-text-secondary">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400 mt-0.5 shrink-0" />
                   <span>{obs}</span>
                 </li>
               ))}
@@ -334,13 +334,13 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
           </div>
 
           <div>
-            <h4 className="text-xs font-medium text-white/50 mb-2">
+            <h4 className="text-xs font-medium text-slate-600 dark:text-theme-text-muted mb-2">
               {t('ui_visit_synthesis_form_prescribed_treatment_protocol')}
             </h4>
             <ul className="space-y-1.5">
               {result.recommendedActions.map((action, i) => (
-                <li key={i} className="flex items-start gap-2 text-xs text-white/80">
-                  <ArrowRight className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
+                <li key={i} className="flex items-start gap-2 text-xs text-slate-700 dark:text-theme-text-secondary">
+                  <ArrowRight className="w-3.5 h-3.5 text-amber-800 dark:text-amber-300 mt-0.5 shrink-0" />
                   <span>{action}</span>
                 </li>
               ))}
@@ -349,8 +349,8 @@ const SynthesisResultsBento: React.FC<SynthesisResultsBentoProps> = ({
         </div>
 
         {/* 1-Click Save Action */}
-        <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-4">
-          <span className="text-xxs text-white/40">
+        <div className="pt-4 border-t border-slate-900/[0.08] dark:border-white/[0.08] flex items-center justify-between gap-4">
+          <span className="text-xxs text-slate-600 dark:text-theme-text-muted">
             {t('ui_visit_synthesis_form_logs_synthesis_to')} {selectedFarmer ? `${selectedFarmer.firstName}'s` : 'farmer'} {t('ui_visit_synthesis_form_record')}
           </span>
           <button
@@ -511,14 +511,14 @@ export const VisitSynthesisForm: React.FC = () => {
   return (
     <div className="max-w-5xl mx-auto space-y-6">
       {/* ── Header Telemetry & Preset Hub ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-sm relative overflow-hidden">
+      <div className="backdrop-blur-xl bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl p-6 shadow-sm relative overflow-hidden">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div>
               <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-medium tracking-tight text-white">{t('nav_visit_synthesis')}</h1>
+                <h1 className="text-xl sm:text-2xl font-medium tracking-tight text-slate-900 dark:text-theme-text-primary">{t('nav_visit_synthesis')}</h1>
               </div>
-              <p className="text-xs text-white/60 mt-0.5">
+              <p className="text-xs text-slate-600 dark:text-theme-text-muted mt-0.5">
                 {t('ui_visit_synthesis_form_convert_unorganized_voice_dictation')}
               </p>
             </div>
@@ -526,7 +526,7 @@ export const VisitSynthesisForm: React.FC = () => {
 
           {/* Quick-Preset Chips */}
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-xs font-medium text-white/50">{t('ui_visit_synthesis_form_presets')}</span>
+            <span className="text-xs font-medium text-slate-600 dark:text-theme-text-muted">{t('ui_visit_synthesis_form_presets')}</span>
             {FIELD_PRESETS.map(p => (
               <button
                 key={p.title}
@@ -535,7 +535,7 @@ export const VisitSynthesisForm: React.FC = () => {
                   setNotes(p.text);
                   toast.success(`Observation "${p.title}" loaded!`);
                 }}
-                className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-emerald-500/15 border border-white/10 hover:border-emerald-500/30 text-xs text-white/80 hover:text-white transition-colors flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-lg bg-slate-900/[0.03] dark:bg-white/[0.04] hover:bg-emerald-500/15 border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-emerald-500/30 text-xs text-slate-700 dark:text-theme-text-secondary hover:text-slate-900 dark:hover:text-white transition-colors flex items-center gap-1.5"
               >
                 <span className="font-medium">{p.title}</span>
               </button>
@@ -562,11 +562,11 @@ export const VisitSynthesisForm: React.FC = () => {
       />
 
       {/* ── Input Terminal Card ── */}
-      <div className="backdrop-blur-xl bg-slate-900/60 border border-white/10 rounded-xl p-6 shadow-sm space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-white/5">
+      <div className="backdrop-blur-xl bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl p-6 shadow-sm space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
           <div className="flex items-center gap-2">
-            <FileText className="w-4 h-4 text-emerald-400" />
-            <h2 className="text-sm font-medium text-white">
+            <FileText className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+            <h2 className="text-sm font-medium text-slate-900 dark:text-theme-text-primary">
               {t('ui_visit_synthesis_form_field_observation_notes')}
             </h2>
           </div>
@@ -585,10 +585,10 @@ export const VisitSynthesisForm: React.FC = () => {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isRecording || isTranscribing}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-white/[0.04] hover:bg-white/[0.08] text-white/70 hover:text-white border border-white/10 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-slate-900/[0.03] dark:bg-white/[0.04] hover:bg-white/[0.08] text-slate-700 dark:text-theme-text-secondary hover:text-slate-900 dark:hover:text-white border border-slate-900/[0.08] dark:border-white/[0.08] transition-colors disabled:opacity-50"
               title="Upload field voice note (.mp3, .wav, .m4a, .ogg, .webm)"
             >
-              <UploadCloud className="w-3.5 h-3.5 text-slate-400" />
+              <UploadCloud className="w-3.5 h-3.5 text-slate-600 dark:text-theme-text-muted" />
               <span>{isTranscribing ? 'Transcribing...' : 'Upload voice memo'}</span>
             </button>
 
@@ -602,7 +602,7 @@ export const VisitSynthesisForm: React.FC = () => {
                   : 'bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 hover:text-emerald-200 border-emerald-500/30'
               }`}
             >
-              {isRecording ? <Square className="w-3.5 h-3.5 text-rose-400 fill-rose-400" /> : <Mic className="w-3.5 h-3.5 text-emerald-400" />}
+              {isRecording ? <Square className="w-3.5 h-3.5 text-rose-700 dark:text-rose-400 fill-rose-400" /> : <Mic className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />}
               <span>{isRecording ? `Stop Recording (${formatSecondsToMMSS(recordingDuration)})` : `Live Dictate (${SPEECH_LANG_MAP[language]?.slice(0, 2).toUpperCase() || 'EN'})`}</span>
             </button>
           </div>
@@ -610,9 +610,9 @@ export const VisitSynthesisForm: React.FC = () => {
 
         {/* Live Audio Streaming Feedback */}
         {isRecording && (
-          <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-between text-xs text-rose-300">
+          <div className="p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-between text-xs text-rose-700 dark:text-rose-400">
             <div className="flex items-center gap-2">
-              <AudioLines className="w-4 h-4 text-rose-400" />
+              <AudioLines className="w-4 h-4 text-rose-700 dark:text-rose-400" />
               <span>
                 {interimText ? `"${interimText}..."` : 'Listening for field observations (Noise suppression active)...'}
               </span>
@@ -626,12 +626,12 @@ export const VisitSynthesisForm: React.FC = () => {
             value={notes}
             onChange={e => setNotes(e.target.value)}
             placeholder="Type, live dictate, or upload field voice notes... (e.g. Inspected 2-acre plot in Rongai. Severe leaf yellowing with late blight lesions on lower leaves, soil moisture depleted, advised copper fungicide spraying and scheduled follow-up inspection in 10 days)"
-            className="w-full min-h-[160px] p-4 rounded-lg border border-white/10 bg-white/[0.02] text-white placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent outline-none transition-colors resize-none text-sm leading-relaxed"
+            className="w-full min-h-[160px] p-4 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-900/[0.03] dark:bg-white/[0.04] text-slate-900 dark:text-theme-text-primary placeholder-white/25 focus:ring-1 focus:ring-emerald-400 focus:border-transparent outline-none transition-colors resize-none text-sm leading-relaxed"
           />
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-2">
-          <span className="text-xxs text-white/40">
+          <span className="text-xxs text-slate-600 dark:text-theme-text-muted">
             {t('ui_visit_synthesis_form_min_10_characters_required_for_multi')}
           </span>
           <button
@@ -665,8 +665,8 @@ export const VisitSynthesisForm: React.FC = () => {
           onVerificationComplete={verified => setIsFraudVerified(verified)}
         />
       ) : (
-        <div className="p-4 rounded-xl bg-slate-900/60 border border-white/10 text-center text-xs text-white/50 flex items-center justify-center gap-2">
-          <AlertCircle className="w-4 h-4 text-slate-400" />
+        <div className="p-4 rounded-xl bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] text-center text-xs text-slate-600 dark:text-theme-text-muted flex items-center justify-center gap-2">
+          <AlertCircle className="w-4 h-4 text-slate-600 dark:text-theme-text-muted" />
           <span>{t('ui_visit_synthesis_form_select_a_registered_farmer_above_to')}</span>
         </div>
       )}

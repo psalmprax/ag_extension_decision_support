@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { Send, AlertTriangle, Loader2, RefreshCw, RotateCcw } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { OutreachDeliveryStats, retryOutreachMessages } from '@/api/campaignService';
@@ -129,7 +130,7 @@ export const OutreachDeliveryStatusCard: React.FC<OutreachDeliveryStatusCardProp
               <div key={f.id} className="p-2 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.06] dark:border-white/[0.08] text-xxs text-slate-700 dark:text-theme-text-secondary">
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-rose-700 dark:text-rose-300">{f.channel} · {f.recipient || 'no recipient'}</span>
-                  <span className="text-slate-500 dark:text-theme-text-muted">{new Date(f.updatedAt).toLocaleString()}</span>
+                  <span className="text-slate-500 dark:text-theme-text-muted">{new Date(f.updatedAt).toLocaleString(appLocale())}</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between gap-2">
                   <span className="text-slate-600 dark:text-theme-text-muted">

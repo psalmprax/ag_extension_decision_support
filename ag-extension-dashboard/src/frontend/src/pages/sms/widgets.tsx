@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { motion } from 'framer-motion';
 import { Loader2, BarChart3 } from 'lucide-react';
 import type { SMSMessage } from './types';
@@ -9,9 +10,9 @@ export function QuotaSummary({ quota, isLoadingQuota, radiusClass }: { quota: { 
   return <div className={`p-4 bg-slate-100/50 dark:bg-theme-bg-tertiary/50 ${radiusClass}`}>
     <div className="flex items-end justify-between">
       <span className="text-3xl font-medium font-mono tabular-nums text-slate-900 dark:text-white">
-        {isLoadingQuota ? <Loader2 className="w-8 h-8 animate-spin inline" /> : quota.limit > 0 ? quota.current.toLocaleString() : '—'}
+        {isLoadingQuota ? <Loader2 className="w-8 h-8 animate-spin inline" /> : quota.limit > 0 ? quota.current.toLocaleString(appLocale()) : '—'}
       </span>
-      <span className="text-sm font-medium font-mono tabular-nums text-slate-500">{quota.limit > 0 ? `/ ${quota.limit.toLocaleString()}` : 'Quota unavailable'}</span>
+      <span className="text-sm font-medium font-mono tabular-nums text-slate-500">{quota.limit > 0 ? `/ ${quota.limit.toLocaleString(appLocale())}` : 'Quota unavailable'}</span>
     </div>
     <div className="h-2 w-full mt-4 bg-slate-200 dark:bg-theme-bg-tertiary rounded-full overflow-hidden">
       <motion.div initial={{ width: 0 }} animate={{ width: `${usedPercent}%` }} className="h-full bg-emerald-600 dark:bg-emerald-500 rounded-full" />

@@ -33,7 +33,7 @@ export function StepCard({
     <div className="p-4 rounded-xl bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] transition-colors shadow-sm relative group">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <span className="w-5 h-5 rounded bg-slate-100 dark:bg-white/[0.07] flex items-center justify-center text-[11px] font-mono text-slate-400">
+          <span className="w-5 h-5 rounded bg-slate-100 dark:bg-white/[0.07] flex items-center justify-center text-xs tabular-nums text-slate-500">
             {index + 1}
           </span>
           <span className="w-6 h-6 rounded-md bg-slate-100 dark:bg-white/[0.07] border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center justify-center shrink-0">
@@ -42,13 +42,13 @@ export function StepCard({
           <h4 className="text-xs font-medium text-slate-800 dark:text-theme-text-primary">{step.title}</h4>
         </div>
 
-        <div className="flex items-center gap-1 opacity-70 group-hover:opacity-100 transition">
+        <div className="flex items-center gap-0.5">
           <button
             type="button"
             disabled={index === 0}
             onClick={onMoveUp}
-            className="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition rounded"
-            title="Move step up"
+            className="h-9 w-9 inline-flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] disabled:opacity-30 transition rounded-md"
+            aria-label={t('advisory_step_move_up', { defaultValue: 'Move step up' })}
           >
             <ArrowUp className="w-3.5 h-3.5" />
           </button>
@@ -56,16 +56,16 @@ export function StepCard({
             type="button"
             disabled={index === totalSteps - 1}
             onClick={onMoveDown}
-            className="p-1 text-slate-400 hover:text-slate-900 dark:hover:text-white disabled:opacity-30 transition rounded"
-            title="Move step down"
+            className="h-9 w-9 inline-flex items-center justify-center text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] disabled:opacity-30 transition rounded-md"
+            aria-label={t('advisory_step_move_down', { defaultValue: 'Move step down' })}
           >
             <ArrowDown className="w-3.5 h-3.5" />
           </button>
           <button
             type="button"
             onClick={onDelete}
-            className="p-1 text-slate-400 hover:text-rose-400 transition rounded ms-1"
-            title="Delete step"
+            className="h-9 w-9 inline-flex items-center justify-center text-slate-500 hover:text-rose-500 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] transition rounded-md"
+            aria-label={t('advisory_step_delete', { defaultValue: 'Delete step' })}
           >
             <Trash2 className="w-3.5 h-3.5" />
           </button>
@@ -73,7 +73,7 @@ export function StepCard({
       </div>
 
       {step.condition && !isEditingCondition && (
-        <div className="mt-2.5 flex items-center justify-between gap-2 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-white/[0.07] border border-slate-900/[0.08] dark:border-white/[0.08] text-[11px] text-slate-700 dark:text-theme-text-secondary">
+        <div className="mt-2.5 flex items-center justify-between gap-2 px-2.5 py-1 rounded-md bg-slate-100 dark:bg-white/[0.07] border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-theme-text-secondary">
           <div className="flex items-center gap-1.5 font-mono">
             <span className="font-medium text-amber-400">IF:</span>
             <span>{step.condition}</span>
@@ -81,7 +81,7 @@ export function StepCard({
           <button
             type="button"
             onClick={() => setIsEditingCondition(true)}
-            className="text-[10px] text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
+            className="text-xs text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
           >
             {t('common_edit')}
           </button>
@@ -111,7 +111,7 @@ export function StepCard({
         <button
           type="button"
           onClick={() => setIsEditingCondition(true)}
-          className="mt-2 text-[11px] text-slate-500 hover:text-slate-700 dark:hover:text-theme-text-secondary inline-flex items-center gap-1 transition-colors"
+          className="mt-2 text-xs text-slate-500 hover:text-slate-700 dark:hover:text-theme-text-secondary inline-flex items-center gap-1 transition-colors"
         >
           <span>{t('ui_advisory_studio_page_add_conditional_logic')}</span>
         </button>
@@ -119,36 +119,36 @@ export function StepCard({
 
       <div className="mt-3 p-2.5 rounded-lg bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-theme-text-secondary">
         {step.type === 'crop_select' && (
-          <div className="grid grid-cols-2 gap-2 text-[11px]">
+          <div className="grid grid-cols-2 gap-2 text-xs">
             <div>
-              <span className="text-slate-500 block text-[10px]">{t('ui_advisory_studio_page_default_crop')}</span>
+              <span className="text-slate-500 block text-xs">{t('ui_advisory_studio_page_default_crop')}</span>
               <span className="font-medium text-emerald-400">{String(step.config.crop || 'Maize')}</span>
             </div>
             <div>
-              <span className="text-slate-500 block text-[10px]">{t('ui_advisory_studio_page_growth_stage')}</span>
+              <span className="text-slate-500 block text-xs">{t('ui_advisory_studio_page_growth_stage')}</span>
               <span className="font-medium text-slate-800 dark:text-theme-text-primary">{String(step.config.stage || 'Vegetative')}</span>
             </div>
           </div>
         )}
         {step.type === 'soil_test' && (
-          <div className="flex items-center justify-between text-[11px]">
+          <div className="flex items-center justify-between text-xs">
             <span className="text-slate-400">{t('ui_advisory_studio_page_target_acidity_threshold')}</span>
             <span className="font-mono text-slate-400">pH {String(step.config.targetPh || '6.5')}</span>
           </div>
         )}
         {step.type === 'pest_scout' && (
-          <div className="flex items-center justify-between text-[11px]">
+          <div className="flex items-center justify-between text-xs">
             <span className="text-slate-400">{t('ui_advisory_studio_page_severity_threshold')}</span>
             <span className="font-mono text-amber-400">{String(step.config.threshold || '30')}%</span>
           </div>
         )}
         {step.type === 'dosage_advisory' && (
-          <div className="text-[11px] text-emerald-400 font-mono">
+          <div className="text-xs text-emerald-400 font-mono">
             {t('ui_advisory_studio_page_rate')} {String(step.config.rateLitersPerAcre || '0.4')} {t('ui_advisory_studio_page_l_acre_in')} {String(step.config.waterPerAcreLiters || '133')} {t('ui_advisory_studio_page_l_water')}
           </div>
         )}
         {step.type === 'photo_leaf' && (
-          <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+          <div className="flex items-center gap-1.5 text-xs text-slate-400">
             <span>{t('ui_advisory_studio_page_edge_diagnostic_mobilenetv3')}</span>
           </div>
         )}

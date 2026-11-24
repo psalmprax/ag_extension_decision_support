@@ -1,4 +1,5 @@
 import { hasAuthSession } from '@/hooks/useAppAuth';
+import { appLocale } from '@/lib/appLocale';
 import React, { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, TrendingUp, Truck, Database, Globe } from 'lucide-react';
@@ -204,7 +205,7 @@ export const MarketPriceTrendCard: React.FC = () => {
                 <TrendingUp className="w-3 h-3" />
                 {t('ui_market_price_trend_card_last_updated')}
               </span>
-              <span className="font-mono">{new Date(metadata.fetchedAt).toLocaleString()}</span>
+              <span className="font-mono">{new Date(metadata.fetchedAt).toLocaleString(appLocale())}</span>
             </div>
           )}
         </>

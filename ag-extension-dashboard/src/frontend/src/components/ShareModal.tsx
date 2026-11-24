@@ -1,19 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { motion } from 'framer-motion';
-import {
-  X,
-  Share2,
-  Link,
-  Copy,
-  Check,
-  Clock,
-  Shield,
-  Globe,
-  Users,
-  Calendar,
-  AlertCircle,
-  RefreshCcw,
-} from 'lucide-react';
+import { X, Share2, Link, Copy, Check, Clock, Shield, Globe, Users, Calendar, AlertCircle, RefreshCcw } from 'lucide-react';
 import { createShare, ShareResponse } from '@/api/shareService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { copyWithToast } from '@/lib/copyText';
@@ -286,7 +274,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
                 <p className="text-xs text-amber-700 dark:text-amber-500 leading-relaxed font-medium">
                   {t('ui_share_modal_this_link_will_expire_on')}{' '}
-                  <strong>{new Date(shareData.expiresAt || '').toLocaleDateString()}</strong>{t('ui_share_modal_access_is_logged_for_security_auditi')}
+                  <strong>{new Date(shareData.expiresAt || '').toLocaleDateString(appLocale())}</strong>{t('ui_share_modal_access_is_logged_for_security_auditi')}
                 </p>
               </div>
 

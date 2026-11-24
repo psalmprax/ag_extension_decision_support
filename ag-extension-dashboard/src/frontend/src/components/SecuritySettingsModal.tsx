@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { BaseModal } from './BaseModal';
 import { getApiErrorMessage } from '@/lib/apiError';
 import apiClient from '../api/client';
@@ -260,7 +261,7 @@ export const SecuritySettingsModal: React.FC<SecuritySettingsModalProps> = ({ is
                     </p>
                   </div>
                   <span className="text-xs text-gray-400">
-                    {t('billing_status_active')} {new Date(s.lastActiveAt).toLocaleDateString()}
+                    {t('billing_status_active')} {new Date(s.lastActiveAt).toLocaleDateString(appLocale())}
                   </span>
                 </div>
               ))}

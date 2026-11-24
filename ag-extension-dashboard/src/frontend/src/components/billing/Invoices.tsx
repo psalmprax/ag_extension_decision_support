@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { Clock, Download, FileText, Receipt } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Badge } from '../ui/Badge';
@@ -74,12 +75,12 @@ export const Invoices: React.FC<InvoicesProps> = ({ invoices }) => {
                     <div className="flex items-center gap-2.5">
                       <Clock className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                       <span className="text-xs font-mono tabular-nums text-slate-700 dark:text-white/80">
-                        {new Date(invoice.created * 1000).toLocaleDateString()}
+                        {new Date(invoice.created * 1000).toLocaleDateString(appLocale())}
                       </span>
                     </div>
                   </td>
                   <td className="px-6 py-4 text-xs font-medium text-slate-900 dark:text-white font-mono tabular-nums">
-                    {(invoice.amount_paid / 100).toLocaleString('en-US', {
+                    {(invoice.amount_paid / 100).toLocaleString(appLocale(), {
                       style: 'currency',
                       currency: invoice.currency,
                     })}

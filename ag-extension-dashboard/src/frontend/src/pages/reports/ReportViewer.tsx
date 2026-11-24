@@ -1,4 +1,5 @@
 import { Dialog as HeadlessDialog } from '@headlessui/react';
+import { appLocale } from '@/lib/appLocale';
 import { Download, Loader2, X } from 'lucide-react';
 import type { Report } from '@/api/reportService';
 import { Dialog } from '@/components/ui/Dialog';
@@ -24,7 +25,7 @@ export function ReportViewer({ report, content, isLoading, onClose, onDownload }
             <div className="min-w-0 flex-1">
               <HeadlessDialog.Title className="text-lg font-medium text-slate-900 dark:text-white">{report.title}</HeadlessDialog.Title>
               <p className="mt-0.5 text-sm text-slate-500 dark:text-theme-text-muted">
-                {[report.generatedAt ? new Date(report.generatedAt).toLocaleString() : null, report.createdBy].filter(Boolean).join(' · ')}
+                {[report.generatedAt ? new Date(report.generatedAt).toLocaleString(appLocale()) : null, report.createdBy].filter(Boolean).join(' · ')}
               </p>
             </div>
             <button type="button" onClick={() => onDownload(report)} className={PRIMARY_BUTTON}>

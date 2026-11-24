@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Sprout, MessageSquare, Calendar, Bell } from 'lucide-react';
@@ -11,7 +12,7 @@ import { NormalDashboard } from './farmer/NormalDashboard';
 function formatNextVisit(value: string | null | undefined): string | null {
   if (!value || value === 'None') return null;
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  return Number.isNaN(date.getTime()) ? null : date.toLocaleDateString(appLocale(), { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 export const FarmerDashboard: React.FC = () => {

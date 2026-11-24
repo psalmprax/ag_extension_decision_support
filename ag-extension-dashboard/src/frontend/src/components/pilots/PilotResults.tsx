@@ -1,7 +1,8 @@
 import { useLanguage } from '@/lib/LanguageContext';
+import { appLocale } from '@/lib/appLocale';
 import type { ArmResult, PilotDetail } from './pilotsApi';
 
-const number = (value: number | null, unit = '') => (value === null ? '—' : `${value.toLocaleString()}${unit}`);
+const number = (value: number | null, unit = '') => (value === null ? '—' : `${value.toLocaleString(appLocale())}${unit}`);
 const share = (part: number, whole: number) => (whole ? `${Math.round((part / whole) * 100)}%` : '—');
 
 /** The two groups side by side, and the difference with its range, said plainly. */
@@ -46,7 +47,7 @@ export function PilotResults({ detail }: { detail: PilotDetail }) {
       <p className="text-sm text-slate-700 dark:text-white/80" role="status">
         {difference
           ? t('pilot_difference', {
-            diff: difference.kgPerHa.toLocaleString(), low: difference.low.toLocaleString(), high: difference.high.toLocaleString(),
+            diff: difference.kgPerHa.toLocaleString(appLocale()), low: difference.low.toLocaleString(appLocale()), high: difference.high.toLocaleString(appLocale()),
             defaultValue: 'The service group’s harvest changed by {diff} kg/ha more than the comparison group’s (95% range {low} to {high}).',
           })
           : t('pilot_no_difference', { defaultValue: 'No difference to show yet: both groups need farmers who reported both harvests.' })}

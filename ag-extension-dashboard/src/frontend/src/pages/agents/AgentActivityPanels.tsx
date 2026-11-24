@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { ArrowRight, Cpu, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import type { QueueStatus } from '@/api/agentService';
@@ -85,7 +86,7 @@ const HandoffPanel: React.FC<{ handoffs: Handoff[] }> = ({ handoffs }) => {
                 </div>
               </div>
               <time dateTime={handoff.timestamp} className="shrink-0 tabular-nums text-slate-500 dark:text-theme-text-muted">
-                {new Date(handoff.timestamp).toLocaleTimeString()}
+                {new Date(handoff.timestamp).toLocaleTimeString(appLocale())}
               </time>
             </li>
           ))}

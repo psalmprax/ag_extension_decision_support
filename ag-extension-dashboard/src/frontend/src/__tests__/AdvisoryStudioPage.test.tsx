@@ -80,7 +80,7 @@ describe('AdvisoryStudioPage Component', () => {
   it('allows moving and deleting steps', () => {
     render(<AdvisoryStudioPage />);
 
-    const deleteButtons = screen.getAllByTitle('Delete step');
+    const deleteButtons = screen.getAllByRole('button', { name: 'Delete step' });
     expect(deleteButtons.length).toBe(4);
 
     fireEvent.click(deleteButtons[0]!);

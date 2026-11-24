@@ -1,24 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Mic,
-  MicOff,
-  Volume2,
-  VolumeX,
-  Send,
-  Globe,
-  Bot,
-  User,
-  RotateCcw,
-  ShieldCheck,
-  ChevronRight,
-  ChevronDown,
-  Loader2,
-  Leaf,
-  Zap,
-  Activity,
-  HelpCircle,
-} from 'lucide-react';
+import { Mic, MicOff, Volume2, VolumeX, Send, Globe, Bot, User, RotateCcw, ShieldCheck, ChevronRight, ChevronDown, Loader2, Leaf, Zap, Activity, HelpCircle } from 'lucide-react';
 import apiClient from '@/api/client';
 import { EncryptedStorageService } from '@/services/encryptedStorageService';
 import { Language, languages } from '@/lib/i18n';
@@ -1774,7 +1757,7 @@ export function TalkingAssistant({ defaultOpen = false, className = '' }: Talkin
         language: lang,
         sourceBadge: apiResult.source,
         citations: apiResult.citations,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date().toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' }),
       };
 
       const updated = apiResult.entitySlots ?? activeSlots;
@@ -1837,7 +1820,7 @@ export function TalkingAssistant({ defaultOpen = false, className = '' }: Talkin
         sender: 'user',
         text: query,
         language: lang,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date().toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' }),
       };
 
       const updatedSlots = extractSlots(query, entitySlots);

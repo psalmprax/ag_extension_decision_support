@@ -1,4 +1,5 @@
 import { Download, FileText } from 'lucide-react';
+import { formatDate } from '@/lib/appLocale';
 import type { Report } from '@/api/reportService';
 import { formatLabel } from '@/lib/formatLabel';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -10,13 +11,13 @@ interface ReportCardProps {
   onDownload: (report: Report) => void;
 }
 
-const dateFormat = new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+const formatWritten = (value: string) => formatDate(value, { day: 'numeric', month: 'short', year: 'numeric' });
 
 /** One report in the list: its title, when and by whom it was written, and a PDF download. */
 export function ReportCard({ report, onOpen, onDownload }: ReportCardProps) {
   const { t } = useLanguage();
   const ready = isReportReady(report);
-  const written = report.generatedAt ? dateFormat.format(new Date(report.generatedAt)) : null;
+  const written = report.generatedAt ? formatWritten(report.generatedAt) : null;
 
   return (
     <li className="flex items-center gap-3 px-4 py-3">

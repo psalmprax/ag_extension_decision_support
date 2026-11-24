@@ -1,23 +1,17 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { AdvisoryPreferencesSection } from '@/components/advisories/AdvisoryPreferencesSection';
 import { FarmerRecordingsSection } from '@/components/partners/FarmerRecordingsSection';
 import { Farmer, Visit } from '@/types/dashboard';
 import { Button } from './ui/Button';
-import { Input } from './ui/Input';
-import { Select } from './ui/Select';
-import { Badge } from './ui/Badge';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FarmerDetailHeader } from './FarmerDetailHeader';
-import { FarmerYieldChart } from './FarmerYieldChart';
-import { ScoreMeter } from '@/components/charts/ScoreMeter';
-import { FarmerVisitTimeline } from './FarmerVisitTimeline';
-import { X, TrendingUp, MessageSquare, Phone, Video, Clock, ChevronRight, Sprout, Activity, Mail, History, FileText, Loader2, Link2, ListChecks } from 'lucide-react';
+import { X, TrendingUp, Clock, ChevronRight, Activity, History, FileText, Link2, ListChecks } from 'lucide-react';
 import { FarmerProgressLog } from './progress/FarmerProgressLog';
 
 type DetailTab = 'overview' | 'history' | 'progress' | 'insights';
 import { VideoCall } from './VideoCall';
 import { useLanguage } from '@/lib/LanguageContext';
-import { isActionEnter } from '@/lib/keyboard';
 import { useAppStore } from '@/store/useAppStore';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,8 +20,9 @@ import { generateSynthesis } from '@/api/chatbotService';
 import { fetchPriorityScore, updateVisit } from '@/api/visitService';
 import { SatelliteInsights } from './SatelliteInsights';
 import { ConfirmModal } from './ConfirmModal';
-import { getLogContent, getLogTypeColor } from './farmerLogFormat';
 import { copyWithToast } from '@/lib/copyText';
+import { HistoryTabContent } from './farmerDetail/HistoryTabContent';
+import { OverviewTabContent } from './farmerDetail/OverviewTabContent';
 
 interface FarmerDetailPanelProps {
   isOpen: boolean;
@@ -37,299 +32,6 @@ interface FarmerDetailPanelProps {
   onFarmerClick?: (farmer: Farmer | null) => void;
 }
 const radiusClass = 'rounded-xl';
-
-const HistoryTabContent = ({
-  interactions,
-  isLoadingHistory,
-  radiusClass,
-}: {
-  interactions: Array<Record<string, unknown>>;
-  isLoadingHistory: boolean;
-  radiusClass: string;
-}) => (
-  <section className="space-y-6">
-    <div className="flex items-center justify-between">
-      <h3
-        className={`text-sm font-medium flex items-center gap-2 text-gray-400`}
-      >
-        <History className={`w-4 h-4 text-primary-500`} />
-        Recent Interactions
-      </h3>
-    </div>
-    <div className="space-y-4">
-      {isLoadingHistory ? (
-        <div className="flex justify-center py-10">
-          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
-        </div>
-      ) : interactions.length > 0 ? (
-        interactions.map((log, i: number) => (
-          <div
-            key={(log.id as string) || `${log.type}-${i}`}
-            className={`p-4 ${radiusClass} border bg-gray-50/50 dark:bg-theme-bg-tertiary/30 border-gray-100 dark:border-white/[0.08]`}
-          >
-            <div className="flex justify-between items-start mb-2">
-              <div className="flex items-center gap-2">
-                <span
-                  className={`px-2 py-0.5 rounded text-xs font-medium ${getLogTypeColor(log.type as string)}`}
-                >
-                  {log.type as string}
-                </span>
-                <span className="text-xxs text-gray-400">{log.date as string}</span>
-              </div>
-              <span className="text-xs font-medium text-emerald-500">
-                {log.status as string}
-              </span>
-            </div>
-            <p className="text-xs text-gray-600 dark:text-theme-text-secondary leading-relaxed">
-              {getLogContent(log)}
-            </p>
-          </div>
-        ))
-      ) : (
-        <div className="text-center py-10 text-gray-500 text-xs font-normal">
-          No interaction history found
-        </div>
-      )}
-    </div>
-  </section>
-);
-
-const CropsSection = ({
-  farmer,
-  isEditing,
-  editData,
-  setEditData,
-  radiusClass,
-  t,
-}: {
-  farmer: Farmer;
-  isEditing: boolean;
-  editData: Record<string, unknown>;
-  setEditData: (d: Record<string, unknown>) => void;
-  radiusClass: string;
-  t: (key: string) => string;
-}) => (
-  <section
-    className={`p-6 ${radiusClass} border shadow-sm bg-theme-bg-card dark:bg-theme-bg-tertiary/80 border-gray-100 dark:border-white/[0.12]`}
-  >
-    <h3
-      className={`text-xs font-medium mb-4 flex items-center gap-2 text-gray-400`}
-    >
-      <Sprout className={`w-4 h-4 text-green-500`} />
-      {t('table_crops')}
-    </h3>
-    {isEditing ? (
-      <div className="space-y-2">
-        <div className="flex flex-wrap gap-2">
-          {((editData.crops as string[]) || []).map((crop: string, i: number) => (
-            <Badge key={i} variant="info" size="sm" className="flex items-center gap-1">
-              {crop}
-              <button
-                type="button"
-                onClick={() =>
-                  setEditData({
-                    ...editData,
-                    crops: (editData.crops as string[])?.filter(
-                      (_: string, idx: number) => idx !== i
-                    ),
-                  })
-                }
-                className="ms-1 text-red-400 hover:text-red-600"
-              >
-                ×
-              </button>
-            </Badge>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <Input
-            size="sm"
-            placeholder="Add crop..."
-            onKeyDown={e => {
-              if (!isActionEnter(e)) return;
-              e.preventDefault();
-              const input = e.target as HTMLInputElement;
-              const val = input.value.trim();
-              const crops = (editData.crops as string[]) || [];
-              if (val && !crops.includes(val)) {
-                setEditData({ ...editData, crops: [...crops, val] });
-                input.value = '';
-              }
-            }}
-          />
-        </div>
-      </div>
-    ) : (
-      <div className="flex flex-wrap gap-2">
-        {(farmer.crops || []).map((crop: string, i: number) => (
-          <Badge key={`${crop}-${i}`} variant="info" size="sm">
-            {crop}
-          </Badge>
-        ))}
-      </div>
-    )}
-  </section>
-);
-
-const VitalStatsSection = ({
-  farmer,
-  isEditing,
-  editData,
-  setEditData,
-  radiusClass,
-  t,
-}: {
-  farmer: Farmer;
-  isEditing: boolean;
-  editData: Record<string, unknown>;
-  setEditData: (d: Record<string, unknown>) => void;
-  radiusClass: string;
-  t: (key: string) => string;
-}) => (
-  <section
-    className={`p-6 ${radiusClass} border shadow-sm bg-theme-bg-card dark:bg-theme-bg-tertiary/80 border-gray-100 dark:border-white/[0.12]`}
-  >
-    <h3
-      className={`text-xs font-medium mb-4 flex items-center gap-2 text-gray-400`}
-    >
-      <Activity className={`w-4 h-4 text-secondary-500`} />
-      {t('farmer_vital_score')}
-    </h3>
-    <div className="text-3xl font-medium leading-none text-gray-900 dark:text-white">
-      {Number.isFinite(farmer.vitalScore) ? <>{farmer.vitalScore}<span className="text-sm text-slate-600 dark:text-theme-text-muted">/100</span></> : <span className="text-sm font-normal text-slate-600 dark:text-theme-text-muted">{t('farmer_vital_score_none')}</span>}
-    </div>
-    <div className="mt-3"><ScoreMeter value={farmer.vitalScore} max={100} /></div>
-    {isEditing && (
-      <div className="mt-4">
-        <label className="text-xs font-medium text-gray-400 block mb-1">
-          Status
-        </label>
-        <Select
-          value={(editData.status as string) || 'Active'}
-          onChange={e => setEditData({ ...editData, status: e.target.value })}
-          options={[
-            { value: 'Active', label: 'Active' },
-            { value: 'Inactive', label: 'Inactive' },
-            { value: 'High Priority', label: 'High Priority' },
-            { value: 'Special Attention', label: 'Special Attention' },
-          ]}
-          size="sm"
-        />
-      </div>
-    )}
-  </section>
-);
-
-const OverviewTabContent = ({
-  farmer,
-  isCyber,
-  radiusClass,
-  isEditing,
-  editData,
-  setEditData,
-  visits = [],
-  handleUpdateVisitStatus,
-  handleAction,
-  showContextMenu,
-  t,
-}: {
-  farmer: Farmer;
-  isCyber: boolean;
-  radiusClass: string;
-  isEditing: boolean;
-  editData: Record<string, unknown>;
-  setEditData: (d: Record<string, unknown>) => void;
-  visits?: Visit[];
-  handleUpdateVisitStatus: (id: string, st: string) => void;
-  handleAction: (a: string) => void;
-  showContextMenu: (e: React.MouseEvent) => void;
-  t: (key: string) => string;
-}) => (
-  <>
-    {/* Action Buttons */}
-    <div className="grid grid-cols-4 gap-3">
-      {[
-        {
-          id: 'chat',
-          icon: MessageSquare,
-          label: t('action_chat') || 'Chat',
-          color: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
-        },
-        {
-          id: 'sms',
-          icon: Mail,
-          label: t('action_sms') || 'SMS',
-          color: 'bg-slate-500/10 border-slate-500/20 text-slate-400',
-        },
-        {
-          id: 'call',
-          icon: Phone,
-          label: t('action_call') || 'Call',
-          color: 'bg-slate-500/10 border-slate-500/20 text-slate-400',
-        },
-        {
-          id: 'video',
-          icon: Video,
-          label: t('action_video') || 'Video',
-          color: 'bg-slate-500/10 border-slate-500/20 text-slate-400',
-        },
-      ].map(action => (
-        <button
-          key={action.id}
-          onClick={() => handleAction(action.id as 'chat' | 'sms' | 'call' | 'video')}
-          onContextMenu={e => {
-            e.preventDefault();
-            (
-              showContextMenu as unknown as (data: {
-                x: number;
-                y: number;
-                entityType: string;
-                entityId?: string;
-              }) => void
-            )({ x: e.clientX, y: e.clientY, entityType: 'farmer', entityId: farmer.id });
-          }}
-          className="flex flex-col items-center p-3 rounded-lg bg-slate-900/60 hover:bg-slate-800/80 border border-slate-800 hover:border-slate-700 transition-colors group text-center"
-        >
-          <div
-            className={`w-10 h-10 rounded-md border ${action.color} flex items-center justify-center mb-2`}
-          >
-            <action.icon className="w-5 h-5" />
-          </div>
-          <span className="text-xs font-medium text-slate-200">{action.label}</span>
-        </button>
-      ))}
-    </div>
-    {/* Yield Performance */}
-    <FarmerYieldChart farmer={farmer} radiusClass={radiusClass} />{' '}
-    <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-      <CropsSection
-        farmer={farmer}
-        isEditing={isEditing}
-        editData={editData as unknown as Record<string, unknown>}
-        setEditData={setEditData as unknown as (d: Record<string, unknown>) => void}
-        radiusClass={radiusClass}
-        t={t}
-      />
-      <VitalStatsSection
-        farmer={farmer}
-        isEditing={isEditing}
-        editData={editData as unknown as Record<string, unknown>}
-        setEditData={setEditData as unknown as (d: Record<string, unknown>) => void}
-        radiusClass={radiusClass}
-        t={t}
-      />
-    </div>
-    {/* Visit Timeline */}
-    <FarmerVisitTimeline
-      visits={visits}
-      handleUpdateVisitStatus={
-        handleUpdateVisitStatus as unknown as (id: string, st: string) => void
-      }
-      radiusClass={radiusClass}
-      isCyber={isCyber}
-    />
-  </>
-);
 export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
   isOpen,
   onClose,
@@ -388,7 +90,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
           res.data.map(msg => ({
             id: msg.id,
             type: 'SMS',
-            date: new Date(msg.created_at || Date.now()).toLocaleDateString(),
+            date: new Date(msg.created_at || Date.now()).toLocaleDateString(appLocale()),
             status:
               msg.status === 'sent' || msg.status === 'delivered'
                 ? 'delivered'
@@ -496,7 +198,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
       const res = await generateSynthesis({
         farmerId: farmer.id,
         notes: `Farmer: ${farmer.firstName} ${farmer.lastName}. Region: ${farmer.region}. Farm Size: ${farmer.farmSize}ha. Crops: ${farmer.crops?.join(', ')}.`,
-        visitDate: new Date().toLocaleDateString(),
+        visitDate: new Date().toLocaleDateString(appLocale()),
       });
 
       if (res.success) {
@@ -577,7 +279,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[60]"
+            className="fixed inset-0 bg-slate-900/[0.04] dark:bg-black/40 backdrop-blur-sm z-[60]"
           />
 
           {/* Panel */}
@@ -588,7 +290,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 220 }}
-            className="fixed end-0 top-0 bottom-0 w-full max-w-xl z-[70] shadow-2xl overflow-hidden flex flex-col bg-slate-950/95 backdrop-blur-2xl border-s border-slate-800 text-slate-100"
+            className="fixed end-0 top-0 bottom-0 w-full max-w-xl z-[70] shadow-2xl overflow-hidden flex flex-col bg-white dark:bg-theme-bg-primary backdrop-blur-2xl border-s border-slate-900/[0.08] dark:border-white/[0.08] text-slate-900 dark:text-theme-text-primary"
             onClick={() => onFarmerClick?.(farmer)}
           >
             <FarmerDetailHeader
@@ -607,7 +309,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             />
 
             {/* Tabs */}
-            <div className="px-4 sm:px-6 py-2 border-b bg-slate-900/60 border-slate-800 flex items-center gap-2 text-xs overflow-x-auto scrollbar-hide">
+            <div className="px-4 sm:px-6 py-2 border-b bg-slate-50 dark:bg-theme-bg-secondary border-slate-900/[0.08] dark:border-white/[0.08] flex items-center gap-2 text-xs overflow-x-auto scrollbar-hide">
               {[
                 { id: 'overview', label: t('nav_dashboard') || 'Overview', icon: FileText },
                 { id: 'history', label: t('nav_sms_history') || 'Communication', icon: History },
@@ -665,21 +367,21 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
               <FarmerRecordingsSection farmerId={farmer.id} farmerName={`${farmer.firstName} ${farmer.lastName}`} />
             </div>
 
-            <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-900/80 border-slate-800">
+            <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50 dark:bg-theme-bg-secondary border-slate-900/[0.08] dark:border-white/[0.08]">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-[4px] flex items-center justify-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 shrink-0">
+                <div className="w-9 h-9 rounded-[4px] flex items-center justify-center bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 shrink-0">
                   <Clock className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[10px] font-mono font-medium text-slate-400">
+                  <p className="text-[10px] font-mono font-medium text-slate-600 dark:text-theme-text-muted">
                     {t('visit_next_scheduled') || 'Next scheduled'}
                   </p>
-                  <p className="text-xs font-medium text-white truncate">
+                  <p className="text-xs font-medium text-slate-900 dark:text-theme-text-primary truncate">
                     {(() => {
                       if (!nextScheduledVisit) return t('no_visit_scheduled') || 'None scheduled';
                       const raw = nextScheduledVisit.scheduledAt || nextScheduledVisit.scheduled_at;
                       return raw && !isNaN(new Date(raw).getTime())
-                        ? new Date(raw).toLocaleDateString()
+                        ? new Date(raw).toLocaleDateString(appLocale())
                         : t('no_visit_scheduled') || 'None scheduled';
                     })()}
                   </p>
@@ -698,7 +400,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
                 <Button
                   loading={isSynthesizing}
                   onClick={handleStartSynthesis}
-                  className="font-medium text-xs !rounded-[4px] !bg-emerald-600 !hover:bg-emerald-500 !text-white border border-white/10 shadow-sm"
+                  className="font-medium text-xs !rounded-[4px] !bg-emerald-600 !hover:bg-emerald-500 !text-white border border-slate-900/[0.08] dark:border-white/[0.08] shadow-sm"
                 >
                   {t('action_start_synthesis') || 'Start synthesis'}
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -730,17 +432,17 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/[0.04] dark:bg-black/40 backdrop-blur-md"
         >
           <div
-            className={`w-full max-w-4xl max-h-[90vh] overflow-hidden relative ${radiusClass} border border-white/20 shadow-2xl`}
+            className={`w-full max-w-4xl max-h-[90vh] overflow-hidden relative ${radiusClass} border border-slate-900/[0.08] dark:border-white/[0.08] shadow-2xl`}
           >
             <button
               onClick={() => {
                 const inviteLink = `${window.location.origin}/tele-call/farmer-${farmer.id}`;
                 void copyWithToast(inviteLink, 'Invite link copied — share it with the farmer to join this call.');
               }}
-              className="absolute top-4 end-16 z-[110] px-3 py-2 bg-black/50 hover:bg-black/70 text-white text-xs font-medium rounded-xl backdrop-blur-md transition-all flex items-center gap-1.5"
+              className="absolute top-4 end-16 z-[110] px-3 py-2 bg-slate-900/[0.04] dark:bg-black/40 hover:bg-black/70 text-slate-900 dark:text-theme-text-primary text-xs font-medium rounded-xl backdrop-blur-md transition-all flex items-center gap-1.5"
             >
               <Link2 className="w-4 h-4" />
               {t('ui_farmer_detail_panel_invite')}
@@ -748,7 +450,7 @@ export const FarmerDetailPanel: React.FC<FarmerDetailPanelProps> = ({
             <button
               onClick={() => setShowVideoCall(false)}
               aria-label="Close video call"
-              className="absolute top-4 end-4 z-[110] p-2 bg-black/50 hover:bg-black/70 text-white rounded-xl backdrop-blur-md transition-all"
+              className="absolute top-4 end-4 z-[110] p-2 bg-slate-900/[0.04] dark:bg-black/40 hover:bg-black/70 text-slate-900 dark:text-theme-text-primary rounded-xl backdrop-blur-md transition-all"
             >
               <X className="w-6 h-6" />
             </button>

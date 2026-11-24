@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { SoilTest } from '@/api/fieldRecordsService';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -8,7 +9,7 @@ import { LINE_WIDTH, Y_AXIS_WIDTH, chartGrid, chartMargin, chartTick, lineCursor
 import { formatNumber } from '@/components/charts/chartFormat';
 import { ORGANIC_SERIES, organicChange, organicRows, recordedSeries } from './soilTestModel';
 
-const formatDate = (value: string | number) => new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+const formatDate = (value: string | number) => new Date(`${value}T00:00:00`).toLocaleDateString(appLocale(), { day: 'numeric', month: 'short', year: 'numeric' });
 const percent = (value: number | string) => `${formatNumber(Number(value), 2)}%`;
 
 /**

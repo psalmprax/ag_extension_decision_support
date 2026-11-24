@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import apiClient from '@/api/client';
@@ -69,10 +70,10 @@ function isReachable(agent: AgentData): boolean {
 }
 
 function buildBootLines(fleet: AgentData[], tools: string[] | undefined): string[] {
-  const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+  const timestamp = new Date().toLocaleTimeString(appLocale(), { hour12: false });
   const reachable = fleet.filter(isReachable).length;
   const agentLines = fleet.map(agent => {
-    const lastSeen = agent.lastActive ? ` · last seen ${new Date(agent.lastActive).toLocaleTimeString()}` : '';
+    const lastSeen = agent.lastActive ? ` · last seen ${new Date(agent.lastActive).toLocaleTimeString(appLocale())}` : '';
     return `${timestamp} [${agent.id.toUpperCase().replace(/-/g, '_')}] ${agent.status}${lastSeen}`;
   });
   const toolStatus = tools?.length ? `${tools.length} MCP tools registered.` : 'MCP tool registry not loaded.';
@@ -86,7 +87,7 @@ function scenarioTool(agent: string): string {
 }
 
 function actionMessage(agent: string, action: 'start' | 'success' | 'error', error?: unknown): string {
-  const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+  const timestamp = new Date().toLocaleTimeString(appLocale(), { hour12: false });
   if (action === 'start') return `${timestamp} [EXEC] Starting ${agent} task execution...`;
   if (action === 'success') return `${timestamp} [OK] Agent ${agent} task dispatched successfully`;
   return `${timestamp} [ERROR] ${error instanceof Error ? error.message : 'Agent execution unavailable'}`;
@@ -148,7 +149,7 @@ function useAgentOpsActions(
   useEffect(() => {
     if (agentsLoading) return;
     if (agentsError) {
-      setConsoleOutput([`${new Date().toLocaleTimeString('en-US', { hour12: false })} [ERROR] Agent registry unavailable (GET /api/ai/agents failed).`]);
+      setConsoleOutput([`${new Date().toLocaleTimeString(appLocale(), { hour12: false })} [ERROR] Agent registry unavailable (GET /api/ai/agents failed).`]);
       return;
     }
     setConsoleOutput(buildBootLines(fleet, mcpTools));
@@ -159,10 +160,10 @@ function useAgentOpsActions(
   const handleRunScenario = useCallback((scenario: AutonomousScenario) => {
     setActiveAgent(scenario.agent);
     setIsExecuting(true);
-    const timestamp = new Date().toLocaleTimeString('en-US', { hour12: false });
+    const timestamp = new Date().toLocaleTimeString(appLocale(), { hour12: false });
     setConsoleOutput(previous => [...previous, `${timestamp} [DISPATCH] Triggering Autonomous Scenario: "${scenario.title}"`, `${timestamp} [HANDOFF] Routing task to ${scenario.agent.toUpperCase()}...`, `${timestamp} [DEMO] ${scenario.initialLog}`]);
     window.setTimeout(() => {
-      const completionTime = new Date().toLocaleTimeString('en-US', { hour12: false });
+      const completionTime = new Date().toLocaleTimeString(appLocale(), { hour12: false });
       setConsoleOutput(previous => [...previous, `${completionTime} [REASONING] Evaluating biophysical constraints and FAO/CIMMYT guidelines...`, `${completionTime} [DEMO] Illustrative tool sequence: ${scenarioTool(scenario.agent)}`, `${completionTime} [DEMO] Scenario preview complete. No live task or telemetry was changed.`]);
       setIsExecuting(false);
       toast.success(`Demo scenario previewed: ${scenario.title}`);

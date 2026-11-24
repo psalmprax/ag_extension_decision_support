@@ -1,4 +1,5 @@
 import { hasAuthSession } from '@/hooks/useAppAuth';
+import { appLocale } from '@/lib/appLocale';
 import React from 'react';
 import { motion } from 'framer-motion';
 import { MessageSquare, Send, FileText, AlertCircle, TrendingUp, Activity } from 'lucide-react';
@@ -31,20 +32,20 @@ const QuotaBar = ({
       <div className="flex justify-between items-end">
         <div className="flex items-center gap-3">
           <div
-            className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 shadow-inner transition-all group-hover/bar:scale-105"
+            className="p-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 shadow-inner transition-all group-hover/bar:scale-105"
           >
             <Icon className="w-3.5 h-3.5" />
           </div>
           <div>
-            <span className="text-xxs font-medium text-slate-400 block leading-none mb-1">
+            <span className="text-xxs font-medium text-slate-600 dark:text-theme-text-muted block leading-none mb-1">
               {label}
             </span>
             <span
               className={`text-xs font-mono font-medium ${isHigh ? 'text-rose-400' : 'text-white'}`}
             >
-              {current.toLocaleString()}{' '}
-              <span className="text-slate-500 font-normal">
-                / {isUnlimited ? '∞' : limit.toLocaleString()}
+              {current.toLocaleString(appLocale())}{' '}
+              <span className="text-slate-600 dark:text-theme-text-muted font-normal">
+                / {isUnlimited ? '∞' : limit.toLocaleString(appLocale())}
               </span>
             </span>
           </div>
@@ -57,7 +58,7 @@ const QuotaBar = ({
           </span>
         </div>
       </div>
-      <div className="relative h-2 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800 shadow-inner">
+      <div className="relative h-2 w-full bg-slate-50 dark:bg-theme-bg-secondary rounded-full overflow-hidden border border-slate-900/[0.08] dark:border-white/[0.08] shadow-inner">
         <motion.div
           initial={{ width: 0 }}
           animate={{ width: isUnlimited ? '100%' : `${percentage}%` }}
@@ -83,12 +84,12 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
 
   if (isLoading) {
     return (
-      <div className="p-8 space-y-6 animate-pulse bg-slate-950/80 rounded-xl border border-slate-800">
-        <div className="h-4 bg-slate-800 rounded-full w-1/3"></div>
+      <div className="p-8 space-y-6 animate-pulse bg-white dark:bg-theme-bg-primary rounded-xl border border-slate-900/[0.08] dark:border-white/[0.08]">
+        <div className="h-4 bg-slate-100 dark:bg-theme-bg-tertiary rounded-full w-1/3"></div>
         <div className="space-y-4">
-          <div className="h-3 bg-slate-800/60 rounded-full"></div>
-          <div className="h-3 bg-slate-800/60 rounded-full"></div>
-          <div className="h-3 bg-slate-800/60 rounded-full"></div>
+          <div className="h-3 bg-slate-100 dark:bg-theme-bg-tertiary rounded-full"></div>
+          <div className="h-3 bg-slate-100 dark:bg-theme-bg-tertiary rounded-full"></div>
+          <div className="h-3 bg-slate-100 dark:bg-theme-bg-tertiary rounded-full"></div>
         </div>
       </div>
     );
@@ -100,16 +101,16 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
         className={`relative overflow-hidden ${compact ? '' : 'p-6 bg-slate-900/60 border border-white/10 rounded-xl shadow-xl backdrop-blur-xl'}`}
       >
         <div className="relative z-10 flex flex-col items-center text-center py-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mb-3 shadow-sm text-emerald-400">
+          <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mb-3 shadow-sm text-emerald-700 dark:text-emerald-400">
             <Activity className="w-6 h-6" />
           </div>
-          <h4 className="text-sm font-medium text-white mb-1">
+          <h4 className="text-sm font-medium text-slate-900 dark:text-theme-text-primary mb-1">
             {t('usage_init_title') || 'Realtime quota telemetry'}
           </h4>
-          <p className="text-xs text-white/60 max-w-xs leading-relaxed mb-4">
+          <p className="text-xs text-slate-600 dark:text-theme-text-muted max-w-xs leading-relaxed mb-4">
             {t('usage_init_desc') || 'Automatic telemetry tracking for SMS dispatch, AI queries, and telemetry synthesis.'}
           </p>
-          <div className="w-full h-1 bg-white/[0.05] rounded-full overflow-hidden">
+          <div className="w-full h-1 bg-slate-900/[0.03] dark:bg-white/[0.04] rounded-full overflow-hidden">
             <motion.div
               animate={{ x: ['-100%', '100%'] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
@@ -137,21 +138,21 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
       {!compact && (
         <div className="flex items-center justify-between mb-6 relative z-10">
           <div className="flex items-center gap-3.5">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-inner">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400 shadow-inner">
               <TrendingUp className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-medium text-white tracking-tight">
+              <h4 className="text-sm font-medium text-slate-900 dark:text-theme-text-primary tracking-tight">
                 {t('billing_quota_usage') || 'Quota & seats'}
               </h4>
-              <p className="text-xs text-white/60">
+              <p className="text-xs text-slate-600 dark:text-theme-text-muted">
                 {t('usage_realtime_telemetry') || 'Live agronomy quota'}
               </p>
             </div>
           </div>
           <div className="flex flex-col items-end">
-            <span className="px-3 py-1 rounded-xl bg-white/[0.03] border border-white/10 text-xs text-white/80 font-mono">
-              {t('ui_billing_dashboard_tier')} <strong className="text-white">{plan.name}</strong>
+            <span className="px-3 py-1 rounded-xl bg-slate-900/[0.03] dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-theme-text-secondary font-mono">
+              {t('ui_billing_dashboard_tier')} <strong className="text-slate-900 dark:text-theme-text-primary">{plan.name}</strong>
             </span>
           </div>
         </div>
@@ -184,14 +185,14 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
               animate={{ opacity: 1, scale: 1 }}
               className="mt-6 p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 backdrop-blur-md relative overflow-hidden"
             >
-              <div className="relative z-10 shrink-0 p-1.5 bg-rose-500/20 rounded-lg text-rose-400">
+              <div className="relative z-10 shrink-0 p-1.5 bg-rose-500/20 rounded-lg text-rose-700 dark:text-rose-400">
                 <AlertCircle className="w-4 h-4" />
               </div>
               <div className="relative z-10">
-                <h5 className="text-xs font-medium text-rose-400 mb-0.5">
+                <h5 className="text-xs font-medium text-rose-700 dark:text-rose-400 mb-0.5">
                   {t('usage_critical_threshold') || 'Quota Warning'}
                 </h5>
-                <p className="text-xs text-white/70 leading-relaxed">
+                <p className="text-xs text-slate-700 dark:text-theme-text-secondary leading-relaxed">
                   {t('billing_limit_warning') || 'You have utilized over 90% of your SMS broadcast pool. Upgrade tier to avoid disruption.'}
                 </p>
               </div>

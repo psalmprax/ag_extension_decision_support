@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '../lib/LanguageContext';
@@ -183,7 +184,7 @@ function Telemetry() {
               </div>
               <div className="text-end">
                 <p className="text-sm text-gray-600 dark:text-theme-text-muted">
-                  {new Date(event.timestamp).toLocaleString()}
+                  {new Date(event.timestamp).toLocaleString(appLocale())}
                 </p>
                 {event.durationMs && <p className="text-xs text-gray-500">{event.durationMs}ms</p>}
               </div>

@@ -1,22 +1,8 @@
 import { useState } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Users,
-  UserPlus,
-  X,
-  Loader2,
-  ChevronDown,
-  Search,
-  Mail,
-  MapPin,
-  Phone,
-  CheckCircle2,
-  AlertCircle,
-  History,
-  Laptop,
-  KeyRound,
-} from 'lucide-react';
+import { Users, UserPlus, X, Loader2, ChevronDown, Search, Mail, MapPin, Phone, CheckCircle2, AlertCircle, History, Laptop, KeyRound } from 'lucide-react';
 import apiClient from '@/api/client';
 import { useDemoMode, DEMO_USERS } from '@/demo';
 import { fetchLoginHistory, fetchLoginStats } from '@/api/authService';
@@ -304,10 +290,10 @@ export function UserManagementPage() {
                     </div>
                   )}
 
-                  <div className="pt-2 mt-2 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
-                    <span className="text-[10px] text-slate-500 dark:text-white/40 font-mono truncate max-w-[150px]">
+                  <div className="pt-2 mt-2 border-t border-slate-200 dark:border-white/5 flex items-center justify-between gap-3">
+                    <span className="text-xs text-slate-500 dark:text-white/60 tabular-nums truncate min-w-0">
                       {user.lastLogin
-                        ? t('users_last_login', 'Last: {date}', { date: new Date(user.lastLogin).toLocaleDateString() })
+                        ? t('users_last_login', 'Last: {date}', { date: new Date(user.lastLogin).toLocaleDateString(appLocale()) })
                         : t('users_no_recent_login', 'No recent login')}
                     </span>
                     <div className="flex items-center gap-3 shrink-0">
@@ -315,16 +301,16 @@ export function UserManagementPage() {
                         <button
                           onClick={() => setSelectedUserForAccess(user)}
                           aria-label={t('users_btn_manage_access_for', 'Edit access for {name}', { name: `${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || user.email })}
-                          className="text-[11px] font-medium text-slate-600 dark:text-theme-text-muted hover:text-slate-700 dark:hover:text-theme-text-secondary transition-colors"
+                          className="min-h-9 px-2 -mx-2 rounded-md text-sm text-slate-700 dark:text-theme-text-secondary hover:text-slate-900 dark:hover:text-theme-text-primary hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.06] transition-colors"
                         >
                           {t('users_btn_manage_access', 'Edit access')}
                         </button>
                       )}
                       <button
                         onClick={() => setSelectedUserForHistory(user)}
-                        className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors flex items-center gap-1"
+                        className="min-h-9 px-2 -mx-2 rounded-md text-sm text-emerald-700 dark:text-emerald-300 hover:text-emerald-800 dark:hover:text-emerald-200 hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.06] transition-colors flex items-center gap-1"
                       >
-                        <History className="w-3 h-3" />
+                        <History className="w-4 h-4" aria-hidden="true" />
                         <span>{t('users_btn_history', 'History')}</span>
                       </button>
                     </div>
@@ -343,43 +329,43 @@ export function UserManagementPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/[0.04] dark:bg-black/40 backdrop-blur-md p-4"
             onClick={() => setShowCreateModal(false)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="backdrop-blur-2xl bg-slate-900/95 border border-white/10 rounded-xl shadow-2xl w-full max-w-lg max-h-[90dvh] overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-6 text-white"
+              className="backdrop-blur-2xl bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl shadow-2xl w-full max-w-lg max-h-[90dvh] overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-6 text-slate-900 dark:text-theme-text-primary"
               onClick={e => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div className="flex items-center justify-between border-b border-slate-900/[0.08] dark:border-white/[0.08] pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
                     <UserPlus className="w-5 h-5" />
                   </div>
                   <div>
                     <h2 className="text-lg font-medium">{t('users_modal_register_title', 'Register new user')}</h2>
-                    <p className="text-xs text-white/50">{t('users_modal_register_desc', 'Add extension officer or admin account')}</p>
+                    <p className="text-xs text-slate-600 dark:text-theme-text-muted">{t('users_modal_register_desc', 'Add extension officer or admin account')}</p>
                   </div>
                 </div>
                 <button
                   onClick={() => setShowCreateModal(false)}
-                  className="p-1.5 text-white/40 hover:text-white rounded-lg transition-colors"
+                  className="p-1.5 text-slate-600 dark:text-theme-text-muted hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
               </div>
 
               {formError && (
-                <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+                <div className="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-700 dark:text-rose-400 text-xs flex items-center gap-2">
                   <AlertCircle className="w-4 h-4 shrink-0" />
                   <span>{formError}</span>
                 </div>
               )}
 
               {formSuccess && (
-                <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
+                <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 dark:text-emerald-400 text-xs flex items-center gap-2">
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
                   <span>{formSuccess}</span>
                 </div>
@@ -388,43 +374,43 @@ export function UserManagementPage() {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-white/70">{t('users_form_first_name', 'First name *')}</label>
+                    <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">{t('users_form_first_name', 'First name *')}</label>
                     <input
                       type="text"
                       required
                       value={formData.firstName}
                       onChange={e => setFormData({ ...formData, firstName: e.target.value })}
                       placeholder="e.g. Kiprono"
-                      className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-900/[0.03] dark:bg-white/[0.04] text-slate-900 dark:text-theme-text-primary text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-white/70">{t('users_form_last_name', 'Last name *')}</label>
+                    <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">{t('users_form_last_name', 'Last name *')}</label>
                     <input
                       type="text"
                       required
                       value={formData.lastName}
                       onChange={e => setFormData({ ...formData, lastName: e.target.value })}
                       placeholder="e.g. Rotich"
-                      className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-900/[0.03] dark:bg-white/[0.04] text-slate-900 dark:text-theme-text-primary text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                     />
                   </div>
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-white/70">{t('users_form_work_email', 'Work email *')}</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">{t('users_form_work_email', 'Work email *')}</label>
                   <input
                     type="email"
                     required
                     value={formData.email}
                     onChange={e => setFormData({ ...formData, email: e.target.value })}
                     placeholder="officer@extension.gov"
-                    className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-900/[0.03] dark:bg-white/[0.04] text-slate-900 dark:text-theme-text-primary text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-white/70">{t('users_form_password', 'Password *')}</label>
+                  <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">{t('users_form_password', 'Password *')}</label>
                   <input
                     type="password"
                     autoComplete="new-password"
@@ -432,17 +418,17 @@ export function UserManagementPage() {
                     value={formData.password}
                     onChange={e => setFormData({ ...formData, password: e.target.value })}
                     placeholder="••••••••••••"
-                    className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                    className="w-full px-3 py-2 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-900/[0.03] dark:bg-white/[0.04] text-slate-900 dark:text-theme-text-primary text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-white/70">{t('users_form_role', 'System role')}</label>
+                    <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">{t('users_form_role', 'System role')}</label>
                     <select
                       value={formData.role}
                       onChange={e => setFormData({ ...formData, role: e.target.value })}
-                      className="w-full px-3 py-2 rounded-lg border border-white/10 bg-slate-900 text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-theme-bg-secondary text-slate-900 dark:text-theme-text-primary text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                     >
                       {assignableRoles(currentUserIsSystemAdmin).map(r => (
                         <option key={r.value} value={r.value}>
@@ -452,33 +438,33 @@ export function UserManagementPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-white/70">{t('users_form_phone', 'Phone number')}</label>
+                    <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">{t('users_form_phone', 'Phone number')}</label>
                     <input
                       type="tel"
                       value={formData.phone}
                       onChange={e => setFormData({ ...formData, phone: e.target.value })}
                       placeholder="+254 712 345 678"
-                      className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-900/[0.03] dark:bg-white/[0.04] text-slate-900 dark:text-theme-text-primary text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-white/70">{t('users_form_country', 'Country *')}</label>
+                    <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">{t('users_form_country', 'Country *')}</label>
                     <select
                       required
                       value={formData.country}
                       onChange={e => handleCountryChange(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg border border-white/10 bg-slate-900 text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-theme-bg-secondary text-slate-900 dark:text-theme-text-primary text-xs outline-none focus:ring-1 focus:ring-emerald-400 cursor-pointer"
                     >
                       {CONTINENT_ORDER.map(continent => {
                         const countries = SUPPORTED_COUNTRIES.filter(c => c.continent === continent);
                         if (countries.length === 0) return null;
                         return (
-                          <optgroup key={continent} label={continent} className="bg-slate-900 text-emerald-400 font-medium">
+                          <optgroup key={continent} label={continent} className="bg-slate-50 dark:bg-theme-bg-secondary text-emerald-700 dark:text-emerald-400 font-medium">
                             {countries.map(c => (
-                              <option key={c.name} value={c.name} className="bg-slate-900 text-white font-normal">
+                              <option key={c.name} value={c.name} className="bg-slate-50 dark:bg-theme-bg-secondary text-slate-900 dark:text-theme-text-primary font-normal">
                                 {c.name}
                               </option>
                             ))}
@@ -488,7 +474,7 @@ export function UserManagementPage() {
                     </select>
                   </div>
                   <div className="space-y-1">
-                    <label className="text-xs font-medium text-white/70">
+                    <label className="text-xs font-medium text-slate-700 dark:text-theme-text-secondary">
                       {t('users_form_region', 'Assigned region / Territory')}
                     </label>
                     <div className="relative">
@@ -498,7 +484,7 @@ export function UserManagementPage() {
                         value={formData.region}
                         onChange={e => setFormData({ ...formData, region: e.target.value })}
                         placeholder={availableRegions.length > 0 ? `e.g. ${availableRegions[0]}` : t('users_form_region_placeholder', 'e.g. District / Province')}
-                        className="w-full px-3 py-2 rounded-lg border border-white/10 bg-white/[0.03] text-white text-xs outline-none focus:ring-1 focus:ring-emerald-400"
+                        className="w-full px-3 py-2 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-900/[0.03] dark:bg-white/[0.04] text-slate-900 dark:text-theme-text-primary text-xs outline-none focus:ring-1 focus:ring-emerald-400"
                       />
                       <datalist id="user-region-suggestions">
                         {availableRegions.map(reg => (
@@ -509,11 +495,11 @@ export function UserManagementPage() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-900/[0.08] dark:border-white/[0.08]">
                   <button
                     type="button"
                     onClick={() => setShowCreateModal(false)}
-                    className="px-4 py-2 text-xs font-medium text-white/60 hover:text-white transition-colors"
+                    className="px-4 py-2 text-xs font-medium text-slate-600 dark:text-theme-text-muted hover:text-slate-900 dark:hover:text-white transition-colors"
                   >
                     {t('common_cancel', 'Cancel')}
                   </button>
@@ -539,32 +525,32 @@ export function UserManagementPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/[0.04] dark:bg-black/40 backdrop-blur-md p-4"
             onClick={() => setSelectedUserForHistory(null)}
           >
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="backdrop-blur-2xl bg-slate-900/95 border border-white/10 rounded-xl shadow-2xl w-full max-w-2xl max-h-[90dvh] overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-6 text-white"
+              className="backdrop-blur-2xl bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl shadow-2xl w-full max-w-2xl max-h-[90dvh] overflow-y-auto custom-scrollbar p-6 sm:p-8 space-y-6 text-slate-900 dark:text-theme-text-primary"
               onClick={e => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-white/10 pb-4">
+              <div className="flex items-center justify-between border-b border-slate-900/[0.08] dark:border-white/[0.08] pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-slate-500/20 border border-slate-500/30 flex items-center justify-center text-slate-400">
+                  <div className="w-10 h-10 rounded-xl bg-slate-500/20 border border-slate-500/30 flex items-center justify-center text-slate-600 dark:text-theme-text-muted">
                     <History className="w-5 h-5" />
                   </div>
                   <div>
                     <h2 className="text-lg font-medium">{t('users_history_title', 'Login & access history')}</h2>
-                    <p className="text-xs text-white/50">
+                    <p className="text-xs text-slate-600 dark:text-theme-text-muted">
                       {selectedUserForHistory.firstName} {selectedUserForHistory.lastName} ({selectedUserForHistory.email})
                     </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setSelectedUserForHistory(null)}
-                  className="p-1.5 text-white/40 hover:text-white rounded-lg transition-colors"
+                  className="p-1.5 text-slate-600 dark:text-theme-text-muted hover:text-slate-900 dark:hover:text-white rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -572,29 +558,29 @@ export function UserManagementPage() {
 
               {/* Telemetry Stats */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-xs text-white/50 block">{t('users_history_total_logins', 'Total logins')}</span>
-                  <strong className="text-sm font-medium text-white font-mono tabular-nums">{loginStatsData?.totalLogins ?? 0}</strong>
+                <div className="p-3 rounded-xl bg-slate-900/[0.03] dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-1">
+                  <span className="text-xs text-slate-600 dark:text-theme-text-muted block">{t('users_history_total_logins', 'Total logins')}</span>
+                  <strong className="text-sm font-medium text-slate-900 dark:text-theme-text-primary font-mono tabular-nums">{loginStatsData?.totalLogins ?? 0}</strong>
                 </div>
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-xs text-white/50 block">{t('users_history_failed_24h', 'Failed (24h)')}</span>
-                  <strong className="text-sm font-medium text-rose-400 font-mono tabular-nums">{loginStatsData?.failedAttempts24h ?? 0}</strong>
+                <div className="p-3 rounded-xl bg-slate-900/[0.03] dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-1">
+                  <span className="text-xs text-slate-600 dark:text-theme-text-muted block">{t('users_history_failed_24h', 'Failed (24h)')}</span>
+                  <strong className="text-sm font-medium text-rose-700 dark:text-rose-400 font-mono tabular-nums">{loginStatsData?.failedAttempts24h ?? 0}</strong>
                 </div>
-                <div className="p-3 rounded-xl bg-white/[0.02] border border-white/5 space-y-1">
-                  <span className="text-xs text-white/50 block">{t('users_history_last_ip', 'Last IP')}</span>
-                  <strong className="text-xs font-medium text-emerald-400 font-mono tabular-nums truncate block">{loginStatsData?.lastLoginIp || '—'}</strong>
+                <div className="p-3 rounded-xl bg-slate-900/[0.03] dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-1">
+                  <span className="text-xs text-slate-600 dark:text-theme-text-muted block">{t('users_history_last_ip', 'Last IP')}</span>
+                  <strong className="text-xs font-medium text-emerald-700 dark:text-emerald-400 font-mono tabular-nums truncate block">{loginStatsData?.lastLoginIp || '—'}</strong>
                 </div>
               </div>
 
               {/* Table of Attempts */}
-              <div className="max-h-[300px] overflow-y-auto rounded-xl border border-white/10 bg-slate-950/60 divide-y divide-white/5">
+              <div className="max-h-[300px] overflow-y-auto rounded-xl border border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-theme-bg-primary divide-y divide-white/5">
                 {isLoadingHistory ? (
-                  <div className="p-12 text-center text-white/50 text-xs flex items-center justify-center gap-2">
-                    <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                  <div className="p-12 text-center text-slate-600 dark:text-theme-text-muted text-xs flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-slate-600 dark:text-theme-text-muted" />
                     <span>{t('users_history_loading', 'Loading access history...')}</span>
                   </div>
                 ) : !loginHistoryData?.items || loginHistoryData.items.length === 0 ? (
-                  <div className="p-12 text-center text-white/50 text-xs space-y-2">
+                  <div className="p-12 text-center text-slate-600 dark:text-theme-text-muted text-xs space-y-2">
                     <KeyRound className="w-6 h-6 text-white/20 mx-auto" />
                     <p>{t('users_history_empty', 'No login audit records found for this account.')}</p>
                   </div>
@@ -612,20 +598,20 @@ export function UserManagementPage() {
                           {entry.status}
                         </span>
                         <div>
-                          <div className="font-medium text-white flex items-center gap-2">
-                            <Laptop className="w-3 h-3 text-white/40" />
+                          <div className="font-medium text-slate-900 dark:text-theme-text-primary flex items-center gap-2">
+                            <Laptop className="w-3 h-3 text-slate-600 dark:text-theme-text-muted" />
                             <span>{entry.device || t('users_history_unknown_device', 'Unknown device')}</span>
                           </div>
                           {entry.failureReason && (
-                            <p className="text-xxs text-rose-400 font-mono mt-0.5">{t('users_history_reason', 'Reason: {reason}', { reason: entry.failureReason })}</p>
+                            <p className="text-xxs text-rose-700 dark:text-rose-400 font-mono mt-0.5">{t('users_history_reason', 'Reason: {reason}', { reason: entry.failureReason })}</p>
                           )}
                         </div>
                       </div>
 
-                      <div className="text-end font-mono text-xxs text-white/50 space-y-0.5">
-                        <div className="text-white/80">{new Date(entry.createdAt).toLocaleString()}</div>
+                      <div className="text-end font-mono text-xxs text-slate-600 dark:text-theme-text-muted space-y-0.5">
+                        <div className="text-slate-700 dark:text-theme-text-secondary">{new Date(entry.createdAt).toLocaleString(appLocale())}</div>
                         {entry.location && (
-                          <div className="flex items-center justify-end gap-1 text-white/70">
+                          <div className="flex items-center justify-end gap-1 text-slate-700 dark:text-theme-text-secondary">
                             <MapPin className="w-2.5 h-2.5 text-emerald-400/80 shrink-0" />
                             <span className="truncate max-w-[160px]">{entry.location}</span>
                           </div>
@@ -640,7 +626,7 @@ export function UserManagementPage() {
               <div className="flex justify-end pt-2">
                 <button
                   onClick={() => setSelectedUserForHistory(null)}
-                  className="px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs font-medium transition-all text-white"
+                  className="px-4 py-2 rounded-xl bg-slate-900/[0.03] dark:bg-white/[0.04] hover:bg-white/10 border border-slate-900/[0.08] dark:border-white/[0.08] text-xs font-medium transition-all text-slate-900 dark:text-theme-text-primary"
                 >
                   {t('common_close', 'Close')}
                 </button>

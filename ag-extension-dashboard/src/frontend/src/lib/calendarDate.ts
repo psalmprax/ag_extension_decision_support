@@ -1,8 +1,9 @@
 /** A YYYY-MM-DD calendar date for display, never shifted across time zones. */
+import { appLocale } from '@/lib/appLocale';
 export function formatCalendarDate(value: string): string {
   const [year, month, day] = value.slice(0, 10).split('-').map(Number);
   if (!year || !month || !day) return value;
-  return new Date(year, month - 1, day).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+  return new Date(year, month - 1, day).toLocaleDateString(appLocale(), { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 /** Today, or `days` from today, as YYYY-MM-DD in the user's own calendar. */

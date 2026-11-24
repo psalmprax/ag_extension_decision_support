@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { useQuery } from '@tanstack/react-query';
 import { AlertTriangle, CheckCircle, Copy, Link2 } from 'lucide-react';
 import { checkAuditChain, type AuditChainCheck } from '@/api/auditService';
@@ -7,7 +8,7 @@ import { getApiErrorMessage } from '@/lib/apiError';
 import { SECONDARY_BUTTON } from '@/components/ui/controlStyles';
 import { formatNumber } from '@/components/charts/chartFormat';
 
-const when = (iso: string) => new Date(iso).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+const when = (iso: string) => new Date(iso).toLocaleString(appLocale(), { dateStyle: 'medium', timeStyle: 'short' });
 
 function Verdict({ check }: { check: AuditChainCheck }) {
   const { t } = useLanguage();

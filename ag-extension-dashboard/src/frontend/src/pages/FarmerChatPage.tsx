@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { formatDate } from '@/lib/appLocale';
 import { Users, Plus, Lock, MessageSquare, ArrowLeft, Trash2, Mic } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -255,12 +256,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                         </span>
                         <UnreadCount conversationId={conv.id} className="ms-auto me-2" />
                         <span className="text-xs text-slate-500 dark:text-white/40">
-                          {(() => {
-                            const rawStarted = conv.startedAt || conv.updatedAt;
-                            if (!rawStarted) return '—';
-                            const parsed = new Date(rawStarted);
-                            return Number.isNaN(parsed.getTime()) ? '—' : parsed.toLocaleDateString();
-                          })()}
+                          {conv.startedAt || conv.updatedAt ? formatDate((conv.startedAt || conv.updatedAt) as string, { dateStyle: 'short' }) : '—'}
                         </span>
                       </div>
                       {regionText && (

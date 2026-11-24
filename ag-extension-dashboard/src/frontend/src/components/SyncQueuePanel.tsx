@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { RefreshCw, Trash2, AlertTriangle, Clock, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { syncQueue, type SyncQueueItem } from '@/api/syncQueueService';
@@ -58,7 +59,7 @@ export const SyncQueuePanel: React.FC = () => {
         <div>
           <h3 className="text-sm font-medium text-white">{t('ui_sync_queue_panel_offline_sync_queue')}</h3>
           <p className="text-xs text-white/50">
-            {pending.length} {t('ui_sync_queue_panel_pending')}{nextRetryAt ? ` · next automatic retry ${new Date(nextRetryAt).toLocaleTimeString()}` : ''} · {stuck.length} {t('ui_sync_queue_panel_need_attention')}
+            {pending.length} {t('ui_sync_queue_panel_pending')}{nextRetryAt ? ` · next automatic retry ${new Date(nextRetryAt).toLocaleTimeString(appLocale())}` : ''} · {stuck.length} {t('ui_sync_queue_panel_need_attention')}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -94,7 +95,7 @@ export const SyncQueuePanel: React.FC = () => {
                 <span className="text-white/80 font-medium truncate">{item.method} {item.endpoint}</span>
               </div>
               <div className="text-white/40 mt-0.5 flex flex-wrap items-center gap-2">
-                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {t('ui_sync_queue_panel_queued')} {new Date(item.timestamp).toLocaleString()} {t('ui_sync_queue_panel_attempts')} {item.retryCount}</span>
+                <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {t('ui_sync_queue_panel_queued')} {new Date(item.timestamp).toLocaleString(appLocale())} {t('ui_sync_queue_panel_attempts')} {item.retryCount}</span>
                 {item.lastError && <span className="text-rose-300/80 truncate">· {item.lastError}</span>}
                 {item.conflicts && item.conflicts.length > 0 && (
                   <span className="text-amber-300/90 font-mono text-[10px]">

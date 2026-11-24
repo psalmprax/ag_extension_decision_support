@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { motion } from 'framer-motion';
 import { Clock, CheckCircle, XCircle, Eye } from 'lucide-react';
 import DOMPurify from 'dompurify';
@@ -62,7 +63,7 @@ export function EmailWorkflowsApprovalQueue({
                     Requested by {approval.requestedBy}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-theme-text-muted mt-1">
-                    {new Date(approval.createdAt).toLocaleString()}
+                    {new Date(approval.createdAt).toLocaleString(appLocale())}
                   </p>
                 </div>
               </div>

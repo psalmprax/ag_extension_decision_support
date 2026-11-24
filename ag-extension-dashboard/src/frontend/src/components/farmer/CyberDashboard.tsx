@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { Zap, TrendingUp, LineChart, ShieldAlert } from 'lucide-react';
@@ -81,7 +82,7 @@ export const CyberDashboard: React.FC<CyberDashboardProps> = ({ farmerStats }) =
             {t('ui_cyber_dashboard_system_status')} {farmerStats ? 'Telemetry available' : 'Awaiting telemetry'}
           </p>
           <p className="text-sm font-medium font-mono tabular-nums text-white mt-1">
-            {new Date().toLocaleDateString('en-US', {
+            {new Date().toLocaleDateString(appLocale(), {
               year: 'numeric',
               month: 'short',
               day: 'numeric',
