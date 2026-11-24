@@ -54,7 +54,8 @@ describe('Tool Registry', () => {
     expect(toolNames).toContain('get_disease_alerts');
     expect(toolNames).toContain('research_agricultural_data');
     expect(toolNames).toContain('register_agricultural_alert');
-    expect(toolNames).toContain('crop_yield_forecast');
+    // Removed: its base yields, weather factors and advice had no source.
+    expect(toolNames).not.toContain('crop_yield_forecast');
     expect(toolNames).toContain('deep_agricultural_research');
     expect(toolNames).toContain('satellite_ndvi_analysis');
     expect(toolNames).toContain('memory_store');

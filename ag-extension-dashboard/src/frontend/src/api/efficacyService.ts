@@ -114,39 +114,6 @@ export interface OutbreakCluster {
     differentialPrivacyApplied?: boolean;
 }
 
-export interface AtmosphericDispersalInput {
-    centroid: { lat: number; lng: number };
-    windSpeedKmH: number;
-    windBearingDeg: number;
-    relativeHumidity: number;
-    temperatureC: number;
-    crop?: string;
-    diseaseLabel?: string;
-    timeHorizonHours?: number;
-}
-
-export interface AtmosphericDispersalProjection {
-    origin: { lat: number; lng: number };
-    targetCentroid: { lat: number; lng: number };
-    coneFootprint: Array<{ lat: number; lng: number }>;
-    dispersionDistanceKm: number;
-    apertureDegrees: number;
-    viabilityScore: number;
-    riskLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-    environmentalFactors: {
-        windSpeedKmH: number;
-        windBearingDeg: number;
-        relativeHumidity: number;
-        temperatureC: number;
-        germinationIndex: number;
-    };
-    modelProvenance: {
-        model: string;
-        methodology: string;
-        calculatedAt: string;
-    };
-}
-
 export const outbreakService = {
     async getClusters(params: { days?: number; bbox?: string } = {}): Promise<OutbreakCluster[]> {
         const { data } = await apiClient.get('/outbreaks', { params });
@@ -154,11 +121,6 @@ export const outbreakService = {
         // alerts") instead of handing a non-array to callers that filter it, which
         // took the whole dashboard down with "filter is not a function".
         if (!Array.isArray(data?.data)) throw new Error('Unexpected /outbreaks response: data is not a list');
-        return data.data;
-    },
-
-    async getDispersalProjection(input: AtmosphericDispersalInput): Promise<AtmosphericDispersalProjection> {
-        const { data } = await apiClient.post('/outbreaks/dispersal-projection', input);
         return data.data;
     },
 };

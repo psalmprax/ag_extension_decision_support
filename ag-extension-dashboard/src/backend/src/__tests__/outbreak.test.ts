@@ -5,7 +5,6 @@ import {
     K_ANONYMITY_MIN,
     ALERT_THRESHOLD,
     applyDifferentialPrivacyPerturbation,
-    projectAtmosphericDispersalCone,
 } from '../services/outbreakService';
 import { query } from '../services/databaseService';
 import outbreakRouter from '../routes/outbreaks';
@@ -168,62 +167,6 @@ describe('applyDifferentialPrivacyPerturbation (IR-004)', () => {
     });
 });
 
-describe('projectAtmosphericDispersalCone (CE-002)', () => {
-    const baseInput = {
-        centroid: { lat: -13.9, lng: 33.7 },
-        windSpeedKmH: 25,
-        windBearingDeg: 90, // Eastward
-        relativeHumidity: 85,
-        temperatureC: 22,
-        crop: 'maize',
-        diseaseLabel: 'fall_armyworm',
-    };
-
-    it('calculates downwind trajectory, target centroid, and polygon footprint', () => {
-        const projection = projectAtmosphericDispersalCone(baseInput);
-
-        expect(projection.origin).toEqual(baseInput.centroid);
-        expect(projection.dispersionDistanceKm).toBeGreaterThanOrEqual(5);
-        expect(projection.dispersionDistanceKm).toBeLessThanOrEqual(150);
-        expect(projection.targetCentroid.lng).toBeGreaterThan(baseInput.centroid.lng); // Eastward drift
-        expect(projection.coneFootprint.length).toBeGreaterThanOrEqual(8);
-        expect(projection.modelProvenance.model).toContain('AlphaAg-Atmospheric-Dispersal');
-    });
-
-    it('narrows aperture under high wind speeds and widens under calm winds', () => {
-        const calm = projectAtmosphericDispersalCone({ ...baseInput, windSpeedKmH: 5 });
-        const gale = projectAtmosphericDispersalCone({ ...baseInput, windSpeedKmH: 60 });
-
-        expect(calm.apertureDegrees).toBeGreaterThan(gale.apertureDegrees);
-        expect(gale.apertureDegrees).toBeGreaterThanOrEqual(15);
-        expect(calm.apertureDegrees).toBeLessThanOrEqual(45);
-    });
-
-    it('computes high viability score and CRITICAL risk under optimal spore conditions', () => {
-        const result = projectAtmosphericDispersalCone({
-            ...baseInput,
-            windSpeedKmH: 40,
-            relativeHumidity: 90,
-            temperatureC: 24, // Optimal 18-28C
-        });
-
-        expect(result.viabilityScore).toBe(1.0);
-        expect(result.riskLevel).toBe('CRITICAL');
-    });
-
-    it('reduces viability and risk under dry or extreme cold conditions', () => {
-        const result = projectAtmosphericDispersalCone({
-            ...baseInput,
-            windSpeedKmH: 10,
-            relativeHumidity: 30, // Dry (<50%)
-            temperatureC: 8,  // Cold (<14C)
-        });
-
-        expect(result.viabilityScore).toBeLessThan(0.2);
-        expect(result.riskLevel).toBe('LOW');
-    });
-});
-
 describe('Outbreak API Routes', () => {
     it('GET /api/outbreaks returns k-anonymized cluster list with alert flags', async () => {
         mockQuery.mockResolvedValueOnce({
@@ -251,56 +194,8 @@ describe('Outbreak API Routes', () => {
         expect(res.body.data[0].differentialPrivacyApplied).toBe(true);
     });
 
-    it('POST /api/outbreaks/dispersal-projection validates input parameters', async () => {
-        const resInvalidCentroid = await request(app)
-            .post('/api/outbreaks/dispersal-projection')
-            .send({ windSpeedKmH: 20 });
-        expect(resInvalidCentroid.status).toBe(400);
-        expect(resInvalidCentroid.body.error).toContain('centroid');
-
-        const resInvalidWind = await request(app)
-            .post('/api/outbreaks/dispersal-projection')
-            .send({
-                centroid: { lat: -13.9, lng: 33.7 },
-                windSpeedKmH: -10,
-                windBearingDeg: 90,
-                relativeHumidity: 70,
-                temperatureC: 22,
-            });
-        expect(resInvalidWind.status).toBe(400);
-        expect(resInvalidWind.body.error).toContain('windSpeedKmH');
-
-        const resInvalidHumidity = await request(app)
-            .post('/api/outbreaks/dispersal-projection')
-            .send({
-                centroid: { lat: -13.9, lng: 33.7 },
-                windSpeedKmH: 15,
-                windBearingDeg: 90,
-                relativeHumidity: 120, // Invalid > 100
-                temperatureC: 22,
-            });
-        expect(resInvalidHumidity.status).toBe(400);
-        expect(resInvalidHumidity.body.error).toContain('relativeHumidity');
-    });
-
-    it('POST /api/outbreaks/dispersal-projection returns valid projection on clean input', async () => {
-        const res = await request(app)
-            .post('/api/outbreaks/dispersal-projection')
-            .send({
-                centroid: { lat: -13.9, lng: 33.7 },
-                windSpeedKmH: 25,
-                windBearingDeg: 180, // Southward
-                relativeHumidity: 80,
-                temperatureC: 25,
-                crop: 'maize',
-                diseaseLabel: 'fall_armyworm',
-            });
-
-        expect(res.status).toBe(200);
-        expect(res.body.success).toBe(true);
-        expect(res.body.data.origin).toEqual({ lat: -13.9, lng: 33.7 });
-        expect(res.body.data.targetCentroid.lat).toBeLessThan(-13.9); // Southward
-        expect(res.body.data.riskLevel).toBeDefined();
-        expect(res.body.data.coneFootprint.length).toBeGreaterThan(0);
+    it('offers no spread projection: no spread model here has a source', async () => {
+        const res = await request(app).post('/api/outbreaks/dispersal-projection').send({ centroid: { lat: -13.9, lng: 33.7 } });
+        expect(res.status).toBe(404);
     });
 });

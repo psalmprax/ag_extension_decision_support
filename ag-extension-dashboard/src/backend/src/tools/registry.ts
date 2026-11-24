@@ -9,7 +9,6 @@ import { marketPriceTool } from './marketPriceTool';
 import { diseaseAlertTool } from './diseaseAlertTool';
 import { researchTool } from './researchTool';
 import { registerAlertTool } from './registerAlertTool';
-import { cropYieldForecastTool } from './cropYieldForecastTool';
 import { deepResearchTool } from './deepResearchTool';
 import { satelliteNDVITool } from './satelliteNDVITool';
 import { memoryStoreTool, memoryRecallTool, memoryForgetTool } from './memoryTools';
@@ -34,7 +33,6 @@ export const toolRegistry: AnyTool[] = [
   diseaseAlertTool,
   researchTool,
   registerAlertTool,
-  cropYieldForecastTool,
   deepResearchTool,
   satelliteNDVITool,
   memoryStoreTool,

@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { calculateWeatherScore } from '../tools/cropYieldForecastTool';
 import { SatelliteService } from '../services/satelliteService';
 import { SoilGridsService } from '../services/data/soilGridsService';
 import { FaostatService } from '../services/data/faostatService';
@@ -21,18 +20,6 @@ jest.mock('../utils/logger', () => ({
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-const weather = {
-  temperature: 24,
-  temp: 24,
-  condition: 'Clear sky',
-  humidity: 60,
-  windSpeed: 8,
-  forecast: [
-    { date: '2026-08-24', maxTemp: 28, minTemp: 18, precipitationMm: 0, condition: 'Clear sky' },
-    { date: '2026-08-25', maxTemp: 27, minTemp: 18, precipitationMm: 12, condition: 'Moderate rain' },
-  ],
-};
-
 describe('production data truthfulness', () => {
   beforeEach(() => {
     jest.restoreAllMocks();
@@ -41,21 +28,6 @@ describe('production data truthfulness', () => {
     delete process.env.SENTINEL_HUB_CLIENT_SECRET;
     delete process.env.NASA_EARTHDATA_KEY;
     delete process.env.FAOSTAT_ALLOW_UNVERIFIED_FALLBACK;
-  });
-
-  it('uses actual precipitation in weather scoring', () => {
-    const rainy = calculateWeatherScore(weather, 'maize');
-    const dry = calculateWeatherScore({ ...weather, forecast: weather.forecast.map(day => ({ ...day, precipitationMm: 0 })) }, 'maize');
-
-    expect(rainy.dataStatus).toBe('complete');
-    expect(rainy.score).toBeGreaterThan(dry.score);
-  });
-
-  it('marks missing precipitation as partial instead of treating it as rain', () => {
-    const result = calculateWeatherScore({ ...weather, forecast: weather.forecast.map(({ precipitationMm: _ignored, ...day }) => day) }, 'maize');
-
-    expect(result.dataStatus).toBe('partial');
-    expect(result.score).toBeLessThan(calculateWeatherScore(weather, 'maize').score);
   });
 
   it('gives no weather rather than made-up values when NASA POWER does not answer', async () => {
