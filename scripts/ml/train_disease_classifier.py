@@ -239,7 +239,8 @@ def train(model, samples: list[Sample], labels: list[str], args) -> None:
     model.to("cpu").eval()
 
 
-def export_onnx(model, labels: list[str], size: int, out: Path) -> Path:
+def export_onnx(model, labels: list[str], size: int, out: Path) -> tuple[Path, Path]:
+    """The float model and an int8 copy; which one ships is decided by their scores."""
     import torch
     from onnxruntime.quantization import QuantType, quantize_dynamic
 
@@ -256,11 +257,25 @@ def export_onnx(model, labels: list[str], size: int, out: Path) -> Path:
         WithSoftmax(model).eval(), torch.zeros(1, 3, size, size), float_path,
         input_names=["input"], output_names=["probabilities"], opset_version=17, dynamo=False,
     )
-    quantised = out / "plant-disease.onnx"
+    quantised = out / "plant-disease.int8.onnx"
     quantize_dynamic(float_path, quantised, weight_type=QuantType.QInt8)
+    for path in (float_path, quantised):
+        print(f"Exported {path} ({path.stat().st_size / 1e6:.1f} MB, {len(labels)} classes)", flush=True)
+    return float_path, quantised
+
+
+# int8 ships only if it keeps top-3 within this of the float model; MobileNet convolutions often do not.
+QUANTISATION_TOLERANCE = 0.02
+
+
+def choose_model(out: Path, float_path: Path, quantised: Path, float_scores: dict, int8_scores: dict) -> tuple[str, dict]:
+    """Copies the chosen file to plant-disease.onnx and says which it was."""
+    use_int8 = int8_scores["top3Accuracy"] >= float_scores["top3Accuracy"] - QUANTISATION_TOLERANCE
+    chosen, scores = (quantised, int8_scores) if use_int8 else (float_path, float_scores)
+    (out / "plant-disease.onnx").write_bytes(chosen.read_bytes())
     float_path.unlink()
-    print(f"Exported {quantised} ({quantised.stat().st_size / 1e6:.1f} MB, {len(labels)} classes)", flush=True)
-    return quantised
+    quantised.unlink()
+    return ("int8" if use_int8 else "float32"), scores
 
 
 def crop_of(label: str) -> str:
@@ -301,7 +316,8 @@ def evaluate(model_path: Path, samples: list[Sample], labels: list[str], size: i
     }
 
 
-def write_outputs(out: Path, labels: list[str], scores: dict, args, sources: list[str], counts: dict) -> None:
+def write_outputs(out: Path, labels: list[str], scores: dict, args, sources: list[str], counts: dict,
+                  precision: str, float_scores: dict, int8_scores: dict, train_scores: dict) -> None:
     dataset = "smoke run, generated images" if args.smoke else ", ".join(f"{s} test split" for s in sources)
     entry = {
         "file": "plant-disease.onnx",
@@ -309,6 +325,7 @@ def write_outputs(out: Path, labels: list[str], scores: dict, args, sources: lis
         "labels": labels,
         "output": "probabilities",
         "inputSize": args.size,
+        "precision": precision,
         "fieldEvaluation": {
             "dataset": dataset,
             "images": scores["images"],
@@ -326,7 +343,9 @@ def write_outputs(out: Path, labels: list[str], scores: dict, args, sources: lis
         f"# Plant disease classifier: {entry['name']}",
         "",
         f"Architecture: `{args.arch}` from timm, ImageNet weights, fine-tuned {args.epochs} epochs at {args.size}px.",
-        "Output: softmax probabilities over the labels in manifest.json. Quantised to int8; every number below is for the quantised file.",
+        f"Output: softmax probabilities over the labels in manifest.json. Shipped as {precision}; every number below is for the shipped file.",
+        f"Float32 top-3 {float_scores['top3Accuracy']:.1%}, int8 top-3 {int8_scores['top3Accuracy']:.1%}; int8 ships only within {QUANTISATION_TOLERANCE:.0%} of float.",
+        f"Top-1 on {train_scores['images']} training photos (fit check): {train_scores['top1Accuracy']:.1%}.",
         "",
         "## Field evaluation",
         "",
@@ -401,10 +420,16 @@ def main() -> int:
 
     model = build_model(args.arch, len(labels), pretrained=not args.smoke)
     train(model, splits.train, labels, args)
-    model_path = export_onnx(model, labels, args.size, args.out)
-    scores = evaluate(model_path, splits.test, labels, args.size)
-    print(json.dumps({k: v for k, v in scores.items() if k not in ("perClass",)}, indent=2), flush=True)
-    write_outputs(args.out, labels, scores, args, sources, counts)
+    float_path, quantised = export_onnx(model, labels, args.size, args.out)
+    float_scores = evaluate(float_path, splits.test, labels, args.size)
+    int8_scores = evaluate(quantised, splits.test, labels, args.size)
+    fit_sample = random.Random(args.seed).sample(splits.train, min(500, len(splits.train)))
+    train_scores = evaluate(float_path, fit_sample, labels, args.size)
+    for name, sc in (("float32", float_scores), ("int8", int8_scores), ("float32 on training photos", train_scores)):
+        print(name, json.dumps({k: v for k, v in sc.items() if k not in ("perClass",)}, indent=2), flush=True)
+    precision, scores = choose_model(args.out, float_path, quantised, float_scores, int8_scores)
+    print(f"Shipping the {precision} model", flush=True)
+    write_outputs(args.out, labels, scores, args, sources, counts, precision, float_scores, int8_scores, train_scores)
 
     if args.push_to:
         from huggingface_hub import HfApi
