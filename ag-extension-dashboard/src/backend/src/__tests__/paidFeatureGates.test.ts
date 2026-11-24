@@ -80,7 +80,8 @@ const PAID_ROUTES = [
   { name: 'list chats', method: 'get' as const, path: '/chatbot/conversations', body: undefined },
   { name: 'start a chat', method: 'post' as const, path: '/chatbot/conversations', body: { kind: 'officer_ai' } },
   { name: 'send a chat message', method: 'post' as const, path: '/chatbot/messages', body: { conversationId: 'c1', content: 'hi' } },
-  { name: 'run an outreach campaign', method: 'post' as const, path: '/campaigns/goal', body: { goalPrompt: 'Armyworm alert' } },
+  { name: 'draft an outreach campaign', method: 'post' as const, path: '/campaigns/goal/draft', body: { goalPrompt: 'Armyworm alert' } },
+  { name: 'run an outreach campaign', method: 'post' as const, path: '/campaigns/goal', body: { goalPrompt: 'Armyworm alert', message: 'Check your maize this week.' } },
   {
     name: 'synthesise a skill with AI',
     method: 'post' as const,

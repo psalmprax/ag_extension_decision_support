@@ -1,21 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { X, MapPin, Calendar, FileText, User } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useDemoMode } from '@/demo';
-import { fetchFarmers } from '@/api/farmerService';
-import { createVisit } from '@/api/visitService';
-import toast from 'react-hot-toast';
+import { useVisitScheduler } from './useVisitScheduler';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-
-interface Farmer {
-  id: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  region?: string;
-  village?: string;
-}
 
 interface VisitModalProps {
   isOpen: boolean;
@@ -26,101 +15,7 @@ interface VisitModalProps {
 export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSuccess }) => {
   const { t } = useLanguage();
   const { isDemo } = useDemoMode();
-  const [loading, setLoading] = useState(false);
-  const [farmers, setFarmers] = useState<Farmer[]>([]);
-  const [loadingFarmers, setLoadingFarmers] = useState(false);
-  const [formData, setFormData] = useState({
-    farmerId: '',
-    type: 'routine',
-    scheduledAt: '',
-    notes: '',
-    farmerSearch: '',
-  });
-
-  useEffect(() => {
-    if (isOpen) {
-      if (isDemo) {
-        // Demo: only the canonical "Demo Farmer" is available
-        setFarmers([
-          {
-            id: 'demo-farmer',
-            firstName: 'Demo',
-            lastName: 'Farmer',
-            phone: '+0000000000',
-            region: 'Demo Region',
-            village: 'Demo Village',
-          },
-        ]);
-        setLoadingFarmers(false);
-      } else {
-        loadFarmers();
-      }
-    }
-  }, [isOpen, isDemo]);
-
-  const loadFarmers = async () => {
-    setLoadingFarmers(true);
-    try {
-      const data = await fetchFarmers();
-      if (data.success && data.data?.farmers) {
-        setFarmers(data.data.farmers);
-      }
-    } catch (error) {
-      console.error('Failed to fetch farmers:', error);
-    } finally {
-      setLoadingFarmers(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!formData.farmerId || !formData.scheduledAt) return;
-
-    // Demo mode: skip the network call entirely; just simulate success so the
-    // user sees the expected UX without hitting the backend with a fake farmer id.
-    if (isDemo) {
-      toast.success(t('visit_create_success') || 'Visit scheduled (demo)');
-      onSuccess();
-      onClose();
-      setFormData({
-        farmerId: '',
-        type: 'routine',
-        scheduledAt: '',
-        notes: '',
-        farmerSearch: '',
-      });
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const data = await createVisit({
-        farmer_id: formData.farmerId,
-        visit_type: formData.type,
-        scheduled_at: new Date(formData.scheduledAt).toISOString(),
-        notes: formData.notes,
-      });
-
-      if (data.success) {
-        onSuccess();
-        onClose();
-        setFormData({
-          farmerId: '',
-          type: 'routine',
-          scheduledAt: '',
-          notes: '',
-          farmerSearch: '',
-        });
-      } else {
-        toast.error(t('visit_create_failed'));
-      }
-    } catch (error) {
-      console.error('Failed to create visit:', error);
-      toast.error(t('visit_create_failed'));
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { loading, loadingFarmers, formData, setFormData, matches, selectFarmer, clearFarmer, handleSubmit } = useVisitScheduler({ isOpen, isDemo, onSuccess, onClose });
 
   if (!isOpen) return null;
 
@@ -177,29 +72,13 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
               />
               {formData.farmerSearch && !formData.farmerId && (
                 <div className="absolute z-10 w-full mt-1 bg-white dark:bg-white/[0.08] border border-gray-200 dark:border-white/[0.12] rounded-xl shadow-lg max-h-48 overflow-y-auto">
-                  {farmers
-                    .filter(
-                      f =>
-                        `${f.firstName} ${f.lastName}`
-                          .toLowerCase()
-                          .includes(formData.farmerSearch!.toLowerCase()) ||
-                        (f.region || '')
-                          .toLowerCase()
-                          .includes(formData.farmerSearch!.toLowerCase()) ||
-                        (f.phone || '').includes(formData.farmerSearch!)
-                    )
+                  {matches
                     .slice(0, 10)
                     .map(farmer => (
                       <button
                         key={farmer.id}
                         type="button"
-                        onClick={() =>
-                          setFormData({
-                            ...formData,
-                            farmerId: farmer.id,
-                            farmerSearch: `${farmer.firstName} ${farmer.lastName}`,
-                          })
-                        }
+                        onClick={() => selectFarmer(farmer)}
                         className="w-full px-4 py-2 text-start hover:bg-gray-100 dark:hover:bg-white/[0.12] text-sm"
                       >
                         <span className="font-medium text-gray-900 dark:text-white">
@@ -210,11 +89,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                         </span>
                       </button>
                     ))}
-                  {farmers.filter(f =>
-                    `${f.firstName} ${f.lastName}`
-                      .toLowerCase()
-                      .includes(formData.farmerSearch!.toLowerCase())
-                  ).length === 0 && (
+                  {matches.length === 0 && (
                     <div className="px-4 py-2 text-sm text-gray-500">{t('chat_no_farmers')}</div>
                   )}
                 </div>
@@ -226,7 +101,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                   </span>
                   <button
                     type="button"
-                    onClick={() => setFormData({ ...formData, farmerId: '', farmerSearch: '' })}
+                    onClick={clearFarmer}
                     className="text-xs text-gray-400 hover:text-gray-600"
                   >
                     {t('ui_visit_modal_change')}

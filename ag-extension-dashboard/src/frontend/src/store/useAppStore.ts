@@ -7,6 +7,7 @@ import { randomId } from '@/lib/randomId';
 import { toast } from 'react-hot-toast';
 import { isDemoSession } from '@/demo/demoSession';
 import { safeStorage } from '@/lib/safeStorage';
+import { setDeviceOwner } from '@/lib/offlineReadCache';
 
 // Types
 export interface User {
@@ -87,6 +88,12 @@ export interface Notification {
   onAction?: () => void;
 }
 
+function showNotificationToast(type: Notification['type'], message: string): void {
+  if (type === 'success') toast.success(message);
+  else if (type === 'error') toast.error(message);
+  else toast(message);
+}
+
 // App Store
 safeStorage.remove('ag-liquid-effect');
 
@@ -142,6 +149,7 @@ export interface AppState {
 
   // Notifications
   notifications: Notification[];
+  /** Shows the message as a toast and keeps it in the notification list. */
   addNotification: (notification: Omit<Notification, 'id' | 'timestamp' | 'read'>) => void;
   markNotificationRead: (id: string) => void;
   clearNotifications: () => void;
@@ -389,6 +397,8 @@ export const useAppStore = create<AppState>()(
 
       addNotification: notification => {
         const id = randomId();
+        // Until this toasted, confirmations and errors raised this way only reached the bell list.
+        showNotificationToast(notification.type, notification.message);
 
         set(state => ({
           notifications: [
@@ -438,5 +448,9 @@ export const useAppStore = create<AppState>()(
     }
   )
 );
+
+// Copies kept for offline use and writes waiting to sync belong to whoever is signed in.
+setDeviceOwner(useAppStore.getState().user?.id ?? null);
+useAppStore.subscribe(state => setDeviceOwner(state.user?.id ?? null));
 
 export default useAppStore;

@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { StatCardProps } from '../types/dashboard';
 import { useLanguage } from '@/lib/LanguageContext';
 import { StatTile } from '@/components/ui/StatTile';
@@ -12,7 +13,7 @@ export const StatCard = ({ title, value, change, icon }: StatCardProps) => {
   const { t } = useLanguage();
   const hasChange = typeof change === 'number' && Number.isFinite(change) && change !== 0;
   const empty = value === undefined || value === null || value === '';
-  const shown = empty ? '\u2014' : typeof value === 'number' ? value.toLocaleString() : value;
+  const shown = empty ? '\u2014' : typeof value === 'number' ? value.toLocaleString(appLocale()) : value;
 
   return (
     <StatTile

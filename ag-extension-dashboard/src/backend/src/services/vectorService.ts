@@ -6,6 +6,7 @@ import { executeIlikeFallback, mapKeywordRows, keywordSearch as runKeywordSearch
 import { fuseRankedLegs, type RetrievalSignals } from '@/services/vector/rrfFusion';
 import { cosineDistance, embeddingWidthPredicate, toVectorLiteral } from '@/services/vector/vectorSql';
 import { backfillAllMissingEmbeddings as drainEmbeddings, backfillMissingEmbeddings as fillEmbeddingsBatch } from '@/services/vector/embeddingBackfill';
+import { SEED_ARTICLE_SOURCE } from '@/services/knowledge/seedArticles';
 
 export interface VectorDocument {
     id: string;
@@ -232,7 +233,7 @@ export class VectorService {
                         tags: article.tags || [],
                         crops: [article.crop],
                         regions: article.regions || (article.crop === 'maize' ? ['East Africa'] : ['tropical']),
-                        source: article.source || 'AG Extension Tropical Agronomy Seed',
+                        source: article.source || SEED_ARTICLE_SOURCE,
                         sourceUrl: article.sourceUrl || null,
                         contentType: 'text'
                     }

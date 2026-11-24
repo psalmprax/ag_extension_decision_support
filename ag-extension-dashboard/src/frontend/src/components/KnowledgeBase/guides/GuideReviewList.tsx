@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/Button';
@@ -45,7 +46,7 @@ export function GuideReviewList({ refreshKey }: { refreshKey: number }) {
           <div className="min-w-0">
             <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{guide.title}</p>
             <p className="text-xs text-slate-500 dark:text-white/60">
-              {guide.source ?? t('kb_guide_unknown_source', { defaultValue: 'Source not given' })}, {new Date(guide.updatedAt).toLocaleDateString()}
+              {guide.source ?? t('kb_guide_unknown_source', { defaultValue: 'Source not given' })}, {new Date(guide.updatedAt).toLocaleDateString(appLocale())}
             </p>
           </div>
           <div className="flex gap-2 shrink-0">

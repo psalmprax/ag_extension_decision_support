@@ -68,6 +68,19 @@ for (const file of files(ROOT)) {
   }
 }
 
+/**
+ * Screen text comes from the locale files, so an emoji written there reaches the screen even
+ * though no component contains it. Email subjects are not screen text.
+ */
+const EN_LOCALE = path.join(ROOT, '..', 'public', 'locales', 'en.json');
+const emojiRule = RULES.find(rule => rule.name === 'emoji');
+if (fs.existsSync(EN_LOCALE)) {
+  for (const [key, value] of Object.entries(JSON.parse(fs.readFileSync(EN_LOCALE, 'utf8')))) {
+    if (key.startsWith('email_')) continue;
+    if (typeof value === 'string' && emojiRule.pattern.test(value)) problems.push(`public/locales/en.json  emoji in "${key}": ${value.slice(0, 80)}`);
+  }
+}
+
 if (problems.length > 0) {
   console.error(`${problems.length} design-rule breaks (see CLAUDE.md, Unslop):\n${problems.join('\n')}`);
   process.exit(1);

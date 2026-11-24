@@ -10,14 +10,14 @@ import { calendarDateFromToday, formatCalendarDate } from '@/lib/calendarDate';
 import { useLanguage } from '@/lib/LanguageContext';
 
 const PROGRESS_KINDS: { value: ProgressKind; label: string; tone: string }[] = [
-  { value: 'success', label: 'Success', tone: 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10' },
-  { value: 'failure', label: 'Failure', tone: 'text-rose-300 border-rose-500/30 bg-rose-500/10' },
-  { value: 'field_event', label: 'Field event', tone: 'text-slate-300 border-slate-500/30 bg-slate-500/10' },
-  { value: 'action', label: 'Action taken', tone: 'text-amber-300 border-amber-500/30 bg-amber-500/10' },
-  { value: 'observation', label: 'Observation', tone: 'text-slate-300 border-slate-500/30 bg-slate-500/10' },
+  { value: 'success', label: 'Success', tone: 'text-emerald-700 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10' },
+  { value: 'failure', label: 'Failure', tone: 'text-rose-700 dark:text-rose-400 border-rose-500/30 bg-rose-500/10' },
+  { value: 'field_event', label: 'Field event', tone: 'text-slate-700 dark:text-theme-text-secondary border-slate-500/30 bg-slate-500/10' },
+  { value: 'action', label: 'Action taken', tone: 'text-amber-800 dark:text-amber-300 border-amber-500/30 bg-amber-500/10' },
+  { value: 'observation', label: 'Observation', tone: 'text-slate-700 dark:text-theme-text-secondary border-slate-500/30 bg-slate-500/10' },
 ];
 
-const FIELD = 'w-full rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-sm text-white';
+const FIELD = 'w-full rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-theme-bg-primary px-3 py-2 text-sm text-slate-900 dark:text-theme-text-primary';
 
 /** The form an officer uses to add to a farmer's progress log. */
 const ProgressEntryForm: React.FC<{ farmerId: string; crops: string[] }> = ({ farmerId, crops }) => {
@@ -59,36 +59,36 @@ const ProgressEntryForm: React.FC<{ farmerId: string; crops: string[] }> = ({ fa
         e.preventDefault();
         if (title.trim()) save.mutate();
       }}
-      className="space-y-3 rounded-xl border border-white/10 bg-slate-900/60 p-4"
+      className="space-y-3 rounded-xl border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-theme-bg-secondary p-4"
     >
       <div className="grid grid-cols-2 gap-3">
-        <label className="text-xs text-white/70 space-y-1">
+        <label className="text-xs text-slate-700 dark:text-theme-text-secondary space-y-1">
           <span>{t('ui_farmer_progress_log_type')}</span>
           <select value={kind} onChange={e => setKind(e.target.value as ProgressKind)} className={FIELD}>
             {PROGRESS_KINDS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </label>
-        <label className="text-xs text-white/70 space-y-1">
+        <label className="text-xs text-slate-700 dark:text-theme-text-secondary space-y-1">
           <span>{t('ui_farmer_progress_log_date')}</span>
           <input type="date" value={occurredOn} max={calendarDateFromToday()} onChange={e => setOccurredOn(e.target.value)} className={FIELD} />
         </label>
       </div>
-      <label className="block text-xs text-white/70 space-y-1">
+      <label className="block text-xs text-slate-700 dark:text-theme-text-secondary space-y-1">
         <span>{t('ui_farmer_progress_log_what_happened')}</span>
         <input value={title} maxLength={200} onChange={e => setTitle(e.target.value)} className={FIELD}
           placeholder="e.g. Maize germination 92%, armyworm found in 3 of 20 plants" />
       </label>
-      <label className="block text-xs text-white/70 space-y-1">
+      <label className="block text-xs text-slate-700 dark:text-theme-text-secondary space-y-1">
         <span>{t('ui_farmer_progress_log_details')}</span>
         <textarea value={details} rows={2} onChange={e => setDetails(e.target.value)} className={FIELD} />
       </label>
       <div className="grid grid-cols-2 gap-3">
-        <label className="text-xs text-white/70 space-y-1">
+        <label className="text-xs text-slate-700 dark:text-theme-text-secondary space-y-1">
           <span>{t('ui_goal_mode_campaign_modal_crop')}</span>
           <input value={crop} list="progress-crops" onChange={e => setCrop(e.target.value)} className={FIELD} />
           <datalist id="progress-crops">{crops.map(c => <option key={c} value={c} />)}</datalist>
         </label>
-        <label className="text-xs text-white/70 space-y-1">
+        <label className="text-xs text-slate-700 dark:text-theme-text-secondary space-y-1">
           <span>{t('ui_farmer_progress_log_photos_up_to_4')}</span>
           <input type="file" accept="image/jpeg,image/png,image/webp" multiple
             onChange={e => setPhotos(Array.from(e.target.files ?? []).slice(0, 4))} className="text-xs" />
@@ -128,23 +128,23 @@ export const FarmerProgressLog: React.FC<{ farmerId: string; crops?: string[] }>
         ))}
       </div>
       {canRecord && <ProgressEntryForm farmerId={farmerId} crops={crops} />}
-      {isLoading && <p className="text-xs text-white/50">{t('ui_farmer_progress_log_loading_progress')}</p>}
-      {isError && <p role="alert" className="text-xs text-rose-300">{t('ui_farmer_progress_log_the_progress_log_could_not_be_loaded')}</p>}
+      {isLoading && <p className="text-xs text-slate-600 dark:text-theme-text-muted">{t('ui_farmer_progress_log_loading_progress')}</p>}
+      {isError && <p role="alert" className="text-xs text-rose-700 dark:text-rose-400">{t('ui_farmer_progress_log_the_progress_log_could_not_be_loaded')}</p>}
       {!isLoading && !isError && entries.length === 0 && (
-        <p className="text-xs text-white/50">{t('ui_farmer_progress_log_no_progress_recorded_yet')}</p>
+        <p className="text-xs text-slate-600 dark:text-theme-text-muted">{t('ui_farmer_progress_log_no_progress_recorded_yet')}</p>
       )}
       <ol className="space-y-3" aria-label="Progress entries">
         {entries.map(entry => {
           const kind = PROGRESS_KINDS.find(k => k.value === entry.kind) ?? PROGRESS_KINDS[4];
           return (
-            <li key={entry.id} className="rounded-xl border border-white/10 bg-slate-900/40 p-3 space-y-1.5">
+            <li key={entry.id} className="rounded-xl border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-theme-bg-secondary p-3 space-y-1.5">
               <div className="flex items-center justify-between gap-2 text-xs">
                 <span className={`px-2 py-0.5 rounded-md border ${kind.tone}`}>{kind.label}</span>
-                <span className="font-mono text-white/50">{formatCalendarDate(entry.occurredOn)}</span>
+                <span className="font-mono text-slate-600 dark:text-theme-text-muted">{formatCalendarDate(entry.occurredOn)}</span>
               </div>
-              <p className="text-sm text-white">{entry.title}</p>
-              {entry.details && <p className="text-xs text-white/70 whitespace-pre-line">{entry.details}</p>}
-              <p className="text-xxs text-white/40">
+              <p className="text-sm text-slate-900 dark:text-theme-text-primary">{entry.title}</p>
+              {entry.details && <p className="text-xs text-slate-700 dark:text-theme-text-secondary whitespace-pre-line">{entry.details}</p>}
+              <p className="text-xxs text-slate-600 dark:text-theme-text-muted">
                 {[entry.crop, entry.officerName && `recorded by ${entry.officerName}`].filter(Boolean).join(' · ')}
               </p>
               <MessagePhotos photos={entry.attachments} label={`Photo for ${entry.title}`} />

@@ -387,6 +387,7 @@ export async function createTables(pool: Pool): Promise<void> {
         phosphorus_ppm DECIMAL(8,2),
         potassium_ppm DECIMAL(8,2),
         organic_matter_pct DECIMAL(5,2),
+        organic_carbon_pct DECIMAL(5,2),
         raw JSONB,
         tested_at TIMESTAMP(6),
         imported_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP

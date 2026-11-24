@@ -71,6 +71,13 @@ function requiredForecastTemperature(value: unknown): number {
   return Math.round(temperature);
 }
 
+/** One place from Open-Meteo's geocoding search. */
+interface GeocodingResult {
+  latitude: number;
+  longitude: number;
+  country_code?: string;
+}
+
 export class WeatherService {
   private static getWeatherApiKey(): string {
     return process.env.WEATHER_API_KEY || config.externalApis.weather.apiKey || '';
@@ -143,7 +150,7 @@ export class WeatherService {
     const cacheKey = `geo:${cityName}`;
     const locationLower = locationHint;
     return rateLimitedFetch<{ latitude: number; longitude: number }>('openMeteo', cacheKey, async () => {
-      const response = await axios.get('https://geocoding-api.open-meteo.com/v1/search', {
+      const response = await axios.get<{ results?: GeocodingResult[] }>('https://geocoding-api.open-meteo.com/v1/search', {
         params: { name: cityName, count: 5, language: 'en', format: 'json' },
         timeout: OPEN_METEO_TIMEOUT_MS,
       });
@@ -165,8 +172,7 @@ export class WeatherService {
       };
       for (const [hint, code] of Object.entries(hints)) {
         if (locationLower.includes(hint)) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const match = response.data.results.find((r: any) => r.country_code === code);
+          const match = response.data.results.find(r => r.country_code === code);
           if (match) {
             coords = match;
             break;

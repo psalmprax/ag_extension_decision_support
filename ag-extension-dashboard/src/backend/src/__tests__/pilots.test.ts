@@ -9,7 +9,7 @@ import { query } from '@/services/databaseService';
 import { sendFarmerNotice } from '@/services/notify/farmerNotices';
 import { assignArms, createPilot, PilotError, startPilot } from '@/services/pilots/pilots';
 import { parseAnswer, parseYield, takePilotReply } from '@/services/pilots/pilotReplies';
-import { armYields, differenceInChange } from '@/services/pilots/results';
+import { armUse, armYields, differenceInChange } from '@/services/pilots/results';
 import { sendDueFollowUps } from '@/services/pilots/followups';
 
 const mockQuery = query as jest.Mock;
@@ -109,6 +109,19 @@ describe('results', () => {
 
     it('gives no difference until both groups have at least two farmers with both harvests', () => {
         expect(differenceInChange([100], [50, 60])).toBeNull();
+    });
+
+    it('reports each group’s visits, messages, replies and advice within the season', async () => {
+        mockQuery.mockResolvedValueOnce({ rows: [
+            { arm: 'service', visits: '14', farmers_visited: '9', farmer_messages: '40', farmers_messaging: '12', officer_replies: '31', ai_replies: '6', advice_recorded: '8', advice_reviewed: '3' },
+            { arm: 'comparison', visits: '2', farmers_visited: '2', farmer_messages: '0', farmers_messaging: '0', officer_replies: '0', ai_replies: '0', advice_recorded: '0', advice_reviewed: '0' },
+        ] });
+        const use = await armUse('p1');
+        expect(use.service).toEqual({ visits: 14, farmersVisited: 9, farmerMessages: 40, farmersMessaging: 12, officerReplies: 31, aiReplies: 6, adviceRecorded: 8, adviceReviewed: 3 });
+        expect(use.comparison.visits).toBe(2);
+        const sql = mockQuery.mock.calls[0][0] as string;
+        expect(sql).toContain("vi.status = 'completed'");
+        expect(sql).toContain('season.to_at');
     });
 });
 

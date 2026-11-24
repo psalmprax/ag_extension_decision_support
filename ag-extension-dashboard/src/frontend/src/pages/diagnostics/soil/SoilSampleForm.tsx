@@ -2,8 +2,8 @@ import React from 'react';
 import { Activity, FlaskConical, Loader2, Upload } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 
-const FIELD = 'w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white placeholder-slate-600 focus:border-emerald-500/60';
-const LABEL = 'block text-[11px] font-medium text-slate-400 mb-1';
+const FIELD = 'w-full px-3 py-2 bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-[3px] text-xs text-slate-900 dark:text-theme-text-primary placeholder-slate-400 dark:placeholder-white/40 focus:border-emerald-500/60';
+const LABEL = 'block text-[11px] font-medium text-slate-600 dark:text-theme-text-muted mb-1';
 
 interface Props {
   cropType: string;
@@ -33,10 +33,10 @@ export const SoilSampleForm: React.FC<Props> = ({
 }) => {
   const { t } = useLanguage();
   return (
-    <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 flex flex-col justify-between space-y-4">
+    <div className="p-5 rounded-[4px] bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] flex flex-col justify-between space-y-4">
       <div className="space-y-3">
-        <h3 className="text-xs font-medium text-white flex items-center gap-2">
-          <FlaskConical className="w-4 h-4 text-emerald-400" />
+        <h3 className="text-xs font-medium text-slate-900 dark:text-theme-text-primary flex items-center gap-2">
+          <FlaskConical className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
           {t('ui_soil_sample_form_title', 'Soil photo')}
         </h3>
         <div>
@@ -65,25 +65,25 @@ export const SoilSampleForm: React.FC<Props> = ({
             className={`${FIELD} resize-none`}
           />
         </div>
-        <div className="rounded-[4px] border border-dashed border-slate-700 hover:border-emerald-500/60 bg-slate-950/80 p-5 text-center transition-colors">
+        <div className="rounded-[4px] border border-dashed border-slate-900/[0.08] dark:border-white/[0.08] hover:border-emerald-500/60 bg-white dark:bg-theme-bg-primary p-5 text-center transition-colors">
           {soilImagePreview ? (
             <div className="space-y-3">
               <img
                 src={soilImagePreview}
                 alt={t('ui_soil_sample_form_preview_alt', 'Soil photo to analyze')}
-                className="max-w-xs w-full h-40 mx-auto object-cover rounded-[3px] border border-slate-800"
+                className="max-w-xs w-full h-40 mx-auto object-cover rounded-[3px] border border-slate-900/[0.08] dark:border-white/[0.08]"
               />
-              <button type="button" onClick={onRemoveImage} className="text-xs text-rose-400 hover:text-rose-300 underline">
+              <button type="button" onClick={onRemoveImage} className="text-xs text-rose-700 dark:text-rose-400 hover:text-rose-300 underline">
                 {t('ui_soil_sample_form_remove', 'Remove photo')}
               </button>
             </div>
           ) : (
             <label htmlFor="soil-upload" className="block cursor-pointer space-y-2 py-3">
-              <Upload className="w-5 h-5 mx-auto text-slate-400" />
-              <span className="block text-xs font-medium text-emerald-400 hover:text-emerald-300">
+              <Upload className="w-5 h-5 mx-auto text-slate-600 dark:text-theme-text-muted" />
+              <span className="block text-xs font-medium text-emerald-700 dark:text-emerald-400 hover:text-emerald-300">
                 {t('ui_soil_sample_form_upload', 'Add a soil photo')}
               </span>
-              <span className="block text-[11px] text-slate-500">
+              <span className="block text-[11px] text-slate-600 dark:text-theme-text-muted">
                 {t('ui_soil_sample_form_upload_hint', 'A close-up of the topsoil or a clod, up to 10 MB')}
               </span>
               <input

@@ -21,6 +21,17 @@ export interface ArmResult {
   meanChangeKgPerHa: number | null;
   medianReplyMinutes: number | null;
   followups: { asked: number; yes: number; partly: number; no: number };
+  /** Use of the service by the group within the season. */
+  use: {
+    visits: number;
+    farmersVisited: number;
+    farmerMessages: number;
+    farmersMessaging: number;
+    officerReplies: number;
+    aiReplies: number;
+    adviceRecorded: number;
+    adviceReviewed: number;
+  };
 }
 
 export interface PilotDetail {

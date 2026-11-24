@@ -43,9 +43,9 @@ describe('plantingDensity', () => {
         expect(r.plantsPerHa).toBe(44444);
     });
 
-    it('scales total seed with 15% oversow', () => {
-        const r = plantingDensity(0.9, 0.25, 1);
-        expect(r.seedKgApprox).toBe(Math.round(((44444 * 1.15) / 4000) * 10) / 10);
+    it('gives seed weight only from the seeds per kg on the packet', () => {
+        expect(plantingDensity(0.9, 0.25, 1).seedKg).toBeNull();
+        expect(plantingDensity(0.9, 0.25, 1, 3000).seedKg).toBe(14.8); // 44,444 / 3,000
     });
 });
 

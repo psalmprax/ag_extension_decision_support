@@ -46,6 +46,20 @@ export const safeStorage = {
     }
   },
 
+  /** Every saved key that starts with `prefix`; none when storage is blocked. */
+  keys(prefix: string): string[] {
+    try {
+      const store = storage();
+      if (!store) return [];
+      return Array.from({ length: store.length }, (_, index) => store.key(index)).filter(
+        (key): key is string => key !== null && key.startsWith(prefix)
+      );
+    } catch (error) {
+      warn('list', prefix, error);
+      return [];
+    }
+  },
+
   /** A saved JSON value, or `fallback` when nothing is saved or what is saved is not valid JSON. */
   json<T>(key: string, fallback: T): T {
     const raw = this.get(key);

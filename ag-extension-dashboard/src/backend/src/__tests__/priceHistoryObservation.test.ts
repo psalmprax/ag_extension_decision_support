@@ -64,7 +64,7 @@ describe('price history keeps observation time separate from record time', () =>
 
     it('never records synthetic estimates as observations', async () => {
         await recordPriceSnapshot('114', [
-            priceRow({ dataStatus: 'estimated', source: 'baseline_estimate', priceType: null }),
+            priceRow({ dataStatus: 'estimated', source: 'giews_fpma', priceType: null }),
         ]);
 
         expect(await getPriceHistory('114', 30)).toEqual([]);

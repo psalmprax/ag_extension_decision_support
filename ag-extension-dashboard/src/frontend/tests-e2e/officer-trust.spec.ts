@@ -34,7 +34,7 @@ async function fileReport(page: Page, findings: string): Promise<void> {
   // A fresh page: the visits list is reloaded and starts on its "All" view.
   await page.reload();
   await openMenu(page, 'Visits');
-  await page.getByRole('button', { name: `Mark visit for ${samuel.name} as completed` }).first().click();
+  await page.getByRole('button', { name: `Complete (${samuel.name})` }).first().click();
   const report = page.getByRole('dialog', { name: new RegExp(`Visit report: ${samuel.name}`) });
   await expect(report.getByText('Your location is saved with the report')).toBeVisible();
   await report.getByLabel('Findings *').fill(findings);

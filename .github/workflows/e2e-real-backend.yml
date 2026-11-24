@@ -88,6 +88,15 @@ jobs:
         working-directory: ag-extension-dashboard/src/backend
         run: npm run check:sql
 
+      # On the real schema: the fixture reset (which live user-story runs use) deletes accounts,
+      # and the audit chain must still check out afterwards.
+      - name: Check the fixture reset and the audit chain on the real database
+        working-directory: ag-extension-dashboard/src/backend
+        run: |
+          REAL_WORLD_RESET_TEST_DATABASE_URL="$DATABASE_URL" npx jest src/__tests__/realWorldReset.integration.test.ts
+          # The reset removed the test population; put it back for the journeys.
+          npm run seed:realworld
+
       - name: Install Playwright browser (chromium)
         working-directory: ag-extension-dashboard/src/frontend
         run: npx playwright install --with-deps chromium

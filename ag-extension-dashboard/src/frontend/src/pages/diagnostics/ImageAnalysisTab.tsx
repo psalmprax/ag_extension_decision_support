@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Camera, FileImage, Loader2, CheckCircle, CloudOff, ShieldAlert, Check } from 'lucide-react';
 import {
-  analyzePlantImage,
   type DiagnosticProvenance,
   type DiseaseDiagnosis,
   type DiagnosticReviewStatus,
 } from '../../api/diseaseService';
-import { queueSpecimenForAnalysis } from '@/services/offlineDiagnosisQueue';
+import { OnDevicePhotoResult } from '@/components/edgeVision/OnDevicePhotoResult';
+import { usePhotoCheck } from './usePhotoCheck';
+import { CropField } from '@/components/edgeVision/CropField';
 import { DiseaseSaliencyCanvas } from '@/components/canvas-ui/DiseaseSaliencyCanvas';
-import toast from 'react-hot-toast';
 import { useLanguage } from '@/lib/LanguageContext';
 import { DiagnosisValidationNote, type DiagnosisValidation } from '@/components/diagnosisTests/DiagnosisValidationNote';
 
@@ -70,19 +70,7 @@ const ImageUploadViewfinder: React.FC<{
       </div>
 
       <div className="space-y-3">
-        <div>
-          <label htmlFor="diagnosis-photo-crop" className="block text-sm text-slate-400 mb-1">
-            {t('diagnosis_photo_crop', { defaultValue: 'Crop (optional)' })}
-          </label>
-          <input
-            id="diagnosis-photo-crop"
-            type="text"
-            value={cropType}
-            onChange={e => setCropType(e.target.value)}
-            placeholder={t('diagnosis_photo_crop_placeholder', { defaultValue: 'For example maize, coffee or tomato' })}
-            className="w-full px-3 py-2 bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-md text-xs text-slate-900 dark:text-white placeholder-slate-600 focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/40 transition-colors"
-          />
-        </div>
+        <CropField value={cropType} onChange={setCropType} />
 
         <div className="relative rounded-lg border-2 border-dashed border-slate-900/[0.08] dark:border-white/[0.08] hover:border-emerald-500/60 bg-white dark:bg-theme-bg-primary p-5 text-center transition-colors group overflow-hidden">
           {imagePreview ? (
@@ -329,50 +317,6 @@ export const AnalysisResultsHUD: React.FC<{
   );
 };
 
-function getBoundedDimensions(width: number, height: number, maxDim: number): { width: number; height: number } {
-  if (width <= maxDim && height <= maxDim) {
-    return { width, height };
-  }
-  if (width > height) {
-    return { width: maxDim, height: Math.round((height * maxDim) / width) };
-  }
-  return { width: Math.round((width * maxDim) / height), height: maxDim };
-}
-
-function downscaleImageCanvas(img: HTMLImageElement, rawFallback: string): string {
-  const maxDim = 1920;
-  const { width, height } = getBoundedDimensions(img.width, img.height, maxDim);
-  if (width === img.width && height === img.height) {
-    return rawFallback;
-  }
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return rawFallback;
-  ctx.drawImage(img, 0, 0, width, height);
-  return canvas.toDataURL('image/jpeg', 0.88);
-}
-
-function processImageFile(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-      const rawResult = (e.target?.result as string) || '';
-      if (!rawResult) {
-        resolve('');
-        return;
-      }
-      const img = new Image();
-      img.onload = () => resolve(downscaleImageCanvas(img, rawResult));
-      img.onerror = () => resolve(rawResult);
-      img.src = rawResult;
-    };
-    reader.onerror = err => reject(err);
-    reader.readAsDataURL(file);
-  });
-}
-
 export function ImageAnalysisTab({
   cropType,
   setCropType,
@@ -382,100 +326,31 @@ export function ImageAnalysisTab({
   addNotification,
   getSeverityColor,
 }: Props) {
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isAnalyzingImage, setIsAnalyzingImage] = useState(false);
-  const [offlineQueued, setOfflineQueued] = useState(false);
-  const [imageAnalysis, setImageAnalysis] = useState<ImageAnalysisData | null>(null);
-
-  const handleImageSelect = (file: File) => {
-    setSelectedImage(file);
-    const reader = new FileReader();
-    reader.onload = e => {
-      setImagePreview(e.target?.result as string);
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleAnalyzeImage = async () => {
-    if (!selectedImage) return;
-
-    setIsAnalyzingImage(true);
-    setImageAnalysis(null);
-    setOfflineQueued(false);
-
-    try {
-      const base64 = await processImageFile(selectedImage);
-      const imageData = base64.includes(',') ? base64.split(',')[1] : base64;
-
-      if (!navigator.onLine) {
-        queueSpecimenForAnalysis(imageData, cropType || undefined);
-        setOfflineQueued(true);
-        toast('No connection — specimen queued for analysis when you are back online.');
-        return;
-      }
-
-      const res = await analyzePlantImage(imageData, cropType || undefined);
-      if (res.success) {
-        setImageAnalysis(res.data);
-        if (res.data.recommendations.includes('Analysis was unavailable; do not treat this as a diagnosis')) {
-          toast.error('Plant image analysis is unavailable. No diagnosis was generated.');
-          addNotification({
-            type: 'error',
-            message: 'Plant image analysis is unavailable — no diagnosis was generated.',
-          });
-        } else {
-          toast.success('Plant disease analysis completed!');
-        }
-      } else {
-        toast.error('The analysis service could not process this image. No diagnosis was generated — please try again.');
-        addNotification({
-          type: 'error',
-          message: 'Plant image analysis failed — no diagnosis was generated.',
-        });
-      }
-    } catch (error: unknown) {
-      console.error('Image analysis error:', error);
-      const status = (error as { response?: { status?: number } })?.response?.status;
-      const isPayloadTooLarge = status === 413;
-      toast.error(
-        isPayloadTooLarge
-          ? 'Image file is too large for the analysis server. Please select a smaller photo.'
-          : 'Could not reach the analysis service. No diagnosis was generated.'
-      );
-      addNotification({
-        type: 'error',
-        message: isPayloadTooLarge
-          ? 'Image upload failed: payload too large (413).'
-          : 'Failed to analyze image — no diagnosis was generated.',
-      });
-    } finally {
-      setIsAnalyzingImage(false);
-    }
-  };
+  const check = usePhotoCheck(cropType, addNotification);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
       <ImageUploadViewfinder
         cropType={cropType}
         setCropType={setCropType}
-        imagePreview={imagePreview}
-        selectedImage={selectedImage}
-        onImageSelect={handleImageSelect}
-        onRemoveImage={() => {
-          setSelectedImage(null);
-          setImagePreview(null);
-        }}
-        onAnalyze={handleAnalyzeImage}
-        isAnalyzing={isAnalyzingImage}
+        imagePreview={check.imagePreview}
+        selectedImage={check.selectedImage}
+        onImageSelect={check.handleImageSelect}
+        onRemoveImage={check.removeImage}
+        onAnalyze={check.handleAnalyzeImage}
+        isAnalyzing={check.isAnalyzingImage}
       />
 
-      <AnalysisResultsHUD
-        imageAnalysis={imageAnalysis}
-        imagePreview={imagePreview}
-        offlineQueued={offlineQueued}
-        getSeverityColor={getSeverityColor}
-      />
+      {check.onDevice && !check.imageAnalysis ? (
+        <OnDevicePhotoResult result={check.onDevice.result} reason={check.onDevice.reason} onCloudCheck={check.handleOnlineCheck} cloudBusy={check.isAnalyzingImage} />
+      ) : (
+        <AnalysisResultsHUD
+          imageAnalysis={check.imageAnalysis}
+          imagePreview={check.imagePreview}
+          offlineQueued={check.offlineQueued}
+          getSeverityColor={getSeverityColor}
+        />
+      )}
     </div>
   );
 }

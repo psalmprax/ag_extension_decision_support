@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { setAppLanguage } from './appLocale';
 import { Language } from './i18n';
 import { interpolate } from './interpolate';
 import { safeStorage } from '@/lib/safeStorage';
@@ -110,6 +111,9 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     return interpolationParams ? interpolate(raw, interpolationParams) : raw;
   };
 
+  // Set during render, not in an effect, so the screen rendered for a new language
+  // already formats its dates and numbers in it.
+  setAppLanguage(language);
   const isRTL = RTL_LANGUAGES.includes(language);
 
   useEffect(() => {

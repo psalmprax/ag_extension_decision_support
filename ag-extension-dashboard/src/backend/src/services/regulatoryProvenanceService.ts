@@ -201,8 +201,13 @@ export class RegulatoryProvenanceService {
 
   private currentDatasetVersion = 'REG-2026.09-REV1';
 
+  /** The version stamped on rules ingested now. */
+  get datasetVersion(): string {
+    return this.currentDatasetVersion;
+  }
+
   private constructor() {
-    this.seedDefaultAuthoritiesAndRules();
+    this.seedDefaultAuthorities();
   }
 
   static getInstance(): RegulatoryProvenanceService {
@@ -334,9 +339,10 @@ export class RegulatoryProvenanceService {
     // 3. Find Candidate Rules Matching Jurisdiction
     const candidateRules = Array.from(this.rules.values()).filter(r => r.jurisdiction === jurisdiction);
     if (candidateRules.length === 0) {
+      const registry = Array.from(this.authorities.values()).find(a => a.jurisdiction === jurisdiction)?.officialGazetteOrRegistryUrl;
       return this.createRejection(
         'JURISDICTION_MISMATCH',
-        `No regulatory rules ingested for jurisdiction '${jurisdiction}'.`,
+        `This app holds no verified registration data for '${jurisdiction}', so it cannot approve a chemical treatment there.${registry ? ` Check the product, crop and label rate on the registry: ${registry}` : ' Check the product with the national registration authority.'}`,
         req,
         adviceTimestamp
       );
@@ -824,209 +830,30 @@ export class RegulatoryProvenanceService {
   }
 
   /**
-   * Seeds initial baseline registry from accredited authorities:
-   * 1. Kenya Pest Control Products Board (PCPB)
-   * 2. India Central Insecticides Board & Registration Committee (CIB&RC)
-   * 3. Canada Pest Management Regulatory Agency (PMRA)
+   * The regulators whose registries the app can point to. No registrations, notices or rates are
+   * loaded: the app holds no verified copy of any registry, so every chemical recommendation that
+   * names a jurisdiction is rejected with a pointer to that country's own registry. Load real
+   * rules with ingestRule() only from a registry export whose source is recorded.
    */
-  private seedDefaultAuthoritiesAndRules(): void {
-    // 1. Authorities
+  private seedDefaultAuthorities(): void {
     this.registerAuthority({
       authorityId: 'KE-PCPB',
       jurisdiction: 'KE',
       name: 'Kenya Pest Control Products Board',
-      officialGazetteOrRegistryUrl: 'https://pcpb.go.ke/registered-products',
+      // FAO's directory of African pesticide registries, which links to the PCPB.
+      officialGazetteOrRegistryUrl: 'https://www.fao.org/pesticide-registration-toolkit/information-sources/registrations-elsewhere/africa/en',
     });
-
     this.registerAuthority({
       authorityId: 'IN-CIBRC',
       jurisdiction: 'IN',
       name: 'Central Insecticides Board & Registration Committee',
-      officialGazetteOrRegistryUrl: 'https://cibrc.gov.in/registered-products',
+      officialGazetteOrRegistryUrl: 'http://ppqs.gov.in/divisions/cib-rc/registered-products',
     });
-
     this.registerAuthority({
       authorityId: 'CA-PMRA',
       jurisdiction: 'CA',
       name: 'Pest Management Regulatory Agency (Health Canada)',
-      officialGazetteOrRegistryUrl: 'https://www.canada.ca/en/health-canada/services/consumer-product-safety/pesticides-pest-management.html',
-    });
-
-    // 2. Documents / Gazettes
-    this.registerDocument({
-      documentId: 'DOC-KE-GAZ-2024-01',
-      authorityId: 'KE-PCPB',
-      gazetteCitation: 'Kenya Gazette Notice No. 4512 — Registered Agrochemicals 2024',
-      publishedDate: '2024-01-15T00:00:00Z',
-      sourceHash: 'a1b2c3d4e5f60102030405060708090a0b0c0d0e0f1011121314151617181920',
-    });
-
-    this.registerDocument({
-      documentId: 'DOC-KE-BAN-2023-09',
-      authorityId: 'KE-PCPB',
-      gazetteCitation: 'Kenya Gazette Notice No. 12934 — Prohibition of Chlorpyrifos and Endosulfan',
-      publishedDate: '2023-09-01T00:00:00Z',
-      sourceHash: 'b2c3d4e5f6a102030405060708090a0b0c0d0e0f101112131415161718192021',
-    });
-
-    this.registerDocument({
-      documentId: 'DOC-IN-CIB-2025-03',
-      authorityId: 'IN-CIBRC',
-      gazetteCitation: 'Government of India Gazette Schedule II (CIBRC-2025)',
-      publishedDate: '2025-03-01T00:00:00Z',
-      sourceHash: 'c3d4e5f6a1b2030405060708090a0b0c0d0e0f10111213141516171819202122',
-    });
-
-    // 3. Seed Rules
-    // Rule 1: Ridomil Gold MZ 68 WG in Kenya for Tomato/Potato Late Blight
-    this.ingestRule({
-      ruleId: 'RULE-KE-PCPB-0142-POTATO',
-      registrationNumber: 'PCPB(CR)0142',
-      jurisdiction: 'KE',
-      authorityId: 'KE-PCPB',
-      documentId: 'DOC-KE-GAZ-2024-01',
-      datasetVersion: this.currentDatasetVersion,
-      commercialTradeName: 'Ridomil Gold MZ 68 WG',
-      activeIngredients: [
-        { name: 'metalaxyl-M', concentrationGramsPerKgOrL: 40 },
-        { name: 'mancozeb', concentrationGramsPerKgOrL: 640 },
-      ],
-      formulationType: 'WG',
-      crop: 'potato',
-      targetPests: ['late blight', 'phytophthora infestans', 'early blight'],
-      maxDoseMlOrGramsHa: 2500, // 2.5 kg/ha formulation
-      applicationMethod: 'knapsack_foliar',
-      legalPhiDays: 14,
-      legalReiHours: 24,
-      maxApplicationsPerSeason: 3,
-      environmentalRestrictions: {
-        bufferZoneMeters: 10,
-        pollinatorLockoutDuringFlowering: false,
-        aquaticRunoffRisk: 'moderate',
-      },
-      status: 'active_registered',
-      effectiveFrom: '2024-01-01T00:00:00Z',
-      effectiveTo: '2028-12-31T23:59:59Z',
-    });
-
-    // Rule 2: Ridomil Gold for Tomato
-    this.ingestRule({
-      ruleId: 'RULE-KE-PCPB-0142-TOMATO',
-      registrationNumber: 'PCPB(CR)0142',
-      jurisdiction: 'KE',
-      authorityId: 'KE-PCPB',
-      documentId: 'DOC-KE-GAZ-2024-01',
-      datasetVersion: this.currentDatasetVersion,
-      commercialTradeName: 'Ridomil Gold MZ 68 WG',
-      activeIngredients: [
-        { name: 'metalaxyl-M', concentrationGramsPerKgOrL: 40 },
-        { name: 'mancozeb', concentrationGramsPerKgOrL: 640 },
-      ],
-      formulationType: 'WG',
-      crop: 'tomato',
-      targetPests: ['late blight', 'phytophthora infestans'],
-      maxDoseMlOrGramsHa: 2500,
-      applicationMethod: 'knapsack_foliar',
-      legalPhiDays: 7, // 7 days for tomato
-      legalReiHours: 24,
-      maxApplicationsPerSeason: 3,
-      environmentalRestrictions: {
-        bufferZoneMeters: 10,
-        pollinatorLockoutDuringFlowering: false,
-        aquaticRunoffRisk: 'moderate',
-      },
-      status: 'active_registered',
-      effectiveFrom: '2024-01-01T00:00:00Z',
-      effectiveTo: '2028-12-31T23:59:59Z',
-    });
-
-    // Rule 3: Banned Substance — Chlorpyrifos in Kenya
-    this.ingestRule({
-      ruleId: 'RULE-KE-PCPB-BANNED-CHLORPYRIFOS',
-      registrationNumber: 'PCPB(CR)0088-REVOKED',
-      jurisdiction: 'KE',
-      authorityId: 'KE-PCPB',
-      documentId: 'DOC-KE-BAN-2023-09',
-      datasetVersion: this.currentDatasetVersion,
-      commercialTradeName: 'Dursban 480 EC',
-      activeIngredients: [{ name: 'chlorpyrifos', concentrationGramsPerKgOrL: 480 }],
-      formulationType: 'EC',
-      crop: 'maize',
-      targetPests: ['fall armyworm', 'stem borer'],
-      maxDoseMlOrGramsHa: 1500,
-      applicationMethod: 'knapsack_foliar',
-      legalPhiDays: 30,
-      legalReiHours: 48,
-      maxApplicationsPerSeason: 0,
-      environmentalRestrictions: {
-        bufferZoneMeters: 50,
-        pollinatorLockoutDuringFlowering: true,
-        aquaticRunoffRisk: 'extreme',
-      },
-      status: 'revoked_banned',
-      effectiveFrom: '2023-09-01T00:00:00Z',
-      effectiveTo: '2099-12-31T23:59:59Z',
-    });
-
-    // Rule 4: Confidor 200 SL in India (Pollinator lockout during flowering)
-    this.ingestRule({
-      ruleId: 'RULE-IN-CIBRC-CONFIDOR-COTTON',
-      registrationNumber: 'CIR-2234',
-      jurisdiction: 'IN',
-      authorityId: 'IN-CIBRC',
-      documentId: 'DOC-IN-CIB-2025-03',
-      datasetVersion: this.currentDatasetVersion,
-      commercialTradeName: 'Confidor 200 SL',
-      activeIngredients: [{ name: 'imidacloprid', concentrationGramsPerKgOrL: 200 }],
-      formulationType: 'SL',
-      crop: 'cotton',
-      targetPests: ['aphids', 'jassids', 'whitefly'],
-      maxDoseMlOrGramsHa: 100, // 100 mL/ha
-      applicationMethod: 'knapsack_foliar',
-      legalPhiDays: 21,
-      legalReiHours: 24,
-      maxApplicationsPerSeason: 2,
-      environmentalRestrictions: {
-        bufferZoneMeters: 15,
-        pollinatorLockoutDuringFlowering: true, // Severe bee toxicant
-        aquaticRunoffRisk: 'moderate',
-      },
-      status: 'active_registered',
-      effectiveFrom: '2025-01-01T00:00:00Z',
-      effectiveTo: '2029-12-31T23:59:59Z',
-    });
-
-    // Rule 5: Emergency Locust Authorization (Desert Locust Control)
-    this.ingestRule({
-      ruleId: 'RULE-KE-EMERGENCY-LOCUST-2026',
-      registrationNumber: 'EAU-KE-2026-LOCUST',
-      jurisdiction: 'KE',
-      authorityId: 'KE-PCPB',
-      documentId: 'DOC-KE-GAZ-2024-01',
-      datasetVersion: this.currentDatasetVersion,
-      commercialTradeName: 'Chlorfenapyr Ultra 240 SC',
-      activeIngredients: [{ name: 'chlorfenapyr', concentrationGramsPerKgOrL: 240 }],
-      formulationType: 'SC',
-      crop: 'pasture',
-      targetPests: ['desert locust', 'swarms of desert locust'],
-      maxDoseMlOrGramsHa: 500,
-      applicationMethod: 'boom_spray',
-      legalPhiDays: 14,
-      legalReiHours: 48,
-      maxApplicationsPerSeason: 1,
-      environmentalRestrictions: {
-        bufferZoneMeters: 30,
-        pollinatorLockoutDuringFlowering: true,
-        aquaticRunoffRisk: 'extreme',
-      },
-      status: 'emergency_authorization',
-      effectiveFrom: '2026-01-01T00:00:00Z',
-      effectiveTo: '2026-12-31T23:59:59Z',
-      emergencyAuthorizationWindow: {
-        validFrom: '2026-06-01T00:00:00Z',
-        validTo: '2026-10-31T23:59:59Z',
-        exemptionNotice: 'National Desert Locust Biosecurity Crisis Exemption (Ministry of Agriculture)',
-      },
+      officialGazetteOrRegistryUrl: 'https://www.canada.ca/en/health-canada/services/consumer-product-safety/pesticides-pest-management/registrants-applicants/tools/pesticide-label-search.html',
     });
   }
 }

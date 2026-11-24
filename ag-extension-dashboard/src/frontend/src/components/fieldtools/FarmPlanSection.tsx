@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListChecks, FileText, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -77,7 +78,7 @@ export function FarmPlanSection({ cropCycleId }: { cropCycleId: string }) {
                                     </span>
                                     {m.dueDate && (
                                         <span className="text-xxs text-slate-500 shrink-0">
-                                            {new Date(m.dueDate).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                            {new Date(m.dueDate).toLocaleDateString(appLocale(), { month: 'short', day: 'numeric' })}
                                         </span>
                                     )}
                                 </li>

@@ -14,7 +14,7 @@ import { rateLimitedFetch } from './externalApiGuard';
  *   PRECTOTCORR     — Corrected precipitation (mm/day)
  *   RH2M            — Relative humidity at 2m (%)
  *   WS2M            — Wind speed at 2m (m/s)
- *   ALLSKY_SFC_SW_DWN — Insolation (kW-hr/m²/day)
+ *   ALLSKY_SFC_SW_DWN — All-sky surface solar radiation (MJ/m²/day; the RE community reports kW-hr/m²/day)
  */
 
 const POWER_BASE = 'https://power.larc.nasa.gov/api/temporal/daily/point';
@@ -37,7 +37,7 @@ const PARAM_LABELS: Record<string, string> = {
   PRECTOTCORR: 'Precipitation (mm)',
   RH2M: 'Humidity (%)',
   WS2M: 'Wind Speed (m/s)',
-  ALLSKY_SFC_SW_DWN: 'Solar Radiation (kW-hr/m²/day)',
+  ALLSKY_SFC_SW_DWN: 'Solar Radiation (MJ/m²/day)',
 };
 
 export interface DailyPoint {

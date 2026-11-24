@@ -1,5 +1,6 @@
 import apiClient from '@/api/client';
 import { purgePrivateApiCache } from '@/lib/privateApiCache';
+import { forgetOfflineReads } from '@/lib/offlineReadCache';
 import type {
   AuthResponse,
   LoginCredentials,
@@ -115,6 +116,8 @@ export const logout = async (): Promise<void> => {
   } catch {
     // Logout best-effort
   } finally {
+    // Copies of fields and soil tests kept for offline use leave with the person.
+    forgetOfflineReads();
     try {
       await purgePrivateApiCache();
     } catch {

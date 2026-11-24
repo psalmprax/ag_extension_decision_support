@@ -193,28 +193,28 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
   };
 
   return (
-    <div className="p-4 sm:p-5 rounded-xl bg-slate-900/80 border border-emerald-500/25 backdrop-blur-xl shadow-xl space-y-4">
+    <div className="p-4 sm:p-5 rounded-xl bg-slate-50 dark:bg-theme-bg-secondary border border-emerald-500/25 backdrop-blur-xl shadow-xl space-y-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-white/[0.08] pb-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-900/[0.08] dark:border-white/[0.08] pb-3">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-700 dark:text-emerald-400">
             <Shield className="w-4 h-4" />
           </div>
           <div>
-            <div className="text-xs font-medium text-white flex items-center gap-2">
+            <div className="text-xs font-medium text-slate-900 dark:text-theme-text-primary flex items-center gap-2">
               {t('ui_anti_fraud_verification_badge_zero_trust_visit_verification_engine')}
-              <span className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 border border-emerald-500/25 ">
+              <span className="text-[9px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25 ">
                 {t('ui_anti_fraud_verification_badge_anti_fraud')}
               </span>
             </div>
-            <div className="text-[11px] text-white/50">
+            <div className="text-[11px] text-slate-600 dark:text-theme-text-muted">
               {t('ui_anti_fraud_verification_badge_hardware_gps_geofence_two_party_hand')}
             </div>
           </div>
         </div>
 
         {/* Tab switcher */}
-        <div className="flex bg-slate-950 rounded-lg p-0.5 border border-white/[0.06] text-xxs font-medium">
+        <div className="flex bg-white dark:bg-theme-bg-primary rounded-lg p-0.5 border border-slate-900/[0.08] dark:border-white/[0.08] text-xxs font-medium">
           <button
             type="button"
             onClick={() => setActiveTab('geofence')}
@@ -248,12 +248,12 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
       {/* Tab 1: Geofence Verification */}
       {activeTab === 'geofence' && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 rounded-xl bg-slate-950/70 border border-white/[0.06]">
+          <div className="flex items-center justify-between p-3 rounded-xl bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08]">
             <div className="flex items-center gap-3">
-              <MapPin className="w-4 h-4 text-emerald-400" />
+              <MapPin className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
               <div>
-                <div className="text-xs font-medium text-white">{t('ui_anti_fraud_verification_badge_physical_proximity_check')}</div>
-                <div className="text-[11px] text-white/50">
+                <div className="text-xs font-medium text-slate-900 dark:text-theme-text-primary">{t('ui_anti_fraud_verification_badge_physical_proximity_check')}</div>
+                <div className="text-[11px] text-slate-600 dark:text-theme-text-muted">
                   {geofence ? geofence.details : 'Check live officer GPS coordinates against farm boundary.'}
                 </div>
               </div>
@@ -282,9 +282,9 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
             >
               <div className="flex items-center gap-2">
                 {geofence.isValid ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                 ) : (
-                  <AlertTriangle className="w-4 h-4 text-red-400" />
+                  <AlertTriangle className="w-4 h-4 text-red-700 dark:text-red-400" />
                 )}
                 <span>
                   {geofence.isValid
@@ -292,7 +292,7 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
                     : `Geofence breach detected (${geofence.distanceMeters}m away).`}
                 </span>
               </div>
-              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-black/40 border border-white/10">
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-slate-900/[0.04] dark:bg-black/40 border border-slate-900/[0.08] dark:border-white/[0.08]">
                 {t('ui_anti_fraud_verification_badge_risk_score_100', { riskScore: geofence.riskScore })}
               </span>
             </motion.div>
@@ -303,20 +303,20 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
       {/* Tab 2: Two-Party Farmer Co-Sign */}
       {activeTab === 'cosign' && (
         <div className="space-y-3">
-          <div className="p-3.5 rounded-xl bg-slate-950/70 border border-white/[0.06] space-y-3">
+          <div className="p-3.5 rounded-xl bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] space-y-3">
             <div className="flex items-center justify-between">
-              <div className="text-xs text-white/80 font-medium">
-                {t('ui_anti_fraud_verification_badge_physical_handshake_confirmation_for')} <strong className="text-white">{farmerName}</strong>
+              <div className="text-xs text-slate-700 dark:text-theme-text-secondary font-medium">
+                {t('ui_anti_fraud_verification_badge_physical_handshake_confirmation_for')} <strong className="text-slate-900 dark:text-theme-text-primary">{farmerName}</strong>
               </div>
               {isCoSignVerified ? (
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
                   <Check className="w-3 h-3" /> {t('ui_anti_fraud_verification_badge_co_signed')}
                 </span>
               ) : (
                 <button
                   type="button"
                   onClick={handleGenerateCoSign}
-                  className="text-xs text-emerald-400 hover:text-emerald-300 underline font-medium"
+                  className="text-xs text-emerald-700 dark:text-emerald-400 hover:text-emerald-300 underline font-medium"
                 >
                   {coSignOtp ? 'Regenerate Code' : 'Generate Farmer OTP'}
                 </button>
@@ -324,11 +324,11 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
             </div>
 
             {coSignOtp && !isCoSignVerified && (
-              <div className="p-3 rounded-lg bg-slate-900 border border-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="p-3 rounded-lg bg-slate-50 dark:bg-theme-bg-secondary border border-emerald-500/20 flex flex-col sm:flex-row items-center justify-between gap-3">
                 <div className="flex items-center gap-2">
-                  <KeyRound className="w-4 h-4 text-emerald-400" />
-                  <span className="text-xs text-white/60">{t('ui_anti_fraud_verification_badge_farmer_otp_code')}</span>
-                  <span className="font-mono text-base font-medium text-emerald-400 bg-black/40 px-3 py-1 rounded-md border border-emerald-500/30">
+                  <KeyRound className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+                  <span className="text-xs text-slate-600 dark:text-theme-text-muted">{t('ui_anti_fraud_verification_badge_farmer_otp_code')}</span>
+                  <span className="font-mono text-base font-medium text-emerald-700 dark:text-emerald-400 bg-slate-900/[0.04] dark:bg-black/40 px-3 py-1 rounded-md border border-emerald-500/30">
                     {coSignOtp}
                   </span>
                 </div>
@@ -340,7 +340,7 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
                     placeholder="Enter 6-digit OTP"
                     value={enteredOtp}
                     onChange={e => setEnteredOtp(e.target.value)}
-                    className="w-32 px-3 py-1 text-xs rounded-lg bg-black/40 border border-white/15 text-white font-mono text-center focus:outline-none focus:border-emerald-400"
+                    className="w-32 px-3 py-1 text-xs rounded-lg bg-slate-900/[0.04] dark:bg-black/40 border border-white/15 text-slate-900 dark:text-theme-text-primary font-mono text-center focus:outline-none focus:border-emerald-400"
                   />
                   <button
                     type="button"
@@ -359,12 +359,12 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
       {/* Tab 3: Canopy Evidence Check */}
       {activeTab === 'evidence' && (
         <div className="space-y-3">
-          <div className="p-3.5 rounded-xl bg-slate-950/70 border border-white/[0.06] flex items-center justify-between">
+          <div className="p-3.5 rounded-xl bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center justify-between">
             <div className="space-y-0.5">
-              <div className="text-xs font-medium text-white flex items-center gap-2">
+              <div className="text-xs font-medium text-slate-900 dark:text-theme-text-primary flex items-center gap-2">
                 {t('ui_anti_fraud_verification_badge_canopy_evidence_cross_audit')}
               </div>
-              <div className="text-[11px] text-white/50">
+              <div className="text-[11px] text-slate-600 dark:text-theme-text-muted">
                 {t('ui_anti_fraud_verification_badge_cross_references_field_diagnostic_ob')}
               </div>
             </div>
@@ -372,7 +372,7 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
             <button
               type="button"
               onClick={handleRunSatelliteAudit}
-              className="px-3 py-1.5 rounded-lg bg-white/[0.06] border border-white/[0.1] hover:bg-white/[0.1] text-xs font-medium text-white transition-colors"
+              className="px-3 py-1.5 rounded-lg bg-slate-900/[0.03] dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] hover:bg-white/[0.1] text-xs font-medium text-slate-900 dark:text-theme-text-primary transition-colors"
             >
               {t('ui_anti_fraud_verification_badge_run_canopy_evidence_audit')}
             </button>
@@ -382,19 +382,19 @@ export const AntiFraudVerificationBadge: React.FC<AntiFraudVerificationBadgeProp
             <motion.div
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              className="p-3 rounded-xl bg-slate-950/80 border border-emerald-500/20 space-y-2 text-xs"
+              className="p-3 rounded-xl bg-white dark:bg-theme-bg-primary border border-emerald-500/20 space-y-2 text-xs"
             >
               <div className="flex items-center justify-between">
-                <span className="text-white/60">{t('ui_anti_fraud_verification_badge_observed_canopy')}</span>
-                <span className="font-medium text-emerald-400">{canopyAudit.evidenceVigorLevel}</span>
+                <span className="text-slate-600 dark:text-theme-text-muted">{t('ui_anti_fraud_verification_badge_observed_canopy')}</span>
+                <span className="font-medium text-emerald-700 dark:text-emerald-400">{canopyAudit.evidenceVigorLevel}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-white/60">{t('ui_anti_fraud_verification_badge_evidence_consistency')}</span>
-                <span className="font-medium text-emerald-400">{canopyAudit.evidenceConsistencyScore}%</span>
+                <span className="text-slate-600 dark:text-theme-text-muted">{t('ui_anti_fraud_verification_badge_evidence_consistency')}</span>
+                <span className="font-medium text-emerald-700 dark:text-emerald-400">{canopyAudit.evidenceConsistencyScore}%</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-white/60">{t('ui_anti_fraud_verification_badge_audit_recommendation')}</span>
-                <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/25">
+                <span className="text-slate-600 dark:text-theme-text-muted">{t('ui_anti_fraud_verification_badge_audit_recommendation')}</span>
+                <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-500/25">
                   {canopyAudit.recommendedAction}
                 </span>
               </div>

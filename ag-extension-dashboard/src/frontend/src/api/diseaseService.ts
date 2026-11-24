@@ -1,4 +1,5 @@
 import apiClient from './client';
+import { shrinkForVision } from '@/lib/visionPhoto';
 
 export const MAX_DIAGNOSIS_VIDEO_BYTES = 30 * 1024 * 1024;
 
@@ -87,7 +88,8 @@ export const analyzePlantImage = async (
     reportId?: string;
   };
 }> => {
-  const response = await apiClient.post('/ai/diseases/diagnose/image', { imageData, cropType });
+  // Shrunk to what the vision model needs: its cost grows with the photo's size.
+  const response = await apiClient.post('/ai/diseases/diagnose/image', { imageData: await shrinkForVision(imageData), cropType });
   return response.data;
 };
 
@@ -143,6 +145,6 @@ export const analyzeSoilImage = async (
   cropType?: string,
   details?: Record<string, unknown>
 ): Promise<{ success: boolean; data: SoilAnalysisResult }> => {
-  const response = await apiClient.post('/ai/diseases/diagnose/soil', { imageData, cropType, details });
+  const response = await apiClient.post('/ai/diseases/diagnose/soil', { imageData: await shrinkForVision(imageData), cropType, details });
   return response.data;
 };

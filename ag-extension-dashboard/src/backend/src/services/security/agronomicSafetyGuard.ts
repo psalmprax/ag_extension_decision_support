@@ -43,12 +43,14 @@ export interface AgronomicMetricInput {
 class AgronomicSafetyGuard {
   private static instance: AgronomicSafetyGuard;
 
-  // Maximum safe upper boundaries based on FAO & Ministry of Agriculture agronomic guidelines
+  // Review limits chosen by the app team, not published safe limits. A rate above one is not
+  // judged unsafe; it is held so a person checks it against the label, the soil test or the
+  // national guide before it reaches a farmer.
   private static readonly SAFETY_BOUNDS = {
     nitrogenMaxKgHa: 300,
     phosphorusMaxKgHa: 150,
     potassiumMaxKgHa: 200,
-    pesticideMaxMlHa: 4000, // 4 Liters / ha max active ingredient for smallholders
+    pesticideMaxMlHa: 4000,
     minSoilPh: 3.5,
     maxSoilPh: 9.5,
   };
@@ -89,8 +91,9 @@ class AgronomicSafetyGuard {
     if (quarantineDiseases.length > 0) return 'critical_hazard';
     const hasCritical = violations.some(
       v =>
-        v.startsWith('Excessive Nitrogen') ||
-        v.startsWith('Lethal pesticide') ||
+        v.startsWith('Nitrogen rate held for review') ||
+        v.startsWith('Pesticide rate held for review') ||
+        v.startsWith('Pre-harvest interval check') ||
         v.startsWith('Pre-Harvest Interval') ||
         v.startsWith('PROHIBITED SUBSTANCE') ||
         v.includes('strictly rejected') ||
@@ -134,32 +137,32 @@ class AgronomicSafetyGuard {
     // 2. Nitrogen validation
     if (metrics.nitrogenKgHa !== undefined && metrics.nitrogenKgHa > AgronomicSafetyGuard.SAFETY_BOUNDS.nitrogenMaxKgHa) {
       violations.push(
-        `Excessive Nitrogen dosage: ${metrics.nitrogenKgHa} kg/ha exceeds safe ceiling of ${AgronomicSafetyGuard.SAFETY_BOUNDS.nitrogenMaxKgHa} kg/ha (Risk of crop burn & groundwater contamination)`
+        `Nitrogen rate held for review: ${metrics.nitrogenKgHa} kg/ha is above ${AgronomicSafetyGuard.SAFETY_BOUNDS.nitrogenMaxKgHa} kg/ha, the most this app passes without a person checking it against the soil test and the national fertilizer guide`
       );
     }
 
     // 3. Phosphorus validation
     if (metrics.phosphorusKgHa !== undefined && metrics.phosphorusKgHa > AgronomicSafetyGuard.SAFETY_BOUNDS.phosphorusMaxKgHa) {
       violations.push(
-        `Excessive Phosphorus dosage: ${metrics.phosphorusKgHa} kg/ha exceeds safe ceiling of ${AgronomicSafetyGuard.SAFETY_BOUNDS.phosphorusMaxKgHa} kg/ha`
+        `Phosphorus rate held for review: ${metrics.phosphorusKgHa} kg/ha is above ${AgronomicSafetyGuard.SAFETY_BOUNDS.phosphorusMaxKgHa} kg/ha, the most this app passes without a person checking it against the soil test and the national fertilizer guide`
       );
     }
 
     // 4. Baseline heuristic pesticide application rate validation
     if (metrics.pesticideMlHa !== undefined && metrics.pesticideMlHa > AgronomicSafetyGuard.SAFETY_BOUNDS.pesticideMaxMlHa) {
       violations.push(
-        `Lethal pesticide dosage: ${metrics.pesticideMlHa} mL/ha exceeds maximum safe application threshold of ${AgronomicSafetyGuard.SAFETY_BOUNDS.pesticideMaxMlHa} mL/ha (High risk of phytotoxicity & toxicity)`
+        `Pesticide rate held for review: ${metrics.pesticideMlHa} mL/ha is above ${AgronomicSafetyGuard.SAFETY_BOUNDS.pesticideMaxMlHa} mL/ha, the most this app passes without a person checking it against the product label`
       );
     }
 
     // 5. Soil pH range
     if (metrics.soilPh !== undefined && (metrics.soilPh < AgronomicSafetyGuard.SAFETY_BOUNDS.minSoilPh || metrics.soilPh > AgronomicSafetyGuard.SAFETY_BOUNDS.maxSoilPh)) {
-      violations.push(`Unrealistic or extreme Soil pH: ${metrics.soilPh} (Valid arable range is 3.5 - 9.5)`);
+      violations.push(`Soil pH ${metrics.soilPh} is outside ${AgronomicSafetyGuard.SAFETY_BOUNDS.minSoilPh}–${AgronomicSafetyGuard.SAFETY_BOUNDS.maxSoilPh}, the range this app accepts as a likely reading; check the measurement`);
     }
   }
 
   /**
-   * Validates structured numerical agronomic metrics against hard safety ceilings
+   * Checks structured numerical agronomic metrics against the app's review limits
    * and authoritative regulatory provenance rules.
    */
   validateStructuredMetrics(metrics: AgronomicMetricInput): AgronomicBoundaryCheck {
@@ -173,14 +176,14 @@ class AgronomicSafetyGuard {
     // 6. Pre-Harvest Interval (PHI) check (Baseline heuristic fallback if regulatory record absent)
     if (!regulatoryDecision && metrics.daysToHarvest !== undefined && metrics.daysToHarvest < 7 && (metrics.pesticideMlHa !== undefined && metrics.pesticideMlHa > 0)) {
       violations.push(
-        `Pre-Harvest Interval (PHI) violation: Chemical application scheduled ${metrics.daysToHarvest} days before harvest (Minimum safe PHI is 7–14 days to prevent toxic residues in consumed produce)`
+        `Pre-harvest interval check: a spray is planned ${metrics.daysToHarvest} days before harvest. The label sets the waiting time for each product and crop; this app holds any spray within 7 days of harvest until that is checked`
       );
     }
 
     // 7. Pollinator & Flowering safety check (Baseline heuristic fallback if regulatory record absent)
     if (!regulatoryDecision && metrics.floweringOrPollinatorsPresent && (metrics.pesticideMlHa !== undefined && metrics.pesticideMlHa > 0)) {
       violations.push(
-        `Pollinator safety violation: Insecticide/pesticide spraying during flowering or active pollinator foraging creates severe bee mortality risk (Apply only during late evening hours when bees are inactive)`
+        `Pollinator check: a spray is planned while the crop is flowering or bees are foraging. Follow the label's instructions on bees and flowering before spraying`
       );
     }
 

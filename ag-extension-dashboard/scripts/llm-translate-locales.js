@@ -21,19 +21,26 @@ function getEnvKey(key) {
   return '';
 }
 
-// Groq when its key is set, otherwise AIHubMix (the provider the app itself uses).
-// Both speak the OpenAI chat-completions protocol.
+// Every provider whose key is set, in this order: one that refuses (no credit, bad key) or keeps
+// failing hands its strings to the next, so an empty account no longer stops the run. All speak
+// the OpenAI chat-completions protocol. Each lists models to try in turn when one is not served.
+// TRANSLATE_MODEL replaces the first available provider's models.
 const PROVIDERS = [
-  { name: 'Groq', key: getEnvKey('GROQ_API_KEY'), url: 'https://api.groq.com/openai/v1/chat/completions', model: 'qwen/qwen3.6-27b' },
-  { name: 'AIHubMix', key: getEnvKey('AIHUBMIX_API_KEY'), url: 'https://aihubmix.com/v1/chat/completions', model: 'gemini-3.1-flash-lite' },
-];
-const PROVIDER = PROVIDERS.find(provider => provider.key);
-if (!PROVIDER) {
-  console.error('Missing GROQ_API_KEY or AIHUBMIX_API_KEY in environment or .env');
+  { name: 'AIHubMix', key: getEnvKey('AIHUBMIX_API_KEY'), url: 'https://aihubmix.com/v1/chat/completions', models: ['gemini-3.1-flash-lite'] },
+  { name: 'Groq', key: getEnvKey('GROQ_API_KEY'), url: 'https://api.groq.com/openai/v1/chat/completions', models: ['qwen/qwen3.6-27b'] },
+  {
+    name: 'NVIDIA', key: getEnvKey('NVIDIA_API_KEY'), url: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    models: ['nvidia/nemotron-3-super-120b-a12b', 'nvidia/nemotron-3.5-lightning-30b-a3b'],
+  },
+  // OpenRouter's free router sends each request to a free model that is up.
+  { name: 'OpenRouter', key: getEnvKey('OPENROUTER_API_KEY'), url: 'https://openrouter.ai/api/v1/chat/completions', models: ['openrouter/free'] },
+].filter(provider => provider.key);
+if (PROVIDERS.length === 0) {
+  console.error('Missing AIHUBMIX_API_KEY, GROQ_API_KEY, NVIDIA_API_KEY or OPENROUTER_API_KEY in environment or .env');
   process.exit(1);
 }
-const MODEL = process.env.TRANSLATE_MODEL || PROVIDER.model;
-console.log(`Translating with ${PROVIDER.name} (${MODEL})`);
+if (process.env.TRANSLATE_MODEL) PROVIDERS[0].models = [process.env.TRANSLATE_MODEL];
+console.log(`Translation providers, in order: ${PROVIDERS.map(p => `${p.name} (${p.models.join(', ')})`).join('; ')}`);
 
 const LANGUAGE_NAMES = {
   ar: 'Arabic',
@@ -107,46 +114,100 @@ function checkProtectedTerms(original, translated) {
   return true;
 }
 
-async function callModel(prompt, retries = 3) {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const res = await fetch(PROVIDER.url, {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${PROVIDER.key}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          max_tokens: 4096,
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are an expert multilingual localization specialist for agricultural and field telemetry software. You must return valid JSON only.',
-            },
-            { role: 'user', content: prompt },
-          ],
-          response_format: { type: 'json_object' },
-          temperature: 0.2,
-        }),
-      });
+/** Every provider refused for a reason a retry cannot fix (no credit, bad key): stop the run. */
+class ProviderRefused extends Error {}
 
-      if (!res.ok) {
-        const errText = await res.text();
-        console.warn(`  [${PROVIDER.name} HTTP ${res.status}] ${errText.slice(0, 150)}`);
-        await new Promise(r => setTimeout(r, 2000 * (i + 1)));
-        continue;
+/** The model's reply as an object: without a reasoning block or a ```json fence, else the first {...}. */
+function parseReply(content) {
+  const text = String(content).replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, '');
+  try {
+    return JSON.parse(text);
+  } catch {
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start === -1 || end <= start) throw new Error('reply is not JSON');
+    return JSON.parse(text.slice(start, end + 1));
+  }
+}
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/**
+ * One request to one provider and model. Returns the parsed object, or throws: 'refused' for
+ * 401/402/403 (or a quota message), 'model' when the model is not served, 'retry' otherwise.
+ */
+async function requestOnce(provider, model, prompt) {
+  const body = {
+    model,
+    max_tokens: 8192,
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are an expert multilingual localization specialist for agricultural and field telemetry software. You must return valid JSON only.',
+      },
+      { role: 'user', content: prompt },
+    ],
+    temperature: 0.2,
+  };
+  if (!provider.noJsonMode) body.response_format = { type: 'json_object' };
+  const res = await fetch(provider.url, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${provider.key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(180_000),
+  });
+  if (!res.ok) {
+    const errText = (await res.text()).slice(0, 300);
+    console.warn(`  [${provider.name} ${model} HTTP ${res.status}] ${errText.slice(0, 150)}`);
+    const kind = [401, 402, 403].includes(res.status) || /insufficient|balance|quota limit/i.test(errText) ? 'refused'
+      : res.status === 404 || /model.*(not found|does not exist|unavailable)/i.test(errText) ? 'model'
+      : res.status === 400 && /response_format|json_object|json mode/i.test(errText) ? 'nojson'
+      : res.status === 429 ? 'rate'
+      : 'retry';
+    throw Object.assign(new Error(`${provider.name} HTTP ${res.status}: ${errText.slice(0, 200)}`), { kind });
+  }
+  const data = await res.json();
+  return parseReply(data.choices?.[0]?.message?.content ?? '');
+}
+
+/**
+ * The translated object from the first provider and model that answers. A provider that refuses
+ * is dropped for the rest of the run; one that keeps failing is skipped for this request only.
+ * Null when none answered; ProviderRefused when every provider has refused.
+ */
+async function callModel(prompt, retries = 4) {
+  for (const provider of PROVIDERS) {
+    if (provider.refused) continue;
+    for (const model of provider.models) {
+      if (provider.missingModels?.has(model)) continue;
+      for (let attempt = 0; attempt < retries; attempt++) {
+        try {
+          return await requestOnce(provider, model, prompt);
+        } catch (e) {
+          if (e.kind === 'refused') {
+            provider.refused = e.message;
+            console.warn(`  ${provider.name} refused; using the next provider from now on.`);
+            break;
+          }
+          if (e.kind === 'model') {
+            (provider.missingModels ??= new Set()).add(model);
+            break;
+          }
+          if (e.kind === 'nojson') {
+            provider.noJsonMode = true;
+            continue;
+          }
+          console.warn(`  [${provider.name} ${model} attempt ${attempt + 1}] ${e.message}`);
+          // Several jobs share one key: on "too many requests" wait long enough for the window to pass.
+          await sleep((e.kind === 'rate' ? 20_000 : 2000) * (attempt + 1) + Math.random() * 1000);
+        }
       }
-
-      const data = await res.json();
-      const content = String(data.choices?.[0]?.message?.content ?? '');
-      // Some models wrap the object in a ```json fence despite response_format.
-      return JSON.parse(content.replace(/^\s*```(?:json)?\s*/i, '').replace(/\s*```\s*$/, ''));
-    } catch (e) {
-      console.warn(`  [${PROVIDER.name} error, attempt ${i + 1}] ${e.message}`);
-      await new Promise(r => setTimeout(r, 2000 * (i + 1)));
+      if (provider.refused) break;
     }
+  }
+  if (PROVIDERS.every(provider => provider.refused)) {
+    throw new ProviderRefused(PROVIDERS.map(provider => provider.refused).join('; '));
   }
   return null;
 }
@@ -179,6 +240,15 @@ ${JSON.stringify(chunk, null, 2)}`;
     }
   }
   return validated;
+}
+
+/** The locale file in en.json's key order. */
+function saveLocale(filePath, en, locale) {
+  const sorted = {};
+  Object.keys(en).forEach(k => {
+    sorted[k] = locale[k] || en[k];
+  });
+  fs.writeFileSync(filePath, JSON.stringify(sorted, null, 4) + '\n');
 }
 
 async function translateLanguage(code, onlyKeys = null) {
@@ -218,6 +288,7 @@ async function translateLanguage(code, onlyKeys = null) {
   // CHUNK_SIZE env override allows smaller, reliable batches (default 30).
   const CHUNK_SIZE = Math.max(1, Number(process.env.TRANSLATE_CHUNK_SIZE ?? 30) || 30);
   let translatedCount = 0;
+  let refused = null;
 
   for (let i = 0; i < pendingKeys.length; i += CHUNK_SIZE) {
     const chunkKeys = pendingKeys.slice(i, i + CHUNK_SIZE);
@@ -226,22 +297,29 @@ async function translateLanguage(code, onlyKeys = null) {
       chunk[k] = en[k];
     });
 
-    const translated = await translateChunk(chunk, code, langName);
+    let translated;
+    try {
+      translated = await translateChunk(chunk, code, langName);
+    } catch (e) {
+      if (!(e instanceof ProviderRefused)) throw e;
+      refused = e; // keep what was translated, then stop
+      break;
+    }
     for (const [k, v] of Object.entries(translated)) {
       locale[k] = v;
       translatedCount++;
     }
+    saveLocale(filePath, en, locale); // a timeout or a refusal keeps everything done so far
 
     console.log(`  [${code}] Processed ${Math.min(i + CHUNK_SIZE, pendingKeys.length)}/${pendingKeys.length} (translated: ${translatedCount})`);
     await new Promise(r => setTimeout(r, 500));
   }
 
-  const sorted = {};
-  Object.keys(en).forEach(k => {
-    sorted[k] = locale[k] || en[k];
-  });
-
-  fs.writeFileSync(filePath, JSON.stringify(sorted, null, 4) + '\n');
+  saveLocale(filePath, en, locale);
+  if (refused) {
+    console.error(`[${code} - ${langName}] Stopped after ${translatedCount} of ${pendingKeys.length} keys: ${refused.message}`);
+    throw refused;
+  }
   console.log(`✅ [${code} - ${langName}] Done! Saved with ${translatedCount} translated keys.`);
 }
 
@@ -262,6 +340,10 @@ async function main() {
 }
 
 main().catch(err => {
+  if (err instanceof ProviderRefused) {
+    console.error(`\nStopped: every provider refused (${err.message}).\nNothing more can be translated until one accepts requests again (for example, an account is topped up).`);
+    process.exit(2);
+  }
   console.error('Fatal error:', err);
   process.exit(1);
 });

@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { Visit } from '@/types/dashboard';
 import { Button } from './ui/Button';
 import { Clock, Calendar } from 'lucide-react';
@@ -23,8 +24,8 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
 
   return (
     <section>
-      <h3 className="text-sm font-medium mb-6 flex items-center gap-2 text-slate-400">
-        <Clock className="w-4 h-4 text-slate-500" />
+      <h3 className="text-sm font-medium mb-6 flex items-center gap-2 text-slate-600 dark:text-theme-text-muted">
+        <Clock className="w-4 h-4 text-slate-600 dark:text-theme-text-muted" />
         {t('nav_visits')}
       </h3>
       <div className="space-y-4">
@@ -55,7 +56,7 @@ export const FarmerVisitTimeline: React.FC<FarmerVisitTimelineProps> = ({
                   <span className="text-xxs font-medium text-gray-400">
                     {(() => {
                       const raw = visit.scheduledAt || visit.scheduled_at || visit.startedAt || visit.started_at;
-                      return raw && !isNaN(new Date(raw).getTime()) ? new Date(raw).toLocaleDateString() : '—';
+                      return raw && !isNaN(new Date(raw).getTime()) ? new Date(raw).toLocaleDateString(appLocale()) : '—';
                     })()}
                   </span>
                 </div>

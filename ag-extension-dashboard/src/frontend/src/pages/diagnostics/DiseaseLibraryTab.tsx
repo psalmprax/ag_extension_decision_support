@@ -18,28 +18,28 @@ export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onVi
   );
 
   return (
-    <div className="p-5 rounded-[4px] bg-slate-900/80 border border-slate-800 space-y-5">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-800">
+    <div className="p-5 rounded-[4px] bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] space-y-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <BookOpen className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-xs font-medium text-white">
+            <BookOpen className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
+            <h3 className="text-xs font-medium text-slate-900 dark:text-theme-text-primary">
               {t('ui_disease_library_tab_pathology_encyclopedia_protocols')}
             </h3>
           </div>
-          <p className="text-[11px] font-mono text-slate-400">
+          <p className="text-[11px] font-mono text-slate-600 dark:text-theme-text-muted">
             {t('ui_disease_library_tab_browse_the_internal_disease_referenc')}
           </p>
         </div>
 
         <div className="relative">
-          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600 dark:text-theme-text-muted" />
           <input
             type="text"
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search plant pathogen or crop..."
-            className="w-full md:w-72 ps-9 pe-3 py-2 bg-slate-950 border border-slate-800 rounded-[3px] text-xs text-white placeholder-slate-600 focus:border-emerald-500/60 font-mono transition-all"
+            className="w-full md:w-72 ps-9 pe-3 py-2 bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-[3px] text-xs text-slate-900 dark:text-theme-text-primary placeholder-slate-400 dark:placeholder-white/40 focus:border-emerald-500/60 font-mono transition-all"
           />
         </div>
       </div>
@@ -53,17 +53,17 @@ export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onVi
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.03 }}
               onClick={() => onViewDiseaseInfo(disease)}
-              className="p-3.5 rounded-[4px] bg-slate-950 border border-slate-800 hover:border-emerald-500/40 hover:bg-slate-900/80 transition-all cursor-pointer group shadow-lg shadow-black/40 flex items-center justify-between"
+              className="p-3.5 rounded-[4px] bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-emerald-500/40 hover:bg-slate-900/80 transition-all cursor-pointer group shadow-lg shadow-black/40 flex items-center justify-between"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-[3px] bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0 group-hover:scale-105 transition-transform">
+                <div className="w-8 h-8 rounded-[3px] bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-700 dark:text-emerald-400 shrink-0 group-hover:scale-105 transition-transform">
                   <Leaf className="w-4 h-4" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="text-xs font-medium text-white group-hover:text-emerald-300 transition-colors truncate">
+                  <h4 className="text-xs font-medium text-slate-900 dark:text-theme-text-primary group-hover:text-emerald-300 transition-colors truncate">
                     {disease}
                   </h4>
-                  <span className="text-[10px] font-mono text-slate-500 font-medium">
+                  <span className="text-[10px] font-mono text-slate-600 dark:text-theme-text-muted font-medium">
                     {t('ui_disease_library_tab_reference_information')}
                   </span>
                 </div>
@@ -73,15 +73,15 @@ export function DiseaseLibraryTab({ allDiseases, radiusClass: _radiusClass, onVi
           ))}
 
           {filteredDiseases.length === 0 && (
-            <div className="col-span-full text-center py-12 text-slate-500">
-              <p className="text-xs font-medium text-slate-400">{t('ui_disease_library_tab_no_matching_pathology_dossiers')}</p>
+            <div className="col-span-full text-center py-12 text-slate-600 dark:text-theme-text-muted">
+              <p className="text-xs font-medium text-slate-600 dark:text-theme-text-muted">{t('ui_disease_library_tab_no_matching_pathology_dossiers')}</p>
               <p className="text-[10px] font-mono mt-1">{t('ui_disease_library_tab_try_a_different_crop_or_disease_keyw')}</p>
             </div>
           )}
         </div>
       ) : (
         <div className="flex items-center justify-center py-16">
-          <Loader2 className="w-6 h-6 animate-spin text-emerald-400" />
+          <Loader2 className="w-6 h-6 animate-spin text-emerald-700 dark:text-emerald-400" />
         </div>
       )}
     </div>

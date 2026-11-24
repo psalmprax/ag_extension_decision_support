@@ -1,23 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Bot,
-  X,
-  Camera,
-  Mic,
-  Send,
-  MessageSquare,
-  Smartphone,
-  UploadCloud,
-  Volume2,
-  Leaf,
-  ArrowRight,
-  Video,
-  Loader2,
-  Square,
-  Link2,
-  RotateCcw,
-} from 'lucide-react';
+import { Bot, X, Camera, Mic, Send, MessageSquare, Smartphone, UploadCloud, Volume2, Leaf, ArrowRight, Video, Loader2, Square, Link2, RotateCcw } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { getChatCompletion, analyzeImage } from '@/api/aiService';
 import { useFieldVoiceRecorder } from '@/hooks/useFieldVoiceRecorder';
@@ -449,12 +433,12 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
     if (!chatInput.trim() || isLoadingAi) return;
 
     const userText = chatInput.trim();
-    const now = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const now = new Date().toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' });
     setMessages(prev => [...prev, { sender: 'user', text: userText, time: now }]);
     setChatInput('');
     setIsLoadingAi(true);
 
-    const answeredAt = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const answeredAt = () => new Date().toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' });
     try {
       const res = await getChatCompletion(userText, undefined, language);
       const reply = res.data?.messages?.find(m => m.role === 'assistant')?.content;
@@ -507,7 +491,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
       {
         sender: 'user',
         text: capturedVoiceNote.trim(),
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: new Date().toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' }),
       },
     ]);
     setActiveTab('chat');
@@ -692,7 +676,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                           {
                             sender: 'user',
                             text: note,
-                            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                            time: new Date().toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' }),
                           },
                         ]);
                         setActiveTab('chat');
@@ -709,7 +693,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                                 {
                                   sender: 'ai',
                                   text: 'No response received — please try again, or save the observation for your extension officer to review.',
-                                  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                  time: new Date().toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' }),
                                 },
                               ]);
                               return;
@@ -719,7 +703,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                               {
                                 sender: 'ai',
                                 text: reply,
-                                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                time: new Date().toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' }),
                               },
                             ]);
                           })
@@ -730,7 +714,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
                               {
                                 sender: 'ai',
                                 text: 'Notice: Could not connect to remote AI inference model.',
-                                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+                                time: new Date().toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' }),
                               },
                             ]);
                           })

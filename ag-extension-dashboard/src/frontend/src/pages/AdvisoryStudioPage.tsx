@@ -172,9 +172,9 @@ export function AdvisoryStudioPage() {
 
   return (
     <div className="min-h-screen bg-white dark:bg-theme-bg-primary text-slate-800 dark:text-theme-text-primary flex flex-col rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] overflow-hidden">
-      <header className="h-16 border-b border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] backdrop-blur-md px-6 flex items-center justify-between z-20 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-md bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center justify-center text-slate-700 dark:text-theme-text-secondary">
+      <header className="min-h-16 border-b border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] backdrop-blur-md px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 z-20 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 shrink-0 rounded-md bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center justify-center text-slate-700 dark:text-theme-text-secondary">
             <Layers className="w-4 h-4 text-emerald-400" />
           </div>
           <div>
@@ -195,7 +195,7 @@ export function AdvisoryStudioPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2.5">
           <select aria-label="Workflow template"
             onChange={(e) => handleSelectTemplate(e.target.value)}
             className="px-2.5 py-1.5 text-xs rounded-md bg-slate-100 dark:bg-white/[0.07] border border-slate-900/[0.08] dark:border-white/[0.08] text-slate-700 dark:text-theme-text-secondary focus:outline-none focus:border-emerald-500"
@@ -256,15 +256,15 @@ export function AdvisoryStudioPage() {
         </div>
       )}
 
-      <div className="flex-1 flex overflow-hidden">
-        <aside className="w-72 border-e border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-5 flex flex-col gap-4 shrink-0 overflow-y-auto">
+      <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden">
+        <aside className="w-full lg:w-72 border-b lg:border-b-0 lg:border-e border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-4 sm:p-5 flex flex-col gap-4 shrink-0 lg:overflow-y-auto">
           <SavedProtocols activeId={workflowId} onOpen={handleOpenSaved} />
           <div>
             <h3 className="text-xs font-medium text-slate-400 mb-1 flex items-center gap-1.5">
               <Layers className="w-3.5 h-3.5 text-slate-400" />
               <span>{t('ui_advisory_studio_page_agronomic_blocks')}</span>
             </h3>
-            <p className="text-[11px] text-slate-500 mb-3">{t('ui_advisory_studio_page_click_block_to_insert_into_workflow')}</p>
+            <p className="text-xs text-slate-500 mb-3">{t('ui_advisory_studio_page_click_block_to_insert_into_workflow')}</p>
 
             <div className="space-y-2">
               {PALETTE_ITEMS.map((item) => (
@@ -282,14 +282,14 @@ export function AdvisoryStudioPage() {
                       {item.title}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-400 leading-snug">{item.description}</p>
+                  <p className="text-xs text-slate-500 dark:text-theme-text-muted leading-snug">{item.description}</p>
                 </button>
               ))}
             </div>
           </div>
 
           <div className="mt-auto pt-4 border-t border-slate-900/[0.08] dark:border-white/[0.08]">
-            <div className="p-3 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] text-[11px] text-slate-400 flex items-start gap-2">
+            <div className="p-3 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-500 dark:text-theme-text-muted flex items-start gap-2">
               <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
               <span>
                 {t('ui_advisory_studio_page_zero_code_logic_conditional_branchin')}
@@ -298,12 +298,12 @@ export function AdvisoryStudioPage() {
           </div>
         </aside>
 
-        <main className="flex-1 bg-white dark:bg-theme-bg-primary p-6 overflow-y-auto flex flex-col items-center">
+        <main className="flex-1 bg-white dark:bg-theme-bg-primary p-4 sm:p-6 lg:overflow-y-auto flex flex-col items-center">
           <div className="w-full max-w-2xl">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
                 <h2 className="text-sm font-medium text-slate-800 dark:text-theme-text-primary">{t('ui_advisory_studio_page_protocol_decision_canvas')}</h2>
-                <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-white/[0.07] text-slate-400 border border-slate-900/[0.08] dark:border-white/[0.08] font-mono">
+                <span className="text-xs px-2 py-0.5 rounded bg-slate-100 dark:bg-white/[0.07] text-slate-500 border border-slate-900/[0.08] dark:border-white/[0.08] tabular-nums">
                   {t('ui_advisory_studio_page_steps', { length: steps.length })}
                 </span>
               </div>
@@ -344,20 +344,20 @@ export function AdvisoryStudioPage() {
           </div>
         </main>
 
-        <aside className="w-84 border-s border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-5 flex flex-col items-center shrink-0 overflow-y-auto">
+        <aside className="w-full lg:w-84 border-t lg:border-t-0 lg:border-s border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-4 sm:p-5 flex flex-col items-center shrink-0 lg:overflow-y-auto">
           <div className="w-full flex items-center justify-between mb-4">
             <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-theme-text-secondary">
               <Smartphone className="w-4 h-4 text-slate-400" />
               <span>{t('ui_advisory_studio_page_mobile_pwa_preview')}</span>
             </div>
-            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.07] text-slate-700 dark:text-theme-text-secondary border border-slate-900/[0.08] dark:border-white/[0.08]">
+            <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.07] text-slate-700 dark:text-theme-text-secondary border border-slate-900/[0.08] dark:border-white/[0.08]">
               {t('ui_advisory_studio_page_offline_ready')}
             </span>
           </div>
 
           <PhoneSimulator steps={steps} />
 
-          <div className="mt-4 w-full p-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] text-slate-400 text-[11px] text-center">
+          <div className="mt-4 w-full p-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] text-slate-500 dark:text-theme-text-muted text-xs text-center">
             {t('ui_advisory_studio_page_rule_updates_on_canvas_reflect_immed')}
           </div>
         </aside>

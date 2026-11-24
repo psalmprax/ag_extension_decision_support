@@ -2,6 +2,7 @@ import { Client } from 'pg';
 import { randomUUID } from 'node:crypto';
 import { resetRealWorldFixtures } from '@/seed/realWorldReset';
 import { REAL_WORLD_EMAIL_DOMAIN } from '@/seed/realWorldSeed';
+import { entryHashSql } from '@/services/audit/auditChain';
 
 /**
  * Runs the fixture reset against a real PostgreSQL schema. The reset removes
@@ -23,6 +24,7 @@ const databaseUrl = process.env.REAL_WORLD_RESET_TEST_DATABASE_URL;
         sharedVisit: randomUUID(),
         fixtureRoom: randomUUID(),
         consultationInFixtureRoom: randomUUID(),
+        fixtureAuditEntry: randomUUID(),
     };
 
     beforeAll(async () => {
@@ -64,6 +66,19 @@ const databaseUrl = process.env.REAL_WORLD_RESET_TEST_DATABASE_URL;
             [ids.consultationInFixtureRoom, ids.realFarmer, ids.realOfficer, ids.fixtureRoom]
         );
 
+        // A chained audit entry by the fixture officer, written as appendChainedAuditEntry does.
+        await client.query('BEGIN');
+        await client.query('SELECT pg_advisory_xact_lock(727011001)');
+        await client.query(
+            `INSERT INTO audit_logs (id, actor_id, actor_key, actor_role, action, method, path, status_code, created_at, chain_seq, prev_hash)
+             SELECT $1, $2, $2, 'extension_officer', 'auth_login', 'POST', '/api/auth/login', 200, NOW(),
+                    COALESCE(MAX(chain_seq), 0) + 1, (SELECT entry_hash FROM audit_logs WHERE chain_seq = (SELECT MAX(chain_seq) FROM audit_logs))
+               FROM audit_logs`,
+            [ids.fixtureAuditEntry, ids.fixtureOfficer]
+        );
+        await client.query(`UPDATE audit_logs a SET entry_hash = ${entryHashSql('a')} WHERE a.id = $1`, [ids.fixtureAuditEntry]);
+        await client.query('COMMIT');
+
         await resetRealWorldFixtures(client);
     });
 
@@ -78,6 +93,14 @@ const databaseUrl = process.env.REAL_WORLD_RESET_TEST_DATABASE_URL;
     });
 
     const one = async (sql: string, params: unknown[]) => (await client.query(sql, params)).rows[0];
+
+    it("keeps the fixture officer's audit entry checkable after the reset deletes the account", async () => {
+        const entry = await one(
+            `SELECT actor_id, actor_key, entry_hash = ${entryHashSql('a')} AS hash_ok FROM audit_logs a WHERE id = $1`,
+            [ids.fixtureAuditEntry]
+        );
+        expect(entry).toEqual({ actor_id: null, actor_key: ids.fixtureOfficer, hash_ok: true });
+    });
 
     it('removes the fixture officer', async () => {
         expect(await one('SELECT id FROM users WHERE id = $1', [ids.fixtureOfficer])).toBeUndefined();

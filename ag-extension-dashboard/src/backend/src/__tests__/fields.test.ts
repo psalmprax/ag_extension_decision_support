@@ -129,6 +129,9 @@ jest.mock('../services/prismaService', () => {
                             },
                         });
                     }
+                    if (args.where.id === '88888888-8888-4888-8888-888888888888') {
+                        return Promise.resolve({ id: args.where.id, farmerId: '99999999-9999-4999-8999-999999999999', name: 'Someone else', isActive: true });
+                    }
                     return Promise.resolve(null);
                 }),
                 count: jest.fn().mockResolvedValue(1),
@@ -145,6 +148,9 @@ jest.mock('../services/prismaService', () => {
                 findMany: jest.fn().mockResolvedValue([]),
                 delete: jest.fn().mockImplementation((args: Prisma.CropCycleDeleteArgs) => Promise.resolve({ id: args.where.id })),
                 findUnique: jest.fn().mockImplementation((args: Prisma.CropCycleFindUniqueArgs) => {
+                    if (args.where.id === '55555555-5555-4555-8555-555555555555') {
+                        return Promise.resolve({ id: args.where.id, fieldId: '22222222-2222-2222-2222-222222222222', cropName: 'Beans', status: 'growing' });
+                    }
                     if (args.where.id === 'cycle-1') {
                         return Promise.resolve({
                             id: 'cycle-1',
@@ -262,6 +268,111 @@ describe('Fields & Crops API Integration Tests', () => {
         expect(response.status).toBe(201);
         expect(response.body.success).toBe(true);
         expect(response.body.data.name).toBe('East Slope');
+    });
+
+    it('lets a farmer add a field without naming their own farm', async () => {
+        const response = await request(app)
+            .post('/api/v1/fields')
+            .set('Authorization', `Bearer ${farmerToken}`)
+            .send({ name: 'Home Plot', areaHectares: 0.5 });
+
+        expect(response.status).toBe(201);
+        expect(response.body.data.farmerId).toBe('11111111-1111-1111-1111-111111111111');
+    });
+
+    it('saves a field under the id the device chose while offline', async () => {
+        const id = '77777777-7777-4777-8777-777777777777';
+        const response = await request(app)
+            .post('/api/v1/fields')
+            .set('Authorization', `Bearer ${farmerToken}`)
+            .send({ id, name: 'Walked offline', areaHectares: 0.8 });
+
+        expect(response.status).toBe(201);
+        expect(response.body.data.id).toBe(id);
+    });
+
+    it('keeps one copy of a field sent again after an offline save', async () => {
+        const response = await request(app)
+            .post('/api/v1/fields')
+            .set('Authorization', `Bearer ${farmerToken}`)
+            .send({ id: '22222222-2222-2222-2222-222222222222', name: 'North Plot', areaHectares: 2 });
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.name).toBe('North Plot');
+    });
+
+    it("refuses a device id that another farmer's field already has", async () => {
+        const response = await request(app)
+            .post('/api/v1/fields')
+            .set('Authorization', `Bearer ${farmerToken}`)
+            .send({ id: '88888888-8888-4888-8888-888888888888', name: 'Mine', areaHectares: 1 });
+
+        expect(response.status).toBe(409);
+    });
+
+    it('keeps one copy of a crop cycle sent again, and wants a UUID for a device id', async () => {
+        const url = '/api/v1/fields/22222222-2222-2222-2222-222222222222/cycles';
+        const again = await request(app)
+            .post(url)
+            .set('Authorization', `Bearer ${farmerToken}`)
+            .send({ id: '55555555-5555-4555-8555-555555555555', cropName: 'Beans', status: 'growing' });
+        expect(again.status).toBe(200);
+        expect(again.body.data.cropName).toBe('Beans');
+
+        const fresh = await request(app)
+            .post(url)
+            .set('Authorization', `Bearer ${farmerToken}`)
+            .send({ id: '66666666-6666-4666-8666-666666666666', cropName: 'Sorghum' });
+        expect(fresh.status).toBe(201);
+        expect(fresh.body.data.id).toBe('66666666-6666-4666-8666-666666666666');
+
+        const notAnId = await request(app).post(url).set('Authorization', `Bearer ${farmerToken}`).send({ id: 'abc', cropName: 'Maize' });
+        expect(notAnId.status).toBe(400);
+    });
+
+    it('measures the area and location from a mapped boundary', async () => {
+        // About 100 m a side near the equator: one hectare.
+        const d = 100 / 111_195;
+        const response = await request(app)
+            .post('/api/v1/fields')
+            .set('Authorization', `Bearer ${farmerToken}`)
+            .send({
+                name: 'Walked Plot',
+                areaHectares: 5,
+                boundaryCoordinates: [{ lat: 0, lng: 36 }, { lat: 0, lng: 36 + d }, { lat: d, lng: 36 + d }, { lat: d, lng: 36 }],
+                boundaryMethod: 'walked',
+                boundaryAccuracyM: 4,
+            });
+
+        expect(response.status).toBe(201);
+        expect(response.body.data.areaHectares).toBeCloseTo(1, 2);
+        expect(response.body.data.latitude).toBeCloseTo(d / 2, 6);
+        expect(response.body.data.boundaryAccuracyM).toBe(4);
+    });
+
+    it('refuses a boundary that crosses itself', async () => {
+        const response = await request(app)
+            .post('/api/v1/fields')
+            .set('Authorization', `Bearer ${farmerToken}`)
+            .send({
+                name: 'Bowtie',
+                areaHectares: 1,
+                boundaryCoordinates: [{ lat: 0, lng: 0 }, { lat: 0.001, lng: 0.001 }, { lat: 0, lng: 0.001 }, { lat: 0.001, lng: 0 }],
+                boundaryMethod: 'drawn',
+            });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toMatch(/crosses itself/);
+    });
+
+    it('refuses a field with an impossible soil pH', async () => {
+        const response = await request(app)
+            .post('/api/v1/fields')
+            .set('Authorization', `Bearer ${farmerToken}`)
+            .send({ name: 'Plot', areaHectares: 1, soilPh: 19 });
+
+        expect(response.status).toBe(400);
+        expect(response.body.error).toMatch(/soilPh/);
     });
 
     it('should allow farmer to create a new crop cycle', async () => {

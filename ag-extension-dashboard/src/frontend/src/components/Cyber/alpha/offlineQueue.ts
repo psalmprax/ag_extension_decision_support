@@ -1,9 +1,10 @@
 import { safeStorage } from '@/lib/safeStorage';
+import { appLocale } from '@/lib/appLocale';
 // Offline queue moved verbatim from components/Cyber/AlphaAI.tsx (pure move).
 
 const OFFLINE_QUEUE_KEY = 'alphaAiOfflineQueue';
 
-export const nowStamp = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+export const nowStamp = () => new Date().toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' });
 
 function readOfflineQueue(): string[] {
   return safeStorage.json<string[]>(OFFLINE_QUEUE_KEY, []);

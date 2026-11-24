@@ -9,12 +9,16 @@ export const useAppSync = (
   const [pendingSyncCount, setPendingSyncCount] = useState(0);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  // Offline sync queue
+  // Offline sync queue. A change the device could not keep is said out loud: it is lost on reload.
   useEffect(() => {
     const unsubscribe = syncQueue.onCountChange(setPendingSyncCount);
+    const unsubscribeErrors = syncQueue.onPersistenceError(message => addNotification({ type: 'error', message }));
     setPendingSyncCount(syncQueue.getPendingCount());
-    return unsubscribe;
-  }, []);
+    return () => {
+      unsubscribe();
+      unsubscribeErrors();
+    };
+  }, [addNotification]);
 
   // Online/offline detection with sync queue
   useEffect(() => {
@@ -50,7 +54,7 @@ export const useAppSync = (
       setIsOnline(false);
       addNotification({
         type: 'warning',
-        message: 'You are offline — field visits and offline diagnoses are queued for sync; other edits need a connection',
+        message: 'You are offline. Visits, plant photos, fields, soil tests and crop cycles are saved on this device and sync when you are back online; other changes need a connection.',
       });
     };
 

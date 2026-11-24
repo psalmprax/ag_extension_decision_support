@@ -147,7 +147,7 @@ test.describe('Demo mode network isolation', () => {
     await expect(page.getByRole('heading', { name: 'Knowledge', exact: true })).toBeVisible({ timeout: 15000 });
 
     // Verify benchmark research scenario is clickable and executes
-    const scenarioCard = page.getByText('Severe Soil Acidity (pH 4.8) & Liming Protocol').first();
+    const scenarioCard = page.getByText('Liming very acidic soil (pH below 5)').first();
     await expect(scenarioCard).toBeVisible({ timeout: 10000 });
     await scenarioCard.click();
 

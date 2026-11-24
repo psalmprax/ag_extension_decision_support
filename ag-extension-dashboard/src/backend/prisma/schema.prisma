@@ -452,6 +452,9 @@ model Report {
 model AuditLog {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   actorId      String?   @map("actor_id") @db.Uuid
+  /// The actor as written, with no foreign key: the hash chain covers this, not actorId, which
+  /// becomes null when the account is deleted
+  actorKey     String?   @map("actor_key") @db.Uuid
   actorRole    String?   @map("actor_role") @db.VarChar(50)
   action       String    @db.VarChar(120)
   method       String    @db.VarChar(10)
@@ -463,12 +466,24 @@ model AuditLog {
   userAgent    String?   @map("user_agent") @db.VarChar(512)
   requestBody  Json?     @map("request_body")
   createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  /// Position in the hash chain; null for entries written before the chain began
+  chainSeq     BigInt?   @unique @map("chain_seq")
+  prevHash     String?   @map("prev_hash") @db.Char(64)
+  entryHash    String?   @map("entry_hash") @db.Char(64)
   actor        User?     @relation(fields: [actorId], references: [id], onDelete: SetNull)
 
   @@index([actorId, createdAt])
   @@index([action, createdAt])
   @@index([resourceType, resourceId])
   @@map("audit_logs")
+}
+
+/// Facts about the audit hash chain that migrations fix, such as the first entry with actor_key
+model AuditChainMeta {
+  key   String @id @db.VarChar(64)
+  value String
+
+  @@map("audit_chain_meta")
 }
 
 model AnalyticsEvent {
@@ -881,10 +896,17 @@ model Field {
   id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   farmerId            String             @map("farmer_id") @db.Uuid
   name                String             @db.VarChar(100)
-  areaHectares        Decimal?           @map("area_hectares") @db.Decimal(10, 2)
+  areaHectares        Decimal?           @map("area_hectares") @db.Decimal(12, 4)
   soilType            String?            @map("soil_type") @db.VarChar(50)
   soilPh              Decimal?           @map("soil_ph") @db.Decimal(4, 2)
+  latitude            Decimal?           @db.Decimal(9, 6)
+  longitude           Decimal?           @db.Decimal(9, 6)
+  /// Corners of the field's edge in order, as [{ lat, lng }]; the area is worked out from them.
   boundaryCoordinates Json?              @map("boundary_coordinates")
+  /// walked (GPS fixes along the edge) or drawn (corners tapped on a map)
+  boundaryMethod      String?            @map("boundary_method") @db.VarChar(10)
+  /// Typical GPS error of a walked boundary, in metres
+  boundaryAccuracyM   Decimal?           @map("boundary_accuracy_m") @db.Decimal(6, 1)
   isActive            Boolean?           @default(true) @map("is_active")
   createdAt           DateTime?          @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt           DateTime?          @default(now()) @map("updated_at") @db.Timestamp(6)
@@ -1275,6 +1297,7 @@ model SoilLabResult {
   phosphorusPpm   Decimal?  @map("phosphorus_ppm") @db.Decimal(8, 2)
   potassiumPpm    Decimal?  @map("potassium_ppm") @db.Decimal(8, 2)
   organicMatterPct Decimal? @map("organic_matter_pct") @db.Decimal(5, 2)
+  organicCarbonPct Decimal? @map("organic_carbon_pct") @db.Decimal(5, 2)
   raw             Json?
   testedAt        DateTime? @map("tested_at") @db.Timestamp(6)
   importedAt      DateTime  @default(now()) @map("imported_at") @db.Timestamp(6)

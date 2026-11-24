@@ -41,16 +41,16 @@ export function FarmerRecordingsSection({ farmerId, farmerName }: { farmerId: st
   };
 
   return (
-    <section className="rounded-lg border border-slate-800 bg-slate-900/60 p-4 space-y-3" aria-labelledby={`recordings-${farmerId}`}>
-      <h3 id={`recordings-${farmerId}`} className="text-sm font-medium text-white">Recordings for {farmerName}</h3>
-      {failed && <p className="text-xs text-rose-300" role="alert">{failed}</p>}
-      {!recordings && !failed && <p className="text-xs text-slate-400">Finding recordings in their language…</p>}
+    <section className="rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-theme-bg-secondary p-4 space-y-3" aria-labelledby={`recordings-${farmerId}`}>
+      <h3 id={`recordings-${farmerId}`} className="text-sm font-medium text-slate-900 dark:text-theme-text-primary">Recordings for {farmerName}</h3>
+      {failed && <p className="text-xs text-rose-700 dark:text-rose-400" role="alert">{failed}</p>}
+      {!recordings && !failed && <p className="text-xs text-slate-600 dark:text-theme-text-muted">Finding recordings in their language…</p>}
       <ul className="space-y-3">
         {recordings?.map(recording => (
           <li key={recording.id} className="space-y-1.5">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
-                <p className="text-sm text-white">{recording.title}</p>
+                <p className="text-sm text-slate-900 dark:text-theme-text-primary">{recording.title}</p>
                 <div className="[&_p]:text-slate-400"><RecordingCredit recording={recording} /></div>
               </div>
               <Button size="sm" variant="secondary" disabled={sending === recording.id} onClick={() => void send(recording)}>

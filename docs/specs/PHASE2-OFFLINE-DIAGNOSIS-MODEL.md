@@ -1,6 +1,6 @@
 # Decision Memo: On-Device Offline Crop-Disease Diagnosis (Phase 2.1)
 
-**Status:** Implementation active — Two-Stage On-Device Architecture adopted
+**Status:** Not shipped. No model has passed the acceptance gate below. The files once in `models/` were random-weight scaffolds and were removed in November 2026; offline photos get the colour check only. The architecture below is the plan, not what runs.
 **Decision needed from:** Product owner (accuracy gate acceptance, model license sign-off)
 
 ## Adopted Architecture: Two-Stage On-Device Edge Pipeline
@@ -53,8 +53,8 @@ Collect ≥300 field photos via officers (existing upload pipeline), label with 
 - PlantVillage dataset: CC-BY-SA — attribution required, share-alike on derivatives
 - Candidate models: verify model card licenses before shipping; fallback = train in-house weights using provided scripts
 
-## Export & Build Pipeline
+## Training & Build Pipeline
 
-1. `python3 scripts/ml/export_yolo_onnx.py --imgsz 320 --int8`
-2. `python3 scripts/ml/export_mobilevit_onnx.py --model mobilevit_xxs --int8`
-3. Models cached via Workbox `CacheFirst` on `/\/models\/.*\.onnx$/i` for 30 days.
+1. `uv run scripts/ml/train_disease_classifier.py --out out/` (or the "Train disease model" workflow): fine-tunes MobileNetV3 on field photos (PlantDoc, handheld maize, Ugandan cassava), exports int8 ONNX and scores the quantised file on held-out field photos.
+2. The run writes `MODEL_CARD.md` and a `manifest.json` entry. The app loads a model only when that entry meets the gate above (`src/services/edgeModelManifest.ts`).
+3. Models cached via Workbox `CacheFirst` on `/\/models\/.*\.onnx$/i` for 30 days; the manifest NetworkFirst.

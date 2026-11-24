@@ -1,17 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageSquare, MapPin, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAppStore } from '../store/useAppStore';
-import { fetchSMSHistory, sendSMS, sendBulkSMS, translateMessage } from '../api/smsService';
-import { fetchFarmers } from '../api/farmerService';
-import { fetchUsage } from '../api/billingService';
+import { sendSMS, sendBulkSMS, translateMessage } from '../api/smsService';
 import { ChannelOnboardingModal } from '../components/channels/ChannelOnboardingModal';
 import { GoalModeCampaignModal } from '../components/campaigns/GoalModeCampaignModal';
 import toast from 'react-hot-toast';
-import type { Contact, SMSHistoryRecord, SMSMessage } from './sms/types';
+import type { Contact } from './sms/types';
+import { useSmsData } from './sms/useSmsData';
 import { SMSComposerPanel } from './sms/ComposerPanel';
 import { SMSContactsPanel } from './sms/ContactsPanel';
 import { SMSRightPanel } from './sms/RightPanel';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 export function SMSPage() {
   const { t, language } = useLanguage();
@@ -49,8 +49,6 @@ export function SMSPage() {
     },
   ];
 
-  const [recentContacts, setRecentContacts] = useState<Contact[]>([]);
-  const [isLoadingContacts, setIsLoadingContacts] = useState(false);
 
   // Form State
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -66,96 +64,7 @@ export function SMSPage() {
 
   const [response, setResponse] = useState<{ message?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [history, setHistory] = useState<SMSMessage[]>([]);
-
-  // Quota State - fetched from billing API
-  const [quota, setQuota] = useState<{
-    current: number;
-    limit: number;
-    sent: number;
-    failed: number;
-  } | null>(null);
-  const [isLoadingQuota, setIsLoadingQuota] = useState(false);
-
-  // Fetch History
-  const loadHistory = useCallback(async () => {
-    try {
-      const data = await fetchSMSHistory();
-      if (!data.success) throw new Error('SMS history request failed');
-      setHistory(data.data.map(normalizeSmsHistory));
-    } catch (err) {
-      console.error('Failed to fetch SMS history:', err);
-      setHistory([]);
-      toast.error('SMS history is unavailable');
-    }
-  }, []);
-
-  const normalizeSmsHistory = (msg: SMSHistoryRecord): SMSMessage => ({
-    id: msg.id,
-    to: msg.recipient_phone,
-    message: msg.message,
-    status:
-      msg.status === 'sent' || msg.status === 'delivered'
-        ? 'success'
-        : msg.status === 'failed'
-          ? 'failed'
-          : 'pending',
-    timestamp: new Date(msg.created_at || Date.now()),
-  });
-
-  const loadContacts = async () => {
-    setIsLoadingContacts(true);
-    try {
-      const res = await fetchFarmers();
-      if (!res.success) throw new Error('Farmer contacts request failed');
-      setRecentContacts(
-        res.data.farmers.map(f => ({
-          id: f.id,
-          name: `${f.firstName} ${f.lastName}`,
-          phone: f.phone || '',
-        }))
-      );
-    } catch (err) {
-      console.error('Failed to fetch farmers for SMS contacts:', err);
-      setRecentContacts([]);
-      toast.error('Farmer contacts are unavailable');
-    } finally {
-      setIsLoadingContacts(false);
-    }
-  };
-
-  const loadQuota = async () => {
-    setIsLoadingQuota(true);
-    try {
-      const data = await fetchUsage();
-      const usageData = data?.success ? data.data : null;
-      const smsUsage = Array.isArray(usageData)
-        ? usageData.find((u: { type: string }) => u.type === 'sms' || u.type === 'SMS')
-        : usageData;
-      if (!smsUsage) {
-        setQuota(null);
-        return;
-      }
-      setQuota({
-        current: typeof smsUsage.current === 'number' ? smsUsage.current : 0,
-        limit: typeof smsUsage.limit === 'number' ? smsUsage.limit : 0,
-        sent: typeof smsUsage.sent === 'number' ? smsUsage.sent : 0,
-        failed: typeof smsUsage.failed === 'number' ? smsUsage.failed : 0,
-      });
-    } catch (err) {
-      console.error('Failed to fetch SMS quota:', err);
-      setQuota(null);
-      toast.error('SMS quota is unavailable');
-    } finally {
-      setIsLoadingQuota(false);
-    }
-  };
-
-  useEffect(() => {
-    loadHistory();
-    loadContacts();
-    loadQuota();
-  }, [loadHistory]);
+  const { history, loadHistory, recentContacts, isLoadingContacts, quota, isLoadingQuota } = useSmsData();
 
   // Check for pending SMS on mount
   useEffect(() => {
@@ -264,21 +173,12 @@ export function SMSPage() {
   }, [bulkSelectedIds, sendMode, recentContacts]);
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-[calc(100vh-80px)] lg:h-[calc(100vh-80px)] overflow-y-auto lg:overflow-hidden gap-4 p-3.5 sm:p-4 lg:p-6 bg-slate-50 dark:bg-theme-bg-primary pb-28 md:pb-6">
-      {/* LEFT PANEL: Contacts & Search */}
-      <SMSContactsPanel
-        searchQuery={searchQuery}
-        setSearchQuery={setSearchQuery}
-        sendMode={sendMode}
-        recentContacts={recentContacts}
-        isLoadingContacts={isLoadingContacts}
-        selectedContact={selectedContact}
-        bulkSelectedIds={bulkSelectedIds}
-        handleBulkSelectAll={handleBulkSelectAll}
-        selectContact={selectContact}
-        onAddRecipient={phone => setPhoneNumber(phone)}
-        radiusClass={radiusClass}
-      />
+    <div className="flex flex-col min-h-[calc(100vh-80px)] lg:h-[calc(100vh-80px)] bg-slate-50 dark:bg-theme-bg-primary">
+    <PageHeader className="px-3.5 sm:px-4 lg:px-6 pt-3.5 sm:pt-4 lg:pt-6" title={t('nav_sms', { defaultValue: 'SMS' })} description={t('sms_page_desc', { defaultValue: 'Send advice and alerts by text message to one farmer or many.' })} />
+    <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden gap-4 p-3.5 sm:p-4 lg:p-6 pb-28 md:pb-6">
+      <SMSContactsPanel searchQuery={searchQuery} setSearchQuery={setSearchQuery} sendMode={sendMode} recentContacts={recentContacts} isLoadingContacts={isLoadingContacts}
+        selectedContact={selectedContact} bulkSelectedIds={bulkSelectedIds} handleBulkSelectAll={handleBulkSelectAll} selectContact={selectContact}
+        onAddRecipient={phone => setPhoneNumber(phone)} radiusClass={radiusClass} />
 
       {/* MIDDLE PANEL: Composer */}
       <SMSComposerPanel
@@ -324,6 +224,7 @@ export function SMSPage() {
 
       {/* Goal Mode Autonomous Campaigns & Closed Loop Skills Modal */}
       <GoalModeCampaignModal isOpen={isGoalModeOpen} onClose={() => setIsGoalModeOpen(false)} />
+    </div>
     </div>
   );
 }

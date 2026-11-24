@@ -41,7 +41,7 @@ describe('public demos', () => {
     expect(screen.getByText('Orbital recon & atmospheric ingestion')).toBeInTheDocument();
     // Stage and audience buttons are named by the text they show.
     fireEvent.click(screen.getByRole('button', { name: /SoilGrids/ }));
-    expect(screen.getByText('Subsurface soil horizon stratigraphy')).toBeInTheDocument();
+    expect(screen.getByText('Topsoil properties from SoilGrids')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /SoilGrids/ })).toHaveAttribute('aria-current', 'step');
     fireEvent.click(screen.getByRole('button', { name: 'Agribusiness & co-ops' }));
     expect(screen.getByText('Input efficiency & fertilizer optimization')).toBeInTheDocument();

@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle } from 'lucide-react';
 import type { ExecutionHistoryEntry } from '@/types/mcp';
@@ -43,7 +44,7 @@ export function MCPToolsExecutionHistory({
             </div>
             <div className="text-end">
               <p className="text-sm text-gray-600 dark:text-theme-text-muted">
-                {new Date(execution.timestamp).toLocaleString()}
+                {new Date(execution.timestamp).toLocaleString(appLocale())}
               </p>
             </div>
           </motion.div>

@@ -3,6 +3,7 @@
  */
 
 import apiClient from '@/api/client';
+import { shrinkForVision } from '@/lib/visionPhoto';
 
 import type { LesionDetectionZone } from '@/components/canvas-ui/DiseaseSaliencyCanvas';
 
@@ -69,7 +70,7 @@ export async function analyzeLeafImage(file: File): Promise<LeafAnalysisOutcome>
     r.onerror = reject;
     r.readAsDataURL(file);
   });
-  const { data } = await apiClient.post('/ai/diseases/diagnose/image', { imageData: dataUrl });
+  const { data } = await apiClient.post('/ai/diseases/diagnose/image', { imageData: await shrinkForVision(dataUrl) });
   const payload = (data?.data ?? data ?? {}) as {
     overallHealth?: string;
     confidence?: number;

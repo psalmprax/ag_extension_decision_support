@@ -1,8 +1,10 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { Trash2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { Field } from '@/api/fieldService';
 import { useLanguage } from '@/lib/LanguageContext';
+import { PendingSyncBadge } from '@/components/common/PendingSyncBadge';
 
 interface CropCyclesTableProps {
   fields: Field[];
@@ -19,13 +21,13 @@ function getStatusClass(status: string): string {
 }
 
 function formatHarvestDate(cycle: { actualHarvestDate?: string | null; expectedHarvestDate?: string | null }): string {
-  if (cycle.actualHarvestDate) return new Date(cycle.actualHarvestDate).toLocaleDateString();
-  if (cycle.expectedHarvestDate) return `Est: ${new Date(cycle.expectedHarvestDate).toLocaleDateString()}`;
+  if (cycle.actualHarvestDate) return new Date(cycle.actualHarvestDate).toLocaleDateString(appLocale());
+  if (cycle.expectedHarvestDate) return `Est: ${new Date(cycle.expectedHarvestDate).toLocaleDateString(appLocale())}`;
   return 'N/A';
 }
 
 function formatYield(yieldKg: number | null | undefined): string {
-  if (yieldKg !== undefined && yieldKg !== null) return `${yieldKg.toLocaleString()} kg`;
+  if (yieldKg !== undefined && yieldKg !== null) return `${yieldKg.toLocaleString(appLocale())} kg`;
   return 'In Progress';
 }
 
@@ -59,6 +61,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <h4 className="text-sm font-medium text-slate-900 dark:text-theme-text-primary">{cycle.cropName}</h4>
+                    {cycle.pendingSync && <PendingSyncBadge className="my-1" />}
                     <p className="text-xs text-slate-500 dark:text-theme-text-muted">
                       {t('ui_crop_cycles_table_sector')} <span className="text-slate-800 dark:text-theme-text-primary font-medium">{field.name}</span>
                     </p>
@@ -94,7 +97,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
                   <div>
                     <span className="text-xxs text-slate-500 dark:text-theme-text-muted font-medium block">{t('ui_crop_cycles_table_planting_date')}</span>
                     <span className="text-slate-600 dark:text-theme-text-muted">
-                      {cycle.plantingDate ? new Date(cycle.plantingDate).toLocaleDateString() : 'N/A'}
+                      {cycle.plantingDate ? new Date(cycle.plantingDate).toLocaleDateString(appLocale()) : 'N/A'}
                     </span>
                   </div>
                   <div>
@@ -125,7 +128,10 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
                 {allCycles.map(({ field, cycle }) => (
                   <tr key={cycle.id} className="hover:bg-slate-50/80 dark:hover:bg-white/5 transition-colors group">
                     <td className="p-4 ps-6 font-medium text-slate-900 dark:text-theme-text-primary">{field.name}</td>
-                    <td className="p-4 font-medium text-slate-800 dark:text-theme-text-primary">{cycle.cropName}</td>
+                    <td className="p-4 font-medium text-slate-800 dark:text-theme-text-primary">
+                      {cycle.cropName}
+                      {cycle.pendingSync && <PendingSyncBadge className="ms-2" />}
+                    </td>
                     <td className="p-4 text-slate-600 dark:text-theme-text-muted font-mono text-xs">{cycle.variety || 'N/A'}</td>
                     <td className="p-4">
                       <span
@@ -137,7 +143,7 @@ export const CropCyclesTable: React.FC<CropCyclesTableProps> = ({
                       </span>
                     </td>
                     <td className="p-4 text-slate-600 dark:text-theme-text-muted">
-                      {cycle.plantingDate ? new Date(cycle.plantingDate).toLocaleDateString() : 'N/A'}
+                      {cycle.plantingDate ? new Date(cycle.plantingDate).toLocaleDateString(appLocale()) : 'N/A'}
                     </td>
                     <td className="p-4 text-slate-600 dark:text-theme-text-muted">{formatHarvestDate(cycle)}</td>
                     <td className="p-4 font-mono font-medium tabular-nums text-emerald-600 dark:text-emerald-400">{formatYield(cycle.yieldKg)}</td>

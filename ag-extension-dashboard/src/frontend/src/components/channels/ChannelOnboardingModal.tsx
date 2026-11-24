@@ -312,43 +312,43 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         onClick={onClose}
-        className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4"
+        className="fixed inset-0 bg-slate-900/[0.04] dark:bg-black/40 backdrop-blur-md z-[100] flex items-center justify-center p-4"
       >
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           onClick={e => e.stopPropagation()}
-          className="bg-slate-900 border border-slate-700/60 shadow-2xl rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden text-slate-100"
+          className="bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] shadow-2xl rounded-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden text-slate-900 dark:text-theme-text-primary"
         >
           {/* Header */}
-          <div className="p-6 border-b border-slate-800 bg-slate-950/80 flex items-center justify-between">
+          <div className="p-6 border-b border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-theme-bg-primary flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+              <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                 <Zap className="w-6 h-6" />
               </div>
               <div>
-                <h2 className="text-xl font-medium tracking-tight text-white flex items-center gap-2">
+                <h2 className="text-xl font-medium tracking-tight text-slate-900 dark:text-theme-text-primary flex items-center gap-2">
                   {t('ui_channel_onboarding_modal_client_farmer_channel_onboarding')}
-                  <span className="text-xxs px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  <span className="text-xxs px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border border-emerald-500/30">
                     {t('ui_channel_onboarding_modal_live_hub')}
                   </span>
                 </h2>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-600 dark:text-theme-text-muted">
                   {t('ui_channel_onboarding_modal_configure_sms_whatsapp_business_and')}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+              className="p-2 rounded-xl text-slate-600 dark:text-theme-text-muted hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/[0.06] transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
 
           {/* Navigation Tabs */}
-          <div className="flex border-b border-slate-800 bg-slate-950/40 px-6 gap-2">
+          <div className="flex border-b border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-theme-bg-primary px-6 gap-2">
             <button
               onClick={() => setActiveTab('sms')}
               className={`py-3.5 px-4 text-xs font-medium transition-all border-b-2 flex items-center gap-2 ${
@@ -359,7 +359,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
             >
               <Smartphone className="w-4 h-4" />
               <span>{t('ui_channel_onboarding_modal_sms_ussd_gateway')}</span>
-              <span className="text-xxs px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300">
+              <span className="text-xxs px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-theme-bg-tertiary text-slate-700 dark:text-theme-text-secondary">
                 {stats.sms}
               </span>
             </button>
@@ -374,7 +374,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
             >
               <MessageSquare className="w-4 h-4" />
               <span>{t('ui_channel_onboarding_modal_whatsapp_business')}</span>
-              <span className="text-xxs px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300">
+              <span className="text-xxs px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-theme-bg-tertiary text-slate-700 dark:text-theme-text-secondary">
                 {stats.whatsapp}
               </span>
             </button>
@@ -389,7 +389,7 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
             >
               <Bot className="w-4 h-4" />
               <span>{t('ui_channel_onboarding_modal_telegram_bot')}</span>
-              <span className="text-xxs px-1.5 py-0.5 rounded-md bg-slate-800 text-slate-300">
+              <span className="text-xxs px-1.5 py-0.5 rounded-md bg-slate-100 dark:bg-theme-bg-tertiary text-slate-700 dark:text-theme-text-secondary">
                 {stats.telegram}
               </span>
             </button>
@@ -410,8 +410,8 @@ export const ChannelOnboardingModal: React.FC<ChannelOnboardingModalProps> = ({ 
           {/* Body Content */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
             {isLoading ? (
-              <div className="flex items-center justify-center py-16 gap-3 text-slate-400 text-sm">
-                <RefreshCw className="w-5 h-5 animate-spin text-emerald-400" />
+              <div className="flex items-center justify-center py-16 gap-3 text-slate-600 dark:text-theme-text-muted text-sm">
+                <RefreshCw className="w-5 h-5 animate-spin text-emerald-700 dark:text-emerald-400" />
                 <span>{t('ui_channel_onboarding_modal_loading_channel_configurations')}</span>
               </div>
             ) : null}

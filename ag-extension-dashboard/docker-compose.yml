@@ -209,7 +209,8 @@ services:
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
       AI_FALLBACK_PROVIDER: ${AI_FALLBACK_PROVIDER:-ollama}
       AI_FALLBACK_MODEL: ${AI_FALLBACK_MODEL:-llama3.2:3b}
-      ADVISORY_ENGINE_ENABLED: ${ADVISORY_ENGINE_ENABLED:-true}
+      # Daily weather texts to farmers: off unless the server's .env says true (see seasonalAdvisoryService).
+      ADVISORY_ENGINE_ENABLED: ${ADVISORY_ENGINE_ENABLED:-false}
       # Requires the agents stack (docker-compose.agents.yml) — off unless explicitly enabled.
       INGESTION_ENABLED: ${INGESTION_ENABLED:-false}
       AGENT_ZERO_URL: ${AGENT_ZERO_URL:-http://ag-agent-zero:8000}

@@ -6,6 +6,8 @@ export * from './helpers';
 export * from './auth';
 export * from './farmer';
 export * from './field';
+export * from './fieldBoundary';
+export * from './fieldRecords';
 export * from './visits';
 export * from './chatbot';
 export * from './upload';

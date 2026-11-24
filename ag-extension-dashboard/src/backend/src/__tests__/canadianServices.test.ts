@@ -65,23 +65,26 @@ describe('Canadian Services API (/api/v1/canadian)', () => {
       expect(response.body.error).toBe('Validation failed');
     });
 
-    it('should validate treatment against Fertilizers Act and Pest Control Products Act', async () => {
-      const payload = {
-        treatmentName: 'Fungicide Delta',
-        activeIngredient: 'glyphosate_aquatic_buffer',
-        province: 'Ontario',
-        dosagePerHectare: 150,
-      };
-
+    it('leaves rates and buffer zones to the label, and points to it', async () => {
       const response = await request(app)
         .post('/api/v1/canadian/regulatory/check')
         .set('Authorization', `Bearer ${officerToken}`)
-        .send(payload);
+        .send({ treatmentName: 'Fungicide Delta', activeIngredient: 'azoxystrobin', province: 'Ontario', dosagePerHectare: 150 });
 
       expect(response.status).toBe(200);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.registrationStatus).toBe('restricted');
-      expect(response.body.data.bufferZoneMeters).toBe(15);
+      expect(response.body.data).toMatchObject({ isCompliant: true, registrationStatus: 'registered' });
+      expect(response.body.data.bufferZoneMeters).toBeUndefined();
+      expect(response.body.data.maximumDosagePerHectare).toBeUndefined();
+      expect(response.body.data.warnings.join(' ')).toContain('pesticide-label-search');
+    });
+
+    it('flags an active with no Canadian registration', async () => {
+      const response = await request(app)
+        .post('/api/v1/canadian/regulatory/check')
+        .set('Authorization', `Bearer ${officerToken}`)
+        .send({ treatmentName: 'Old stock', activeIngredient: 'endosulfan', province: 'Quebec', dosagePerHectare: 1 });
+
+      expect(response.body.data).toMatchObject({ isCompliant: false, registrationStatus: 'prohibited' });
     });
   });
 

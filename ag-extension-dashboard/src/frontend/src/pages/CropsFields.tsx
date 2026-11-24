@@ -1,33 +1,18 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Sprout,
-  Map,
-  Plus,
-  TrendingUp,
-  Sliders,
-  User,
-  Loader2,
-} from 'lucide-react';
+import { Sprout, Map, Plus, TrendingUp, Sliders, User, Loader2, CloudOff } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '../store/useAppStore';
-import {
-  fetchFields,
-  createField,
-  updateField,
-  deleteField,
-  createCropCycle,
-  updateCropCycle,
-  deleteCropCycle,
-  type Field,
-  type CropCycle,
-} from '../api/fieldService';
+import { fetchFields, deleteField, type Field } from '../api/fieldService';
 import { fetchFarmers } from '../api/farmerService';
 import type { Farmer } from '../types/dashboard';
 import { DEMO_FARMERS, isDemoFarmerId, buildDemoFields, useDemoMode } from '@/demo';
 import { CropsOverviewTab } from '@/components/crops/CropsOverviewTab';
 import { CropCyclesTable } from '@/components/crops/CropCyclesTable';
 import { FieldModal } from '@/components/crops/FieldModal';
+import { useFieldEditor } from '@/components/crops/useFieldEditor';
+import { useCropCycleActions, useSavedNotice } from '@/components/crops/useCropCycleActions';
+import { useQueueDrained } from '@/hooks/useQueueDrained';
 import { GrowthCycleModal } from '@/components/crops/GrowthCycleModal';
 import { HarvestModal } from '@/components/crops/HarvestModal';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -51,38 +36,7 @@ export function CropsFields() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'cycles'>('overview');
 
-  const [showFieldModal, setShowFieldModal] = useState(false);
-  const [showCycleModal, setShowCycleModal] = useState(false);
-  const [showHarvestModal, setShowHarvestModal] = useState(false);
-
-  const [editingField, setEditingField] = useState<Field | null>(null);
-  const [selectedField, setSelectedField] = useState<Field | null>(null);
-  const [selectedCycle, setSelectedCycle] = useState<CropCycle | null>(null);
-
-  // Form state - Field
-  const [fieldForm, setFieldForm] = useState({
-    name: '',
-    areaHectares: '',
-    soilType: '',
-    soilPh: '',
-    latitude: '',
-    longitude: '',
-  });
-
-  const [cycleForm, setCycleForm] = useState({
-    cropName: '',
-    variety: '',
-    plantingDate: new Date().toISOString().split('T')[0],
-    expectedHarvestDate: '',
-    notes: '',
-  });
-
-  const [harvestForm, setHarvestForm] = useState({
-    status: 'harvested' as 'harvested' | 'failed',
-    actualHarvestDate: new Date().toISOString().split('T')[0],
-    yieldKg: '',
-    notes: '',
-  });
+  const [offline, setOffline] = useState(false);
 
   // Load farmers if user is officer/admin
   useEffect(() => {
@@ -143,6 +97,7 @@ export function CropsFields() {
       }
 
       const res = await fetchFields(targetId);
+      setOffline(Boolean(res.offline));
       if (res.success) {
         setFields(res.data || []);
       } else {
@@ -168,68 +123,13 @@ export function CropsFields() {
     loadFieldsData();
   }, [loadFieldsData]);
 
-  const handleOpenAddField = () => {
-    setEditingField(null);
-    setFieldForm({
-      name: '',
-      areaHectares: '',
-      soilType: 'loam',
-      soilPh: '6.5',
-      latitude: '',
-      longitude: '',
-    });
-    setShowFieldModal(true);
-  };
+  // Writes saved here while offline reach the server later; show the server's copy once they do.
+  useQueueDrained(loadFieldsData);
 
-  const handleOpenEditField = (field: Field) => {
-    setEditingField(field);
-    setFieldForm({
-      name: field.name,
-      // The form shows the person's unit (hectares or acres); it is saved in hectares.
-      areaHectares: String(Math.round(units.fromHectares(Number(field.areaHectares)) * 100) / 100),
-      soilType: field.soilType || 'loam',
-      soilPh: field.soilPh?.toString() || '6.5',
-      latitude: field.latitude?.toString() || '',
-      longitude: field.longitude?.toString() || '',
-    });
-    setShowFieldModal(true);
-  };
-
-  const handleSaveField = async () => {
-    if (!fieldForm.name || !fieldForm.areaHectares) {
-      addNotification({ type: 'warning', message: 'Name and Area are required' });
-      return;
-    }
-
-    const data = {
-      farmerId: isFarmer ? undefined : selectedFarmerId,
-      name: fieldForm.name,
-      areaHectares: units.toHectares(parseFloat(fieldForm.areaHectares)),
-      soilType: fieldForm.soilType || undefined,
-      soilPh: fieldForm.soilPh ? parseFloat(fieldForm.soilPh) : undefined,
-      latitude: fieldForm.latitude ? parseFloat(fieldForm.latitude) : undefined,
-      longitude: fieldForm.longitude ? parseFloat(fieldForm.longitude) : undefined,
-    };
-
-    try {
-      let res;
-      if (editingField) {
-        res = await updateField(editingField.id, data);
-        addNotification({ type: 'success', message: 'Field updated successfully' });
-      } else {
-        res = await createField(data);
-        addNotification({ type: 'success', message: 'Field created successfully' });
-      }
-
-      if (res.success) {
-        setShowFieldModal(false);
-        loadFieldsData();
-      }
-    } catch (error) {
-      console.error('Failed to save field:', error);
-      addNotification({ type: 'error', message: 'Failed to save field record' });
-    }
-  };
+  const fieldEditor = useFieldEditor({ farmerId: isFarmer ? undefined : selectedFarmerId, notify: addNotification, onSaved: loadFieldsData });
+  const { handleOpenAddField, handleOpenEditField } = fieldEditor;
+  const cycles = useCropCycleActions({ notify: addNotification, onSaved: loadFieldsData });
+  const savedNotice = useSavedNotice();
 
   const handleDeleteField = async (id: string) => {
     if (
@@ -238,116 +138,14 @@ export function CropsFields() {
       return;
 
     try {
-      const res = await deleteField(id);
+      const res = await deleteField(id, fields.find(field => field.id === id)?.name);
       if (res.success) {
-        addNotification({ type: 'success', message: 'Field deleted successfully' });
+        addNotification({ type: 'success', message: savedNotice(res.queued, 'Field deleted successfully') });
         loadFieldsData();
       }
     } catch (error) {
       console.error('Failed to delete field:', error);
       addNotification({ type: 'error', message: 'Failed to delete field' });
-    }
-  };
-
-  // Crop Cycle Actions
-  const handleOpenStartCycle = (field: Field) => {
-    setSelectedField(field);
-    setCycleForm({
-      cropName: '',
-      variety: '',
-      plantingDate: new Date().toISOString().split('T')[0],
-      expectedHarvestDate: '',
-      notes: '',
-    });
-    setShowCycleModal(true);
-  };
-
-  const handleStartCycle = async () => {
-    if (!selectedField || !cycleForm.cropName || !cycleForm.plantingDate) {
-      addNotification({ type: 'warning', message: 'Crop Name and Planting Date are required' });
-      return;
-    }
-
-    const data = {
-      cropName: cycleForm.cropName,
-      variety: cycleForm.variety || undefined,
-      status: 'growing' as const,
-      plantingDate: new Date(cycleForm.plantingDate).toISOString(),
-      expectedHarvestDate: cycleForm.expectedHarvestDate
-        ? new Date(cycleForm.expectedHarvestDate).toISOString()
-        : undefined,
-      notes: cycleForm.notes || undefined,
-    };
-
-    try {
-      const res = await createCropCycle(selectedField.id, data);
-      if (res.success) {
-        addNotification({
-          type: 'success',
-          message: `Started growing ${data.cropName} on ${selectedField.name}`,
-        });
-        setShowCycleModal(false);
-        loadFieldsData();
-      }
-    } catch (error) {
-      console.error('Failed to start cycle:', error);
-      addNotification({ type: 'error', message: 'Failed to start crop cycle' });
-    }
-  };
-
-  const handleOpenHarvest = (field: Field, cycle: CropCycle) => {
-    setSelectedField(field);
-    setSelectedCycle(cycle);
-    setHarvestForm({
-      status: 'harvested',
-      actualHarvestDate: new Date().toISOString().split('T')[0],
-      yieldKg: '',
-      notes: '',
-    });
-    setShowHarvestModal(true);
-  };
-
-  const handleHarvestCycle = async () => {
-    if (!selectedField || !selectedCycle) return;
-
-    const data = {
-      status: harvestForm.status,
-      actualHarvestDate: new Date(harvestForm.actualHarvestDate).toISOString(),
-      yieldKg: harvestForm.yieldKg ? parseFloat(harvestForm.yieldKg) : undefined,
-      notes: harvestForm.notes || undefined,
-    };
-
-    try {
-      const res = await updateCropCycle(selectedField.id, selectedCycle.id, data);
-      if (res.success) {
-        addNotification({
-          type: 'success',
-          message:
-            harvestForm.status === 'harvested'
-              ? `Harvest recorded! Yield: ${data.yieldKg || 0} kg`
-              : `Crop cycle marked as ${harvestForm.status}`,
-        });
-        setShowHarvestModal(false);
-        loadFieldsData();
-      }
-    } catch (error) {
-      console.error('Failed to record harvest:', error);
-      addNotification({ type: 'error', message: 'Failed to update crop cycle' });
-    }
-  };
-
-  const handleDeleteCycle = async (fieldId: string, cycleId: string) => {
-    if (!confirm('Are you sure you want to delete this crop cycle?')) return;
-
-    try {
-      const res = await deleteCropCycle(fieldId, cycleId);
-      if (res.success) {
-        addNotification({ type: 'success', message: 'Crop cycle deleted' });
-        loadFieldsData();
-      }
-    } catch (error) {
-      console.error('Failed to delete cycle:', error);
-      addNotification({ type: 'error', message: 'Failed to delete cycle' });
     }
   };
 
@@ -437,7 +235,13 @@ export function CropsFields() {
         })}
       </div>
 
-      {/* Tab content renders */}
+      {offline && (
+        <p role="status" className="flex items-start gap-2 text-sm text-slate-700 dark:text-theme-text-secondary">
+          <CloudOff className="w-4 h-4 mt-0.5 shrink-0" aria-hidden="true" />
+          {t('fields_offline_note', { defaultValue: 'No connection. These are the fields kept on this device; changes you make sync when you are back online.' })}
+        </p>
+      )}
+
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20 gap-4">
           <Loader2 className="w-10 h-10 animate-spin text-primary-400" />
@@ -456,52 +260,23 @@ export function CropsFields() {
               btnClass={btnClass}
               handleOpenEditField={handleOpenEditField}
               handleDeleteField={handleDeleteField}
-              handleOpenStartCycle={handleOpenStartCycle}
-              handleOpenHarvest={handleOpenHarvest}
+              handleOpenStartCycle={cycles.handleOpenStartCycle}
+              handleOpenHarvest={cycles.handleOpenHarvest}
               handleOpenAddField={handleOpenAddField}
             />
           )}
 
           {activeTab === 'cycles' && (
-            <CropCyclesTable
-              fields={fields}
-              handleDeleteCycle={handleDeleteCycle}
-            />
+            <CropCyclesTable fields={fields} handleDeleteCycle={cycles.handleDeleteCycle} />
           )}
         </AnimatePresence>
       )}
 
       {/* Modals */}
-      <FieldModal
-        showFieldModal={showFieldModal}
-        setShowFieldModal={setShowFieldModal}
-        editingField={editingField}
-        fieldForm={fieldForm}
-        setFieldForm={setFieldForm}
-        handleSaveField={handleSaveField}
-        radiusClass={radiusClass}
-      />
+      <FieldModal {...fieldEditor} radiusClass={radiusClass} />
 
-      <GrowthCycleModal
-        showCycleModal={showCycleModal}
-        setShowCycleModal={setShowCycleModal}
-        selectedField={selectedField}
-        cycleForm={cycleForm}
-        setCycleForm={setCycleForm}
-        handleStartCycle={handleStartCycle}
-        radiusClass={radiusClass}
-      />
-
-      <HarvestModal
-        showHarvestModal={showHarvestModal}
-        setShowHarvestModal={setShowHarvestModal}
-        selectedField={selectedField}
-        selectedCycle={selectedCycle}
-        harvestForm={harvestForm}
-        setHarvestForm={setHarvestForm}
-        handleHarvestCycle={handleHarvestCycle}
-        radiusClass={radiusClass}
-      />
+      <GrowthCycleModal {...cycles} radiusClass={radiusClass} />
+      <HarvestModal {...cycles} radiusClass={radiusClass} />
     </div>
   );
 }

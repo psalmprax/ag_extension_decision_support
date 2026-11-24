@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { motion } from 'framer-motion';
 import { Clock, CheckCircle, XCircle } from 'lucide-react';
 import { useLanguage } from '../../lib/LanguageContext';
@@ -46,7 +47,7 @@ export function SMSComposerHistoryTab({
                   {msg.message}
                 </p>
                 <span className="text-xxs font-medium text-slate-400 mt-2 inline-block">
-                  {msg.timestamp.toLocaleString()}
+                  {msg.timestamp.toLocaleString(appLocale())}
                 </span>
               </div>
             </div>

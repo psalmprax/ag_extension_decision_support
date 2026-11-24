@@ -1,4 +1,5 @@
 import React from 'react';
+import { formatDate } from '@/lib/appLocale';
 import { motion } from 'framer-motion';
 import { Clock, ChevronRight } from 'lucide-react';
 import type { Visit, Farmer } from '@/types/dashboard';
@@ -14,7 +15,7 @@ const STATUS_TONE: Record<string, string> = {
 };
 const PENDING_TONE = 'bg-amber-50 text-amber-800 dark:bg-amber-400/[0.12] dark:text-amber-200';
 
-const whenFormat = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+const formatWhen = (date: Date) => formatDate(date, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
 const ACTION_BUTTON = 'h-9 px-3 rounded-md text-sm transition-colors';
 
@@ -88,7 +89,7 @@ export const VisitCard: React.FC<VisitCardProps> = ({
 
       <p className="flex items-center gap-2 text-sm text-slate-700 dark:text-theme-text-primary tabular-nums">
         <Clock className="w-4 h-4 text-slate-400 shrink-0" aria-hidden="true" />
-        {parsedDate ? whenFormat.format(parsedDate) : <span className="text-slate-500 dark:text-theme-text-muted">{t('ui_visit_card_flexible_as_needed')}</span>}
+        {parsedDate ? formatWhen(parsedDate) : <span className="text-slate-500 dark:text-theme-text-muted">{t('ui_visit_card_flexible_as_needed')}</span>}
       </p>
 
       {visit.notes && <p className="text-sm text-slate-600 dark:text-theme-text-secondary line-clamp-2">{visit.notes}</p>}
@@ -99,7 +100,8 @@ export const VisitCard: React.FC<VisitCardProps> = ({
         {isOpen && (
           <>
             <button
-              aria-label={`Mark visit for ${farmerDisplayName} as completed`}
+              // The visible word leads the name, so voice control ("click Complete") finds it in any language.
+              aria-label={`${t('ui_farmer_visit_timeline_complete')} (${farmerDisplayName})`}
               onClick={e => {
                 e.stopPropagation();
                 onComplete(visit, farmerDisplayName);
@@ -109,7 +111,7 @@ export const VisitCard: React.FC<VisitCardProps> = ({
               {t('ui_farmer_visit_timeline_complete')}
             </button>
             <button
-              aria-label={`Cancel visit for ${farmerDisplayName}`}
+              aria-label={`${t('common_cancel')} (${farmerDisplayName})`}
               onClick={e => {
                 e.stopPropagation();
                 onCancel(visit.id, farmerDisplayName);

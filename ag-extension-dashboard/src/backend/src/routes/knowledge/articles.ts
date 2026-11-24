@@ -14,7 +14,7 @@ import { logger } from '@/utils/logger';
 import { authorize, UserRole } from '@/middleware/authorize';
 import { VectorService } from '@/services/vectorService';
 import { safeError } from '@/utils/safeResponse';
-import { seedKnowledgeArticlesData } from '@/services/knowledge/seedArticles';
+import { SEED_ARTICLE_SOURCE, seedKnowledgeArticlesData } from '@/services/knowledge/seedArticles';
 import { isWebUrl } from '@/utils/webUrl';
 
 const router = Router();
@@ -66,7 +66,7 @@ export async function seedKnowledgeArticles(): Promise<void> {
         tags: art.tags,
         crops: [art.crop],
         regions: art.crop === 'maize' ? ['East Africa'] : ['tropical'],
-        source: 'AG Extension Tropical Agronomy Seed'
+        source: SEED_ARTICLE_SOURCE
     }));
 
     try {

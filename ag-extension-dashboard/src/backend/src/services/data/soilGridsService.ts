@@ -13,6 +13,13 @@ export interface SoilProperties {
 /**
  * Service to interact with the ISRIC SoilGrids v2.0 API for global soil properties.
  */
+/** The parts of a SoilGrids properties query this service reads. */
+interface SoilGridsResponse {
+    properties?: {
+        layers?: Array<{ name: string; depths?: Array<{ values?: { mean?: number | null } }> }>;
+    };
+}
+
 export class SoilGridsService {
     private readonly baseUrl = 'https://rest.isric.org/soilgrids/v2.0/properties/query';
 
@@ -76,7 +83,7 @@ export class SoilGridsService {
                 throw new Error(`SoilGrids returned HTTP ${response.status}`);
             }
 
-            const data = await response.json();
+            const data = (await response.json()) as SoilGridsResponse;
             logger.info(`Successfully fetched SoilGrids data for lat/lng: ${latitude}, ${longitude}`);
             
             return this.parseSoilGridsResponse(data);
@@ -86,20 +93,17 @@ export class SoilGridsService {
         }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private parseSoilGridsResponse(data: any): SoilProperties {
+    private parseSoilGridsResponse(data: SoilGridsResponse | undefined): SoilProperties {
         const layers = data?.properties?.layers || [];
-        
+
         const getMeanValue = (layerName: string): number | null => {
-            const layer = layers.find((l: { name: string }) => l.name === layerName);
-            if (!layer || !layer.depths || layer.depths.length === 0) return null;
-            
+            const layer = layers.find(l => l.name === layerName);
+            if (!layer?.depths?.length) return null;
+
             // Average the mean values across the queried depths (0-5, 5-15, 15-30 cm)
-            const validDepths = layer.depths.filter((d: { values?: { mean?: number } }) => d.values && d.values.mean !== undefined);
-            if (validDepths.length === 0) return null;
-            
-            const sum = validDepths.reduce((acc: number, cur: { values: { mean: number } }) => acc + cur.values.mean, 0);
-            return sum / validDepths.length;
+            const means = layer.depths.map(d => d.values?.mean).filter((mean): mean is number => typeof mean === 'number');
+            if (means.length === 0) return null;
+            return means.reduce((acc, mean) => acc + mean, 0) / means.length;
         };
 
         // SoilGrids scales some values:

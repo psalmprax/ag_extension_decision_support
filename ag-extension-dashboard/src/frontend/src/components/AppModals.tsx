@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FileText, Loader2, X } from 'lucide-react';
 import { Farmer, Visit } from '../types/dashboard';
@@ -6,7 +7,6 @@ import { Report, downloadReportPdf } from '@/api/reportService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { saveBlob } from '@/lib/saveBlob';
-
 
 async function downloadPdf(report: Report): Promise<void> {
   const blob = await downloadReportPdf(report.id);
@@ -216,7 +216,7 @@ export const AppModals: React.FC<AppModalsProps> = props => {
                   {props.viewingReport.title}
                 </h3>
                 <p className="text-xs text-gray-500 mt-1">
-                  {t('ui_app_modals_generated')} {new Date(props.viewingReport.generatedAt).toLocaleString()} {t('ui_app_modals_status')}{' '}
+                  {t('ui_app_modals_generated')} {new Date(props.viewingReport.generatedAt).toLocaleString(appLocale())} {t('ui_app_modals_status')}{' '}
                   {props.viewingReport.status}
                 </p>
               </div>

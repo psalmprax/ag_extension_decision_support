@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+import { appLocale } from '@/lib/appLocale';
+import { scrollListToEnd } from '@/lib/scrollListToEnd';
 import { Send, Mic, MicOff, Image as ImageIcon, ShieldCheck, Download, Share2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useQuery } from '@tanstack/react-query';
@@ -6,14 +8,7 @@ import apiClient from '@/api/client';
 
 import { AgronomicIntakeCard, isAgronomicQueryAmbiguous } from '../AgronomicIntakeCard';
 import { nowStamp, drainAlphaOfflineQueue } from './alpha/offlineQueue';
-import {
-  type ChatMessageItem,
-  stashQueryOffline,
-  requestAdvisoryMessage,
-  handleAdvisoryFailure,
-  latestAdvisoryText,
-  WELCOME_MESSAGE_ID,
-} from './alpha/response';
+import { type ChatMessageItem, stashQueryOffline, requestAdvisoryMessage, handleAdvisoryFailure, latestAdvisoryText, WELCOME_MESSAGE_ID } from './alpha/response';
 import { exportAdvisoryPdf } from './alpha/advisoryExport';
 import { isActionEnter } from '@/lib/keyboard';
 import { MessageStream } from './alpha/MessageStream';
@@ -123,7 +118,7 @@ export const AlphaAI: React.FC = () => {
       text: t('ai_agronomist_welcome', {
         defaultValue: 'Ask about a crop, a pest, your soil or the weather. Add a photo of the leaf if you have one. Answers list their sources.',
       }),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date().toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
 
@@ -138,7 +133,7 @@ export const AlphaAI: React.FC = () => {
   const guides = kbStats?.data?.totalDocuments ?? kbStats?.data?.total;
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    scrollListToEnd(messagesEndRef.current);
   }, [messages, isProcessing]);
 
   // Drain offline queue when back online — the sender is read through a ref so the
@@ -317,7 +312,7 @@ export const AlphaAI: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <section
           aria-label={t('ai_agronomist_conversation', { defaultValue: 'Conversation' })}
-          className="lg:col-span-8 bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl p-4 flex flex-col min-h-[520px] max-h-[72vh]"
+          className="lg:col-span-8 bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl p-4 flex flex-col min-h-[360px] lg:min-h-[520px] max-h-[72dvh]"
         >
           <MessageStream
             messages={messages}

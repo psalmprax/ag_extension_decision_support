@@ -1,12 +1,19 @@
 /**
- * Static seed articles, used when the live knowledge corpus is unavailable and
+ * Background notes written by the app team, loaded into every knowledge base at startup and used
  * as the fixed corpus of the retrieval evaluation (eval/rag-golden.json).
+ *
+ * They carry no rates, doses, thresholds or statistics: nothing here cites a source, so every
+ * number would be the app's own claim. Each note says where the figure should come from instead
+ * (a soil test, the product label, a national guide). The one exception cites its source inline.
  */
+/** The source shown with these notes in search answers: who wrote them, and that it is not a published guide. */
+export const SEED_ARTICLE_SOURCE = 'Background note by the app team (not a published guide)';
+
 export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb01',
         title: 'Maize Disease Management',
-        content: 'Common maize diseases include Northern leaf blight, Southern rust, and Grey leaf spot. Prevention strategies include crop rotation, using resistant varieties, and proper plant spacing. For Northern leaf blight, apply fungicides at the first sign of symptoms.',
+        content: 'Common maize leaf diseases include northern leaf blight (long grey-brown lesions), southern rust and grey leaf spot. Prevention: rotate away from maize, plant varieties with resistance to the diseases in your area, space plants so leaves dry quickly, and bury or remove infected residue. If northern leaf blight appears before tasselling and spreads, a fungicide registered for maize in your country can protect the upper leaves; use the rate and timing on its label and confirm the diagnosis with an extension officer first.',
         category: 'Crop Management',
         tags: ['maize', 'diseases', 'prevention'],
         crop: 'maize',
@@ -14,7 +21,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb02',
         title: 'Soil Fertility Management',
-        content: 'Regular soil testing helps determine nutrient requirements. Organic matter addition through compost or manure improves soil structure and water retention. Apply nitrogen in split doses for optimal uptake.',
+        content: 'Test the soil before buying fertilizer: a soil test shows which nutrients are short and how much to apply, so money is not spent on nutrients the field already has. Compost and manure improve soil structure and water retention. Split nitrogen: apply part at planting and the rest as top dressing when the crop starts growing fast, so less is lost to leaching. Take rates from the soil test report or your national fertilizer recommendation for the crop and area.',
         category: 'Soil Health',
         tags: ['soil', 'fertility', 'organic'],
         crop: 'all',
@@ -22,7 +29,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb03',
         title: 'Climate-Smart Agriculture',
-        content: 'Climate-smart agriculture practices include conservation agriculture, agroforestry, and water harvesting techniques. These methods help adapt to changing weather patterns while reducing greenhouse gas emissions.',
+        content: 'Climate-smart farming practices include conservation agriculture (little tillage, a permanent soil cover and crop rotation), agroforestry and water harvesting. They help a farm cope with erratic rainfall and dry spells, and can reduce greenhouse gas emissions. To adapt to changing rainfall patterns, plant drought-tolerant or early-maturing varieties, keep the soil covered with mulch, and harvest rain into pits, ridges or tanks.',
         category: 'Climate',
         tags: ['climate', 'weather', 'adaptation'],
         crop: 'all',
@@ -30,7 +37,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb04',
         title: 'Pest Control in Vegetables',
-        content: 'Integrated Pest Management (IPM) combines biological, cultural, and chemical methods. Common vegetable pests include aphids, whiteflies, and fruit borers. Use neem oil for organic control.',
+        content: 'Integrated pest management (IPM) combines cultural, biological and chemical methods, using chemicals last. Common vegetable pests include aphids, whiteflies and fruit borers. Check plants regularly, remove infested leaves and fruit, use yellow sticky traps for whiteflies, and protect natural enemies such as ladybirds. Neem-based products can control soft-bodied pests organically; follow the product label. If a chemical is needed, choose one registered for the crop in your country and keep to its pre-harvest interval.',
         category: 'Pest Management',
         tags: ['pests', 'vegetables', 'IPM'],
         crop: 'vegetables',
@@ -38,7 +45,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb05',
         title: 'Post-Harvest Handling',
-        content: 'Proper post-harvest practices include timely harvesting, appropriate storage conditions, and processing techniques. Store produce at cool temperatures when possible. Use proper packaging to prevent damage.',
+        content: 'Good post-harvest handling starts with harvesting at the right maturity and in dry weather. Keep produce out of the sun, handle it gently, and sort out damaged pieces. Store produce cool and dry where possible, in clean, ventilated containers, and use packaging that protects it from bruising on the way to market.',
         category: 'Post-Harvest',
         tags: ['harvest', 'storage', 'processing'],
         crop: 'all',
@@ -46,7 +53,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb06',
         title: 'Cassava Crop Management & Irrigation',
-        content: 'Cassava (Manihot esculenta) is a staple tropical root crop. Soil Diagnostics: Grows best in deep, well-drained sandy loam or silt loam soils with a pH of 5.5 to 6.5. Highly sensitive to waterlogging. Irrigation Guidelines: Evapotranspiration demand is 3-4mm/day. Requires moderate but consistent watering (about 250mm to 350mm total) during the first 3 months (tuber initiation phase) for maximum starch build-up. Once established, cassava is extremely drought-tolerant and can survive 4-6 months with minimal moisture, although yields will be reduced. Drip irrigation emitters should be placed 30cm from the stem base, delivering 2 liters/hour in 1-hour cycles twice per week during dry spells.',
+        content: 'Cassava (Manihot esculenta) is a staple tropical root crop. It grows best in deep, well-drained loam soils and is very sensitive to waterlogging, so avoid low-lying fields that flood or raise the planting on ridges or mounds. It needs steady moisture while roots are forming in the first months; once established it tolerates long dry spells, though yields fall. Where irrigation is used, water at the base of the plant rather than over the leaves, and plan amounts from the crop\'s water use (see the irrigation note in this library).',
         category: 'Crop Management',
         tags: ['cassava', 'irrigation', 'soil', 'tropics'],
         crop: 'cassava',
@@ -54,7 +61,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb07',
         title: 'Yam Cultivation & Staking',
-        content: 'Yam (Dioscorea spp.) cultivation requires rich, loose, deep soils (such as clay loam or alluvial silt loam) with a high concentration of organic compost and a pH range of 5.5 to 6.5. Yam tubers require active staking (height 2-3 meters) to maximize sunlight interception. Water Requirements: Yams are water-intensive, requiring 1200mm to 1500mm of water distributed evenly over their 7-8 month growing cycle. Starch accumulation occurs during the bulking stage (4-6 months after planting), where a moisture deficit can drop yields by up to 60%. Drip irrigation must maintain soil moisture above 60% field capacity.',
+        content: 'Yam (Dioscorea spp.) needs rich, loose, deep soil with plenty of organic matter; heaps or mounds help in heavy soils. Stake the vines so the leaves reach the light: taller stakes generally mean more leaf area and better tubers, so use the stake height your local yam guide recommends. Yams need steady moisture through the season, especially while tubers bulk; a dry spell then reduces yield most.',
         category: 'Soil & Water',
         tags: ['yam', 'staking', 'organic', 'tropics'],
         crop: 'yam',
@@ -62,7 +69,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb08',
         title: 'Cocoa Tree Agronomy & Shade Control',
-        content: 'Cocoa (Theobroma cacao) is a delicate tropical tree requiring highly structured clay-loam soils with a pH of 5.0 to 7.5 and a minimum soil depth of 1.5 meters. Soil Diagnostics: High levels of calcium, potassium, and magnesium are critical. Evapotranspiration is 4-5mm/day. Irrigation: Cocoa requires 1500mm to 2000mm of rain or micro-sprinkler irrigation annually. Avoid heavy sprinkler watering on leaves to prevent Black Pod Disease (Phytophthora megakarya). Shade management: Cocoa seedlings need 50% shade cover, reducing to 30% for mature trees. Pruning should be completed at the start of the dry season to improve ventilation and reduce pest habitats.',
+        content: 'Cocoa (Theobroma cacao) needs deep, well-drained, fertile soil and evenly spread rainfall or irrigation. Calcium, potassium and magnesium matter for healthy trees, so base fertilizer on a soil or leaf test. Young cocoa needs more shade than mature cocoa: keep temporary shade (such as plantain) while trees establish, then thin it as the canopy closes. Avoid wetting the leaves and pods when irrigating, and remove diseased pods, to limit black pod disease. Prune at the start of the dry season to open the canopy.',
         category: 'Pest & Crop Management',
         tags: ['cocoa', 'shade', 'black pod', 'tropics'],
         crop: 'cocoa',
@@ -70,7 +77,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb09',
         title: 'Coffee Agronomy (Arabica vs Robusta)',
-        content: 'Coffee (Coffea arabica & Coffea canephora/robusta) grows best in deep, acidic volcanic soils (Ferralsols, Nitisols) with a pH of 5.0 to 6.0. Arabica prefers higher altitudes (1000-2000m) and cooler climates, whereas Robusta thrives in warmer, lower elevation zones. Nutrition Diagnostics: High nitrogen (N) and potassium (K) are required. Apply NPK 15-15-15 in split applications during the rainy seasons. Irrigation: Drip irrigation delivering 15-20 liters per tree weekly during dry flowering periods stabilizes berry size and prevents fruit drop. Maintain strict pruning rules (single-stem vs multi-stem systems) to optimize yields.',
+        content: 'Coffee grows best in deep, well-drained, slightly acidic soils, such as volcanic soils. Arabica suits higher, cooler areas; robusta suits warmer, lower areas, so at low altitude robusta is usually the better choice. Coffee needs nitrogen and potassium in particular; split fertilizer over the rainy season and base amounts on a soil test or your national coffee guide. Irrigation during dry spells around flowering helps berries set and fill. Keep to one pruning system (single-stem or multi-stem) to manage yields.',
         category: 'Crop Management',
         tags: ['coffee', 'arabica', 'robusta', 'pruning', 'fertilizer'],
         crop: 'coffee',
@@ -78,7 +85,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb10',
         title: 'Rice Cultivation and Water Submergence Systems',
-        content: 'Rice (Oryza sativa) requires heavy, poorly drained clay or clay-loam soils to retain a standing water layer (flooding depth of 5cm to 10cm). Soil pH should ideally range from 6.0 to 7.0. Water Management: Traditional lowland rice requires continuous submergence from transplanting until 2 weeks before harvest. Alternate Wetting and Drying (AWD) is an advanced water-saving irrigation method where the field is allowed to dry until the water table drops to 15cm below the soil surface before re-flooding, reducing water consumption by up to 30% without yield loss.',
+        content: 'Lowland rice is grown in heavy clay or clay-loam soils that hold a layer of standing water; keep the water shallow and level so all plants are covered evenly. Drain the field before harvest so it is firm and grain ripens evenly. Alternate wetting and drying (AWD) saves water: the field is allowed to dry until the water level drops a little below the soil surface, checked with a perforated field tube, and is then flooded again. Ask your local rice programme how far to let the water drop for your soils.',
         category: 'Water Management',
         tags: ['rice', 'awd', 'flooding', 'water conservation'],
         crop: 'rice',
@@ -86,7 +93,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb11',
         title: 'Plantain & Banana Nutrient Management',
-        content: 'Plantain and Banana (Musa spp.) require fertile, deep, well-aerated soils (volcanic or alluvial loams) with high organic matter, excellent drainage, and a pH between 5.5 and 7.0. Water requirements are extremely high (100-150mm per month). Moisture stress triggers immediate leaf yellowing, reduced bunch weight, and long fruit-filling times. Fertilization: Heavy potassium feeding is vital for bunch formation. Apply nitrogen (urea) and potassium (muriate of potash) monthly. Drip irrigation systems should use dual lateral lines on either side of the plant row to cover the dense feeder root zone.',
+        content: 'Plantain and banana need fertile, deep, well-drained soil rich in organic matter, and a lot of water through the year. Yellowing leaves can come from drought stress, potassium or nitrogen shortage, poor drainage, or diseases such as Fusarium wilt or Sigatoka; check the pattern (old or young leaves, edges or whole leaf) and ask an extension officer to confirm. Potassium is especially important for bunch filling. Mulch to keep moisture in, and base fertilizer on a soil test or the national recommendation.',
         category: 'Soil & Water',
         tags: ['plantain', 'banana', 'potassium', 'fertilizer'],
         crop: 'plantain',
@@ -94,7 +101,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb12',
         title: 'Sandy Loam Soil Diagnostics & Aeration',
-        content: 'Sandy Loam soil consists of 60% sand, 20% silt, and 20% clay. Diagnostics: Excellent aeration and drainage but extremely low nutrient holding capacity (Cation Exchange Capacity of 5-15 meq/100g) and low water retention. Water management: Requires frequent, low-volume irrigation (micro-drip cycles of 20-30 minutes daily) to prevent nutrient leaching. Soil improvement: Incorporate green manures, cover crops, and mature organic compost (at least 10 tons per hectare annually) to increase soil carbon and water retention.',
+        content: 'Sandy loam drains and breathes well but holds little water and few nutrients, so fertilizer is lost quickly by leaching. Irrigate little and often rather than with large amounts at once, and split fertilizer into several small applications. Build up organic matter with compost, green manure and cover crops to improve how much water and nutrient the soil holds.',
         category: 'Soil Health',
         tags: ['soil', 'sandy loam', 'compost', 'aeration'],
         crop: 'all',
@@ -102,7 +109,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb13',
         title: 'Clay Loam Soil Management & Drainage',
-        content: 'Clay Loam soil consists of 30-40% clay, 20-40% sand, and 20-40% silt. Diagnostics: High nutrient retention capacity (CEC of 20-30 meq/100g) but prone to compaction, slow drainage, and waterlogging. Management: Perform subsoiling or deep ripping to break up hardpans. Add gypsum (calcium sulfate) at 2-5 tons/hectare to improve structure and promote flocculation of clay particles. Irrigation: Sprinkler or drip systems must use low application rates (less than 10mm/hour) to prevent runoff and ponding.',
+        content: 'Clay loam holds water and nutrients well but compacts easily and drains slowly, so fields can stay waterlogged. Avoid working the soil when it is wet, break hardpans by subsoiling or deep ripping when the soil is dry, and add organic matter. Gypsum (calcium sulfate) can improve the structure of some clay soils, especially sodic ones; have the soil tested before buying it, and use the rate the test recommends. Irrigate slowly to avoid runoff and ponding.',
         category: 'Soil Health',
         tags: ['soil', 'clay loam', 'drainage', 'compaction'],
         crop: 'all',
@@ -110,7 +117,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb14',
         title: 'Acidic Volcanic Soils (Ferralsols & Acrisols)',
-        content: 'Acidic volcanic soils, common in high-altitude tropical zones, suffer from intense leaching and phosphorus (P) fixation (phosphorus binds tightly to iron and aluminum oxides, making it unavailable to plants). Diagnostics: pH levels are often below 5.0. Lime requirements: Apply agricultural lime (calcium carbonate) or dolomite to raise pH above 5.5, which unlocks bound phosphorus. Fertilizer guidelines: Apply rock phosphate or triple superphosphate (TSP) in banded rows directly next to plant roots to minimize soil contact and fixation.',
+        content: 'Acidic volcanic and highly weathered soils (Ferralsols, Acrisols) often lose nutrients by leaching and fix phosphorus, which binds to iron and aluminium and becomes unavailable to plants. Liming with agricultural lime or dolomite raises the pH and makes phosphorus more available; how much lime depends on the soil\'s pH and buffer capacity, so take the rate from a soil test. Place phosphorus fertilizer in a band near the seed rather than spreading it, to reduce fixation.',
         category: 'Soil Health',
         tags: ['soil', 'acidic', 'lime', 'volcanic', 'phosphorus'],
         crop: 'all',
@@ -118,7 +125,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb15',
         title: 'Precision Irrigation Calculations',
-        content: 'Effective crop irrigation requires calculating the daily water requirement using the equation: ETc = ETo x Kc. ETc is the crop evapotranspiration, ETo is the reference evapotranspiration (based on local temperature, solar radiation, wind, and humidity), and Kc is the crop coefficient (which varies by growth stage). For example, Maize has a Kc of 0.4 at emergence, rising to 1.15 during tasseling/silking, and dropping to 0.5 at maturity. During tasseling in a dry region with an ETo of 5mm/day, the crop requires: 5 x 1.15 = 5.75mm of water daily.',
+        content: 'Crop water use is calculated as ETc = Kc × ETo, where ETo is the reference evapotranspiration from local weather data and Kc is the crop coefficient for the crop and its growth stage (FAO Irrigation and Drainage Paper 56, chapter 6: https://www.fao.org/4/x0490e/x0490e0b.htm). Kc is low after emergence, highest around flowering and lower again at maturity; take the values for your crop from FAO-56 or your national irrigation guide. Irrigation need is crop water use minus effective rainfall.',
         category: 'Water Management',
         tags: ['irrigation', 'math', 'evapotranspiration', 'kc'],
         crop: 'all',
@@ -127,7 +134,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb16',
         title: 'Livestock-Crop Integration for Smallholders',
-        content: 'Integrating livestock with crops creates nutrient cycles: manure fertilizes crops, crop residues feed animals. Poultry manure provides 1-2% N, 1-2% P, 1% K. For a 1-hectare maize plot, 5-10 tons of composted poultry manure per season replaces mineral fertilizer. Use chicken tractors to rotate birds through fallow fields. Zero-grazing dairy units (3-5 cows) on 1 hectare of napier grass can produce 15-20 liters milk/day while providing 10-15 tons manure/year for adjacent vegetable plots.',
+        content: 'Integrating livestock with crops recycles nutrients: manure fertilizes the fields and crop residues feed the animals. Compost manure before use to kill weed seeds and pathogens and reduce nitrogen loss. Manure nutrient content varies with the animal, feed and storage, so test it or use your national guide when working out how much to apply to maize or other crops. Rotate poultry through fallow plots, and keep zero-grazing units close to fodder plots such as napier grass to make manure easy to collect.',
         category: 'Integrated Farming',
         tags: ['livestock', 'manure', 'nutrient cycling', 'smallholder'],
         crop: 'all',
@@ -135,7 +142,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb17',
         title: 'Agroforestry Systems for Climate Resilience',
-        content: 'Agroforestry combines trees with crops/livestock. Alley cropping: plant rows of Gliricidia sepium or Leucaena leucocephala (4m apart) with maize/beans between rows. Trees fix 100-200 kg N/ha/year via leaf litter, reducing fertilizer needs by 30-50%. Multistrata systems (cocoa + banana + timber + medicinal plants) yield 3-5x more per hectare than monoculture. Windbreaks (Casuarina, Grevillea) reduce evapotranspiration by 15-20% downwind.',
+        content: 'Agroforestry combines trees with crops or livestock. In alley cropping, rows of nitrogen-fixing trees such as Gliricidia sepium or Leucaena leucocephala are planted with maize or beans between them; the trees are pruned and the leaves added to the soil, where they release nitrogen as they decay. Windbreaks of trees such as Grevillea or Casuarina shelter crops from drying winds. Multistrata systems mix crops like cocoa and banana with timber and fruit trees.',
         category: 'Agroforestry',
         tags: ['trees', 'nitrogen fixation', 'biodiversity', 'carbon'],
         crop: 'all',
@@ -143,7 +150,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb18',
         title: 'Market Access & Value Chain Development',
-        content: 'Smallholder market linkage requires: (1) Collective marketing through farmer groups/cooperatives to achieve volume for bulk buyers; (2) Contract farming agreements specifying price, quality, and delivery terms with processors/exporters; (3) Market information systems (SMS/WhatsApp) providing daily wholesale prices; (4) Post-harvest infrastructure (collection centers, cold rooms, drying platforms) to reduce losses. Digital platforms (Twiga, Mkulima Young) connect farmers directly to urban retailers, cutting 3-4 intermediaries and increasing farm-gate price by 20-40%.',
+        content: 'A farmer cooperative or group can bulk produce so that it reaches the volumes bulk buyers and processors want, negotiate together, and share transport and storage. Contract farming agreements should state price, quality, quantity and delivery terms in writing. Market information services by SMS, USSD or messaging apps can send daily wholesale prices to a phone; ask your extension officer which services work in your area.',
         category: 'Market Access',
         tags: ['market', 'value chain', 'cooperatives', 'digital'],
         crop: 'all',
@@ -151,7 +158,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb19',
         title: 'Post-Harvest Technology & Food Loss Reduction',
-        content: 'Sub-Saharan Africa loses 30-50% of food post-harvest. Technologies: (1) Hermetic storage bags (PICS bags) for grains kill insects without chemicals, store 9+ months; (2) Solar dryers (cabinet or tunnel) reduce moisture to 12-14% for fruits/vegetables in 1-2 days; (4) Cold rooms (10-15°C, 85-95% RH) extend shelf life of tomatoes/leafy greens by 2-3 weeks; (5) Mobile processing units (cassava chippers, maize shellers) reduce transport costs. Investment of $500-1000 in village-level drying/storage cuts losses by 60-80%.',
+        content: 'Much food is lost between harvest and market. Hermetic storage bags seal grain so insects die without chemicals once the oxygen is used up. Solar dryers dry fruit, vegetables and grain faster and more cleanly than sun drying on the ground. Cool storage extends the shelf life of tomatoes and leafy vegetables. Shared village drying and storage facilities cut losses and let farmers sell when prices are better.',
         category: 'Post-Harvest',
         tags: ['storage', 'drying', 'cold chain', 'food loss'],
         crop: 'all',
@@ -159,7 +166,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb20',
         title: 'Digital Agriculture & Advisory Services',
-        content: 'Digital tools for extension: (1) USSD/SMS platforms (e.g., iCow, M-Farm) deliver weather, prices, and agronomic tips to feature phones; (2) Smartphone apps (PlantVillage, Crop Doctor) use AI vision for disease ID; (3) IoT sensors (soil moisture, weather stations) feed data to dashboards; (4) Drone imagery (NDVI) maps crop stress at 5cm resolution; (5) Blockchain traceability (Farmer Connect, Provenance) verifies organic/fair-trade claims. Key barrier: digital literacy training for women and youth extension officers.',
+        content: 'Digital tools for extension include SMS and USSD services that send weather, prices and agronomic tips to basic phones, smartphone apps that suggest a crop disease from a photo (always confirm with an expert before treating), sensors that report soil moisture and weather, and drone or satellite imagery that shows crop stress. Training in digital skills, especially for women and young officers, decides how much these tools are used.',
         category: 'Digital Agriculture',
         tags: ['digital', 'AI', 'IoT', 'extension', 'blockchain'],
         crop: 'all',
@@ -167,7 +174,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb21',
         title: 'Gender-Responsive Agricultural Extension',
-        content: 'Women produce 60-80% of food in SSA but access 10-20% of extension services. Gender-responsive design: (1) Train female extension agents (target 40-50%); (2) Schedule meetings at times/locations accessible to women; (3) Address women-specific crops (vegetables, legumes) and constraints (land tenure, credit); (4) Use women groups (savings, seed, processing) as entry points; (5) Collect sex-disaggregated data. Projects with gender lens show 20-30% higher adoption of improved varieties and soil practices.',
+        content: 'Extension services reach more women farmers when they train and hire female extension agents, hold meetings at times and places women can attend, cover the crops and tasks women manage, work through women\'s groups (savings, seed, processing), and address constraints such as land tenure and credit. Collect data by sex so you can see who the service reaches.',
         category: 'Social Equity',
         tags: ['gender', 'women', 'extension', 'adoption'],
         crop: 'all',
@@ -175,7 +182,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb22',
         title: 'Youth Engagement in Agriculture & Agripreneurship',
-        content: 'Average farmer age in Africa is 60. Youth strategies: (1) Incubators for agri-tech startups (precision farming, logistics, processing); (2) Access to land via youth land banks or lease-to-own models; (3) Blended finance (grants + loans) for mechanization services (tractor hire, drone spraying); (4) Curriculum reform: agribusiness modules in TVET/universities; (5) Digital platforms for market access (Twiga, Apollo Agriculture). Successful youth agripreneurs earn 2-3x average rural income and create jobs for 5-10 peers.',
+        content: 'Young people can get started in agribusiness through incubators and youth programmes, land access schemes such as leasing, finance that mixes grants and loans for equipment and services (tractor hire, spraying, processing), agribusiness training in colleges, and digital market platforms. Service businesses that other farmers pay for, such as mechanisation, input supply or aggregation, are common starting points.',
         category: 'Youth & Employment',
         tags: ['youth', 'agripreneurship', 'mechanization', 'finance'],
         crop: 'all',
@@ -183,7 +190,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb23',
         title: 'Climate Finance for Smallholder Adaptation',
-        content: 'Climate funds accessible to smallholders: (1) Green Climate Fund (GCF) - readiness grants for NAPs, project funding up to $50M; (2) Adaptation Fund - concrete adaptation projects; (3) GEF Small Grants Programme - up to $50K for community projects; (4) Carbon credits: soil carbon (1-3 tCO2/ha/yr via conservation ag) sold at $10-30/tCO2 via Verra/Gold Standard; (5) Weather-index insurance (ACRE Africa, Pula) pays out automatically when satellite rainfall index triggers. Bundling credit + insurance + inputs de-risks lending.',
+        content: 'Climate finance that can reach smallholders includes national adaptation programmes funded by international climate funds, small grants programmes for community projects, carbon payments for practices that store soil carbon (these need careful measurement and verification), and weather-index insurance that pays out when a rainfall index is triggered. Bundling credit, insurance and inputs makes lending to farmers less risky.',
         category: 'Climate Finance',
         tags: ['climate finance', 'carbon', 'insurance', 'GCF'],
         crop: 'all',
@@ -191,7 +198,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb24',
         title: 'Soil Organic Carbon Sequestration & MRV',
-        content: 'Conservation agriculture (no-till + cover crops + rotation) sequesters 0.5-2 tC/ha/yr. Measurement: (1) Direct soil sampling (0-30cm, bulk density, %C via dry combustion); (2) Satellite proxies (NDVI, soil moisture); (3) Models (RothC, Century) calibrated to local data. MRV standards: IPCC Tier 2 (country-specific emission factors) or Tier 3 (process models). Carbon credit prices: $15-30/tCO2 for agriculture. Co-benefits: +10-20% yield, -30% fertilizer use, drought resilience.',
+        content: 'Conservation agriculture (little tillage, cover crops and rotation) can increase soil organic carbon over time. Measuring it requires soil sampling to a fixed depth with bulk density and carbon analysis, sometimes combined with satellite data and calibrated models. Carbon schemes follow reporting standards such as the IPCC tiers; payments and verified gains vary widely by site and scheme, so check claims against measured results.',
         category: 'Soil Carbon',
         tags: ['carbon', 'MRV', 'conservation agriculture', 'climate'],
         crop: 'all',
@@ -199,7 +206,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb25',
         title: 'Biochar Production & Soil Application',
-        content: 'Biochar: pyrolysis of crop residues (corn cobs, rice husks, wood) at 400-600°C with limited oxygen. Properties: 70-90% C, high surface area (100-400 m2/g), pH 8-10, CEC 20-50 cmol/kg. Application: 5-20 t/ha incorporated into topsoil. Benefits: +15-30% water retention, +10-20% crop yield (especially in acidic/sandy soils), -20-50% N2O emissions, long-term C sequestration (100-1000 yr). Small-scale production: Kon-Tiki kiln (100-500 kg/batch) or TLUD stove for household use.',
+        content: 'Biochar is made by heating crop residues or wood with little oxygen (pyrolysis). It is mostly carbon, porous and usually alkaline, so it can help acidic or sandy soils hold water and nutrients. Results vary with the feedstock, the soil and the amount applied, so try it on a small plot first. Small-scale kilns (such as the Kon-Tiki) or TLUD stoves can produce it on the farm.',
         category: 'Soil Amendments',
         tags: ['biochar', 'pyrolysis', 'carbon', 'soil health'],
         crop: 'all',
@@ -207,7 +214,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb26',
         title: 'Composting & Vermiculture for Soil Fertility',
-        content: 'Composting: mix C-rich (straw, leaves, maize stover C:N 50-80:1) and N-rich (manure, kitchen waste, legume residues C:N 15-25:1) materials to achieve initial C:N of 25-30:1. Turn every 3-5 days; ready in 6-8 weeks (dark, crumbly, earthy smell). Vermiculture: Eisenia fetida worms process 0.5-1 kg waste/kg worms/day. Vermicast contains 1-2% N, 1-2% P, 1-2% K, humic acids, and beneficial microbes. Application: 2-5 t/ha compost or 1-2 t/ha vermicast as basal dressing.',
+        content: 'Compost works best from a mix of carbon-rich materials (straw, dry leaves, maize stover) and nitrogen-rich materials (manure, kitchen waste, green legume residues). Keep the heap moist, turn it regularly so it stays aerated, and use it when it is dark, crumbly and smells earthy. In vermicomposting, worms such as Eisenia fetida turn organic waste into vermicast, a rich soil amendment. Apply compost or vermicast as a basal dressing; base amounts on what you have and your soil test.',
         category: 'Soil Amendments',
         tags: ['compost', 'vermicompost', 'organic', 'nutrients'],
         crop: 'all',
@@ -215,7 +222,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb27',
         title: 'Green Manure & Cover Cropping Systems',
-        content: 'Green manures: legumes grown for soil improvement, incorporated before flowering. Top species: (1) Mucuna pruriens (velvet bean) - 150-250 kg N/ha, suppresses weeds; (2) Crotalaria juncea (sunn hemp) - 100-150 kg N/ha, nematode suppression; (3) Sesbania sesban - 80-120 kg N/ha, fast-growing tree legume; (4) Vigna unguiculata (cowpea) - 50-80 kg N/ha, dual-purpose food/cover. Cover crops: off-season planting (oats, rye, radish) prevents erosion, scavenges residual N, breaks pest cycles. Terminate 2-3 weeks before main crop planting.',
+        content: 'Green manures are legumes grown to improve the soil and worked in before or around flowering. Common species include velvet bean (Mucuna pruriens), which also smothers weeds; sunn hemp (Crotalaria juncea), which can suppress nematodes; Sesbania; and cowpea, which also gives food. Cover crops planted between seasons protect the soil from erosion, take up leftover nitrogen and break pest cycles. Kill or incorporate them some weeks before planting the main crop so they start to break down.',
         category: 'Soil Health',
         tags: ['cover crops', 'green manure', 'nitrogen', 'erosion'],
         crop: 'all',
@@ -223,7 +230,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb28',
         title: 'Crop Insurance & Index-Based Risk Management',
-        content: 'Index insurance pays out based on weather/satellite triggers, not individual loss assessment. Products: (1) Area Yield Index Insurance (AYII) - uses historical district yields; (2) Weather Index Insurance (WII) - rainfall/temperature thresholds from satellite/station data; (3) Satellite Yield Index - NDVI-based anomaly detection. Key players: ACRE Africa (Kenya/Rwanda/Tanzania), Pula (Nigeria/Ghana/Zambia), OKO (Mali/Uganda). Bundling: input packages (seeds + fertilizer) + insurance + extension = 30-50% higher adoption. Payouts automated via mobile money within 48h of trigger.',
+        content: 'Index insurance pays out when a measured index passes a set threshold, rather than after assessing each farm\'s loss. Common types use district yields, rainfall or temperature from weather stations or satellites, or satellite measures of crop growth. It is often sold bundled with seed, fertilizer, credit and extension. Because payouts follow the index, a farm can suffer a loss without a payout; read the terms before buying.',
         category: 'Risk Management',
         tags: ['insurance', 'index', 'weather', 'satellite', 'mobile money'],
         crop: 'all',
@@ -231,7 +238,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb29',
         title: 'Integrated Striga (Witchweed) Management',
-        content: 'Striga hermonthica parasitizes maize, sorghum, millet causing 30-100% yield loss. Integrated control: (1) Resistant/tolerant varieties (IR-maize, ICSV sorghum); (2) Trap crops: Desmodium (push-pull), cotton, sunflower induce suicidal germination; (3) Catch crops: Striga-resistant sorghum varieties stimulate germination without attachment; (4) N fertilization reduces Striga emergence; (4) Hand-pulling before seed set; (5) Imazapyr-resistant (IR) maize seed coating (StrigAway®) allows herbicide control. Push-pull (Desmodium intercrop + Napier border) reduces Striga by 80% and stemborer by 70%.',
+        content: 'Striga (witchweed) is a parasitic weed of maize, sorghum and millet that can cause heavy yield losses. Integrated control: plant Striga-resistant or tolerant varieties; use push-pull (Desmodium between maize rows and a Napier or Brachiaria border), which also deters stemborers; rotate with trap crops such as cotton or soybean that make Striga seed germinate without a host; improve soil fertility with fertilizer and manure, which reduces Striga emergence; pull Striga before it sets seed; and where available, use imazapyr-resistant (IR) maize with its herbicide seed coating.',
         category: 'Pest Management',
         tags: ['striga', 'push-pull', 'parasitic weed', 'maize'],
         crop: 'maize',
@@ -239,7 +246,7 @@ export const seedKnowledgeArticlesData = [
     {
         id: '9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb30',
         title: 'Fall Armyworm (FAW) IPM & Biocontrol',
-        content: 'Spodoptera frugiperda invaded Africa 2016, now in 40+ countries. IPM strategy: (1) Monitoring: pheromone traps (1 trap/ha), scout 10 plants/plot weekly; (2) Action threshold: 3+ egg masses or 20% infested plants with early instar larvae; (3) Biocontrol: release Telenomus remus (egg parasitoid) 50,000/ha, Cotesia icipe (larval parasitoid); (4) Botanicals: neem oil (azadirachtin 1-3%) every 7-10 days, Bacillus thuringiensis (Bt) formulations; (5) Chemical (last resort): emamectin benzoate, spinetoram - rotate MoA classes; (6) Resistant varieties: FAW-tolerant maize hybrids (e.g., WE2121, WE3131). Early planting avoids peak moth flights.',
+        content: 'Fall armyworm (Spodoptera frugiperda) is a serious pest of maize across Africa. Scout fields weekly from emergence and use pheromone traps to see when moths arrive; act on the threshold your national guide or FAO\'s fall armyworm guidance gives, rather than on sight of the first larvae. Biological options: conserve natural enemies such as the egg parasitoid Telenomus remus, apply Bacillus thuringiensis (Bt) products, and use neem-based products, following their labels. Push-pull reduces damage. Chemical control is a last resort: use only products registered for fall armyworm on maize in your country, at the label rate, and rotate between modes of action. Early, synchronised planting helps avoid the worst attacks.',
         category: 'Pest Management',
         tags: ['fall armyworm', 'IPM', 'biocontrol', 'maize'],
         crop: 'maize',

@@ -11,6 +11,8 @@ export interface RegulatoryCheckResult {
   sourceNote: string;
 }
 
+const PMRA_LABEL_SEARCH = 'https://www.canada.ca/en/health-canada/services/consumer-product-safety/pesticides-pest-management/registrants-applicants/tools/pesticide-label-search.html';
+
 export class CanadianRegulatoryEngine {
   /**
    * Validates agronomic treatments against Canadian Federal & Provincial regulations
@@ -27,37 +29,25 @@ export class CanadianRegulatoryEngine {
     let isCompliant = true;
     let registrationStatus: RegulatoryCheckResult['registrationStatus'] = 'registered';
 
-    // PMRA Pest Control Products Act (PCPA) Check
-    const restrictedActiveIngredients = ['neonicotinoids', 'glyphosate_aquatic_buffer', 'dicamba_high_volatility'];
+    // Actives with no remaining registration in Canada (PMRA cancelled or phased them out). The
+    // app holds no copy of the label register, so anything else is left to the label search.
     const prohibitedIngredients = ['ddt', 'endosulfan', 'lindane'];
-
     if (prohibitedIngredients.includes(activeIngredient.toLowerCase())) {
       isCompliant = false;
       registrationStatus = 'prohibited';
-      warnings.push(`PROHIBITED: ${activeIngredient} is banned under the Pest Control Products Act (PCPA).`);
-    } else if (restrictedActiveIngredients.includes(activeIngredient.toLowerCase())) {
-      registrationStatus = 'restricted';
-      warnings.push(`RESTRICTED: ${activeIngredient} requires certified applicator license in ${province}.`);
+      warnings.push(`PROHIBITED: ${activeIngredient} has no registration under the Pest Control Products Act.`);
     }
-
-    // CFIA Fertilizers Act max application check
-    if (dosagePerHectare > 250) {
-      warnings.push(`EXCEEDS THRESHOLD: Dosage ${dosagePerHectare}kg/ha exceeds CFIA Fertilizers Act environmental runoff guidelines.`);
-      if (dosagePerHectare > 400) isCompliant = false;
-    }
-
-    // Provincial aquatic buffer zone enforcement (e.g. Ontario O. Reg 63/09, Prairie Water Protection)
-    const bufferZoneMeters = province.toLowerCase() === 'ontario' || province.toLowerCase() === 'quebec' ? 15 : 10;
+    warnings.push(
+      `Check the rate (${dosagePerHectare} per hectare), crop, buffer zone and re-entry interval on the product label: ${PMRA_LABEL_SEARCH}. Provincial rules in ${province} may add to them.`
+    );
 
     return {
       isCompliant,
-      actName: 'Canada Pest Control Products Act & Fertilizers Act',
+      actName: 'Pest Control Products Act (Canada)',
       registrationStatus,
-      maximumDosagePerHectare: 250,
-      bufferZoneMeters,
       warnings,
       sourceNote:
-        'Bounded offline rule set (limited ingredient list + fixed thresholds). Not a substitute for a current PMRA/CFIA label or product-registry lookup.',
+        'Only a short list of actives with no Canadian registration is held here. Rates, buffer zones and registration status come from the product label, not from this check.',
     };
   }
 }

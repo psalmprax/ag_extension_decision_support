@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import { query } from '@/services/databaseService';
+import { appendChainedAuditEntry } from '@/services/audit/auditChain';
 import { logger } from '@/utils/logger';
 
 /**
@@ -12,7 +12,8 @@ import { logger } from '@/utils/logger';
  *    request (any role) to a path in SENSITIVE_PATHS. This is what prevents the
  *    "we forgot to add auditing to that new admin route" failure mode.
  *
- * Rows go to `audit_logs` (see prisma AuditLog). Bodies are redacted and capped.
+ * Rows go to `audit_logs` (see prisma AuditLog), each linked by hash to the one before
+ * (services/audit/auditChain.ts). Bodies are redacted and capped.
  */
 
 const SENSITIVE_PATHS: RegExp[] = [
@@ -77,25 +78,20 @@ export async function writeAuditLog(entry: {
     requestBody?: unknown;
 }): Promise<void> {
     try {
-        await query(
-            `INSERT INTO audit_logs
-               (actor_id, actor_role, action, method, path, resource_type, resource_id, status_code, ip_address, user_agent, request_body, created_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW())`,
-            [
-                entry.actorId ?? null,
-                entry.actorRole ?? null,
-                entry.action.slice(0, 120),
-                entry.method.slice(0, 10),
-                entry.path.slice(0, 512),
-                entry.resourceType ?? null,
-                entry.resourceId ? String(entry.resourceId).slice(0, 120) : null,
-                entry.statusCode,
-                entry.ipAddress ?? null,
-                entry.userAgent ? entry.userAgent.slice(0, 512) : null,
-                // Redact here (not only in the middleware) so every caller is covered.
-                entry.requestBody === undefined ? null : JSON.stringify(safeBody(entry.requestBody)),
-            ]
-        );
+        await appendChainedAuditEntry([
+            entry.actorId ?? null,
+            entry.actorRole ?? null,
+            entry.action.slice(0, 120),
+            entry.method.slice(0, 10),
+            entry.path.slice(0, 512),
+            entry.resourceType ?? null,
+            entry.resourceId ? String(entry.resourceId).slice(0, 120) : null,
+            entry.statusCode,
+            entry.ipAddress ?? null,
+            entry.userAgent ? entry.userAgent.slice(0, 512) : null,
+            // Redact here (not only in the middleware) so every caller is covered.
+            entry.requestBody === undefined ? null : JSON.stringify(safeBody(entry.requestBody)),
+        ]);
     } catch (err) {
         // Never fail the request because auditing failed, but never be silent either.
         logger.error('Audit log write failed:', err);

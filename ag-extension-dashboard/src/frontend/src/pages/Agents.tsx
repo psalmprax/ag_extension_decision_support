@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { QueueStats } from './agents/QueueStats';
 import {
   Server,
@@ -248,7 +249,7 @@ function Agents() {
                 {/* Dispatch Trigger Button */}
                 <div className="pt-4 border-t border-slate-200 dark:border-white/[0.06] space-y-2">
                   <div className="text-xs font-mono tabular-nums text-slate-400 dark:text-white/30 truncate">
-                    {t('ui_agents_heartbeat')} {new Date(agent.lastHeartbeat).toLocaleTimeString()}
+                    {t('ui_agents_heartbeat')} {new Date(agent.lastHeartbeat).toLocaleTimeString(appLocale())}
                   </div>
                   <button
                     onClick={() => handleDispatch(agent.agentId)}

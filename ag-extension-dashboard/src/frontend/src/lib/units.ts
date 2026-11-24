@@ -1,4 +1,5 @@
 import { areaFromHectares, areaToHectares, findCountry, type AreaUnit } from '@ag-extension/shared/api';
+import { appLocale } from '@/lib/appLocale';
 import type { ProfileSettings } from '@/store/useAppStore';
 
 export type TempUnit = 'celsius' | 'fahrenheit';
@@ -26,7 +27,7 @@ export function formatArea(hectares: number | string | null | undefined, unit: A
   const value = toNumber(hectares);
   if (value === null) return '—';
   const shown = areaFromHectares(value, unit);
-  const text = shown.toLocaleString(undefined, { maximumFractionDigits: digits, minimumFractionDigits: 0 });
+  const text = shown.toLocaleString(appLocale(), { maximumFractionDigits: digits, minimumFractionDigits: 0 });
   if (unit === 'ha') return `${text} ha`;
   return `${text} ${Math.abs(shown - 1) < 0.05 ? 'acre' : 'acres'}`;
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { Clock, ExternalLink, TrendingUp, ShieldCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -65,7 +66,7 @@ export const SubscriptionStatus: React.FC<SubscriptionStatusProps> = ({
               {t('billing_renews_on') || 'Renews on'}{' '}
               <span className="tabular-nums">
                 {subscription?.currentPeriodEnd
-                  ? new Date(subscription.currentPeriodEnd).toLocaleDateString()
+                  ? new Date(subscription.currentPeriodEnd).toLocaleDateString(appLocale())
                   : 'N/A'}
               </span>
             </span>

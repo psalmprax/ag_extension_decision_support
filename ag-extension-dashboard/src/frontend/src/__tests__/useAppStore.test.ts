@@ -17,11 +17,13 @@ vi.mock('@/api/visitService', () => ({
   fetchVisits: vi.fn().mockResolvedValue({ success: true, data: [] }),
 }));
 
-vi.mock('react-hot-toast', () => ({
-  default: { success: vi.fn(), error: vi.fn() },
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock('react-hot-toast', () => {
+  // Like the real library: toast() itself shows a plain message, with success/error beside it.
+  const toast = Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), dismiss: vi.fn() });
+  return { default: toast, toast };
+});
 
+import { toast } from 'react-hot-toast';
 import { useAppStore } from '../store/useAppStore';
 
 describe('useAppStore', () => {
@@ -115,6 +117,17 @@ describe('useAppStore', () => {
 
     clearNotifications();
     expect(useAppStore.getState().notifications.length).toBe(0);
+  });
+
+  it('shows each notification as a toast of its kind, not only in the bell list', () => {
+    const { addNotification } = useAppStore.getState();
+    addNotification({ type: 'success', message: 'Visit saved' });
+    addNotification({ type: 'error', message: 'Could not save the visit' });
+    addNotification({ type: 'warning', message: 'There is no page at /nowhere.' });
+
+    expect(toast.success).toHaveBeenCalledWith('Visit saved');
+    expect(toast.error).toHaveBeenCalledWith('Could not save the visit');
+    expect(toast).toHaveBeenCalledWith('There is no page at /nowhere.');
   });
 
   it('should toggle dark mode and save to localStorage', () => {

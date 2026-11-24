@@ -1,4 +1,5 @@
 import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { motion } from 'framer-motion';
 import { Mail, Eye, Edit } from 'lucide-react';
 import type { EmailTemplate } from '@/api/emailWorkflowService';
@@ -74,7 +75,7 @@ export function EmailWorkflowsTemplateGrid({
                 <div className="text-xs text-gray-500 dark:text-theme-text-muted">
                   Created by {template.createdBy || 'System'} •{' '}
                   {template.createdAt
-                    ? new Date(template.createdAt).toLocaleDateString()
+                    ? new Date(template.createdAt).toLocaleDateString(appLocale())
                     : 'Recently'}
                 </div>
               </div>

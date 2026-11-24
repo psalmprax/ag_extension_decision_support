@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { appLocale } from '@/lib/appLocale';
 import { AlertTriangle, History, Loader2 } from 'lucide-react';
 import { getDiagnosisHistory, type DiagnosisHistoryEntry } from '@/api/diseaseService';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -6,7 +7,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 const formatWhen = (iso: string) => {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  return date.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  return date.toLocaleString(appLocale(), { dateStyle: 'medium', timeStyle: 'short' });
 };
 
 const formatSource = (source: string) => source.replace(/_/g, ' ');

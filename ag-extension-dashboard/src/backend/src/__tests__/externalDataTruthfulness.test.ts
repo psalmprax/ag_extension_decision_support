@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { calculateWeatherScore } from '../tools/cropYieldForecastTool';
 import { SatelliteService } from '../services/satelliteService';
 import { SoilGridsService } from '../services/data/soilGridsService';
 import { FaostatService } from '../services/data/faostatService';
@@ -21,18 +20,6 @@ jest.mock('../utils/logger', () => ({
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
 
-const weather = {
-  temperature: 24,
-  temp: 24,
-  condition: 'Clear sky',
-  humidity: 60,
-  windSpeed: 8,
-  forecast: [
-    { date: '2026-08-24', maxTemp: 28, minTemp: 18, precipitationMm: 0, condition: 'Clear sky' },
-    { date: '2026-08-25', maxTemp: 27, minTemp: 18, precipitationMm: 12, condition: 'Moderate rain' },
-  ],
-};
-
 describe('production data truthfulness', () => {
   beforeEach(() => {
     jest.restoreAllMocks();
@@ -43,26 +30,22 @@ describe('production data truthfulness', () => {
     delete process.env.FAOSTAT_ALLOW_UNVERIFIED_FALLBACK;
   });
 
-  it('uses actual precipitation in weather scoring', () => {
-    const rainy = calculateWeatherScore(weather, 'maize');
-    const dry = calculateWeatherScore({ ...weather, forecast: weather.forecast.map(day => ({ ...day, precipitationMm: 0 })) }, 'maize');
-
-    expect(rainy.dataStatus).toBe('complete');
-    expect(rainy.score).toBeGreaterThan(dry.score);
-  });
-
-  it('marks missing precipitation as partial instead of treating it as rain', () => {
-    const result = calculateWeatherScore({ ...weather, forecast: weather.forecast.map(({ precipitationMm: _ignored, ...day }) => day) }, 'maize');
-
-    expect(result.dataStatus).toBe('partial');
-    expect(result.score).toBeLessThan(calculateWeatherScore(weather, 'maize').score);
-  });
-
-  it('does not generate historical NDVI values without a provider history query', async () => {
-    const result = await SatelliteService.getNDVITimeSeries(-1.28, 36.82);
+  it('gives no weather rather than made-up values when NASA POWER does not answer', async () => {
+    const result = await SatelliteService.getDailyWeather(-1.28, 36.82);
 
     expect(result.data).toEqual([]);
     expect(result.dataStatus).toBe('unavailable');
+  });
+
+  it('reports NASA POWER rain and temperature as measured, leaving out its missing-value marks', async () => {
+    const { NasaPowerService } = await import('@/services/nasaPowerService');
+    const spy = jest.spyOn(NasaPowerService, 'getDaily').mockResolvedValue([
+      { date: '2026-11-20', T2M: 21.44, PRECTOTCORR: 3.27 },
+      { date: '2026-11-21', T2M: -999, PRECTOTCORR: 1 },
+    ] as never);
+    const result = await SatelliteService.getDailyWeather(-1.28, 36.82, 14);
+    expect(result).toMatchObject({ source: 'nasa-power', dataStatus: 'live', data: [{ date: '2026-11-20', rainMm: 3.3, tempC: 21.4 }] });
+    spy.mockRestore();
   });
 
   it('returns explicit unavailable soil data after provider failure', async () => {
@@ -109,13 +92,8 @@ describe('production data truthfulness', () => {
     expect(await marketPriceService.getLatestPrices()).toEqual([]);
   });
 
-  it('returns labeled market estimates without mutating the database', async () => {
+  it('gives no prices when no source answers, rather than made-up ones', async () => {
     mockedAxios.get.mockResolvedValue({ data: { rates: { KES: 130 } } });
-    const prices = await marketPriceService.getLatestPrices(undefined, 'Kenya');
-
-    expect(prices).toHaveLength(4);
-    expect(prices[0].source).toBe('baseline_estimate');
-    expect(prices[0].dataStatus).toBe('estimated');
-    expect(prices[0].price).toContain('KES');
+    expect(await marketPriceService.getLatestPrices(undefined, 'Kenya')).toEqual([]);
   });
 });

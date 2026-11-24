@@ -1,22 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { motion } from 'framer-motion';
-import {
-  X,
-  Share2,
-  Link,
-  Copy,
-  Check,
-  Clock,
-  Shield,
-  Globe,
-  Users,
-  Calendar,
-  AlertCircle,
-  RefreshCcw,
-} from 'lucide-react';
-import { createShare, ShareResponse } from '@/api/shareService';
+import { X, Share2, Link, Copy, Check, Clock, Shield, Globe, Users, Calendar, AlertCircle, RefreshCcw } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
-import { copyWithToast } from '@/lib/copyText';
+import { useShareLink } from './share/useShareLink';
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -34,60 +21,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
   entityName,
 }) => {
   const { t } = useLanguage();
-  const [loading, setLoading] = useState(false);
-  const [shareData, setShareData] = useState<ShareResponse['data'] | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-  const [settings, setSettings] = useState({
-    accessType: 'restricted', // public, restricted, organization
-    expiresIn: '7', // days
-    allowExport: true,
-  });
-
-  useEffect(() => {
-    if (isOpen) {
-      setShareData(null);
-      setErrorMessage(null);
-      setCopied(false);
-    }
-  }, [isOpen]);
-
-  const handleCreateShare = async () => {
-    setLoading(true);
-    setErrorMessage(null);
-    try {
-      const result = await createShare({
-        entityType,
-        entityId,
-        accessType: settings.accessType,
-        expiresInDays: parseInt(settings.expiresIn),
-        permissions: {
-          canView: true,
-          canExport: settings.allowExport,
-        },
-      });
-      if (result.success && result.data) {
-        setShareData(result.data);
-      } else {
-        const msg = result.error || 'Failed to create share link';
-        setErrorMessage(msg);
-        console.warn('Failed to create share:', msg);
-      }
-    } catch (error: unknown) {
-      const axiosErr = error as { response?: { data?: { error?: string } }; message?: string };
-      const msg = axiosErr.response?.data?.error || axiosErr.message || 'Share request failed';
-      setErrorMessage(msg);
-      console.warn('Share error:', msg);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const copyToClipboard = async () => {
-    if (!shareData?.shareUrl || !(await copyWithToast(shareData.shareUrl, 'Link copied.'))) return;
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const { loading, shareData, errorMessage, copied, settings, setSettings, handleCreateShare, copyToClipboard, startOver } = useShareLink(isOpen, entityType, entityId);
 
   if (!isOpen) return null;
 
@@ -286,13 +220,13 @@ export const ShareModal: React.FC<ShareModalProps> = ({
                 <AlertCircle className="w-5 h-5 text-amber-600 shrink-0" />
                 <p className="text-xs text-amber-700 dark:text-amber-500 leading-relaxed font-medium">
                   {t('ui_share_modal_this_link_will_expire_on')}{' '}
-                  <strong>{new Date(shareData.expiresAt || '').toLocaleDateString()}</strong>{t('ui_share_modal_access_is_logged_for_security_auditi')}
+                  <strong>{new Date(shareData.expiresAt || '').toLocaleDateString(appLocale())}</strong>{t('ui_share_modal_access_is_logged_for_security_auditi')}
                 </p>
               </div>
 
               <div className="flex gap-3">
                 <button
-                  onClick={() => setShareData(null)}
+                  onClick={startOver}
                   className="flex-1 py-4 bg-gray-100 dark:bg-theme-bg-tertiary hover:bg-gray-200 dark:hover:bg-white/[0.08] text-gray-700 dark:text-theme-text-secondary font-medium rounded-xl transition-all"
                 >
                   {t('ui_share_modal_regenerate')}

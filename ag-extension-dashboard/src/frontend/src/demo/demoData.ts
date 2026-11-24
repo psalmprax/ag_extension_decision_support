@@ -436,7 +436,7 @@ export const DEMO_ACTIVITIES = [
     crop: 'Maize',
     region: 'Kiambu Highlands, Kenya',
     issue: 'Fall Armyworm Infestation',
-    aiSummary: 'Windowpaning on whorl leaves. Larvae detected in upper canopy. Recommends Emamectin benzoate.',
+    aiSummary: 'Windowpaning on whorl leaves. Larvae detected in upper canopy. Recommends Bt or neem first; a registered insecticide only past the action threshold.',
     timestamp: '7m ago',
     isClaimed: false,
     journeySteps: [

@@ -1,16 +1,7 @@
 import React, { useState } from 'react';
+import { appLocale } from '@/lib/appLocale';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  X,
-  PhoneCall,
-  RotateCcw,
-  Smartphone,
-  Battery,
-  CheckCircle,
-  Globe,
-  Radio,
-  Send,
-} from 'lucide-react';
+import { X, PhoneCall, RotateCcw, Smartphone, Battery, CheckCircle, Globe, Radio, Send } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 
 interface USSDSimulatorDrawerProps {
@@ -41,7 +32,7 @@ export const USSDSimulatorDrawer: React.FC<USSDSimulatorDrawerProps> = ({
   };
 
   const addLog = (sender: 'user' | 'ussd', text: string) => {
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const time = new Date().toLocaleTimeString(appLocale(), { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     setSessionLogs(prev => [...prev, { sender, text, time }]);
   };
 
