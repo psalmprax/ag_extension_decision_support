@@ -1,12 +1,13 @@
 name: Train disease model
 
 # Trains the on-device plant disease classifier on field photos from Hugging Face datasets
-# (scripts/ml/train_disease_classifier.py), on this runner's CPU. The run uploads the int8
-# ONNX file, its manifest entry and MODEL_CARD.md as an artifact for review. It never commits:
+# (scripts/ml/train_disease_classifier.py), on this runner's CPU. The run uploads the ONNX
+# file, its manifest entry and MODEL_CARD.md as an artifact for review. It never commits:
 # a model reaches the app only when someone copies it into ag-extension-dashboard/src/frontend/models
 # and its field evaluation passes the gate the app checks (src/services/edgeModelManifest.ts).
 # Runs when the training code changes on stage (GitHub only allows a manual start for workflows
-# already on master), or by hand. A full run takes about an hour on a free public-repo runner.
+# already on master), or by hand. A full run streams about 25 GB of photos and takes two to three
+# hours on a free public-repo runner.
 on:
   push:
     branches: [stage]
@@ -18,15 +19,15 @@ on:
       epochs:
         description: 'Training epochs'
         required: false
-        default: '8'
-      max_per_source:
-        description: 'Cap on photos per source, for a quicker trial (empty = all)'
+        default: '10'
+      max_train_per_label:
+        description: 'Training photos kept per label and source; lower it for a quicker trial (empty = 1500)'
         required: false
         default: ''
       sources:
-        description: 'Datasets to use, comma-separated: plantdoc, maize, cassava'
+        description: 'Datasets to use, comma-separated (empty = all; names are in SOURCES in the script)'
         required: false
-        default: 'plantdoc,maize,cassava'
+        default: ''
       smoke:
         description: 'Only check the pipeline on generated images (numbers mean nothing)'
         type: boolean
@@ -62,13 +63,14 @@ jobs:
       - name: Train, export and score on held-out field photos
         # A push has no inputs, so each falls back to the dispatch default.
         env:
-          EPOCHS: ${{ inputs.epochs || '8' }}
-          MAX_PER_SOURCE: ${{ inputs.max_per_source || '' }}
-          SOURCES: ${{ inputs.sources || 'plantdoc,maize,cassava' }}
+          EPOCHS: ${{ inputs.epochs || '10' }}
+          MAX_TRAIN_PER_LABEL: ${{ inputs.max_train_per_label || '' }}
+          SOURCES: ${{ inputs.sources || '' }}
           SMOKE: ${{ inputs.smoke || 'false' }}
         run: |
-          args=(--out out --epochs "$EPOCHS" --sources "$SOURCES" --workers 4)
-          if [ -n "$MAX_PER_SOURCE" ]; then args+=(--max-per-source "$MAX_PER_SOURCE"); fi
+          args=(--out out --epochs "$EPOCHS" --workers 4)
+          if [ -n "$SOURCES" ]; then args+=(--sources "$SOURCES"); fi
+          if [ -n "$MAX_TRAIN_PER_LABEL" ]; then args+=(--max-train-per-label "$MAX_TRAIN_PER_LABEL"); fi
           if [ "$SMOKE" = "true" ]; then args+=(--smoke --size 96 --batch-size 8 --workers 0); fi
           python scripts/ml/train_disease_classifier.py "${args[@]}"
 

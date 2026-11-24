@@ -33,6 +33,8 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { copyWithToast } from '@/lib/copyText';
 import { safeStorage } from '@/lib/safeStorage';
 import { DiseaseModelStatus } from '@/components/edgeVision/DiseaseModelStatus';
+import { AlsoPossible } from '@/components/edgeVision/AlsoPossible';
+import { buildDiagnosticReportSummary, createPlotEntry, type ScanTargetMode } from '@/components/edgeVision/scanReport';
 
 interface CropPillScrubberProps {
   selectedCrop: string;
@@ -120,7 +122,7 @@ const CropPillScrubber: React.FC<CropPillScrubberProps> = ({
   );
 };
 
-export type ScanTargetMode = 'crop' | 'soil';
+export type { ScanTargetMode } from './edgeVision/scanReport';
 
 interface EdgeVisionScannerModalProps {
   isOpen: boolean;
@@ -176,6 +178,7 @@ const CropDiagnosticHUD: React.FC<{ result: OfflineDiagnosisResult }> = ({ resul
         <p className="text-xs text-slate-400 italic">
           {result.primaryDiagnosis.scientificName}
         </p>
+        <AlsoPossible result={result} />
       </div>
       <span className="px-2.5 py-1 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-medium font-mono rounded-full">
         {Math.round(result.primaryDiagnosis.confidence * 100)}% Match
@@ -530,47 +533,6 @@ const EngineTelemetry: React.FC<{
     </div>
   );
 };
-
-function buildDiagnosticReportSummary(
-  scanMode: ScanTargetMode,
-  crop: string,
-  cropResult: OfflineDiagnosisResult | null,
-  soilResult: OfflineSoilDiagnosisResult | null
-): string {
-  if (scanMode === 'crop' && cropResult) {
-    const diag = cropResult.primaryDiagnosis;
-    const action = diag.culturalControl[0] || 'See full report';
-    return `[Agri-Vision Offline Scan]\nCrop: ${crop}\nDiagnosis: ${diag.condition} (${Math.round(diag.confidence * 100)}% confidence)\nSeverity: ${diag.severity}\nAction: ${action}`;
-  }
-  if (soilResult) {
-    return `[Agri-Soil Offline Scan]\nTexture: ${soilResult.textureClass} (${Math.round(soilResult.confidence * 100)}% confidence)\nDrainage: ${soilResult.drainageClass}\nOrganic Matter: ${soilResult.organicMatterIndex}\nMoisture: ${soilResult.estimatedMoisture}`;
-  }
-  return 'Diagnostic specimen report';
-}
-
-function createPlotEntry(
-  scanMode: ScanTargetMode,
-  crop: string,
-  cropResult: OfflineDiagnosisResult | null,
-  soilResult: OfflineSoilDiagnosisResult | null
-) {
-  const isCrop = scanMode === 'crop';
-  const condition = isCrop
-    ? cropResult?.primaryDiagnosis.condition || 'Crop observation'
-    : soilResult?.textureClass || 'Soil sample';
-  const confidence = isCrop
-    ? cropResult?.primaryDiagnosis.confidence ?? 0.85
-    : soilResult?.confidence ?? 0.85;
-
-  return {
-    id: `scan-${Date.now()}`,
-    crop,
-    condition,
-    mode: scanMode,
-    timestamp: new Date().toISOString(),
-    confidence,
-  };
-}
 
 async function requestCloudVerification(
   scanMode: ScanTargetMode,

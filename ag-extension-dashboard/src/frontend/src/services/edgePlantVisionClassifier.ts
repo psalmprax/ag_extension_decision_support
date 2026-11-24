@@ -5,11 +5,14 @@
  *     the leaf, marks discoloured areas and suggests what they may be. It is labelled
  *     `heuristic`, always needs confirming, and never gives treatment advice.
  *  2) A disease classifier runs only when /models/manifest.json lists one that passed an
- *     evaluation on field photos (see edgeModelManifest.ts). None does yet, so today every
+ *     evaluation on field photos (see edgeModelManifest.ts). Until one is installed, every
  *     offline result is the colour check, and the photo can be queued for the cloud analysis.
+ *     When the model's answer is as sure as the manifest's calibration says is right at least
+ *     nine times in ten (confidentEnough), the photo check can skip the online model.
  */
 
-import { modelUrl, releasedEdgeModels, toProbabilities, type EdgeModelEntry } from './edgeModelManifest';
+import { confidentThreshold, modelUrl, releasedEdgeModels, toProbabilities, type EdgeModelEntry } from './edgeModelManifest';
+import { LABEL_CONDITIONS, cropDisplayName, cropOfLabel, isHealthyLabel, labelDisplayName, matchCrop, modelCrops } from './edgeModelLabels';
 
 export interface EdgeVisualMetrics {
   greenCanopyIndex: number;
@@ -32,11 +35,16 @@ export interface EdgeDiagnosisCandidate {
   scientificName: string;
   crop: string;
   confidence: number;
-  severity: 'mild' | 'moderate' | 'severe';
+  /** How far the damage has gone. A disease model names the disease only, so its answers are not_assessed. */
+  severity: 'mild' | 'moderate' | 'severe' | 'not_assessed';
   symptoms: string[];
   culturalControl: string[];
   biologicalControl: string[];
   chemicalIntervention: string;
+  /** The model output this came from, e.g. "bean___rust"; absent for the colour check. */
+  modelLabel?: string;
+  /** True when the model says the leaf shows no disease. */
+  healthy?: boolean;
 }
 
 export type InferenceOrigin = 'onnx' | 'heuristic';
@@ -76,6 +84,13 @@ export interface OfflineDiagnosisResult {
   twoStage?: TwoStagePipelineResult;
   isRejectedNonFoliage?: boolean;
   rejectionMessage?: string;
+  /**
+   * The model's top answer is at least as sure as the confidence at which, on its published test
+   * photos, answers were right at least nine times in ten. Never true for the colour check.
+   */
+  confidentEnough?: boolean;
+  /** A crop was named and the released model was not trained on it, so the colour check ran. */
+  cropNotCovered?: boolean;
   analyzedAt: string;
 }
 
@@ -91,7 +106,7 @@ export function shouldConfirmEdgeDiagnosis(
 ): boolean {
   if (origin === 'heuristic') return true;
   if (confidence < EDGE_CONFIRM_CONFIDENCE_THRESHOLD) return true;
-  return severity === 'moderate' || severity === 'severe';
+  return severity !== 'mild';
 }
 
 // ── Released on-device model (lazy, loaded once) ───────────────────────────
@@ -182,80 +197,79 @@ function canvasToNchwTensor(canvas: HTMLCanvasElement, ort: OrtModule, targetWid
   return new ort.Tensor('float32', floatData, [1, 3, targetWidth, targetHeight]);
 }
 
-function buildCandidateFromRule(found: NonNullable<ReturnType<typeof findConditionRule>>, prob?: number): EdgeDiagnosisCandidate {
-  return {
-    condition: found.condition,
-    scientificName: found.scientificName,
-    crop: found.crop,
-    confidence: prob ?? 0.5,
-    severity: (prob ?? 0) > 0.75 ? 'severe' : (prob ?? 0) > 0.45 ? 'moderate' : 'mild',
-    symptoms: found.symptoms,
-    culturalControl: found.culturalControl,
-    biologicalControl: found.biologicalControl,
-    chemicalIntervention: found.chemicalIntervention,
-  };
-}
-
 function findConditionRule(condition: string) {
   return KNOWN_CONDITIONS.find(kn => kn.condition === condition);
 }
 
-function mapLabelToCondition(label: string, _cropHint: string | undefined, prob?: number): EdgeDiagnosisCandidate | null {
-  const lower = label.toLowerCase();
-  // Mapping policy: only map a model label to a KNOWN_CONDITIONS entry when the
-  // crop AND disease genuinely align. Cross-crop substitution (e.g. corn rust → Fall
-  // Armyworm, apple rust → Coffee Leaf Rust) presents farmers with wrong diagnoses and
-  // is prohibited. Unmappable labels return null and fall back to heuristic triage.
-  const mapping: Array<{ keywords: string[]; condition: string }> = [
-    { keywords: ['tomato', 'late_blight'], condition: 'Tomato Late Blight' },
-    { keywords: ['tomato', 'early_blight'], condition: 'Tomato Early Blight' },
-    { keywords: ['tomato', 'septoria'], condition: 'Tomato Early Blight' },
-    { keywords: ['potato', 'early_blight'], condition: 'Potato Early Blight' },
-    { keywords: ['potato', 'late_blight'], condition: 'Potato Late Blight' },
-    { keywords: ['corn', 'rust'], condition: 'Maize Common Rust' },
-    { keywords: ['corn', 'blight'], condition: 'Northern Corn Leaf Blight (NCLB)' },
-    { keywords: ['bean'], condition: 'Bean Angular Leaf Spot' },
-    { keywords: ['coffee'], condition: 'Coffee Leaf Rust (CLR)' },
-    { keywords: ['cassava', 'mosaic'], condition: 'Cassava Mosaic Disease (CMD)' },
-    { keywords: ['cassava', 'streak'], condition: 'Cassava Brown Streak Disease (CBSD)' },
-  ];
-  const match = mapping.find(m => m.keywords.every(k => lower.includes(k)));
-  if (!match) return null;
-  const found = findConditionRule(match.condition);
-  return found ? buildCandidateFromRule(found, prob) : null;
+/**
+ * One model output as a candidate. A label that matches a known condition (same crop, same
+ * disease; see LABEL_CONDITIONS) carries that condition's name and symptoms; any other label
+ * is shown by its own name. Either way the treatment advice is withheld later.
+ */
+function labelCandidate(label: string, probability: number): EdgeDiagnosisCandidate {
+  const known = LABEL_CONDITIONS[label] ? findConditionRule(LABEL_CONDITIONS[label]) : undefined;
+  return {
+    condition: known?.condition ?? labelDisplayName(label),
+    scientificName: known?.scientificName ?? '',
+    crop: known?.crop ?? cropDisplayName(cropOfLabel(label)),
+    confidence: probability,
+    severity: 'not_assessed',
+    symptoms: known?.symptoms ?? [],
+    culturalControl: known?.culturalControl ?? [],
+    biologicalControl: known?.biologicalControl ?? [],
+    chemicalIntervention: known?.chemicalIntervention ?? '',
+    modelLabel: label,
+    healthy: isHealthyLabel(label),
+  };
+}
+
+interface ModelAnswer {
+  candidates: EdgeDiagnosisCandidate[];
+  model: EdgeModelEntry;
+  confidentEnough: boolean;
 }
 
 /** Runs the released model on the photo; null when there is none or it cannot run. */
-async function runReleasedModel(canvas: HTMLCanvasElement): Promise<{ candidates: EdgeDiagnosisCandidate[]; model: EdgeModelEntry } | null> {
+async function runReleasedModel(canvas: HTMLCanvasElement, cropHint?: string): Promise<ModelAnswer | 'crop-not-covered' | null> {
   const loaded = await loadReleasedModel();
   if (!loaded) return null;
+  const { session, ort, model } = loaded;
+  const crop = matchCrop(cropHint, modelCrops(model.labels));
+  // A named crop the model never saw: its answer would be about some other crop.
+  if (cropHint?.trim() && !crop) return 'crop-not-covered';
   try {
-    const { session, ort, model } = loaded;
     const tensor = canvasToNchwTensor(canvas, ort, model.inputSize, model.inputSize);
     const results = await session.run({ [session.inputNames?.[0] ?? 'input']: tensor });
     const output = Object.values(results)[0];
     if (!output?.data) return null;
-    const candidates = mapOutputToCandidates(toProbabilities(output.data, model.output), model.labels);
-    return candidates && candidates.length > 0 ? { candidates, model } : null;
+    return rankModelOutput(toProbabilities(output.data, model.output), model, crop);
   } catch (error) {
     console.warn('On-device model failed on this photo; using the colour check.', error);
     return null;
   }
 }
 
-/** Rank the probabilities and map top labels to known conditions (null when nothing maps). */
-function mapOutputToCandidates(probabilities: number[], labels: string[]): EdgeDiagnosisCandidate[] | null {
-  const ranked = probabilities.map((p, i) => ({ p, label: labels[i] ?? `class_${i}` })).sort((a, b) => b.p - a.p);
-  const candidates: EdgeDiagnosisCandidate[] = [];
-  for (const { p, label } of ranked.slice(0, 5)) {
-    // A healthy label is not a disease; the colour check reports healthy leaves.
-    if (label.toLowerCase().includes('healthy')) continue;
-    const mapped = mapLabelToCondition(label, undefined, p);
-    if (mapped) candidates.push(mapped);
-    if (candidates.length >= 3) break;
-  }
-  return candidates.length > 0 ? candidates : null;
+/**
+ * The top answer and up to two alternatives. When the person named a crop, only that crop's
+ * labels are ranked; probabilities are shown as the model gave them, not rescaled.
+ */
+export function rankModelOutput(probabilities: number[], model: EdgeModelEntry, crop: string | null): ModelAnswer | null {
+  const ranked = probabilities.map((p, i) => ({ p, label: model.labels[i] ?? `class_${i}` })).sort((a, b) => b.p - a.p);
+  const shown = crop ? ranked.filter(r => cropOfLabel(r.label) === crop) : ranked;
+  if (shown.length === 0) return null;
+  const [top, ...rest] = shown;
+  const alternatives = rest.slice(0, 2).filter(r => r.p >= MIN_ALTERNATIVE_PROBABILITY);
+  const sureAt = confidentThreshold(model);
+  return {
+    candidates: [top, ...alternatives].map(r => labelCandidate(r.label, r.p)),
+    model,
+    // Sure only when the crop filter did not change the model's own first answer.
+    confidentEnough: sureAt !== null && top.p >= sureAt && top.label === ranked[0].label,
+  };
 }
+
+/** Alternatives less likely than this are left out. */
+const MIN_ALTERNATIVE_PROBABILITY = 0.05;
 
 /** Minimum probability for a released model's answer to be shown instead of the colour check. */
 const ONNX_MIN_PROBABILITY = 0.55;
@@ -825,12 +839,22 @@ function createRejectionDiagnosis(
   };
 }
 
-async function resolveReleasedModel(canvas: HTMLCanvasElement): Promise<{ candidates: EdgeDiagnosisCandidate[]; model: EdgeModelEntry } | null> {
-  const result = await runReleasedModel(canvas);
-  if (!result) return null;
-  const confident = result.candidates.filter(c => c.confidence >= ONNX_MIN_PROBABILITY);
-  return confident.length > 0 ? { candidates: confident, model: result.model } : null;
+/** Why the colour check ran instead of the model, or the model's answer. */
+type ModelOutcome = ModelAnswer | 'no-model' | 'crop-not-covered' | 'unsure';
+
+async function resolveReleasedModel(canvas: HTMLCanvasElement, cropHint?: string): Promise<ModelOutcome> {
+  const result = await runReleasedModel(canvas, cropHint);
+  if (!result) return 'no-model';
+  if (result === 'crop-not-covered') return result;
+  // Below this the colour check runs instead; the alternatives are shown with the top answer.
+  return result.candidates[0].confidence >= ONNX_MIN_PROBABILITY ? result : 'unsure';
 }
+
+const COLOUR_CHECK_NOTICE: Record<Exclude<ModelOutcome, ModelAnswer>, string> = {
+  'no-model': 'Colour check only, not a diagnosis: no field-tested disease model is on this device. Send the photo for a full check when you are back online, or ask an extension officer.',
+  'crop-not-covered': 'Colour check only, not a diagnosis: the disease model on this device was not trained on this crop. Send the photo for a full check when you are back online, or ask an extension officer.',
+  unsure: 'Colour check only, not a diagnosis: the disease model on this device was not sure enough about this photo. Send the photo for a full check when you are back online, or ask an extension officer.',
+};
 
 function runHeuristicStage2(metrics: EdgeVisualMetrics, cropHint?: string): { primary: EdgeDiagnosisCandidate; alternatives: EdgeDiagnosisCandidate[] } {
   const scored: Array<EdgeDiagnosisCandidate & { score: number }> = [];
@@ -890,23 +914,24 @@ export async function diagnosePlantOffline(
     return createRejectionDiagnosis(stage1, cropHint, metrics);
   }
 
-  const onnxResult = await resolveReleasedModel(canvas);
-  if (onnxResult) {
-    const { name, fieldEvaluation } = onnxResult.model;
+  const resolved = await resolveReleasedModel(canvas, cropHint);
+  if (typeof resolved !== 'string') {
+    const { name, fieldEvaluation } = resolved.model;
     return {
       isOfflineInference: true,
       origin: 'onnx',
       modelVersion: name,
       heuristicDisclaimer: `On-device model ${name}: the right answer was in its top three for ${Math.round((fieldEvaluation?.top3Accuracy ?? 0) * 100)}% of ${fieldEvaluation?.images ?? 0} field photos, and first for ${Math.round((fieldEvaluation?.top1Accuracy ?? 0) * 100)}%. Confirm with an extension officer before acting.`,
-      primaryDiagnosis: withholdEdgeAdvice(onnxResult.candidates[0]),
-      alternatives: onnxResult.candidates.slice(1, 3).map(withholdEdgeAdvice),
+      primaryDiagnosis: withholdEdgeAdvice(resolved.candidates[0]),
+      alternatives: resolved.candidates.slice(1, 3).map(withholdEdgeAdvice),
+      confidentEnough: resolved.confidentEnough,
       metrics,
       twoStage: {
         stage1Detector: stage1,
         stage2Classifier: {
           model: name,
-          primaryCondition: onnxResult.candidates[0].condition,
-          confidence: onnxResult.candidates[0].confidence,
+          primaryCondition: resolved.candidates[0].condition,
+          confidence: resolved.candidates[0].confidence,
         },
       },
       analyzedAt: new Date().toISOString(),
@@ -917,7 +942,8 @@ export async function diagnosePlantOffline(
   return {
     isOfflineInference: true,
     origin: 'heuristic',
-    heuristicDisclaimer: 'Colour check only, not a diagnosis: no field-tested disease model is on this device. Send the photo for a full check when you are back online, or ask an extension officer.',
+    ...(resolved === 'crop-not-covered' ? { cropNotCovered: true } : {}),
+    heuristicDisclaimer: COLOUR_CHECK_NOTICE[resolved],
     primaryDiagnosis: withholdEdgeAdvice(primary),
     alternatives: alternatives.map(withholdEdgeAdvice),
     metrics,

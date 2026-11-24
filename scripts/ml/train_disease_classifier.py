@@ -16,20 +16,28 @@
 Train the on-device plant disease classifier on field photos and export it for the app.
 
 What it does, in order:
-  1. Loads leaf photos taken in fields, not lab photos: PlantDoc (web photos of real plants),
-     maize leaves photographed with a handheld camera, and cassava leaves from Uganda. Each
-     source keeps a held-out test set; PlantDoc and cassava use their own test splits.
-  2. Fine-tunes an ImageNet MobileNetV3 with timm.
-  3. Exports ONNX with softmax on the output, quantises it to int8, and evaluates the
-     quantised model with onnxruntime, since that is the file the phone runs.
-  4. Writes plant-disease.onnx, manifest.json (the entry the app reads; see
-     src/services/edgeModelManifest.ts) and MODEL_CARD.md with per-class results.
+  1. Streams leaf photos from the sources in SOURCES (all CC0, CC-BY or CC-BY-SA, so commercial
+     use is allowed with credit). Streaming keeps multi-GB sets off the runner's disk; each label
+     keeps a random --max-train-per-label photos per source, so no crop or source crowds out the
+     rest.
+  2. Holds out test photos. Sources with a published test split use it. The others hold out 15%
+     per label, with copies of one picture (flipped, rotated or re-saved) kept on one side. Any
+     training photo that is a copy of a test photo from another source is dropped.
+  3. Fine-tunes an ImageNet MobileNetV3 with timm and exports ONNX with softmax output, as
+     float32 and as int8; int8 ships only if it keeps its score.
+  4. Scores the shipped file. The headline (fieldEvaluation, which the app's gate reads) uses
+     only published test splits. The 15% holdouts are reported apart (holdoutEvaluation), since
+     photos from the same collection as the training photos flatter the model. It also records
+     how often the top answer is right at each confidence (calibration), which the app uses to
+     decide when an answer is sure enough to show without asking the online model.
+  5. Writes plant-disease.onnx, manifest.json (the entry the app reads; see
+     src/services/edgeModelManifest.ts) and MODEL_CARD.md with per-source and per-label results.
 
 The app loads the model only when the field evaluation meets the acceptance gate in
 docs/specs/PHASE2-OFFLINE-DIAGNOSIS-MODEL.md (>= 300 field photos, top-3 >= 70%, crop top-1
 >= 60%). This script reports the numbers; it does not decide to ship.
 
-Run on a GitHub runner (CPU, about an hour at the defaults) with the "Train disease model"
+Run on a GitHub runner (CPU, two to three hours at the defaults) with the "Train disease model"
 workflow, locally with `uv run scripts/ml/train_disease_classifier.py --out out/`, or on
 Hugging Face Jobs (paid; needs the owner's approval):
   hf jobs uv run --flavor t4-small scripts/ml/train_disease_classifier.py --epochs 15 --out /data/out
@@ -49,42 +57,126 @@ import time
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 
-# Labels are "<crop>___<disease>" in snake case, the form the app maps to its known
-# conditions (mapLabelToCondition in edgePlantVisionClassifier.ts).
-MAIZE_LABELS = {
-    "Common Rust": "corn___common_rust",
-    "Corn Leaf Blight": "corn___leaf_blight",
-    "Gray Leaf Spot": "corn___gray_leaf_spot",
-    "Healthy": "corn___healthy",
-    "Insects damage": "corn___insect_damage",
-}
-CASSAVA_LABELS = {"cbsd": "cassava___brown_streak", "cmd": "cassava___mosaic", "healthy": "cassava___healthy"}
-SOURCES = {
-    "plantdoc": ("geraldmc/plantdoc-full", "CC-BY-4.0", "Singh et al. 2020, PlantDoc"),
-    "maize": ("InriaXagriscienceFM/maize_corn_corn_leaf_disease_detection", "CC-BY-4.0", "Mendeley hmkd6nbngr, via AgML"),
-    "cassava": ("andrewkatumba/cassava_leaf_diseases_dsa_2023", "CC-BY-SA-4.0", "Data Science Africa 2023 cassava set"),
-}
 MEAN = (0.485, 0.456, 0.406)
 STD = (0.229, 0.224, 0.225)
 
 
 def snake(text: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "_", text.strip().lower()).strip("_")
+    return re.sub(r"[^a-z0-9]+", "_", str(text).strip().lower()).strip("_")
 
 
-def plantdoc_label(row: dict) -> str:
+# Labels are "<crop>___<disease>" in snake case, the form the app maps to its known conditions
+# (mapLabelToCondition in edgePlantVisionClassifier.ts). A row maps to a label, or to None to skip it.
+LabelFn = Callable[[dict, str], "str | None"]
+
+
+def by_name(names: dict[str, str]) -> LabelFn:
+    return lambda _row, label_name: names.get(label_name)
+
+
+def plantdoc_label(row: dict, _label_name: str) -> str:
     disease = "healthy" if row["is_healthy"] else snake(row["disease"] or row["class_label"])
     return f"{snake(row['host'])}___{disease}"
 
 
+def by_crop_column(names: dict[str, str]) -> LabelFn:
+    def label(row: dict, label_name: str) -> str | None:
+        disease, crop = names.get(label_name), snake(row.get("crop_type") or "")
+        return f"{crop}___{disease}" if disease and crop else None
+    return label
+
+
+TOM2024_DISEASES = {
+    "healthy-leaf": "healthy", "healthy-fruit": "healthy_fruit", "spodoptera-frugiperda": "fall_armyworm",
+    "helminthosporiosis": "leaf_blight", "tomato-late-blight": "late_blight", "caterpillar": "caterpillar_damage",
+    "abiotic-disease": "abiotic_damage",
+}
+
+
+def tom2024_label(row: dict, label_name: str) -> str | None:
+    crop = snake(row.get("crop_type") or "")
+    disease = re.sub(r"-(d|p|a)$", "", label_name)  # -d disease, -p pest, -a adult pest
+    return f"{crop}___{TOM2024_DISEASES.get(disease, snake(disease))}" if crop else None
+
+
+# Same crop or disease under different names in different sources. Maize is "corn" (PlantDoc's
+# name). Rust is one label: several sources do not say which maize rust a photo shows.
+CROP_ALIASES = {"maize": "corn", "soyabean": "soybean"}
+DISEASE_ALIASES = {"common_rust": "rust"}
+
+
+def canonical(label: str) -> str:
+    crop, _, disease = label.partition("___")
+    return f"{CROP_ALIASES.get(crop, crop)}___{DISEASE_ALIASES.get(disease, disease)}"
+
+
+@dataclass(frozen=True)
+class Source:
+    repo: str
+    licence: str
+    credit: str
+    label: LabelFn
+    # How test photos are chosen: "splits" (the source's own test split), "column" (its own
+    # train/test column) or "holdout" (15% of its photos, scored apart from the headline).
+    test: str
+    config: str | None = None
+    splits: tuple[str, ...] = ("train",)
+    test_splits: tuple[str, ...] = ()
+    min_side: int = 0  # skip photos smaller than this many pixels on the short side
+
+
+SOURCES: dict[str, Source] = {
+    "plantdoc": Source("geraldmc/plantdoc-full", "CC-BY-4.0", "Singh et al. 2020, PlantDoc (web photos, field conditions)",
+                       plantdoc_label, "column"),
+    "cassava": Source("andrewkatumba/cassava_leaf_diseases_dsa_2023", "CC-BY-SA-4.0", "Data Science Africa 2023 cassava set",
+                      by_name({"cbsd": "cassava___brown_streak", "cmd": "cassava___mosaic", "healthy": "cassava___healthy"}),
+                      "splits", splits=("train", "test"), test_splits=("test",)),
+    "beans_ug": Source("Project-AgML/bean_disease_classification_uganda", "CC0-1.0",
+                       "Makerere University BeanWatchNet set, phone photos from farmers' fields in Uganda",
+                       # Its "unknown" class holds other crops among unrelated pictures, so it is left out.
+                       by_name({"als": "bean___angular_leaf_spot", "bean_rust": "bean___rust", "healthy": "bean___healthy"}),
+                       "column"),
+    "maize": Source("InriaXagriscienceFM/maize_corn_corn_leaf_disease_detection", "CC-BY-4.0", "Mendeley hmkd6nbngr, via AgML",
+                    by_name({"Common Rust": "corn___rust", "Corn Leaf Blight": "corn___leaf_blight", "Gray Leaf Spot": "corn___gray_leaf_spot",
+                             "Healthy": "corn___healthy", "Insects damage": "corn___insect_damage"}), "holdout"),
+    "maize_tz": Source("Project-AgML/maize_disease_classification", "CC-BY-4.0", "Mduma et al. 2024, maize imagery dataset, Tanzania",
+                       by_name({"Healthy": "corn___healthy", "MLN": "corn___lethal_necrosis", "MSV": "corn___streak_virus"}), "holdout"),
+    "beans_tz": Source("Project-AgML/bean_disease_classification_tanzania", "CC-BY-4.0", "Laizer et al. 2024, common bean rust and anthracnose",
+                       by_name({"anthracnose": "bean___anthracnose", "healthy": "bean___healthy", "rust": "bean___rust"}), "holdout"),
+    "bean_cowpea": Source("Project-AgML/bean_cowpea_leaf_disease_classification", "CC-BY-4.0", "Bean and cowpea leaf disease set, via AgML",
+                          by_crop_column({"Bacterial wilt": "bacterial_wilt", "Blight": "blight", "Fresh Leaf": "healthy",
+                                          "Mosaic Virus": "mosaic_virus", "Rust": "rust", "Septoria leaf spot": "septoria_leaf_spot"}), "holdout"),
+    "coffee": Source("Project-AgML/arabica_coffee_leaf_disease_classification", "CC-BY-4.0", "Jepkoech et al. 2021, Arabica coffee leaves (JMuBEN)",
+                     by_name({"Cerscospora": "coffee___cercospora_leaf_spot", "Healthy": "coffee___healthy", "Leaf_rust": "coffee___leaf_rust",
+                              "Miner": "coffee___leaf_miner", "Phoma": "coffee___phoma_leaf_spot"}), "holdout"),
+    "banana": Source("Project-AgML/banana_leaf_disease_classification", "CC-BY-4.0", "Genet et al. 2024, Sigatoka and Xanthomonas wilt",
+                     by_name({"healthy": "banana___healthy", "segatoka": "banana___sigatoka", "xamthomonas": "banana___xanthomonas_wilt"}), "holdout"),
+    "banana_tz": Source("Project-AgML/banana_disease_classification_tanzania", "CC0-1.0", "Mduma et al. 2023, banana leaves, Tanzania",
+                        by_name({"black_sigatoka": "banana___sigatoka", "fusarium_wilt": "banana___fusarium_wilt", "healthy": "banana___healthy"}),
+                        "holdout"),
+    "potato": Source("Project-AgML/potato_leaf_disease_classification", "CC-BY-4.0", "Shabrina et al. 2024, potato leaves in uncontrolled conditions",
+                     by_name({"Bacteria": "potato___bacterial_disease", "Fungi": "potato___fungal_disease", "Healthy": "potato___healthy",
+                              "Nematode": "potato___nematode", "Pest": "potato___pest_damage", "Phytopthora": "potato___late_blight",
+                              "Virus": "potato___virus"}), "holdout"),
+    "tom2024": Source("Project-AgML/TOM2024_disease_classification", "CC-BY-4.0", "TOM2024 tomato, onion and maize set (original photos only)",
+                      tom2024_label, "holdout", config="raw", min_side=96),
+}
+# Left out on purpose: Project-AgML/corn_maize_leaf_disease re-uses PlantDoc photos (it would put
+# PlantDoc test photos into training); Project-AgML/bean_disease_uganda (iBean) comes from the
+# same lab as beans_ug and may share photos with its test split; TOM2024's "augmented" config
+# holds edited copies; the Kaggle cassava competition set is licensed for non-commercial use only.
+
+
 @dataclass
 class Sample:
-    jpeg: bytes  # shrunk to a little over the training size, so ~25k photos fit in a runner's memory
+    jpeg: bytes  # shrunk to a little over the training size, so tens of thousands fit in memory
     label: str
     source: str
+    copy_id: int | None = None
 
     @property
     def image(self):
@@ -111,47 +203,174 @@ class Splits:
     test: list[Sample] = field(default_factory=list)
 
 
+def copy_id(sample: Sample) -> int:
+    """A 64-bit difference hash taken over the eight turns and mirrors of the photo, so a copy
+    that was flipped, rotated or re-saved gets the same number."""
+    if sample.copy_id is not None:
+        return sample.copy_id
+    from PIL import Image
+
+    grey = sample.image.convert("L").resize((36, 36))
+    best = None
+    for turn in (None, Image.Transpose.ROTATE_90, Image.Transpose.ROTATE_180, Image.Transpose.ROTATE_270):
+        turned = grey if turn is None else grey.transpose(turn)
+        for view in (turned, turned.transpose(Image.Transpose.FLIP_LEFT_RIGHT)):
+            pixels = np.asarray(view.resize((9, 8)), dtype=np.int16)
+            bits = (pixels[:, :-1] > pixels[:, 1:]).flatten()
+            value = int("".join("1" if b else "0" for b in bits), 2)
+            best = value if best is None else min(best, value)
+    sample.copy_id = best or 0
+    return sample.copy_id
+
+
 def holdout(samples: list[Sample], share: float, seed: int) -> tuple[list[Sample], list[Sample]]:
-    """Stratified split by label, so every class has test photos."""
-    by_label: dict[str, list[Sample]] = {}
+    """Stratified split by label; copies of one picture stay on one side."""
+    by_label: dict[str, dict[int, list[Sample]]] = {}
     for sample in samples:
-        by_label.setdefault(sample.label, []).append(sample)
+        by_label.setdefault(sample.label, {}).setdefault(copy_id(sample), []).append(sample)
     rng = random.Random(seed)
     train, test = [], []
-    for group in by_label.values():
-        rng.shuffle(group)
-        cut = max(1, round(len(group) * share))
-        test += group[:cut]
-        train += group[cut:]
+    for groups in by_label.values():
+        keys = sorted(groups)
+        rng.shuffle(keys)
+        want, taken = max(1, round(sum(len(g) for g in groups.values()) * share)), 0
+        for key in keys:
+            if taken < want:
+                test += groups[key]
+                taken += len(groups[key])
+            else:
+                train += groups[key]
     return train, test
 
 
-def load_sources(names: list[str], max_per_source: int | None, seed: int, size: int) -> Splits:
-    from datasets import load_dataset
+def label_names(source: Source, data) -> list[str] | None:
+    features = getattr(data, "features", None)
+    if features is None:
+        from datasets import load_dataset_builder
 
+        features = load_dataset_builder(source.repo, source.config).info.features
+    label = features.get("label") if features else None
+    return list(label.names) if label is not None and hasattr(label, "names") else None
+
+
+def stream(source: Source, split: str):
+    """Rows of one split, with images left encoded so skipped rows are never decoded."""
+    from datasets import Image as HFImage, load_dataset
+
+    data = load_dataset(source.repo, source.config, split=split, streaming=True)
+    names = label_names(source, data)
+    data = data.cast_column("image", HFImage(decode=False))
+    for row in data:
+        label = row.get("label")
+        yield row, (names[label] if names is not None and isinstance(label, int) else str(label))
+
+
+def decode(row: dict, size: int, min_side: int) -> bytes | None:
+    from PIL import Image
+
+    raw = (row.get("image") or {}).get("bytes")
+    if not raw:
+        return None
+    try:
+        image = Image.open(io.BytesIO(raw))
+        if min(image.size) < min_side:
+            return None
+        # JPEGs decode at 1/2, 1/4 or 1/8 scale when that still covers the size kept: several
+        # times faster on 10-megapixel field photos.
+        short = round(size * 1.15)
+        image.draft("RGB", (short, short))
+        return compact(image, size)
+    except Exception as error:  # a damaged file is skipped, not fatal
+        print(f"  skipped an unreadable photo: {error}", flush=True)
+        return None
+
+
+def sample_rows(name: str, source: Source, side_of: Callable[[str, dict], str], caps: dict[str, int | None],
+                size: int, rng: random.Random) -> dict[str, list[Sample]]:
+    """Streams every row once and keeps, per side and label, a uniform random sample of at most
+    caps[side] photos (reservoir sampling), so a 7 GB set needs no disk and little memory."""
+    kept: dict[tuple[str, str], list[Sample]] = {}
+    seen: dict[tuple[str, str], int] = {}
+    for split in source.splits:
+        for row, label_name in stream(source, split):
+            label = source.label(row, label_name)
+            if not label:
+                continue
+            side, label = side_of(split, row), canonical(label)
+            key = (side, label)
+            seen[key] = seen.get(key, 0) + 1
+            bucket, cap = kept.setdefault(key, []), caps.get(side)
+            slot = len(bucket) if cap is None or len(bucket) < cap else rng.randrange(seen[key])
+            if cap is not None and slot >= cap:
+                continue
+            jpeg = decode(row, size, source.min_side)
+            if jpeg is None:
+                continue
+            sample = Sample(jpeg, label, name)
+            if slot >= len(bucket):
+                bucket.append(sample)
+            else:
+                bucket[slot] = sample
+    out: dict[str, list[Sample]] = {}
+    for (side, _label), bucket in kept.items():
+        out.setdefault(side, []).extend(bucket)
+    return out
+
+
+def load_source(name: str, args, rng: random.Random) -> tuple[list[Sample], list[Sample]]:
+    source = SOURCES[name]
+    train_cap, test_cap = args.max_train_per_label, args.max_test_per_label
+    if source.test == "holdout":
+        pool_cap = None if train_cap is None else round(train_cap / 0.85) + 1
+        pool = sample_rows(name, source, lambda _split, _row: "pool", {"pool": pool_cap}, args.size, rng).get("pool", [])
+        train, test = holdout(pool, 0.15, args.seed)
+        return cap_per_label(train, train_cap, rng), cap_per_label(test, test_cap, rng)
+    if source.test == "column":
+        def side_of(_split, row):
+            return "test" if row.get("split") == "test" else "train"
+    else:
+        def side_of(split, _row):
+            return "test" if split in source.test_splits else "train"
+    # A published test split is scored whole: it is the source's own choice of unseen photos.
+    sides = sample_rows(name, source, side_of, {"train": train_cap, "test": None}, args.size, rng)
+    return sides.get("train", []), sides.get("test", [])
+
+
+def cap_per_label(samples: list[Sample], cap: int | None, rng: random.Random) -> list[Sample]:
+    if cap is None:
+        return samples
+    by_label: dict[str, list[Sample]] = {}
+    for sample in samples:
+        by_label.setdefault(sample.label, []).append(sample)
+    out = []
+    for group in by_label.values():
+        rng.shuffle(group)
+        out += group[:cap]
+    return out
+
+
+def drop_copies_of_test_photos(splits: Splits) -> int:
+    """Training photos that are copies of any test photo (sources sometimes share pictures)."""
+    test_ids = {copy_id(sample) for sample in splits.test}
+    before = len(splits.train)
+    splits.train = [sample for sample in splits.train if copy_id(sample) not in test_ids]
+    return before - len(splits.train)
+
+
+def load_sources(names: list[str], args) -> Splits:
+    rng = random.Random(args.seed)
     splits = Splits()
     for name in names:
-        repo = SOURCES[name][0]
-        print(f"Loading {name} from {repo}", flush=True)
-        if name == "plantdoc":
-            data = load_dataset(repo, split="train")
-            for row in data.select(range(min(len(data), max_per_source or len(data)))):
-                sample = Sample(compact(row["image"], size), plantdoc_label(row), name)
-                (splits.test if row["split"] == "test" else splits.train).append(sample)
-        elif name == "maize":
-            data = load_dataset(repo, split="train")
-            names_ = data.features["label"].names
-            rows = data.select(range(min(len(data), max_per_source or len(data))))
-            samples = [Sample(compact(r["image"], size), MAIZE_LABELS[names_[r["label"]]], name) for r in rows]
-            train, test = holdout(samples, 0.15, seed)
-            splits.train += train
-            splits.test += test
-        elif name == "cassava":
-            for split_name, target in (("train", splits.train), ("test", splits.test)):
-                data = load_dataset(repo, split=split_name)
-                names_ = data.features["label"].names
-                for r in data.select(range(min(len(data), max_per_source or len(data)))):
-                    target.append(Sample(compact(r["image"], size), CASSAVA_LABELS[names_[r["label"]]], name))
+        started = time.time()
+        print(f"Loading {name} from {SOURCES[name].repo}", flush=True)
+        train, test = load_source(name, args, rng)
+        if not train or not test:
+            raise SystemExit(f"{name} gave {len(train)} training and {len(test)} test photos; check its labels and splits")
+        splits.train += train
+        splits.test += test
+        print(f"  {name}: {len(train)} training and {len(test)} test photos in {time.time() - started:.0f}s", flush=True)
+    dropped = drop_copies_of_test_photos(splits)
+    print(f"Dropped {dropped} training photos that copy a test photo", flush=True)
     return splits
 
 
@@ -160,8 +379,8 @@ def smoke_sources(seed: int) -> Splits:
     from PIL import Image
 
     rng = random.Random(seed)
-    labels = ["corn___common_rust", "corn___healthy", "cassava___mosaic"]
-    colours = {"corn___common_rust": (150, 80, 30), "corn___healthy": (40, 140, 40), "cassava___mosaic": (170, 170, 60)}
+    labels = ["corn___rust", "corn___healthy", "cassava___mosaic"]
+    colours = {"corn___rust": (150, 80, 30), "corn___healthy": (40, 140, 40), "cassava___mosaic": (170, 170, 60)}
     splits = Splits()
     for label in labels:
         for i in range(24):
@@ -282,46 +501,105 @@ def crop_of(label: str) -> str:
     return label.split("___", 1)[0]
 
 
-def evaluate(model_path: Path, samples: list[Sample], labels: list[str], size: int) -> dict:
-    """Scores the quantised ONNX file the phone will run, on held-out field photos only."""
+def is_published(sample: Sample) -> bool:
+    """Test photos from a split the source published (or the smoke run's), not a 15% holdout."""
+    return sample.source == "smoke" or SOURCES[sample.source].test != "holdout"
+
+
+@dataclass
+class Prediction:
+    source: str
+    label: str
+    ranked: list[str]  # labels, most likely first
+    confidence: float  # probability of the top label
+
+
+def predict(model_path: Path, samples: list[Sample], labels: list[str], size: int) -> list[Prediction]:
+    """Runs the exported ONNX file, the one the phone will run."""
     import onnxruntime as ort
 
     session = ort.InferenceSession(str(model_path), providers=["CPUExecutionProvider"])
     tf = transforms(size, train=False)
-    per_class: dict[str, dict[str, int]] = {label: {"images": 0, "top1": 0} for label in labels}
+    out = []
+    for sample in samples:
+        probabilities = session.run(None, {"input": tf(sample.image).unsqueeze(0).numpy()})[0][0]
+        order = np.argsort(-probabilities)[:3]
+        out.append(Prediction(sample.source, sample.label, [labels[i] for i in order], float(probabilities[order[0]])))
+    return out
+
+
+def rate(hits: int, total: int) -> float:
+    return round(hits / max(1, total), 4)
+
+
+def summarise(predictions: list[Prediction], labels: list[str]) -> dict:
+    per_class = {label: {"images": 0, "top1": 0} for label in labels}
     per_source: dict[str, dict[str, int]] = {}
     top1 = top3 = crop_top1 = 0
-    for sample in samples:
-        x = tf(sample.image).unsqueeze(0).numpy()
-        probabilities = session.run(None, {"input": x})[0][0]
-        ranked = [labels[i] for i in np.argsort(-probabilities)]
-        hit1, hit3 = ranked[0] == sample.label, sample.label in ranked[:3]
+    for p in predictions:
+        hit1, hit3 = p.ranked[0] == p.label, p.label in p.ranked
         top1 += hit1
         top3 += hit3
-        crop_top1 += crop_of(ranked[0]) == crop_of(sample.label)
-        per_class[sample.label]["images"] += 1
-        per_class[sample.label]["top1"] += hit1
-        source = per_source.setdefault(sample.source, {"images": 0, "top1": 0, "top3": 0})
+        crop_top1 += crop_of(p.ranked[0]) == crop_of(p.label)
+        per_class[p.label]["images"] += 1
+        per_class[p.label]["top1"] += hit1
+        source = per_source.setdefault(p.source, {"images": 0, "top1": 0, "top3": 0})
         source["images"] += 1
         source["top1"] += hit1
         source["top3"] += hit3
-    n = max(1, len(samples))
+    n = len(predictions)
     return {
-        "images": len(samples),
-        "top1Accuracy": round(top1 / n, 4),
-        "top3Accuracy": round(top3 / n, 4),
-        "cropTop1Accuracy": round(crop_top1 / n, 4),
+        "images": n,
+        "top1Accuracy": rate(top1, n),
+        "top3Accuracy": rate(top3, n),
+        "cropTop1Accuracy": rate(crop_top1, n),
         "perClass": per_class,
         "perSource": per_source,
     }
 
 
-def write_outputs(out: Path, labels: list[str], scores: dict, args, sources: list[str], counts: dict,
-                  precision: str, float_scores: dict, int8_scores: dict, train_scores: dict) -> None:
-    # Maize has no published split: its test photos are a random 15% of the same set, so they
-    # score higher than photos from other fields would. Each source's own numbers go in the entry.
-    split_name = {"plantdoc": "PlantDoc test split", "cassava": "cassava test split", "maize": "maize random 15% holdout of the training set"}
-    dataset = "smoke run, generated images" if args.smoke else ", ".join(split_name.get(s, f"{s} test split") for s in sources)
+# The app treats an answer as sure enough to skip the online check when, on published test
+# photos, answers at least that confident were right this often.
+CONFIDENT_TARGET = 0.9
+CALIBRATION_STEPS = (0.3, 0.4, 0.5, 0.55, 0.6, 0.7, 0.8, 0.85, 0.9, 0.95)
+
+
+def calibrate(predictions: list[Prediction]) -> dict:
+    points = []
+    for threshold in CALIBRATION_STEPS:
+        above = [p for p in predictions if p.confidence >= threshold]
+        points.append({
+            "minConfidence": threshold,
+            "share": rate(len(above), len(predictions)),
+            "top1Accuracy": rate(sum(p.ranked[0] == p.label for p in above), len(above)),
+            "images": len(above),
+        })
+    # The lowest threshold from which every step up (with enough photos to mean something) meets the target.
+    counted = [pt for pt in points if pt["images"] >= 50]
+    sure = next((pt["minConfidence"] for i, pt in enumerate(counted)
+                 if all(q["top1Accuracy"] >= CONFIDENT_TARGET for q in counted[i:])), None)
+    return {"basis": "published test splits", "target": CONFIDENT_TARGET, "confidentAt": sure, "points": points}
+
+
+def evaluation_entry(scores: dict, dataset: str) -> dict:
+    return {
+        "dataset": dataset,
+        "images": scores["images"],
+        "top1Accuracy": scores["top1Accuracy"],
+        "top3Accuracy": scores["top3Accuracy"],
+        "cropTop1Accuracy": scores["cropTop1Accuracy"],
+        "evaluatedOn": date.today().isoformat(),
+        "perSource": {
+            source: {"images": v["images"], "top1Accuracy": rate(v["top1"], v["images"]), "top3Accuracy": rate(v["top3"], v["images"])}
+            for source, v in scores["perSource"].items()
+        },
+    }
+
+
+def write_outputs(out: Path, labels: list[str], headline: dict, holdout_scores: dict | None, calibration: dict, args,
+                  sources: list[str], counts: dict, precision: str, float_top3: float, int8_top3: float, train_scores: dict) -> None:
+    published = [s for s in sources if s == "smoke" or SOURCES[s].test != "holdout"]
+    held = [s for s in sources if s != "smoke" and SOURCES[s].test == "holdout"]
     entry = {
         "file": "plant-disease.onnx",
         "name": f"{args.arch}, field photos {date.today().isoformat()}" + (" (smoke run, do not ship)" if args.smoke else ""),
@@ -329,70 +607,117 @@ def write_outputs(out: Path, labels: list[str], scores: dict, args, sources: lis
         "output": "probabilities",
         "inputSize": args.size,
         "precision": precision,
-        "fieldEvaluation": {
-            "dataset": dataset,
-            "images": scores["images"],
-            "top1Accuracy": scores["top1Accuracy"],
-            "top3Accuracy": scores["top3Accuracy"],
-            "cropTop1Accuracy": scores["cropTop1Accuracy"],
-            "evaluatedOn": date.today().isoformat(),
-            "perSource": {
-                source: {"images": v["images"], "top1Accuracy": round(v["top1"] / max(1, v["images"]), 4), "top3Accuracy": round(v["top3"] / max(1, v["images"]), 4)}
-                for source, v in scores["perSource"].items()
-            },
-        },
+        "fieldEvaluation": evaluation_entry(
+            headline, "smoke run, generated images" if args.smoke else "published test splits of " + ", ".join(published)),
+        "calibration": calibration,
     }
+    if holdout_scores and holdout_scores["images"]:
+        entry["holdoutEvaluation"] = evaluation_entry(holdout_scores, "random 15% holdouts of " + ", ".join(held))
     if args.smoke:
         entry["fieldEvaluation"]["smoke"] = True
     (out / "manifest.json").write_text(json.dumps({"models": [entry]}, indent=2) + "\n")
+
+    def source_rows(scores: dict) -> list[str]:
+        return [f"| {s} | {v['images']} | {v['top1'] / max(1, v['images']):.1%} | {v['top3'] / max(1, v['images']):.1%} |"
+                for s, v in scores["perSource"].items()]
 
     lines = [
         f"# Plant disease classifier: {entry['name']}",
         "",
         f"Architecture: `{args.arch}` from timm, ImageNet weights, fine-tuned {args.epochs} epochs at {args.size}px.",
-        f"Output: softmax probabilities over the labels in manifest.json. Shipped as {precision}; every number below is for the shipped file.",
-        f"Float32 top-3 {float_scores['top3Accuracy']:.1%}, int8 top-3 {int8_scores['top3Accuracy']:.1%}; int8 ships only within {QUANTISATION_TOLERANCE:.0%} of float.",
+        f"Output: softmax probabilities over {len(labels)} labels on {len({crop_of(label) for label in labels})} crops (manifest.json).",
+        f"Shipped as {precision}; every number below is for the shipped file. Float32 top-3 {float_top3:.1%}, int8 top-3 "
+        f"{int8_top3:.1%}; int8 ships only within {QUANTISATION_TOLERANCE:.0%} of float.",
         f"Top-1 on {train_scores['images']} training photos (fit check): {train_scores['top1Accuracy']:.1%}.",
         "",
-        "## Field evaluation",
+        "## Field evaluation (the app's gate)",
         "",
-        f"Held-out photos: {scores['images']}. Top-1 {scores['top1Accuracy']:.1%}, top-3 {scores['top3Accuracy']:.1%}, crop top-1 {scores['cropTop1Accuracy']:.1%}.",
+        "Test photos the sources published as their own test split, which none of the training photos come from.",
+        "",
+        f"Photos: {headline['images']}. Top-1 {headline['top1Accuracy']:.1%}, top-3 {headline['top3Accuracy']:.1%}, "
+        f"crop top-1 {headline['cropTop1Accuracy']:.1%}.",
         "",
         "| Source | Photos | Top-1 | Top-3 |",
         "|---|---:|---:|---:|",
+        *source_rows(headline),
     ]
-    for source, s in scores["perSource"].items():
-        lines.append(f"| {source} | {s['images']} | {s['top1'] / max(1, s['images']):.1%} | {s['top3'] / max(1, s['images']):.1%} |")
-    lines += ["", "| Label | Train photos | Test photos | Top-1 |", "|---|---:|---:|---:|"]
-    for label in labels:
-        c = scores["perClass"][label]
-        lines.append(f"| {label} | {counts.get(label, 0)} | {c['images']} | {c['top1'] / max(1, c['images']):.1%} |")
-    lines += ["", "## Data and licences", ""]
-    for source in sources:
-        repo, licence, credit = SOURCES.get(source, ("generated", "n/a", "smoke run"))
-        lines.append(f"- {source}: [{repo}](https://huggingface.co/datasets/{repo}), {licence}, {credit}")
+    if holdout_scores and holdout_scores["images"]:
+        lines += [
+            "",
+            "## Holdout evaluation (not used by the gate)",
+            "",
+            "15% of each remaining source, held out before training. These photos come from the same collections, often the",
+            "same fields and days, as the training photos, so expect these numbers to be higher than on new photos.",
+            "",
+            f"Photos: {holdout_scores['images']}. Top-1 {holdout_scores['top1Accuracy']:.1%}, top-3 {holdout_scores['top3Accuracy']:.1%}, "
+            f"crop top-1 {holdout_scores['cropTop1Accuracy']:.1%}.",
+            "",
+            "| Source | Photos | Top-1 | Top-3 |",
+            "|---|---:|---:|---:|",
+            *source_rows(holdout_scores),
+        ]
     lines += [
         "",
-        "CC-BY-SA data obliges attribution and share-alike terms for derived works; check them before release.",
+        "## Confidence",
+        "",
+        "How often the top answer was right when the model was at least this sure, on the published test photos.",
+        f"The app shows an answer without asking the online model only at {calibration['confidentAt']} or above"
+        f" (top-1 at least {CONFIDENT_TARGET:.0%} here)." if calibration["confidentAt"] is not None else
+        f"No confidence reached {CONFIDENT_TARGET:.0%} top-1 on at least 50 photos, so the app keeps asking the online model.",
+        "",
+        "| At least | Share of photos | Top-1 among them |",
+        "|---:|---:|---:|",
+        *[f"| {pt['minConfidence']:.2f} | {pt['share']:.1%} | {pt['top1Accuracy']:.1%} |" for pt in calibration["points"]],
+        "",
+        "## Per label",
+        "",
+        "| Label | Train photos | Test photos | Top-1 |",
+        "|---|---:|---:|---:|",
+    ]
+    per_class = {label: {"images": 0, "top1": 0} for label in labels}
+    for scores in (headline, holdout_scores or {"perClass": {}}):
+        for label, c in scores["perClass"].items():
+            per_class[label]["images"] += c["images"]
+            per_class[label]["top1"] += c["top1"]
+    for label in labels:
+        c = per_class[label]
+        lines.append(f"| {label} | {counts.get(label, 0)} | {c['images']} | {c['top1'] / max(1, c['images']):.1%} |")
+    lines += ["", "## Data and licences", ""]
+    for name in sources:
+        source = SOURCES.get(name)
+        if source is None:
+            lines.append(f"- {name}: generated images (smoke run)")
+            continue
+        config = f", config `{source.config}`" if source.config else ""
+        lines.append(f"- {name}: [{source.repo}](https://huggingface.co/datasets/{source.repo}){config}, {source.licence}. {source.credit}.")
+    lines += [
+        "",
+        "CC-BY data must be credited wherever the model is shown or shared; CC-BY-SA data adds share-alike terms",
+        "for derived works. Check both before a public release.",
         "",
         "## Limits",
         "",
-        "- Only the labels above. Anything else gets the nearest of them, so the app shows the top three and asks for confirmation.",
-        "- These test photos are public sets. Before release, also score photos taken by the app's officers (the acceptance gate in docs/specs/PHASE2-OFFLINE-DIAGNOSIS-MODEL.md).",
+        "- Only the labels above. A photo of anything else still gets the nearest of them, so the app shows the top",
+        "  three, withholds treatment advice for labels it has no checked advice for, and offers the online check.",
+        "- Several labels are coarse (for example potato fungal disease, bean blight); they say what kind of problem it is,",
+        "  not which pathogen.",
+        "- The confidence table comes from public test sets. Photos taken by the app's officers may score lower; score",
+        "  them before relying on it (the acceptance gate in docs/specs/PHASE2-OFFLINE-DIAGNOSIS-MODEL.md).",
     ]
     (out / "MODEL_CARD.md").write_text("\n".join(lines) + "\n")
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--sources", default="plantdoc,maize,cassava")
+    parser.add_argument("--sources", default=",".join(SOURCES), help=f"Comma-separated, from: {', '.join(SOURCES)}")
     parser.add_argument("--arch", default="mobilenetv3_small_100")
     parser.add_argument("--size", type=int, default=224)
-    parser.add_argument("--epochs", type=int, default=8)
+    parser.add_argument("--epochs", type=int, default=10)
     parser.add_argument("--batch-size", type=int, default=48)
     parser.add_argument("--lr", type=float, default=2e-3)
     parser.add_argument("--workers", type=int, default=2)
-    parser.add_argument("--max-per-source", type=int, default=None, help="Cap photos per source, for a quicker run")
+    parser.add_argument("--max-train-per-label", type=int, default=1500, help="Training photos kept per label and source")
+    parser.add_argument("--max-test-per-label", type=int, default=300, help="Holdout test photos kept per label and source")
     parser.add_argument("--min-photos-per-label", type=int, default=20, help="Drop labels with fewer training photos")
     parser.add_argument("--seed", type=int, default=7)
     parser.add_argument("--out", type=Path, required=True)
@@ -408,7 +733,11 @@ def main() -> int:
     args.out.mkdir(parents=True, exist_ok=True)
 
     sources = ["smoke"] if args.smoke else [s.strip() for s in args.sources.split(",") if s.strip()]
-    splits = smoke_sources(args.seed) if args.smoke else load_sources(sources, args.max_per_source, args.seed, args.size)
+    unknown = [s for s in sources if s != "smoke" and s not in SOURCES]
+    if unknown:
+        print(f"Unknown sources: {', '.join(unknown)}. Choose from: {', '.join(SOURCES)}", file=sys.stderr)
+        return 2
+    splits = smoke_sources(args.seed) if args.smoke else load_sources(sources, args)
     counts: dict[str, int] = {}
     for sample in splits.train:
         counts[sample.label] = counts.get(sample.label, 0) + 1
@@ -420,23 +749,37 @@ def main() -> int:
     keep = set(labels)
     splits.train = [s for s in splits.train if s.label in keep]
     splits.test = [s for s in splits.test if s.label in keep]
-    print(f"{len(splits.train)} training and {len(splits.test)} test photos over {len(labels)} labels", flush=True)
-    if len(labels) < 2 or not splits.test:
+    published = [s for s in splits.test if is_published(s)]
+    print(f"{len(splits.train)} training photos; {len(published)} published and {len(splits.test) - len(published)} holdout "
+          f"test photos; {len(labels)} labels", flush=True)
+    if len(labels) < 2 or not published:
         print("Not enough labelled photos to train and evaluate.", file=sys.stderr)
         return 1
 
     model = build_model(args.arch, len(labels), pretrained=not args.smoke)
     train(model, splits.train, labels, args)
     float_path, quantised = export_onnx(model, labels, args.size, args.out)
-    float_scores = evaluate(float_path, splits.test, labels, args.size)
-    int8_scores = evaluate(quantised, splits.test, labels, args.size)
+    float_predictions = predict(float_path, splits.test, labels, args.size)
+    int8_predictions = predict(quantised, splits.test, labels, args.size)
+    float_all, int8_all = summarise(float_predictions, labels), summarise(int8_predictions, labels)
     fit_sample = random.Random(args.seed).sample(splits.train, min(500, len(splits.train)))
-    train_scores = evaluate(float_path, fit_sample, labels, args.size)
-    for name, sc in (("float32", float_scores), ("int8", int8_scores), ("float32 on training photos", train_scores)):
-        print(name, json.dumps({k: v for k, v in sc.items() if k not in ("perClass",)}, indent=2), flush=True)
-    precision, scores = choose_model(args.out, float_path, quantised, float_scores, int8_scores)
+    train_scores = summarise(predict(float_path, fit_sample, labels, args.size), labels)
+    print(f"All test photos, top-3: float32 {float_all['top3Accuracy']:.1%}, int8 {int8_all['top3Accuracy']:.1%}; "
+          f"training photos top-1 {train_scores['top1Accuracy']:.1%}", flush=True)
+    precision, _ = choose_model(args.out, float_path, quantised, float_all, int8_all)
+    shipped = int8_predictions if precision == "int8" else float_predictions
+    headline_predictions = [p for p, s in zip(shipped, splits.test) if is_published(s)]
+    holdout_predictions = [p for p, s in zip(shipped, splits.test) if not is_published(s)]
+    headline = summarise(headline_predictions, labels)
+    holdout_scores = summarise(holdout_predictions, labels) if holdout_predictions else None
+    calibration = calibrate(headline_predictions)
     print(f"Shipping the {precision} model", flush=True)
-    write_outputs(args.out, labels, scores, args, sources, counts, precision, float_scores, int8_scores, train_scores)
+    for name, scores in (("published test splits", headline), ("holdouts", holdout_scores)):
+        if scores:
+            print(name, json.dumps({k: v for k, v in scores.items() if k != "perClass"}, indent=2), flush=True)
+    print("calibration", json.dumps(calibration, indent=2), flush=True)
+    write_outputs(args.out, labels, headline, holdout_scores, calibration, args, sources, counts, precision,
+                  float_all["top3Accuracy"], int8_all["top3Accuracy"], train_scores)
 
     if args.push_to:
         from huggingface_hub import HfApi

@@ -20,6 +20,18 @@ export interface FieldEvaluation {
   evaluatedOn: string;
   /** Set by a pipeline check on generated images; such a model never runs. */
   smoke?: boolean;
+  /** The same numbers for each source of test photos. */
+  perSource?: Record<string, { images: number; top1Accuracy: number; top3Accuracy: number }>;
+}
+
+/** How often the top answer was right at each confidence, on the published test photos. */
+export interface ModelCalibration {
+  basis: string;
+  /** The top-1 accuracy an answer must reach to count as sure, e.g. 0.9. */
+  target: number;
+  /** The lowest confidence from which answers met the target; null when none did. */
+  confidentAt: number | null;
+  points: Array<{ minConfidence: number; share: number; top1Accuracy: number; images: number }>;
 }
 
 export interface EdgeModelEntry {
@@ -32,8 +44,28 @@ export interface EdgeModelEntry {
   output: 'probabilities' | 'logits';
   inputSize: number;
   fieldEvaluation?: FieldEvaluation;
+  /** Scores on random holdouts of the other sources; reported only, never used by the gate. */
+  holdoutEvaluation?: FieldEvaluation;
+  calibration?: ModelCalibration;
   /** SHA-256 of the model file, written by scripts/ml/install_disease_model.py. */
   sha256?: string;
+}
+
+// An answer counts as sure only when the calibration was measured on this many photos or more,
+// and never below this confidence, whatever the manifest says.
+const MIN_CALIBRATION_IMAGES = 300;
+const MIN_CONFIDENT_AT = 0.5;
+
+/**
+ * The confidence from which the model's top answer can be shown without asking the online
+ * model; null when the manifest gives none, so the online model is always asked.
+ */
+export function confidentThreshold(entry: EdgeModelEntry): number | null {
+  const calibration = entry.calibration;
+  const sureAt = calibration?.confidentAt;
+  if (typeof sureAt !== 'number' || !Number.isFinite(sureAt) || sureAt > 1) return null;
+  if ((entry.fieldEvaluation?.images ?? 0) < MIN_CALIBRATION_IMAGES || calibration!.target < 0.9) return null;
+  return Math.max(sureAt, MIN_CONFIDENT_AT);
 }
 
 /** A short, stable hash of a string (djb2), for a version tag when no SHA-256 was recorded. */

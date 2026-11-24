@@ -9,10 +9,10 @@ const ort = vi.hoisted(() => ({
 }));
 vi.mock('onnxruntime-web/wasm', () => ort);
 
-import { FIELD_EVALUATION_FLOOR, meetsFieldFloor, modelUrl, rejectedCandidate, releasedEdgeModels, resetEdgeModelManifest, toProbabilities, type EdgeModelEntry } from '@/services/edgeModelManifest';
+import { FIELD_EVALUATION_FLOOR, confidentThreshold, meetsFieldFloor, modelUrl, rejectedCandidate, releasedEdgeModels, resetEdgeModelManifest, toProbabilities, type EdgeModelEntry } from '@/services/edgeModelManifest';
 import { diagnosePlantOffline, resetEdgeModel } from '@/services/edgePlantVisionClassifier';
 
-const LABELS = ['cassava___mosaic', 'corn___common_rust', 'corn___healthy'];
+const LABELS = ['cassava___mosaic', 'corn___rust', 'corn___healthy'];
 const passing: EdgeModelEntry = {
   file: 'plant-disease.onnx',
   name: 'mobilenetv3_small_100, field photos test',
@@ -133,9 +133,95 @@ describe('an offline photo check', () => {
     expect(ort.InferenceSession.create).toHaveBeenCalledWith(modelUrl(passing), expect.anything());
     expect(modelUrl(passing)).toMatch(/^\/models\/plant-disease\.onnx\?v=[0-9a-z]+$/);
     expect(result.origin).toBe('onnx');
-    expect(result.primaryDiagnosis.condition).toBe('Maize Common Rust');
+    // Maize "rust" may be common or southern rust, so it is not named as either.
+    expect(result.primaryDiagnosis.condition).toBe('Maize rust');
+    expect(result.primaryDiagnosis.severity).toBe('not_assessed');
+    // Maize was named, so only maize labels are ranked.
+    expect(result.alternatives.map(a => a.condition)).toEqual(['Healthy maize leaf']);
     expect(result.heuristicDisclaimer).toMatch(/top three for 84% of 400 field photos, and first for 62%/);
     // Treatment stays withheld until an expert confirms.
     expect(result.primaryDiagnosis.chemicalIntervention).toMatch(/withheld/);
   });
+
+  function serveModelAnswer(model: EdgeModelEntry, probabilities: number[]) {
+    serveManifest([model]);
+    ort.InferenceSession.create.mockResolvedValue({
+      inputNames: ['input'],
+      run: vi.fn().mockResolvedValue({ probabilities: { data: new Float32Array(probabilities) } }),
+    });
+  }
+  const calibrated: EdgeModelEntry = {
+    ...passing,
+    calibration: { basis: 'published test splits', target: 0.9, confidentAt: 0.8, points: [] },
+  };
+
+  it('says an answer is sure enough to skip the online check only from the calibrated confidence', async () => {
+    serveModelAnswer(calibrated, [0.05, 0.85, 0.1]);
+    expect((await diagnosePlantOffline(leafCanvas(), 'Maize')).confidentEnough).toBe(true);
+    resetEdgeModelManifest();
+    resetEdgeModel();
+    serveModelAnswer(calibrated, [0.05, 0.7, 0.25]);
+    const unsure = await diagnosePlantOffline(leafCanvas(), 'Maize');
+    expect(unsure.origin).toBe('onnx');
+    expect(unsure.confidentEnough).toBe(false);
+  });
+
+  it('is never sure without a calibration in the manifest', async () => {
+    serveModelAnswer(passing, [0.01, 0.98, 0.01]);
+    expect((await diagnosePlantOffline(leafCanvas(), 'Maize')).confidentEnough).toBe(false);
+  });
+
+  it("ranks only the named crop's labels, and is not sure when that changed the model's first answer", async () => {
+    serveModelAnswer(calibrated, [0.1, 0.85, 0.05]);
+    const asCassava = await diagnosePlantOffline(leafCanvas(), 'cassava');
+    // Only cassava labels count, and cassava mosaic at 10% is too unsure to show.
+    expect(asCassava.origin).toBe('heuristic');
+    expect(asCassava.heuristicDisclaimer).toMatch(/not sure enough/);
+  });
+
+  it('runs the colour check and says why when the named crop is not one the model knows', async () => {
+    serveModelAnswer(calibrated, [0.05, 0.9, 0.05]);
+    const result = await diagnosePlantOffline(leafCanvas(), 'Rice');
+    expect(result.origin).toBe('heuristic');
+    expect(result.cropNotCovered).toBe(true);
+    expect(result.heuristicDisclaimer).toMatch(/not trained on this crop/);
+  });
+
+  it('ranks every crop when none is named, naming known conditions by their full name', async () => {
+    serveModelAnswer(calibrated, [0.3, 0.6, 0.1]);
+    const result = await diagnosePlantOffline(leafCanvas());
+    expect([result.primaryDiagnosis, ...result.alternatives].map(c => c.condition))
+      .toEqual(['Maize rust', 'Cassava Mosaic Disease (CMD)', 'Healthy maize leaf']);
+  });
+
+  it('reports a healthy leaf as healthy rather than as a disease', async () => {
+    serveModelAnswer(calibrated, [0.02, 0.08, 0.9]);
+    const result = await diagnosePlantOffline(leafCanvas(), 'Maize');
+    expect(result.primaryDiagnosis.healthy).toBe(true);
+    expect(result.primaryDiagnosis.condition).toBe('Healthy maize leaf');
+  });
 });
+
+describe('confidentThreshold', () => {
+  const withCalibration = (confidentAt: number | null, target = 0.9, images = 400): EdgeModelEntry => ({
+    ...passing,
+    fieldEvaluation: { ...passing.fieldEvaluation!, images },
+    calibration: { basis: 'published test splits', target, confidentAt, points: [] },
+  });
+
+  it("reads the manifest's calibrated confidence", () => {
+    expect(confidentThreshold(withCalibration(0.75))).toBe(0.75);
+  });
+
+  it('gives none without a calibration, a target below 90%, or too few test photos', () => {
+    expect(confidentThreshold(passing)).toBeNull();
+    expect(confidentThreshold(withCalibration(null))).toBeNull();
+    expect(confidentThreshold(withCalibration(0.75, 0.8))).toBeNull();
+    expect(confidentThreshold(withCalibration(0.75, 0.9, 120))).toBeNull();
+  });
+
+  it('never goes below one in two, whatever the manifest says', () => {
+    expect(confidentThreshold(withCalibration(0.2))).toBe(0.5);
+  });
+});
+
