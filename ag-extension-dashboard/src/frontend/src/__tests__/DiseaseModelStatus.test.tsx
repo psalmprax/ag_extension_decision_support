@@ -25,7 +25,7 @@ describe('the disease model line of an offline photo check', () => {
   it('says no model has passed yet when none was scored', async () => {
     serve({ models: [] });
     render(<DiseaseModelStatus model={null} confidence={0} />);
-    expect(await screen.findByText('No trained model has passed field testing yet.')).toBeInTheDocument();
+    expect(await screen.findByText('No disease model is installed yet.')).toBeInTheDocument();
   });
 
   it('names the model and its confidence when one ran', () => {

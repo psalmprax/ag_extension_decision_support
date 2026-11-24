@@ -318,7 +318,10 @@ def evaluate(model_path: Path, samples: list[Sample], labels: list[str], size: i
 
 def write_outputs(out: Path, labels: list[str], scores: dict, args, sources: list[str], counts: dict,
                   precision: str, float_scores: dict, int8_scores: dict, train_scores: dict) -> None:
-    dataset = "smoke run, generated images" if args.smoke else ", ".join(f"{s} test split" for s in sources)
+    # Maize has no published split: its test photos are a random 15% of the same set, so they
+    # score higher than photos from other fields would. Each source's own numbers go in the entry.
+    split_name = {"plantdoc": "PlantDoc test split", "cassava": "cassava test split", "maize": "maize random 15% holdout of the training set"}
+    dataset = "smoke run, generated images" if args.smoke else ", ".join(split_name.get(s, f"{s} test split") for s in sources)
     entry = {
         "file": "plant-disease.onnx",
         "name": f"{args.arch}, field photos {date.today().isoformat()}" + (" (smoke run, do not ship)" if args.smoke else ""),
@@ -333,6 +336,10 @@ def write_outputs(out: Path, labels: list[str], scores: dict, args, sources: lis
             "top3Accuracy": scores["top3Accuracy"],
             "cropTop1Accuracy": scores["cropTop1Accuracy"],
             "evaluatedOn": date.today().isoformat(),
+            "perSource": {
+                source: {"images": v["images"], "top1Accuracy": round(v["top1"] / max(1, v["images"]), 4), "top3Accuracy": round(v["top3"] / max(1, v["images"]), 4)}
+                for source, v in scores["perSource"].items()
+            },
         },
     }
     if args.smoke:

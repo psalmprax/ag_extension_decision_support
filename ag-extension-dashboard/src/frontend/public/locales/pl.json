@@ -3021,7 +3021,7 @@
     "data_status_unavailable": "Unavailable",
     "edge_model_none": "None installed",
     "edge_model_failed_gate": "The latest trained model was not installed: it had the right disease in its top three for {top3}% of {images} field photos, and {floor}% is needed.",
-    "edge_model_none_passed": "No trained model has passed field testing yet.",
+    "edge_model_none_passed": "No disease model is installed yet.",
     "campaign_needs_goal": "Say what the campaign is for first.",
     "campaign_draft_failed": "The draft could not be written. Try again.",
     "campaign_send_failed": "The campaign could not be sent. Try again.",

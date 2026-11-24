@@ -32,7 +32,7 @@ export function DiseaseModelStatus({ model, confidence }: { model: string | null
             defaultValue: 'The latest trained model was not installed: it had the right disease in its top three for {top3}% of {images} field photos, and {floor}% is needed.',
             top3: percent(evaluation.top3Accuracy), images: evaluation.images, floor: percent(FIELD_EVALUATION_FLOOR.top3Accuracy),
           })
-          : t('edge_model_none_passed', { defaultValue: 'No trained model has passed field testing yet.' })}
+          : t('edge_model_none_passed', { defaultValue: 'No disease model is installed yet.' })}
       </span>
     </>
   );
