@@ -192,26 +192,16 @@ export function SoilDiagnosticsTab({
       if (res.success) {
         setSoilAnalysis(res.data);
         if (res.data.colorDiscoloration === 'Analysis unavailable') {
-          toast.error('Soil image analysis is unavailable. No measurements were generated.');
-          addNotification({
-            type: 'error',
-            message: 'Soil image analysis is unavailable — no measurements were generated.',
-          });
+          addNotification({ type: 'error', message: 'Soil image analysis is unavailable. No measurements were generated.' });
         } else {
           toast.success(t('ui_soil_tab_done', 'Soil photo analyzed'));
         }
       } else {
-        addNotification({
-          type: 'error',
-          message: 'Soil analysis failed.',
-        });
+        addNotification({ type: 'error', message: 'Soil analysis failed. No measurements were generated.' });
       }
     } catch (error) {
       console.error('Soil analysis error:', error);
-      addNotification({
-        type: 'error',
-        message: 'Failed to analyze soil image',
-      });
+      addNotification({ type: 'error', message: 'Could not reach the analysis service. No measurements were generated.' });
     } finally {
       setIsAnalyzingSoil(false);
     }

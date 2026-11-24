@@ -419,35 +419,25 @@ export function ImageAnalysisTab({
       if (res.success) {
         setImageAnalysis(res.data);
         if (res.data.recommendations.includes('Analysis was unavailable; do not treat this as a diagnosis')) {
-          toast.error('Plant image analysis is unavailable. No diagnosis was generated.');
-          addNotification({
-            type: 'error',
-            message: 'Plant image analysis is unavailable — no diagnosis was generated.',
-          });
+          addNotification({ type: 'error', message: 'Plant image analysis is unavailable. No diagnosis was generated.' });
         } else {
           toast.success('Plant disease analysis completed!');
         }
       } else {
-        toast.error('The analysis service could not process this image. No diagnosis was generated — please try again.');
         addNotification({
           type: 'error',
-          message: 'Plant image analysis failed — no diagnosis was generated.',
+          message: 'The analysis service could not process this image. No diagnosis was generated, so please try again.',
         });
       }
     } catch (error: unknown) {
       console.error('Image analysis error:', error);
       const status = (error as { response?: { status?: number } })?.response?.status;
       const isPayloadTooLarge = status === 413;
-      toast.error(
-        isPayloadTooLarge
-          ? 'Image file is too large for the analysis server. Please select a smaller photo.'
-          : 'Could not reach the analysis service. No diagnosis was generated.'
-      );
       addNotification({
         type: 'error',
         message: isPayloadTooLarge
-          ? 'Image upload failed: payload too large (413).'
-          : 'Failed to analyze image — no diagnosis was generated.',
+          ? 'Image file is too large for the analysis server. Please select a smaller photo.'
+          : 'Could not reach the analysis service. No diagnosis was generated.',
       });
     } finally {
       setIsAnalyzingImage(false);

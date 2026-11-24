@@ -2998,5 +2998,6 @@
     "advisory_step_move_down": "Move step down",
     "advisory_step_delete": "Delete step",
     "billing_renews_yearly": "Yearly, renews automatically",
-    "billing_renews_monthly": "Monthly, renews automatically"
+    "billing_renews_monthly": "Monthly, renews automatically",
+    "page_not_found": "There is no page at {path}."
 }

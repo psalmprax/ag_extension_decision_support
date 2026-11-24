@@ -1,5 +1,5 @@
 {
-  "App.tsx": 648,
+  "App.tsx": 594,
   "components/AgronomicIntakeCard.tsx": 366,
   "components/AntiFraudVerificationBadge.tsx": 408,
   "components/AppModals.tsx": 488,
@@ -9,7 +9,7 @@
   "components/FarmerDetailPanel.tsx": 477,
   "components/FarmerMap.tsx": 488,
   "components/FloatingAIPill.tsx": 811,
-  "components/HelpCenterModal.tsx": 415,
+  "components/HelpCenterModal.tsx": 412,
   "components/KnowledgeBase/AIResult.tsx": 837,
   "components/KnowledgeBase/ReasoningVisuals.tsx": 355,
   "components/KnowledgeBase/index.tsx": 1078,
@@ -41,8 +41,8 @@
   "pages/SMS.tsx": 325,
   "pages/SystemHealth.tsx": 712,
   "pages/UserManagementPage.tsx": 651,
-  "pages/diagnostics/ImageAnalysisTab.tsx": 482,
-  "pages/diagnostics/SoilDiagnosticsTab.tsx": 431,
+  "pages/diagnostics/ImageAnalysisTab.tsx": 472,
+  "pages/diagnostics/SoilDiagnosticsTab.tsx": 421,
   "pages/landing/sections/FarmerServices.tsx": 355,
   "pages/landing/sections/Hero.tsx": 366,
   "pages/landing/sections/TalkingAssistant.tsx": 1972

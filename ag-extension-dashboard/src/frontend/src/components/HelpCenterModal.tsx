@@ -165,7 +165,6 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
     e.preventDefault();
     if (!ticketSubject.trim() || !ticketDescription.trim()) {
       toast.error('Please provide both a subject and a description.');
-      addNotification({ type: 'warning', message: 'Please provide both a subject and a description.' });
       return;
     }
     setTicketSubmitting(true);
@@ -179,8 +178,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
         setTicketSubmitted(true);
         setTicketSubject('');
         setTicketDescription('');
-        toast.success('Support ticket submitted successfully!');
-        addNotification({ type: 'success', message: 'Support ticket submitted successfully' });
+        addNotification({ type: 'success', message: 'Support ticket submitted.' });
         setTimeout(() => {
           setShowTicketForm(false);
           setTicketSubmitted(false);
@@ -189,8 +187,7 @@ export const HelpCenterModal: React.FC<HelpCenterModalProps> = ({ isOpen, onClos
         throw new Error('Submission returned unsuccessful status');
       }
     } catch {
-      toast.error('Support ticket could not be submitted. Please retry when you are online.');
-      addNotification({ type: 'error', message: 'Support ticket could not be submitted.' });
+      addNotification({ type: 'error', message: 'Support ticket could not be submitted. Please retry when you are online.' });
     } finally {
       setTicketSubmitting(false);
     }

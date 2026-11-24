@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useLocation, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { Login } from './pages/Login';
 import { Register } from './pages/Register';
 import { ForgotPassword } from './pages/ForgotPassword';
@@ -38,6 +38,7 @@ import { useAppAuth, hasAuthSession } from './hooks/useAppAuth';
 import { useAppModalState } from './hooks/useAppModalState';
 import { useAppQueries } from './hooks/useAppQueries';
 import { useAppMenuActions } from './hooks/useAppMenuActions';
+import { useTabUrlSync } from './hooks/useTabUrlSync';
 import { fetchUnreadCount } from '@/api/notificationService';
 import { ensurePersistentQueueStorage } from '@/api/syncQueueService';
 import { OfflineQueueBanner } from './components/common/OfflineQueueBanner';
@@ -62,44 +63,8 @@ const DiagnosisPage = lazy(() =>
   import('./pages/DiagnosisPage').then(m => ({ default: m.DiagnosisPage }))
 );
 
-const TAB_TO_PATH: Record<string, string> = {
-  dashboard: '/dashboard',
-  portfolio: '/portfolio',
-  register_farmer: '/register-farmer',
-  visits: '/visits',
-  reports: '/reports',
-  analytics: '/analytics',
-  billing: '/billing',
-  knowledge: '/knowledge',
-  aiassistant: '/ai-assistant',
-  farmerchat: '/farmer-chat',
-  officerchat: '/my-officer',
-  worldmonitor: '/world-monitor',
-  sms: '/sms',
-  telemetry: '/telemetry',
-  agents: '/agents',
-  system_health: '/system-health',
-  disease_diagnosis: '/disease-diagnosis',
-  fields: '/fields',
-  memory: '/memory',
-  email_workflows: '/email-workflows',
-  mcp_tools: '/mcp-tools',
-  user_management: '/user-management',
-  advisory_studio: '/advisory-studio',
-};
-
-const PATH_TO_TAB: Record<string, string> = {
-  ...Object.entries(TAB_TO_PATH).reduce(
-    (acc, [tab, path]) => ({ ...acc, [path]: tab }),
-    {} as Record<string, string>
-  ),
-  '/diagnosis': 'disease_diagnosis',
-};
-
 function App() {
   const { t, language } = useLanguage();
-  const navigate = useNavigate();
-  const location = useLocation();
   const {
     themeName,
     darkMode,
@@ -118,38 +83,19 @@ function App() {
   } = useAppStore();
   const { isDemo } = useDemoMode();
 
-  // Keep activeTab and the URL pathname in sync — one direction per render.
-  // Two independent effects used to fight each other on deep links: a reload
-  // on /fields with a persisted activeTab of 'dashboard' flipped both values
-  // forever (each effect re-triggering the other). Tracking the previous
-  // values makes the *changed* side the source of truth: one pass settles it.
-  const prevPathRef = React.useRef<string | null>(null);
-  const prevTabRef = React.useRef(activeTab);
-
   React.useEffect(() => {
     // Request persistent storage once so the offline mutation queue survives
     // browser storage pressure (eviction = silent field-data loss).
     void ensurePersistentQueueStorage();
   }, []);
 
-  React.useEffect(() => {
-    const pathChanged = prevPathRef.current === null || prevPathRef.current !== location.pathname;
-    const tabChanged = prevTabRef.current !== activeTab;
-    prevPathRef.current = location.pathname;
-    prevTabRef.current = activeTab;
-
-    if (!storeUser) return;
-
-    if (pathChanged && !tabChanged) {
-      // Deep link / direct navigation — the URL is the source of truth.
-      const tab = PATH_TO_TAB[location.pathname];
-      if (tab && tab !== activeTab) setActiveTab(tab);
-    } else if (tabChanged && !pathChanged) {
-      // Tab click — mirror the active tab in the URL.
-      const targetPath = TAB_TO_PATH[activeTab];
-      if (targetPath && location.pathname !== targetPath) navigate(targetPath);
-    }
-  }, [location.pathname, activeTab, storeUser, navigate, setActiveTab]);
+  useTabUrlSync({
+    activeTab,
+    setActiveTab,
+    signedIn: Boolean(storeUser),
+    onUnknownPath: path =>
+      addNotification({ type: 'warning', message: t('page_not_found', { defaultValue: 'There is no page at {path}.', path }) }),
+  });
 
   const { headingClass } = useThemeClasses();
 

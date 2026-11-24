@@ -17,10 +17,11 @@ vi.mock('@/api/visitService', () => ({
   createVisit: vi.fn().mockResolvedValue({ success: true, data: { id: '1', status: 'pending' } }),
 }));
 
-vi.mock('react-hot-toast', () => ({
-  default: { success: vi.fn(), error: vi.fn() },
-  toast: { success: vi.fn(), error: vi.fn() },
-}));
+vi.mock('react-hot-toast', () => {
+  // Like the real library: toast() itself shows a plain message, with success/error beside it.
+  const toast = Object.assign(vi.fn(), { success: vi.fn(), error: vi.fn(), dismiss: vi.fn() });
+  return { default: toast, toast };
+});
 
 import { useAppStore } from '@/store/useAppStore';
 
