@@ -6,7 +6,7 @@ name: Train disease model
 # a model reaches the app only when someone copies it into ag-extension-dashboard/src/frontend/models
 # and its field evaluation passes the gate the app checks (src/services/edgeModelManifest.ts).
 # Runs when the training code changes on stage (GitHub only allows a manual start for workflows
-# already on master), or by hand. A full run streams about 80 GB of photos from 43 sources and takes
+# already on master), or by hand. A full run streams about 80 GB of photos from 44 sources and takes
 # four to five hours on a free public-repo runner; the script cuts its epochs to finish before the
 # job's time limit.
 on:

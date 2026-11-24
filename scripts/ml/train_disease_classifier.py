@@ -91,6 +91,25 @@ def by_crop_column(names: dict[str, str]) -> LabelFn:
     return label
 
 
+def wheat_label(name: str) -> str | None:
+    """A wheat class name from the archive's data.yaml as a label; None for anything unclear, so
+    no box is filed under a guessed disease."""
+    n = " " + re.sub(r"[^a-z]+", " ", name.lower()).strip() + " "
+    rules = [
+        (("healthy",), "wheat___healthy"),
+        ((" stripe ", "yellow rust"), "wheat___stripe_rust"),
+        (("leaf rust", "brown rust"), "wheat___leaf_rust"),
+        ((" scab ", "fusarium", "head blight", " fhb "), "wheat___fusarium_head_blight"),
+        (("powdery", "mildew"), "wheat___powdery_mildew"),
+        (("glume",), "wheat___glume_blotch"),
+        (("leaf spot", "septoria"), "wheat___leaf_spot"),
+    ]
+    for words, label in rules:
+        if any(word in n for word in words):
+            return label
+    return None
+
+
 TOM2024_DISEASES = {
     "healthy-leaf": "healthy", "healthy-fruit": "healthy_fruit", "spodoptera-frugiperda": "fall_armyworm",
     "helminthosporiosis": "leaf_blight", "tomato-late-blight": "late_blight", "caterpillar": "caterpillar_damage",
@@ -160,6 +179,10 @@ class Source:
     # A box category that marks the whole fruit or leaf, sick or not: it counts as healthy only
     # when no box of another category covers the same object.
     plain_box: str | None = None
+    # A YOLO-format zip read straight from its archive (URL, MD5), with a function that turns each
+    # class name in its data.yaml into a label, or None when the name is not recognised.
+    archive: tuple[str, str] | None = None
+    archive_label: Callable[[str], "str | None"] | None = None
 
 
 SOURCES: dict[str, Source] = {
@@ -265,6 +288,13 @@ SOURCES: dict[str, Source] = {
     # Cashew: the CCMT cashew photos (Mensah et al. 2023, Ghana, CC BY 4.0), re-shared on the Hub under MIT.
     "cashew": Source("pt-sk/Cashew_Dataset", "CC-BY-4.0 (CCMT; this copy MIT)", "Mensah et al. 2023, CCMT cashew leaves, Ghana",
                      one_crop("cashew", {"gumosis": "gummosis"}), "holdout"),
+    # Wheat in the field, Henan, China (Ma 2024, Zenodo 15621359, CC BY 4.0; used in Qian et al. 2025).
+    # Read from the original YOLO archive, because the Hub copy names its classes only 0 to 6; the
+    # class names come from the archive's own data.yaml, and the archive's test folder is the test split.
+    "wheat": Source("zenodo.org/records/15621359", "CC-BY-4.0", "Ma 2024, wheat diseases in the field, Henan, China (boxes cut out)",
+                    by_name({}), "column",
+                    archive=("https://zenodo.org/records/15621359/files/xiaomai.zip?download=1", "368c8befb1ea26bdb37e4f50ddba43ea"),
+                    archive_label=wheat_label),
     # Cocoa pods from Ghanaian farms: a detection set, so each box is cut out as a photo.
     "cocoa": Source("Project-AgML/cocoa_pod_disease_gh_image_classification", "CC-BY-4.0",
                     "Techie-Menson et al. 2026, cocoa pods in the field, Ghana (boxes cut out)", by_name({}), "column",
@@ -281,8 +311,8 @@ SOURCES: dict[str, Source] = {
 # cucumber_disease_classification, coconut_tree_disease_classification, plant_village_classification). The CCMT set
 # (cashew, cassava, maize, tomato from Ghanaian farms, CC BY 4.0, Mendeley bwh3zbpkpv) has no copy on the Hub with the
 # crop of each photo, so it waits for a loader of its own. MangoLeafBD's Hub copy is CC BY-NC.
-# Project-AgML/wheat_disease_detection (CC BY 4.0) names its seven box classes only "0" to "6";
-# it waits until the class names are read from its Zenodo record (10.5281/zenodo.15621359).
+# Project-AgML/wheat_disease_detection names its classes only "0" to "6", so wheat is read from the
+# original archive instead (the "wheat" source).
 
 
 @dataclass
@@ -436,8 +466,8 @@ def sample_rows(name: str, source: Source, side_of: Callable[[str, dict], str], 
 def load_source(name: str, args, rng: random.Random) -> tuple[list[Sample], list[Sample]]:
     source = SOURCES[name]
     train_cap, test_cap = args.max_train_per_label, args.max_test_per_label
-    if source.boxes:
-        train, test = load_box_source(name, source, args)
+    if source.boxes or source.archive:
+        train, test = load_yolo_archive(name, source, args) if source.archive else load_box_source(name, source, args)
         if not test:
             HOLDOUT_FALLBACK.add(name)
             train, test = holdout(train, 0.15, args.seed)
@@ -537,6 +567,85 @@ def load_box_source(name: str, source: Source, args) -> tuple[list[Sample], list
     return train, test
 
 
+def download(url: str, md5: str) -> Path:
+    """The archive in a temporary file, checked against its published MD5."""
+    import hashlib
+    import tempfile
+    import urllib.request
+
+    target = Path(tempfile.mkdtemp()) / "archive.zip"
+    digest = hashlib.md5()
+    with urllib.request.urlopen(url, timeout=120) as response, target.open("wb") as out:
+        while chunk := response.read(1 << 20):
+            digest.update(chunk)
+            out.write(chunk)
+    if digest.hexdigest() != md5:
+        raise ValueError(f"MD5 {digest.hexdigest()} does not match the published {md5}")
+    return target
+
+
+def archive_class_names(zip_file) -> list[str]:
+    """Class names from the archive's data.yaml (list or id-to-name map), or classes.txt."""
+    import yaml
+
+    for member in zip_file.namelist():
+        if member.lower().endswith((".yaml", ".yml")):
+            data = yaml.safe_load(zip_file.read(member))
+            if isinstance(data, dict) and data.get("names"):
+                names = data["names"]
+                return [str(names[k]) for k in sorted(names, key=int)] if isinstance(names, dict) else [str(n) for n in names]
+    for member in zip_file.namelist():
+        if member.lower().endswith(("classes.txt", "obj.names")):
+            return [line.strip() for line in zip_file.read(member).decode().splitlines() if line.strip()]
+    raise ValueError("no data.yaml or classes.txt with class names in the archive")
+
+
+def load_yolo_archive(name: str, source: Source, args) -> tuple[list[Sample], list[Sample]]:
+    """Each box of a YOLO archive as a photo. Every class name must map to a label, or the whole
+    source is skipped: a box filed under the wrong disease is worse than no box."""
+    import zipfile
+
+    from PIL import Image
+
+    path = download(*source.archive)
+    try:
+        with zipfile.ZipFile(path) as archive:
+            names = archive_class_names(archive)
+            labels = [source.archive_label(n) for n in names]
+            if not names or None in labels:
+                raise ValueError(f"class names not all recognised: {names}")
+            print(f"  {name} classes: " + ", ".join(f"{i}={n}->{l}" for i, (n, l) in enumerate(zip(names, labels))), flush=True)
+            members = archive.namelist()
+            images = {}
+            for member in members:
+                if member.lower().endswith((".jpg", ".jpeg", ".png", ".bmp")):
+                    key = re.sub(r"(^|/)images(/|$)", r"\1labels\2", member)
+                    images[key.rsplit(".", 1)[0]] = member
+            train, test = [], []
+            for member in members:
+                if not member.endswith(".txt") or "labels" not in member.split("/"):
+                    continue
+                image_member = images.get(member.rsplit(".", 1)[0])
+                if image_member is None:
+                    continue
+                lines = [line.split() for line in archive.read(member).decode(errors="ignore").splitlines() if line.strip()]
+                if not lines:
+                    continue
+                image = Image.open(io.BytesIO(archive.read(image_member))).convert("RGB")
+                side = test if "test" in member.lower().split("/") else train
+                for parts in lines:
+                    if len(parts) < 5 or not parts[0].isdigit() or int(parts[0]) >= len(labels):
+                        continue
+                    xc, yc, w, h = (float(v) for v in parts[1:5])
+                    box = [(xc - w / 2) * image.width, (yc - h / 2) * image.height, w * image.width, h * image.height]
+                    crop = cut_box(image, box)
+                    if crop is not None:
+                        side.append(Sample(compact(crop, args.size), canonical(labels[int(parts[0])]), name))
+    finally:
+        path.unlink(missing_ok=True)
+    return train, test
+
+
 def drop_copies_of_test_photos(splits: Splits) -> int:
     """Training photos that are copies of any test photo (sources sometimes share pictures)."""
     test_ids = {copy_id(sample) for sample in splits.test}
@@ -550,7 +659,7 @@ def load_sources(names: list[str], args) -> Splits:
     splits = Splits()
     for name in names:
         started = time.time()
-        print(f"Loading {name} from {SOURCES[name].repo}", flush=True)
+        print(f"Loading {name} from {SOURCES[name].archive[0] if SOURCES[name].archive else SOURCES[name].repo}", flush=True)
         # One source that cannot be read (moved, renamed labels, a network failure) is skipped and
         # reported, so a long run over many sources still produces a model.
         try:
@@ -967,7 +1076,8 @@ def write_outputs(out: Path, labels: list[str], headline: dict, holdout_scores: 
             lines.append(f"- {name}: generated images (smoke run)")
             continue
         config = f", config `{source.config}`" if source.config else ""
-        lines.append(f"- {name}: [{source.repo}](https://huggingface.co/datasets/{source.repo}){config}, {source.licence}. {source.credit}.")
+        url = f"https://{source.repo}" if source.archive else f"https://huggingface.co/datasets/{source.repo}"
+        lines.append(f"- {name}: [{source.repo}]({url}){config}, {source.licence}. {source.credit}.")
     lines += [
         "",
         "CC-BY data must be credited wherever the model is shown or shared; CC-BY-SA data adds share-alike terms",

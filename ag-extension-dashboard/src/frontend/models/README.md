@@ -24,14 +24,16 @@ That passed the gate as it stood then. Read the PlantDoc row as the honest estim
 from new fields: the maize photos come from the same set the model trained on, so they score high.
 The int8 file from the same run scored top-3 40%, so the float32 file (about 6 MB) is the one to ship.
 
-The training script now streams 43 openly licensed sources covering about 40 crops: field
+The training script now streams 44 openly licensed sources covering about 40 crops: field
 crops (maize, rice from five sets, cassava, beans, cowpea, groundnut, soybean, lentil, black gram,
 sunflower), cash crops (coffee, tea, cotton, sugarcane, cashew, cocoa pods cut out of a Ghanaian
 detection set), bananas, fruit (orange, lemon, papaya, guava, grape, pomegranate, date palm,
 watermelon and PlantDoc's temperate fruit) and vegetables (tomato, potato, pepper, chili, eggplant,
-okra, onion, cauliflower, squash). Not yet in: wheat (a CC BY 4.0 detection set exists, but its
-classes are named only 0 to 6 until they are read from its Zenodo record), mango (the Hub copies
-are non-commercial or unlicensed), and sorghum, millet, sweet potato and yam (no labelled,
+okra, onion, cauliflower, squash) and wheat (leaf rust, stripe rust, Fusarium head blight, leaf
+spot, powdery mildew; read from the original Zenodo archive, CC BY 4.0, because the Hub copy names
+its classes only 0 to 6. The run takes the names from the archive's own data.yaml and skips wheat if
+any name is not a recognised wheat disease). Not yet in: mango (the Hub copies are non-commercial
+or unlicensed), and sorghum, millet, sweet potato and yam (no labelled,
 licensed disease photos found on the Hub). The rest of the Ghanaian CCMT set (cassava, maize,
 tomato; CC BY 4.0) needs a loader that reads it from Mendeley. The gate is scored on published test splits only, and the
 run's model card gives the photo counts. Install that run's model rather than run 45370280118's.
