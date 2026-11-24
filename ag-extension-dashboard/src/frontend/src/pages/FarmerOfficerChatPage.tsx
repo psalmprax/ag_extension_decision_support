@@ -98,7 +98,7 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
       await loadFarmerMessages(id);
     } catch (err) {
       console.error('First message to the officer failed:', err);
-      setError('Your message could not be sent. Check your connection and try again.');
+      setError(t('farmer_chat_send_failed', { defaultValue: 'Your message could not be sent. Check your connection and try again.' }));
     } finally {
       setSending(false);
     }
@@ -120,7 +120,7 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
         </div>
         <span role="status" className="flex items-center gap-1.5 text-xxs text-slate-500 dark:text-white/50 shrink-0">
           <span className={`w-1.5 h-1.5 rounded-full ${realtime.connected ? 'bg-emerald-500' : 'bg-slate-400'}`} aria-hidden="true" />
-          {realtime.connected ? 'Live updates' : 'Updates paused'}
+          {realtime.connected ? t('chat_live_updates', { defaultValue: 'Live updates' }) : t('chat_updates_paused', { defaultValue: 'Updates paused' })}
         </span>
       </div>
 
@@ -175,13 +175,13 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
                 setFarmerChatInput(e.target.value);
                 realtime.notifyTyping();
               }}
-              placeholder="Write to your officer…"
+              placeholder={t('farmer_chat_write_to_officer', { defaultValue: 'Write to your officer…' })}
               className="flex-1 rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-theme-bg-primary px-3 py-2 text-sm text-slate-900 dark:text-white"
             />
             <button
               type="submit"
               disabled={sending || !farmerChatInput.trim()}
-              aria-label="Send message"
+              aria-label={t('chat_send_message', { defaultValue: 'Send message' })}
               className="flex items-center justify-center w-10 h-10 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50"
             >
               {sending ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Send className="w-4 h-4" aria-hidden="true" />}

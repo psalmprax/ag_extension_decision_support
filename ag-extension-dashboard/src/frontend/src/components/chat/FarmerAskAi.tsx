@@ -16,13 +16,13 @@ interface FarmerAskAiProps {
   reload: (conversationId: string) => void;
 }
 
-function errorText(error: unknown): string {
+function errorText(error: unknown, t: ReturnType<typeof useLanguage>['t']): string {
   if (isAxiosError(error)) {
     const serverMessage = (error.response?.data as { error?: string } | undefined)?.error;
-    if (error.response?.status === 429) return 'You have used your AI answers for now. Your officer will reply.';
+    if (error.response?.status === 429) return t('farmer_ai_limit', { defaultValue: 'You have used your AI answers for now. Your officer will reply.' });
     if (serverMessage) return serverMessage;
   }
-  return 'The AI could not answer just now. Your officer will reply.';
+  return t('farmer_ai_failed', { defaultValue: 'The AI could not answer just now. Your officer will reply.' });
 }
 
 /**
@@ -48,7 +48,7 @@ export const FarmerAskAi: React.FC<FarmerAskAiProps> = ({ ensureConversation, in
       }
       await askAiInThread(conversationId);
     } catch (err) {
-      setError(errorText(err));
+      setError(errorText(err, t));
     } finally {
       setBusy(false);
       if (conversationId) reload(conversationId);

@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Download, X } from 'lucide-react';
 import type { ChatAttachment } from '@/types/dashboard';
 import { Dialog } from '@/components/ui/Dialog';
 import { useAppStore } from '@/store/useAppStore';
+import { useLanguage } from '@/lib/LanguageContext';
 import { LabelPhotoForm } from '@/components/diagnosisTests/LabelPhotoForm';
 
 interface PhotoViewerProps {
@@ -30,6 +31,7 @@ export function PhotoViewer({ photos, index, onIndexChange, label }: PhotoViewer
   const role = useAppStore(state => state.user?.role);
   const canLabel = role === 'extension_officer' || role === 'regional_manager' || role === 'admin';
 
+  const { t } = useLanguage();
   useEffect(() => {
     if (index === null || count < 2) return undefined;
     const onKey = (event: KeyboardEvent) => {
@@ -47,12 +49,12 @@ export function PhotoViewer({ photos, index, onIndexChange, label }: PhotoViewer
           <header className="flex items-center gap-2 ps-4 pe-2 py-2 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
             <HeadlessDialog.Title className="min-w-0 flex-1 text-sm font-medium text-slate-900 dark:text-white truncate">
               {photo.name}
-              {count > 1 && <span className="ms-2 font-normal tabular-nums text-slate-500">{index + 1} of {count}</span>}
+              {count > 1 && <span className="ms-2 font-normal tabular-nums text-slate-500">{t('photo_position', { defaultValue: '{n} of {count}', n: index + 1, count })}</span>}
             </HeadlessDialog.Title>
-            <a href={photo.url} download={photo.name} className={ICON_BUTTON} aria-label={`Download ${photo.name}`}>
+            <a href={photo.url} download={photo.name} className={ICON_BUTTON} aria-label={t('photo_download', { defaultValue: 'Download {name}', name: photo.name })}>
               <Download className="w-[18px] h-[18px]" aria-hidden="true" />
             </a>
-            <button type="button" onClick={() => onIndexChange(null)} className={ICON_BUTTON} aria-label="Close photo">
+            <button type="button" onClick={() => onIndexChange(null)} className={ICON_BUTTON} aria-label={t('photo_close', { defaultValue: 'Close photo' })}>
               <X className="w-[18px] h-[18px]" aria-hidden="true" />
             </button>
           </header>
@@ -60,10 +62,10 @@ export function PhotoViewer({ photos, index, onIndexChange, label }: PhotoViewer
             <img src={photo.url} alt={`${label} ${index + 1}: ${photo.name}`} className="max-h-[75dvh] w-auto max-w-full object-contain" />
             {count > 1 && (
               <>
-                <button type="button" onClick={() => step(-1)} className={`${ICON_BUTTON} absolute start-2 bg-white/80 dark:bg-black/50`} aria-label="Previous photo">
+                <button type="button" onClick={() => step(-1)} className={`${ICON_BUTTON} absolute start-2 bg-white/80 dark:bg-black/50`} aria-label={t('photo_previous', { defaultValue: 'Previous photo' })}>
                   <ChevronLeft className="w-5 h-5" aria-hidden="true" />
                 </button>
-                <button type="button" onClick={() => step(1)} className={`${ICON_BUTTON} absolute end-2 bg-white/80 dark:bg-black/50`} aria-label="Next photo">
+                <button type="button" onClick={() => step(1)} className={`${ICON_BUTTON} absolute end-2 bg-white/80 dark:bg-black/50`} aria-label={t('photo_next', { defaultValue: 'Next photo' })}>
                   <ChevronRight className="w-5 h-5" aria-hidden="true" />
                 </button>
               </>

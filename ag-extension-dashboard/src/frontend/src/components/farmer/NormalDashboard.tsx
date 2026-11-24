@@ -7,7 +7,7 @@ import { fetchMarketPrices, MarketPrice, MarketDataStatus } from '@/api/priceSer
 import { fetchUsdaBenchmark, fetchNDVITimeSeries } from '@/api/agriDataService';
 import type { UsdaBenchmarkResult } from '@/api/agriDataService';
 import { VegetationCard } from './VegetationCard';
-import { DATA_STATUS_LABELS } from './dataStatusLabels';
+import { dataStatusLabel } from './dataStatusLabels';
 import type { FarmerStats } from '@/api/farmerService';
 import { MetricCardSkeleton, ChartSkeleton } from '../Skeleton';
 
@@ -35,7 +35,7 @@ const DATA_STATUS_COLORS: Record<MarketDataStatus, string> = {
   unavailable: 'bg-gray-100 text-gray-500 dark:bg-theme-bg-tertiary dark:text-theme-text-muted',
 };
 
-function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: boolean) {
+function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: boolean, t: ReturnType<typeof useLanguage>['t']) {
   const metrics = data?.world?.metrics || data?.country?.metrics || null;
 
   return (
@@ -46,9 +46,9 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
         </div>
         <div>
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">
-            Global benchmarks
+            {t('benchmarks_title', { defaultValue: 'Global benchmarks' })}
           </h3>
-          <p className="text-xxs text-gray-400 dark:text-theme-text-muted">Maize · USDA PSD data</p>
+          <p className="text-xxs text-gray-400 dark:text-theme-text-muted">{t('benchmarks_subtitle', { defaultValue: 'Maize, USDA PSD data' })}</p>
         </div>
       </div>
 
@@ -59,13 +59,13 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
       ) : !metrics ? (
         <div className="text-center py-10 text-gray-500 text-xs font-medium">
           <Globe className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
-          No benchmark data available
+          {t('benchmarks_none', { defaultValue: 'No benchmark data available' })}
         </div>
       ) : (
         <div className="space-y-4">
           {metrics.production != null && (
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-theme-bg-secondary/50 rounded-xl border border-gray-50 dark:border-white/[0.08]">
-              <div className="text-xs text-gray-400 dark:text-theme-text-muted font-medium mb-1">Global production</div>
+              <div className="text-xs text-gray-400 dark:text-theme-text-muted font-medium mb-1">{t('benchmarks_production', { defaultValue: 'Global production' })}</div>
               <div className="text-xl font-medium text-gray-900 dark:text-white">
                 {(Number(metrics.production) / 1_000_000).toFixed(1)}M {metrics.unit}
               </div>
@@ -73,7 +73,7 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
           )}
           {metrics.yield != null && (
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-theme-bg-secondary/50 rounded-xl border border-gray-50 dark:border-white/[0.08]">
-              <div className="text-xs text-gray-400 dark:text-theme-text-muted font-medium mb-1">Average yield</div>
+              <div className="text-xs text-gray-400 dark:text-theme-text-muted font-medium mb-1">{t('benchmarks_yield', { defaultValue: 'Average yield' })}</div>
               <div className="text-xl font-medium text-primary-600 dark:text-primary-400">
                 {Number(metrics.yield).toFixed(1)} {metrics.unit.replace('tonnes', 't/ha')}
               </div>
@@ -81,9 +81,9 @@ function renderUsdaCard(data: UsdaBenchmarkResult | null | undefined, loading: b
           )}
           {metrics.exports != null && (
             <div className="p-4 bg-theme-bg-secondary/50 dark:bg-theme-bg-secondary/50 rounded-xl border border-gray-50 dark:border-white/[0.08]">
-              <div className="text-xs text-gray-400 dark:text-theme-text-muted font-medium mb-1">Global exports</div>
+              <div className="text-xs text-gray-400 dark:text-theme-text-muted font-medium mb-1">{t('benchmarks_exports', { defaultValue: 'Global exports' })}</div>
               <div className="text-xl font-medium text-emerald-600 dark:text-emerald-400">
-                {(Number(metrics.exports) / 1_000_000).toFixed(1)}M tonnes
+                {(Number(metrics.exports) / 1_000_000).toFixed(1)}M {t('unit_tonnes', { defaultValue: 'tonnes' })}
               </div>
             </div>
           )}
@@ -188,7 +188,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
             {t('farmer_market_prices')}
             {prices && prices.length > 0 && (
               <span className={`ms-2 px-2 py-0.5 rounded text-xs font-medium align-middle ${DATA_STATUS_COLORS[prices[0].dataStatus]}`}>
-                {DATA_STATUS_LABELS[prices[0].dataStatus]}
+                {dataStatusLabel(t, prices[0].dataStatus)}
               </span>
             )}
           </h3>
@@ -242,7 +242,7 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
       {/* Row 2 — Vegetation Health + USDA Benchmarks */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <VegetationCard data={ndviData} loading={ndviLoading} isError={ndviError} hasLocation={!!farmLocation} />
-        {renderUsdaCard(usdaData, usdaLoading)}
+        {renderUsdaCard(usdaData, usdaLoading, t)}
       </div>
     </div>
   );

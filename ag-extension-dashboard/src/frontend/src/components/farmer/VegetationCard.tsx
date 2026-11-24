@@ -2,17 +2,18 @@ import React from 'react';
 import { Loader2, Sprout, CloudOff, MapPin } from 'lucide-react';
 import type { NDVIPoint } from '@/api/agriDataService';
 import type { MarketDataStatus } from '@/api/priceService';
-import { DATA_STATUS_LABELS } from './dataStatusLabels';
+import { dataStatusLabel } from './dataStatusLabels';
+import { useLanguage } from '@/lib/LanguageContext';
 import { MiniBars } from '@/components/charts/MiniBars';
 
 
-/** A plain-language band for a vegetation index value. */
-function vegInterpret(ndvi: number): { label: string; color: string } {
-  if (ndvi >= 0.7) return { label: 'Lush', color: 'text-emerald-600 dark:text-emerald-400' };
-  if (ndvi >= 0.5) return { label: 'Healthy', color: 'text-emerald-600 dark:text-emerald-400' };
-  if (ndvi >= 0.35) return { label: 'Moderate', color: 'text-amber-600 dark:text-amber-400' };
-  if (ndvi >= 0.2) return { label: 'Stressed', color: 'text-rose-600 dark:text-rose-400' };
-  return { label: 'Bare', color: 'text-slate-500' };
+/** A plain-language band for a vegetation index value: its label key, English label and colour. */
+function vegInterpret(ndvi: number): { key: string; label: string; color: string } {
+  if (ndvi >= 0.7) return { key: 'veg_band_lush', label: 'Lush', color: 'text-emerald-600 dark:text-emerald-400' };
+  if (ndvi >= 0.5) return { key: 'veg_band_healthy', label: 'Healthy', color: 'text-emerald-600 dark:text-emerald-400' };
+  if (ndvi >= 0.35) return { key: 'veg_band_moderate', label: 'Moderate', color: 'text-amber-600 dark:text-amber-400' };
+  if (ndvi >= 0.2) return { key: 'veg_band_stressed', label: 'Stressed', color: 'text-rose-600 dark:text-rose-400' };
+  return { key: 'veg_band_bare', label: 'Bare', color: 'text-slate-500' };
 }
 
 /** A quiet message in place of a card's figures. */
@@ -27,6 +28,7 @@ function CardNotice({ icon: Icon, text }: { icon: React.ElementType; text: strin
 
 /** The latest vegetation index and the last two weeks as bars. */
 function VegetationFigures({ data }: { data: { data: NDVIPoint[]; dataStatus: string; reason: string } }) {
+  const { t } = useLanguage();
   const points = data.data;
   const ndvi = points[points.length - 1].ndvi;
   const veg = vegInterpret(ndvi);
@@ -36,20 +38,20 @@ function VegetationFigures({ data }: { data: { data: NDVIPoint[]; dataStatus: st
         <span className={`text-3xl font-medium ${veg.color}`}>
           {ndvi.toFixed(2)}
         </span>
-        <span className="text-sm font-medium text-gray-500 dark:text-theme-text-muted">{veg.label}</span>
+        <span className="text-sm font-medium text-gray-500 dark:text-theme-text-muted">{t(veg.key, { defaultValue: veg.label })}</span>
       </div>
 
       <MiniBars
         points={points.slice(-14).map(p => ({ date: p.date, value: p.ndvi }))}
         max={1}
         format={value => value.toFixed(2)}
-        label="Vegetation index by day"
+        label={t('veg_index_by_day', { defaultValue: 'Vegetation index by day' })}
       />
 
       <div className="mt-4 pt-3 border-t border-gray-100 dark:border-white/[0.12] flex items-center justify-between">
         <span className="text-xxs text-gray-400 dark:text-theme-text-muted capitalize">{data.reason || ''}</span>
         <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-          {data.dataStatus === 'live' ? 'NASA POWER' : data.dataStatus ? DATA_STATUS_LABELS[data.dataStatus as MarketDataStatus] : null}
+          {data.dataStatus === 'live' ? 'NASA POWER' : data.dataStatus ? dataStatusLabel(t, data.dataStatus as MarketDataStatus) : null}
         </span>
       </div>
     </>
@@ -63,6 +65,7 @@ export function VegetationCard({ data, loading, isError, hasLocation }: {
   isError: boolean;
   hasLocation: boolean;
 }) {
+  const { t } = useLanguage();
   const points = data?.data || [];
   const latest = points[points.length - 1];
   const veg = latest?.ndvi != null ? vegInterpret(latest.ndvi) : null;
@@ -75,20 +78,20 @@ export function VegetationCard({ data, loading, isError, hasLocation }: {
         </div>
         <div>
           <h3 className="text-lg font-medium text-slate-900 dark:text-white">
-            Vegetation health
+            {t('veg_card_title', { defaultValue: 'Vegetation health' })}
           </h3>
-          <p className="text-xxs text-gray-400 dark:text-theme-text-muted">14-day agroclimatology proxy</p>
+          <p className="text-xxs text-gray-400 dark:text-theme-text-muted">{t('veg_card_subtitle', { defaultValue: '14-day agroclimatology proxy' })}</p>
         </div>
       </div>
 
       {!hasLocation ? (
-        <CardNotice icon={MapPin} text="Add your farm's location in your profile, or ask your officer to, to see the vegetation on your own fields." />
+        <CardNotice icon={MapPin} text={t('veg_needs_location', { defaultValue: "Add your farm's location in your profile, or ask your officer to, to see the vegetation on your own fields." })} />
       ) : loading ? (
         <div className="flex items-center justify-center py-10">
           <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
         </div>
       ) : isError || !veg ? (
-        <CardNotice icon={CloudOff} text="Vegetation data unavailable" />
+        <CardNotice icon={CloudOff} text={t('veg_unavailable', { defaultValue: 'Vegetation data unavailable' })} />
       ) : (
         <VegetationFigures data={data!} />
       )}
