@@ -176,7 +176,8 @@ export class OmniRouteService {
     { providerName: 'openrouter', model: 'nvidia/nemotron-3.5-lightning:free', score: 95, isFree: true },
     { providerName: 'openrouter', model: 'nvidia/nemotron-3-super-120b-a12b:free', score: 94, isFree: true },
     { providerName: 'openrouter', model: 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free', score: 93, isFree: true },
-    { providerName: 'openrouter', model: 'minimax/minimax-m3:free', score: 92, isFree: true },
+    // minimax/minimax-m3:free stopped being free (HTTP 404); the free router picks a free model that is up.
+    { providerName: 'openrouter', model: 'openrouter/free', score: 92, isFree: true },
     { providerName: 'openrouter', model: 'google/gemma-4-26b-a4b-it:free', score: 91, isFree: true },
     { providerName: 'openrouter', model: 'poolside/laguna-s-2.1:free', score: 88, isFree: true },
 

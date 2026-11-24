@@ -14,6 +14,14 @@ import {
 } from '../types';
 import { REASONING_SYSTEM_PROMPT, extractVisuals, buildGroundedReasoningPrompt } from '../assetLibrary';
 
+/**
+ * OpenRouter's free router: it sends each request to a free model that is up. Named free models
+ * come and go (minimax/minimax-m3:free stopped being free in November 2026 and every call failed
+ * with a 404), so the default never names one. Set AI_FALLBACK_MODEL or OPENROUTER_PRIMARY_MODEL
+ * to pin a model instead.
+ */
+export const OPENROUTER_FREE_ROUTER = 'openrouter/free';
+
 export interface OpenRouterRequest {
   model?: string;
   messages: Array<{ role: string; content: string | null; [k: string]: unknown }>;
@@ -66,7 +74,7 @@ export class OpenRouterProvider extends BaseAIProvider {
     try {
       await axios.post(
         `${this.baseUrl}/chat/completions`,
-        { model: 'minimax/minimax-m3:free', messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 },
+        { model: OPENROUTER_FREE_ROUTER, messages: [{ role: 'user', content: 'ping' }], max_tokens: 2 },
         { headers: { Authorization: `Bearer ${this.getApiKey()}` }, timeout: 3000 }
       );
       this.recordHealthError();
@@ -94,7 +102,7 @@ export class OpenRouterProvider extends BaseAIProvider {
       throw new Error('OpenRouter API key not configured (OPENROUTER_API_KEY missing).');
     }
 
-    const model = req.model || selectedModelFor('openrouter') || 'minimax/minimax-m3:free';
+    const model = req.model || selectedModelFor('openrouter') || OPENROUTER_FREE_ROUTER;
 
     try {
       logger.info(`Routing request to OpenRouter provider (model: ${model})`);
@@ -144,7 +152,7 @@ export class OpenRouterProvider extends BaseAIProvider {
     options?: TextGenerationOptions
   ): Promise<TextGenerationResult> {
     const messages = normalizeMessages(prompt) as OpenRouterRequest['messages'];
-    const model = options?.model || selectedModelFor('openrouter') || 'minimax/minimax-m3:free';
+    const model = options?.model || selectedModelFor('openrouter') || OPENROUTER_FREE_ROUTER;
     const tools = normalizeToolDefinitions(options?.tools);
     const raw = await this.chatRaw({
       model,
@@ -180,7 +188,7 @@ export class OpenRouterProvider extends BaseAIProvider {
     ];
 
     const result = await this.generateText(messages, {
-      model: options?.model || process.env.OPENROUTER_PRIMARY_MODEL || 'meta-llama/llama-3.3-70b-instruct:free',
+      model: options?.model || process.env.OPENROUTER_PRIMARY_MODEL || OPENROUTER_FREE_ROUTER,
       temperature: options?.temperature ?? 0.2,
       maxTokens: options?.maxTokens ?? 4096,
       tools: options?.tools,
