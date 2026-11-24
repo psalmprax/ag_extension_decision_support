@@ -29,13 +29,13 @@ describe('market price cache', () => {
         const second = await marketPriceService.getLatestPrices(undefined, 'KE');
         expect(fetchSpy).toHaveBeenCalledTimes(1);
         expect(second[0].updatedAt).toBeInstanceOf(Date);
-        expect(store.get('market-prices:v1:KE')?.ttl).toBe(6 * 60 * 60);
+        expect(store.get('market-prices:v2:KE')?.ttl).toBe(6 * 60 * 60);
     });
 
     it('keeps estimates only briefly so a recovered upstream is used soon', async () => {
         fetchSpy.mockResolvedValue([row('estimated')]);
         await marketPriceService.getLatestPrices(undefined, 'NG');
-        expect(store.get('market-prices:v1:NG')?.ttl).toBe(30 * 60);
+        expect(store.get('market-prices:v2:NG')?.ttl).toBe(30 * 60);
     });
 
     it('lets concurrent cold requests share one upstream fetch', async () => {
@@ -60,14 +60,11 @@ describe('market price cache', () => {
         beforeEach(() => { process.env.MARKET_PRICE_BUDGET_MS = '20'; });
         afterEach(() => { delete process.env.MARKET_PRICE_BUDGET_MS; });
 
-        it('answers with the labelled estimate when upstream is slow, then serves the live rows', async () => {
+        it('shows no prices when upstream is slow, then serves the live rows', async () => {
             let release!: (rows: MarketPrice[]) => void;
             fetchSpy.mockReturnValue(new Promise<MarketPrice[]>(resolve => { release = resolve; }));
 
-            const first = await marketPriceService.getLatestPrices(undefined, 'Kenya');
-            expect(first.length).toBeGreaterThan(0);
-            expect(first.every(r => r.dataStatus === 'estimated' && r.source === 'baseline_estimate')).toBe(true);
-            expect(first[0].currency).toBe('KES');
+            expect(await marketPriceService.getLatestPrices(undefined, 'Kenya')).toEqual([]);
 
             release([row('live')]);
             await flush();
@@ -76,23 +73,17 @@ describe('market price cache', () => {
             expect(fetchSpy).toHaveBeenCalledTimes(1);
         });
 
-        it('never gives East African baseline prices to another country', async () => {
+        it('never fills a slow lookup with made-up prices, in any country', async () => {
             fetchSpy.mockReturnValue(new Promise<MarketPrice[]>(() => undefined));
-            expect(await marketPriceService.getLatestPrices(undefined, 'United States')).toEqual([]);
-            expect(await marketPriceService.getLatestPrices(undefined, 'Spain')).toEqual([]);
-        });
-
-        it('prices the Ugandan estimate in Ugandan shillings', async () => {
-            fetchSpy.mockReturnValue(new Promise<MarketPrice[]>(() => undefined));
-            const rows = await marketPriceService.getLatestPrices(undefined, 'Uganda');
-            expect(rows[0]).toMatchObject({ currency: 'UGX', dataStatus: 'estimated' });
+            for (const country of ['Kenya', 'Uganda', 'United States', 'Spain']) {
+                expect(await marketPriceService.getLatestPrices(undefined, country)).toEqual([]);
+            }
         });
 
         it('logs a background failure after the budget instead of surfacing it', async () => {
             let fail!: (error: Error) => void;
             fetchSpy.mockReturnValue(new Promise<MarketPrice[]>((_, reject) => { fail = reject; }));
-            const rows = await marketPriceService.getLatestPrices(undefined, 'Tanzania');
-            expect(rows[0].dataStatus).toBe('estimated');
+            expect(await marketPriceService.getLatestPrices(undefined, 'Tanzania')).toEqual([]);
 
             fail(new Error('FAOSTAT timeout'));
             await flush();

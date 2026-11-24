@@ -35,23 +35,27 @@ export function FieldToolsCard() {
     const [tab, setTab] = useState<Tab>('tank');
 
     // tank mix state
-    const [rate, setRate] = useState<number | ''>(1.5);
+    // Rates, targets and spacings start empty: they come from the label, the soil test or the
+    // local guide, and a pre-filled number would read as the app's recommendation.
+    const [rate, setRate] = useState<number | ''>('');
     const [area, setArea] = useState<number | ''>(1);
     const [tank, setTank] = useState<number | ''>(16);
-    const [water, setWater] = useState<number | ''>(200);
+    const [water, setWater] = useState<number | ''>('');
 
     // blend state
-    const [n, setN] = useState<number | ''>(92);
-    const [p, setP] = useState<number | ''>(46);
-    const [k, setK] = useState<number | ''>(0);
+    const [n, setN] = useState<number | ''>('');
+    const [p, setP] = useState<number | ''>('');
+    const [k, setK] = useState<number | ''>('');
     const [blendArea, setBlendArea] = useState<number | ''>(1);
 
     // density state
-    const [row, setRow] = useState<number | ''>(0.9);
-    const [inRow, setInRow] = useState<number | ''>(0.25);
+    const [row, setRow] = useState<number | ''>('');
+    const [inRow, setInRow] = useState<number | ''>('');
     const [densArea, setDensArea] = useState<number | ''>(1);
+    const [seedsPerKg, setSeedsPerKg] = useState<number | ''>('');
 
     const tankResult = useMemo(() => {
+        if (rate === '' || water === '') return { ok: false as const };
         try {
             return { ok: true as const, ...tankMix({ productRatePerHa: Number(rate), areaHa: Number(area), tankVolumeL: Number(tank), waterRateLPerHa: Number(water) }), herbicide: herbicideTankDose({ productRateLPerHa: Number(rate), tankVolumeL: Number(tank), waterRateLPerHa: Number(water) }) };
         } catch {
@@ -60,6 +64,7 @@ export function FieldToolsCard() {
     }, [rate, area, tank, water]);
 
     const blendResult = useMemo(() => {
+        if (n === '' && p === '' && k === '') return { ok: false as const };
         try {
             return { ok: true as const, ...fertilizerBlend({ targetN: Number(n), targetP: Number(p), targetK: Number(k), areaHa: Number(blendArea) }) };
         } catch {
@@ -69,11 +74,11 @@ export function FieldToolsCard() {
 
     const densityResult = useMemo(() => {
         try {
-            return { ok: true as const, ...plantingDensity(Number(row), Number(inRow), Number(densArea)) };
+            return { ok: true as const, ...plantingDensity(Number(row), Number(inRow), Number(densArea), seedsPerKg === '' ? undefined : Number(seedsPerKg)) };
         } catch {
             return { ok: false as const };
         }
-    }, [row, inRow, densArea]);
+    }, [row, inRow, densArea, seedsPerKg]);
 
     const tabs: { key: Tab; label: string; Icon: typeof Calculator }[] = [
         { key: 'tank', label: t('fieldtools_tab_tank', { defaultValue: 'Tank mix' }), Icon: Droplets },
@@ -115,6 +120,7 @@ export function FieldToolsCard() {
                         <NumField label="Tank size" value={tank} onChange={setTank} suffix="L" />
                         <NumField label="Water rate" value={water} onChange={setWater} suffix="L/ha" />
                     </div>
+                    <p className="text-xxs text-gray-500 dark:text-theme-text-muted">{t('ui_field_tools_card_rate_from_label')}</p>
                     {tankResult.ok && (
                         <div className="p-3 bg-primary-500/5 rounded-xl text-xs space-y-1">
                             <p><span className="font-medium">{tankResult.productPerTank}</span> {t('ui_field_tools_card_product_per')} {tank}{t('ui_field_tools_card_l_tank')} <span className="font-medium">{tankResult.herbicide.mlPerTank}ml</span>{t('ui_field_tools_card_tank')}</p>
@@ -132,6 +138,7 @@ export function FieldToolsCard() {
                         <NumField label="Target K₂O" value={k} onChange={setK} suffix="kg/ha" />
                         <NumField label="Area" value={blendArea} onChange={setBlendArea} suffix="ha" />
                     </div>
+                    <p className="text-xxs text-gray-500 dark:text-theme-text-muted">{t('ui_field_tools_card_targets_from_soil_test')}</p>
                     {blendResult.ok && (
                         <div className="p-3 bg-primary-500/5 rounded-xl text-xs space-y-1">
                             <p>{t('ui_field_tools_card_urea_46_0_0')} <span className="font-medium">{blendResult.ureaKg} kg</span></p>
@@ -148,11 +155,17 @@ export function FieldToolsCard() {
                         <NumField label="Row spacing" value={row} onChange={setRow} step="0.05" suffix="m" />
                         <NumField label="In-row spacing" value={inRow} onChange={setInRow} step="0.05" suffix="m" />
                         <NumField label="Area" value={densArea} onChange={setDensArea} suffix="ha" />
+                        <NumField label={t('ui_field_tools_card_seeds_per_kg')} value={seedsPerKg} onChange={setSeedsPerKg} />
                     </div>
                     {densityResult.ok && (
                         <div className="p-3 bg-primary-500/5 rounded-xl text-xs space-y-1">
                             <p><span className="font-medium">{densityResult.plantsPerHa.toLocaleString(appLocale())}</span> {t('ui_field_tools_card_plants_ha')}</p>
-                            <p className="text-gray-500 dark:text-theme-text-muted">{densityResult.plantsTotal.toLocaleString(appLocale())} {t('ui_field_tools_card_plants')}{densityResult.seedKgApprox} {t('ui_field_tools_card_kg_seed_15_oversow')}</p>
+                            <p className="text-gray-500 dark:text-theme-text-muted">{densityResult.plantsTotal.toLocaleString(appLocale())} {t('ui_field_tools_card_plants_on_this_area')}</p>
+                            <p className="text-gray-500 dark:text-theme-text-muted">
+                                {densityResult.seedKg === null
+                                    ? t('ui_field_tools_card_seed_needs_packet')
+                                    : `${densityResult.seedKg.toLocaleString(appLocale())} ${t('ui_field_tools_card_kg_seed')}`}
+                            </p>
                         </div>
                     )}
                 </div>

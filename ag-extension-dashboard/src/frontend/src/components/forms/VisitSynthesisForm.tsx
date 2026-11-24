@@ -35,7 +35,7 @@ import { AntiFraudVerificationBadge } from '@/components/AntiFraudVerificationBa
 const FIELD_PRESETS = [
   {
     title: 'Fall armyworm infestation',
-    text: 'Inspected 3-hectare maize plot. Severe whorl damage observed on 35% of crops at V4 vegetative stage. Characteristic windowpane feeding signs and sawdust-like frass detected. Recommended immediate biological spraying (Emamectin benzoate) and pheromone trap deployment.',
+    text: 'Inspected 3-hectare maize plot. Severe whorl damage observed on 35% of crops at V4 vegetative stage. Characteristic windowpane feeding signs and sawdust-like frass detected. Recommended pheromone traps, Bt or neem on young larvae, and a registered insecticide only if damage passes the national action threshold.',
   },
   {
     title: 'Late blight & soil acidity',

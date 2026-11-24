@@ -10,7 +10,7 @@ describe('Deep-Tier Security — AgronomicSafetyGuard AI Boundary Validation', (
 
       expect(result.safe).toBe(false);
       expect(result.hazardLevel).toBe('critical_hazard');
-      expect(result.violations.some((v) => v.includes('Excessive Nitrogen'))).toBe(true);
+      expect(result.violations.some((v) => v.includes('Nitrogen rate held for review'))).toBe(true);
     });
 
     it('should flag and block lethal pesticide application rates', () => {
@@ -22,7 +22,7 @@ describe('Deep-Tier Security — AgronomicSafetyGuard AI Boundary Validation', (
 
       expect(result.safe).toBe(false);
       expect(result.hazardLevel).toBe('critical_hazard');
-      expect(result.violations.some((v) => v.includes('Lethal pesticide dosage'))).toBe(true);
+      expect(result.violations.some((v) => v.includes('Pesticide rate held for review'))).toBe(true);
     });
 
     it('should detect high-consequence quarantine diseases and trigger containment alert', () => {
@@ -141,7 +141,7 @@ describe('Deep-Tier Security — AgronomicSafetyGuard AI Boundary Validation', (
 
       expect(result.safe).toBe(false);
       expect(result.hazardLevel).toBe('critical_hazard');
-      expect(result.violations.some((v) => v.includes('Pre-Harvest Interval (PHI) violation'))).toBe(true);
+      expect(result.violations.some((v) => v.includes('Pre-harvest interval check'))).toBe(true);
     });
 
     it('should flag violation when insecticide is applied during active flowering or pollinator foraging', () => {
@@ -152,7 +152,7 @@ describe('Deep-Tier Security — AgronomicSafetyGuard AI Boundary Validation', (
       });
 
       expect(result.safe).toBe(false);
-      expect(result.violations.some((v) => v.includes('Pollinator safety violation'))).toBe(true);
+      expect(result.violations.some((v) => v.includes('Pollinator check'))).toBe(true);
     });
   });
 });

@@ -109,13 +109,8 @@ describe('production data truthfulness', () => {
     expect(await marketPriceService.getLatestPrices()).toEqual([]);
   });
 
-  it('returns labeled market estimates without mutating the database', async () => {
+  it('gives no prices when no source answers, rather than made-up ones', async () => {
     mockedAxios.get.mockResolvedValue({ data: { rates: { KES: 130 } } });
-    const prices = await marketPriceService.getLatestPrices(undefined, 'Kenya');
-
-    expect(prices).toHaveLength(4);
-    expect(prices[0].source).toBe('baseline_estimate');
-    expect(prices[0].dataStatus).toBe('estimated');
-    expect(prices[0].price).toContain('KES');
+    expect(await marketPriceService.getLatestPrices(undefined, 'Kenya')).toEqual([]);
   });
 });

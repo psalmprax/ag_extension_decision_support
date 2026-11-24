@@ -1,54 +1,24 @@
 import { limeCalculatorTool } from '../tools/agronomyCalculatorTool';
 
-describe('agronomyCalculatorTool (Deterministic Lime Titration)', () => {
-  it('calculates correct lime requirement using Kamprath equation for acidic soils with exchangeable aluminum', async () => {
-    const resultJson = await limeCalculatorTool.execute({
-      soil_ph: 4.8,
-      target_ph: 6.2,
-      exchangeable_al_cmol: 1.8,
-      soil_texture: 'loam',
-      cce_percentage: 85,
-      crop: 'maize',
-    });
+describe('limeCalculatorTool', () => {
+  const run = async (args: Record<string, unknown>) => JSON.parse(await limeCalculatorTool.execute(limeCalculatorTool.schema.parse(args)));
 
-    const result = JSON.parse(resultJson);
-    expect(result.soil_ph).toBe(4.8);
-    expect(result.target_ph).toBe(6.2);
-    expect(result.method_used).toContain('Kamprath');
-    // Kamprath: 1.8 * 1.5 * (100 / 85) = 2.7 * 1.176 = ~3.18 tons/ha
-    expect(result.prescriptions.lime_tons_per_hectare).toBeCloseTo(3.18, 1);
-    expect(result.prescriptions.lime_kg_per_acre).toBeGreaterThan(1200);
-    expect(result.prescriptions.bags_50kg_per_acre).toBeGreaterThan(20);
-    expect(result.application_guidance).toHaveLength(4);
+  it('uses Kamprath (1970): 1.5 x exchangeable aluminium, adjusted for lime purity, and names the source', async () => {
+    const result = await run({ soil_ph: 4.8, exchangeable_al_cmol: 2, cce_percentage: 80 });
+    expect(result.method_source).toContain('Kamprath (1970)');
+    expect(result.prescriptions.lime_tons_per_hectare).toBe(3.75); // 2 x 1.5 / 0.8
+    expect(result.prescriptions.lime_kg_per_hectare).toBe(3750);
   });
 
-  it('calculates buffer deficit method when exchangeable aluminum is omitted', async () => {
-    const resultJson = await limeCalculatorTool.execute({
-      soil_ph: 5.0,
-      target_ph: 6.0,
-      soil_texture: 'clay',
-      cce_percentage: 90,
-      crop: 'sorghum',
-    });
-
-    const result = JSON.parse(resultJson);
-    expect(result.method_used).toContain('Buffer-Capacity Deficit Method');
-    // Deficit: 1.0 * 3.8 * (100 / 90) = ~4.22 tons/ha
-    expect(result.prescriptions.lime_tons_per_hectare).toBeCloseTo(4.22, 1);
-    expect(result.prescriptions.bags_50kg_per_acre).toBeGreaterThan(30);
+  it('asks for the lab value instead of guessing lime from texture or pH', async () => {
+    const result = await run({ soil_ph: 5.0 });
+    expect(result.status).toBe('needs_lab_value');
+    expect(result.prescriptions).toBeUndefined();
   });
 
-  it('returns 0 lime required when soil pH is already at or above target', async () => {
-    const resultJson = await limeCalculatorTool.execute({
-      soil_ph: 6.5,
-      target_ph: 6.2,
-      soil_texture: 'loam',
-      crop: 'maize',
-      cce_percentage: 85,
-    });
-
-    const result = JSON.parse(resultJson);
-    expect(result.status).toBe('Optimal / No Liming Required');
-    expect(result.prescriptions?.lime_tons_per_hectare || result.lime_required_tons_per_ha).toBe(0);
+  it('calls for no lime when the lab finds no exchangeable aluminium', async () => {
+    const result = await run({ soil_ph: 5.9, exchangeable_al_cmol: 0 });
+    expect(result.status).toBe('no_aluminium_to_neutralise');
+    expect(result.prescriptions.lime_tons_per_hectare).toBe(0);
   });
 });

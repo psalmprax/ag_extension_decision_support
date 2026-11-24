@@ -3,17 +3,20 @@ import {
   regulatoryProvenanceService,
   RegulatoryRule,
 } from '@/services/regulatoryProvenanceService';
+import { loadRegulatoryTestFixtures } from './fixtures/regulatoryFixtures';
 import { agronomicSafetyGuard } from '@/services/security/agronomicSafetyGuard';
 
 describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
+  beforeAll(() => loadRegulatoryTestFixtures(regulatoryProvenanceService));
+
   const BASELINE_TIMESTAMP = '2026-08-15T10:00:00Z';
 
-  // Helper for standard compliant request in Kenya
+  // Helper for standard compliant request in jurisdiction ZZ
   const createCompliantRequest = (overrides = {}) => ({
-    jurisdiction: 'KE',
+    jurisdiction: 'ZZ',
     crop: 'potato',
     pestOrDisease: 'late blight',
-    treatmentTradeNameOrIngredient: 'Ridomil Gold MZ 68 WG',
+    treatmentTradeNameOrIngredient: 'Example Fungicide 68 WG',
     formulation: 'WG' as const,
     doseGramsOrMlHa: 2000, // Legal max is 2500
     applicationMethod: 'knapsack_foliar' as const,
@@ -21,15 +24,15 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
     floweringPresent: false,
     pollinatorsPresent: false,
     adviceTimestamp: BASELINE_TIMESTAMP,
-    farmerId: 'FARMER-KE-001',
-    officerId: 'OFFICER-KE-042',
+    farmerId: 'FARMER-ZZ-001',
+    officerId: 'OFFICER-ZZ-042',
     ...overrides,
   });
 
   describe('1. Authoritative Regulatory Decisioning (Invariants 1–12)', () => {
     it.each([
       [{ jurisdiction: 'UNKNOWN', clientOfflineContext: { isOffline: true, cachedDatasetVersion: 'old', cachedDatasetTimestamp: 'invalid' } }, 'OFFLINE_DATASET_STALE_EXPIRED'],
-      [{ treatmentTradeNameOrIngredient: 'Dursban 480 EC', crop: 'unregistered' }, 'REGISTRATION_REVOKED_BANNED'],
+      [{ treatmentTradeNameOrIngredient: 'Example Banned 480 EC', crop: 'unregistered' }, 'REGISTRATION_REVOKED_BANNED'],
       [{ crop: 'unregistered', pestOrDisease: 'unregistered' }, 'UNREGISTERED_CROP'],
       [{ adviceTimestamp: '2099-01-01T00:00:00Z', formulation: 'EC' }, 'REGISTRATION_EXPIRED'],
       [{ doseGramsOrMlHa: 99999, daysToHarvest: 0, floweringPresent: true }, 'EXCEEDS_MAX_LEGAL_RATE'],
@@ -46,7 +49,7 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
 
       expect(decision.status).toBe('APPROVED');
       expect(decision.reasonCode).toBe('AUTHORIZED_ACTIVE_REGISTRATION');
-      expect(decision.rule?.registrationNumber).toBe('PCPB(CR)0142');
+      expect(decision.rule?.registrationNumber).toBe('TEST-0142');
       expect(decision.provenance).toBeDefined();
       expect(decision.provenance?.recommendationIntegrityHash).toBeDefined();
       expect(decision.provenance?.digitalSignatureEnvelope?.signature).toBeDefined();
@@ -116,7 +119,7 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
       expect(decision.status).toBe('HARD_REJECTION');
       expect(decision.reasonCode).toBe('PHI_VIOLATION');
       expect(decision.rejectionMessage).toContain('Pre-Harvest Interval (PHI) violation');
-      expect(decision.rejectionMessage).toContain('legal PHI for \'Ridomil Gold MZ 68 WG\' on \'potato\' is 14 days');
+      expect(decision.rejectionMessage).toContain('legal PHI for \'Example Fungicide 68 WG\' on \'potato\' is 14 days');
     });
 
     it('8. REI violation warning -> Attached to approved decision', () => {
@@ -128,12 +131,12 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
     });
 
     it('9. Flowering / pollinator restriction -> HARD REJECTION (POLLINATOR_FLOWERING_VIOLATION)', () => {
-      // Confidor 200 SL in India has pollinatorLockoutDuringFlowering = true
+      // Example Insecticide 200 SL in jurisdiction YY has pollinatorLockoutDuringFlowering = true
       const req = {
-        jurisdiction: 'IN',
+        jurisdiction: 'YY',
         crop: 'cotton',
         pestOrDisease: 'jassids',
-        treatmentTradeNameOrIngredient: 'Confidor 200 SL',
+        treatmentTradeNameOrIngredient: 'Example Insecticide 200 SL',
         formulation: 'SL' as const,
         doseGramsOrMlHa: 80,
         applicationMethod: 'knapsack_foliar' as const,
@@ -141,8 +144,8 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
         floweringPresent: true, // Crop is blooming
         pollinatorsPresent: true,
         adviceTimestamp: BASELINE_TIMESTAMP,
-        farmerId: 'FARMER-IN-99',
-        officerId: 'OFFICER-IN-12',
+        farmerId: 'FARMER-YY-99',
+        officerId: 'OFFICER-YY-12',
       };
       const decision = regulatoryProvenanceService.evaluateRecommendation(req);
 
@@ -165,11 +168,11 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
     it('11. Future registration -> HARD REJECTION (REGISTRATION_NOT_YET_EFFECTIVE)', () => {
       // Ingest a futuristic rule
       regulatoryProvenanceService.ingestRule({
-        ruleId: 'RULE-KE-FUTURE-BIO',
+        ruleId: 'RULE-ZZ-FUTURE-BIO',
         registrationNumber: 'PCPB(CR)9999',
-        jurisdiction: 'KE',
-        authorityId: 'KE-PCPB',
-        documentId: 'DOC-KE-GAZ-2024-01',
+        jurisdiction: 'ZZ',
+        authorityId: 'ZZ-TEST',
+        documentId: 'DOC-ZZ-GAZ-2024-01',
         datasetVersion: 'REG-2026.09-REV1',
         commercialTradeName: 'BioFuture Fungicide 500 SC',
         activeIngredients: [{ name: 'bacillus_subtilis_q3', concentrationGramsPerKgOrL: 500 }],
@@ -203,24 +206,24 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
     });
 
     it('12. Revoked / banned registration -> HARD REJECTION (REGISTRATION_REVOKED_BANNED)', () => {
-      // Chlorpyrifos (Dursban 480 EC) was banned in Kenya
+      // Chlorpyrifos (Example Banned 480 EC) was banned in jurisdiction ZZ
       const req = {
-        jurisdiction: 'KE',
+        jurisdiction: 'ZZ',
         crop: 'maize',
         pestOrDisease: 'fall armyworm',
-        treatmentTradeNameOrIngredient: 'Dursban 480 EC',
+        treatmentTradeNameOrIngredient: 'Example Banned 480 EC',
         formulation: 'EC' as const,
         doseGramsOrMlHa: 1000,
         adviceTimestamp: BASELINE_TIMESTAMP,
-        farmerId: 'FARMER-KE-002',
-        officerId: 'OFFICER-KE-042',
+        farmerId: 'FARMER-ZZ-002',
+        officerId: 'OFFICER-ZZ-042',
       };
       const decision = regulatoryProvenanceService.evaluateRecommendation(req);
 
       expect(decision.status).toBe('HARD_REJECTION');
       expect(decision.reasonCode).toBe('REGISTRATION_REVOKED_BANNED');
       expect(decision.rejectionMessage).toContain('PROHIBITED SUBSTANCE');
-      expect(decision.rejectionMessage).toContain('Kenya Gazette Notice No. 12934');
+      expect(decision.rejectionMessage).toContain('Test prohibition notice (fixture)');
     });
   });
 
@@ -233,7 +236,7 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
       const reconstruction = regulatoryProvenanceService.auditReconstruct(hash);
       expect(reconstruction.verified).toBe(true);
       expect(reconstruction.integrityCheck).toBe('INTACT');
-      expect(reconstruction.matchedRule?.registrationNumber).toBe('PCPB(CR)0142');
+      expect(reconstruction.matchedRule?.registrationNumber).toBe('TEST-0142');
       expect(reconstruction.reconstructedProvenance?.dose).toBe(2000);
       expect(reconstruction.discrepancies.length).toBe(0);
     });
@@ -241,11 +244,11 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
     it('14. Dataset corruption / rule hash mismatch -> REJECT safely', () => {
       // Create a corrupted rule where stored hash does not match computed payload
       const corruptedRule: RegulatoryRule = {
-        ruleId: 'RULE-KE-CORRUPTED-001',
+        ruleId: 'RULE-ZZ-CORRUPTED-001',
         registrationNumber: 'PCPB(CR)7777',
-        jurisdiction: 'KE',
-        authorityId: 'KE-PCPB',
-        documentId: 'DOC-KE-GAZ-2024-01',
+        jurisdiction: 'ZZ',
+        authorityId: 'ZZ-TEST',
+        documentId: 'DOC-ZZ-GAZ-2024-01',
         datasetVersion: 'REG-2026.09-REV1',
         commercialTradeName: 'Compromised Spray 100 WP',
         activeIngredients: [{ name: 'copper_oxychloride', concentrationGramsPerKgOrL: 500 }],
@@ -314,13 +317,13 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
     it('18. Emergency authorization -> Allowed within window, rejected outside window', () => {
       // Locust emergency authorization is valid from 2026-06-01 to 2026-10-31
       const validReq = {
-        jurisdiction: 'KE',
+        jurisdiction: 'ZZ',
         crop: 'pasture',
         pestOrDisease: 'desert locust',
-        treatmentTradeNameOrIngredient: 'Chlorfenapyr Ultra 240 SC',
+        treatmentTradeNameOrIngredient: 'Example Emergency 240 SC',
         doseGramsOrMlHa: 400,
         adviceTimestamp: '2026-07-15T12:00:00Z', // Within window
-        farmerId: 'FARMER-KE-PASTURE',
+        farmerId: 'FARMER-ZZ-PASTURE',
         officerId: 'OFFICER-BIOSECURITY-1',
       };
       const validDecision = regulatoryProvenanceService.evaluateRecommendation(validReq);
@@ -335,16 +338,16 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
       expect(expiredDecision.reasonCode).toBe('REGISTRATION_EXPIRED');
     });
 
-    it('19. Jurisdiction mismatch -> Treatment registered in India rejected in Kenya', () => {
+    it('19. Jurisdiction mismatch -> Treatment registered in jurisdiction YY rejected in jurisdiction ZZ', () => {
       const req = {
-        jurisdiction: 'KE', // In Kenya
+        jurisdiction: 'ZZ', // In ZZ
         crop: 'cotton',
         pestOrDisease: 'jassids',
-        treatmentTradeNameOrIngredient: 'Confidor 200 SL', // Only registered in IN dataset
+        treatmentTradeNameOrIngredient: 'Example Insecticide 200 SL', // Only registered in the YY fixture
         doseGramsOrMlHa: 50,
         adviceTimestamp: BASELINE_TIMESTAMP,
-        farmerId: 'FARMER-KE-COTTON',
-        officerId: 'OFFICER-KE-01',
+        farmerId: 'FARMER-ZZ-COTTON',
+        officerId: 'OFFICER-ZZ-01',
       };
       const decision = regulatoryProvenanceService.evaluateRecommendation(req);
       expect(decision.status).toBe('HARD_REJECTION');
@@ -431,13 +434,13 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
 
       // Ingest an updated rule for Ridomil Gold that changes the legal PHI to 21 days
       regulatoryProvenanceService.ingestRule({
-        ruleId: 'RULE-KE-PCPB-0142-POTATO',
-        registrationNumber: 'PCPB(CR)0142',
-        jurisdiction: 'KE',
-        authorityId: 'KE-PCPB',
-        documentId: 'DOC-KE-GAZ-2024-01',
+        ruleId: 'RULE-ZZ-PCPB-0142-POTATO',
+        registrationNumber: 'TEST-0142',
+        jurisdiction: 'ZZ',
+        authorityId: 'ZZ-TEST',
+        documentId: 'DOC-ZZ-GAZ-2024-01',
         datasetVersion: 'REG-2027.01-REV2',
-        commercialTradeName: 'Ridomil Gold MZ 68 WG',
+        commercialTradeName: 'Example Fungicide 68 WG',
         activeIngredients: [
           { name: 'metalaxyl-M', concentrationGramsPerKgOrL: 40 },
           { name: 'mancozeb', concentrationGramsPerKgOrL: 640 },
@@ -467,13 +470,13 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
 
       // Restore baseline rule so subsequent tests run against clean default state
       regulatoryProvenanceService.ingestRule({
-        ruleId: 'RULE-KE-PCPB-0142-POTATO',
-        registrationNumber: 'PCPB(CR)0142',
-        jurisdiction: 'KE',
-        authorityId: 'KE-PCPB',
-        documentId: 'DOC-KE-GAZ-2024-01',
+        ruleId: 'RULE-ZZ-PCPB-0142-POTATO',
+        registrationNumber: 'TEST-0142',
+        jurisdiction: 'ZZ',
+        authorityId: 'ZZ-TEST',
+        documentId: 'DOC-ZZ-GAZ-2024-01',
         datasetVersion: 'REG-2026.09-REV1',
-        commercialTradeName: 'Ridomil Gold MZ 68 WG',
+        commercialTradeName: 'Example Fungicide 68 WG',
         activeIngredients: [
           { name: 'metalaxyl-M', concentrationGramsPerKgOrL: 40 },
           { name: 'mancozeb', concentrationGramsPerKgOrL: 640 },
@@ -500,10 +503,10 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
     it('24. AgronomicSafetyGuard integration -> Authoritative regulatory decision wired into safety check', () => {
       // Testing the integration through agronomicSafetyGuard.validateStructuredMetrics
       const guardResult = agronomicSafetyGuard.validateStructuredMetrics({
-        jurisdiction: 'KE',
+        jurisdiction: 'ZZ',
         cropType: 'potato',
         identifiedPestsOrDiseases: ['late blight'],
-        pesticideName: 'Ridomil Gold MZ 68 WG',
+        pesticideName: 'Example Fungicide 68 WG',
         pesticideMlHa: 2000,
         daysToHarvest: 14,
         farmerId: 'FARMER-INTEGRATION-01',
@@ -517,10 +520,10 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
 
       // Negative check: Banned chemical through safety guard
       const bannedGuardResult = agronomicSafetyGuard.validateStructuredMetrics({
-        jurisdiction: 'KE',
+        jurisdiction: 'ZZ',
         cropType: 'maize',
         identifiedPestsOrDiseases: ['fall armyworm'],
-        pesticideName: 'Dursban 480 EC',
+        pesticideName: 'Example Banned 480 EC',
         pesticideMlHa: 1000,
         farmerId: 'FARMER-INTEGRATION-02',
         officerId: 'OFFICER-INTEGRATION-01',
@@ -579,6 +582,24 @@ describe('AD-001: Regulatory Knowledge & Rule Provenance Subsystem', () => {
         expect(reconstruction.verified).toBe(true);
         expect(reconstruction.signatureAttestation).toBe('keyed_hmac');
       });
+    });
+  });
+
+  describe('With no verified registry data loaded', () => {
+    it('rejects a chemical treatment for a real country and points to its registry', () => {
+      const decision = regulatoryProvenanceService.evaluateRecommendation({
+        jurisdiction: 'KE',
+        crop: 'potato',
+        pestOrDisease: 'late blight',
+        treatmentTradeNameOrIngredient: 'mancozeb',
+        doseGramsOrMlHa: 2000,
+        adviceTimestamp: BASELINE_TIMESTAMP,
+        farmerId: 'FARMER-1',
+        officerId: 'OFFICER-1',
+      });
+      expect(decision.status).toBe('HARD_REJECTION');
+      expect(decision.reasonCode).toBe('JURISDICTION_MISMATCH');
+      expect(decision.rejectionMessage).toMatch(/no verified registration data for 'KE'.*fao\.org\/pesticide-registration-toolkit/);
     });
   });
 });

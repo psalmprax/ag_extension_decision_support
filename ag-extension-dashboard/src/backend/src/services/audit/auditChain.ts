@@ -72,7 +72,7 @@ export interface ChainCheck {
     /** The first entry where the chain breaks: its content changed, or entries before it are gone. */
     problem: { seq: number; kind: ChainProblem; at: string } | null;
     /**
-     * Entries whose account was deleted before 3 December 2026: the hash then covered the account
+     * Entries whose account was deleted before actor_key existed: the hash then covered the account
      * link, which deletion clears, so their content can no longer be checked. Their links still are.
      */
     unverifiableEntries: number;

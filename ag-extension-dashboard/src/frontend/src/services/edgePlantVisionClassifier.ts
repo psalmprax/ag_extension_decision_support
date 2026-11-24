@@ -304,8 +304,8 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
     },
     symptoms: ['Irregular "window pane" feeding holes on young leaves', 'Ragged leaf margins and chewed whorls', 'Sawdust-like frass inside the plant funnel'],
     culturalControl: ['Handpick egg masses and early-instar larvae in small plots', 'Intercrop with desmodium (Push-Pull) and Napier grass borders', 'Apply fine sand or wood ash into whorls to suffocate young larvae'],
-    biologicalControl: ['Bacillus thuringiensis (Bt) sprays during early larval stages', 'Neem seed kernel extract (NSKE 5%) applied directly to whorls', 'Release of Trichogramma egg parasitoids where available'],
-    chemicalIntervention: 'Apply certified emamectin benzoate (e.g. Prove 1.92 EC) or chlorantraniliprole if >20% plants exhibit fresh whorl damage.',
+    biologicalControl: ['Bacillus thuringiensis (Bt) sprays during early larval stages', 'Neem seed kernel extract applied directly to whorls, made or bought as your local guide or the product label says', 'Release of Trichogramma egg parasitoids where available'],
+    chemicalIntervention: 'Last resort, when scouting shows damage spreading past your national or FAO fall armyworm action threshold: an insecticide registered for fall armyworm on maize in your country, at the label rate, aimed into the whorl. Rotate modes of action.',
   },
   {
     condition: 'Cassava Mosaic Disease (CMD)',
@@ -320,9 +320,9 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
       return { match, confidence, severity, score };
     },
     symptoms: ['Distinct yellow-green mosaic pattern on leaflets', 'Severe distortion, twisting, and reduction of leaf lamina size', 'Stunted plant growth and reduced tuberous root yield'],
-    culturalControl: ['Plant certified disease-free stem cuttings (e.g. KME-08-02, MH95/0183)', 'Rogue and destroy diseased plants within the first 90 days after planting', 'Sanitize cutting tools with 5% sodium hypochlorite bleach'],
+    culturalControl: ['Plant certified disease-free stem cuttings of varieties your national programme lists as tolerant', 'Rogue and destroy diseased plants early, in the first months after planting', 'Sanitise cutting tools with a disinfectant your extension officer recommends'],
     biologicalControl: ['Conserve natural predators of whiteflies (Bemisia tabaci) such as lacewings and predatory mites', 'Plant barrier borders with sunflower or sorghum to deter whitefly flight'],
-    chemicalIntervention: 'Vector control only: Target whitefly vector with insecticidal soap or azadirachtin if whitefly count >10 per plant.',
+    chemicalIntervention: 'No cure. Remove infected plants and replant with clean, tolerant cuttings. Treat the whitefly vector only where your local guide advises it, with a product registered for cassava.',
   },
   {
     condition: 'Maize Lethal Necrosis Disease (MLND)',
@@ -337,9 +337,9 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
       return { match, confidence, severity, score };
     },
     symptoms: ['Severe yellow mottling beginning at leaf base and progressing along margins', 'Premature drying / "dead heart" of the whorl and tassels', 'Sterility or poorly filled, rotting cobs'],
-    culturalControl: ['Crop rotation with non-cereal crops (beans, potatoes, vegetables) for at least two seasons', 'Immediate uprooting and burning of infected plants to arrest viral spread', 'Maintain 100% weed-free borders to remove reservoir grass hosts'],
+    culturalControl: ['Crop rotation with non-cereal crops (beans, potatoes, vegetables) for more than one season', 'Immediate uprooting and burning of infected plants to arrest viral spread', 'Keep field borders free of grass weeds that host the virus'],
     biologicalControl: ['Promote natural aphid and thrips predators (ladybird beetles, hoverfly larvae)'],
-    chemicalIntervention: 'Control thrips and beetle vectors early in season with thiamethoxam/lambda-cyhalothrin seed dressings.',
+    chemicalIntervention: 'No cure. In high-risk areas, a seed dressing registered against the insect vectors can help; follow its label.',
   },
   {
     condition: 'Coffee Leaf Rust (CLR)',
@@ -354,9 +354,9 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
       return { match, confidence, severity, score };
     },
     symptoms: ['Yellowish-orange powdery circular lesions on the underside of leaves', 'Chlorotic spots on upper leaf surface corresponding to lower lesions', 'Premature leaf drop leading to dieback of fruiting branches'],
-    culturalControl: ['Proper canopy pruning to allow airflow and reduce relative humidity', 'Plant rust-resistant Arabica cultivars (Ruiru 11, Batian)', 'Balanced potassium and calcium soil nutrition to reinforce leaf cuticle'],
+    culturalControl: ['Proper canopy pruning to allow airflow and reduce relative humidity', 'Plant rust-resistant Arabica varieties recommended by your national coffee research institute', 'Balanced potassium and calcium soil nutrition to reinforce leaf cuticle'],
     biologicalControl: ['Hyperparasite fungus Verticillium hemileiae applications where registered'],
-    chemicalIntervention: 'Preventive copper oxychloride (50% WP) at start of rains, or systemic triazole (azoxystrobin/cyproconazole) if infection >10%.',
+    chemicalIntervention: 'A fungicide registered for coffee leaf rust in your country, timed as its label and your national coffee guide advise (usually protective, at the start of the rains).',
   },
   {
     condition: 'Tomato Late Blight',
@@ -371,9 +371,9 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
       return { match, confidence, severity, score };
     },
     symptoms: ['Water-soaked greenish-brown irregular lesions on leaves and stems', 'White cottony fungal growth on lower leaf surfaces in high humidity', 'Brown firm rot on developing green and ripe fruits'],
-    culturalControl: ['Avoid overhead irrigation; use drip lines to keep foliage dry', 'Ensure adequate plant spacing (60x60 cm) for canopy ventilation', 'Remove and bury lower infected foliage immediately'],
+    culturalControl: ['Avoid overhead irrigation; use drip lines to keep foliage dry', 'Space plants as your local guide recommends so the canopy stays ventilated', 'Remove and bury lower infected foliage immediately'],
     biologicalControl: ['Trichoderma viride root drench and foliar protective spray'],
-    chemicalIntervention: 'Foliar protective Mancozeb 80% WP, or curative metalaxyl-M + mancozeb (Ridomil Gold) upon first lesion detection.',
+    chemicalIntervention: 'A fungicide registered for late blight on tomato in your country: protective before disease, systemic once lesions appear, at the label rate and interval. Rotate modes of action.',
   },
   {
     condition: 'Banana Xanthomonas Wilt (BXW)',
@@ -388,7 +388,7 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
       return { match, confidence, severity, score };
     },
     symptoms: ['Progressive yellowing and wilting of leaves from the apex', 'Yellow bacterial ooze from cut pseudostem', 'Premature and uneven ripening of bunches'],
-    culturalControl: ['Sterilize tools with fire or 10% bleach between mats', 'Remove and bury infected mats (including corm) 1m deep', 'Enforce strict quarantine on planting materials'],
+    culturalControl: ['Sterilise tools between mats, by flaming or with a disinfectant your extension officer recommends', 'Remove infected mats, including the corm, and bury them deep', 'Enforce strict quarantine on planting materials'],
     biologicalControl: ['No effective bio-control; focus on sanitary cultural practices'],
     chemicalIntervention: 'No curative chemical; use disinfected tools and insect vector management for beetles.',
   },
@@ -405,9 +405,9 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
       return { match, confidence, severity, score };
     },
     symptoms: ['Brown streaks on stems and leaf veins', 'Yellow-brown corky necrosis in tuberous roots', 'Leaf chlorosis with feathery mottling'],
-    culturalControl: ['Plant CBSD-tolerant varieties (e.g. NARO-CASS 1)', 'Rogue infected plants early; do not recycle stems for planting'],
+    culturalControl: ['Plant CBSD-tolerant varieties your national programme recommends', 'Rogue infected plants early; do not recycle stems for planting'],
     biologicalControl: ['Conserve whitefly predators; plant border repellents'],
-    chemicalIntervention: 'Manage whitefly vectors with neem/azadirachtin where threshold exceeded.',
+    chemicalIntervention: 'No cure. Use clean cuttings of tolerant varieties. Treat the whitefly vector only where your local guide advises it, with a product registered for cassava.',
   },
   {
     condition: 'Bean Angular Leaf Spot',
@@ -422,9 +422,9 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
       return { match, confidence, severity, score };
     },
     symptoms: ['Angular brown-grey lesions delimited by leaf veins', 'Lesions with chlorotic halo on upper surface', 'Premature defoliation under prolonged humidity'],
-    culturalControl: ['Use certified clean seed and 2-year rotation with non-legumes', 'Bury crop residues by deep ploughing', 'Plant at 45×10 cm for airflow'],
+    culturalControl: ['Use certified clean seed and rotate away from beans and other legumes', 'Bury crop residues by deep ploughing', 'Space plants as your local guide recommends, for airflow'],
     biologicalControl: ['Trichoderma harzianum seed dressing'],
-    chemicalIntervention: 'Foliar chlorothalonil or mancozeb at first lesion, repeat 10 days.',
+    chemicalIntervention: 'A fungicide registered for angular leaf spot on beans in your country, at the label rate and interval.',
   },
   {
     condition: 'Potato Early Blight',
@@ -441,7 +441,7 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
     symptoms: ['Dark brown concentric target-spot lesions with yellow halo', 'Lesions coalesce leading to leaf blight and defoliation', 'Stem and tuber lesions in advanced stage'],
     culturalControl: ['Rotate with cereals; hill soil to cover lower foliage', 'Remove volunteer potatoes and debris'],
     biologicalControl: ['Bacillus subtilis foliar spray'],
-    chemicalIntervention: 'Protective mancozeb or chlorothalonil; alternate with strobilurin for resistance.',
+    chemicalIntervention: 'A fungicide registered for early blight on potato in your country, at the label rate; alternate modes of action to slow resistance.',
   },
   {
     condition: 'Rice Blast',
@@ -456,9 +456,9 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
       return { match, confidence, severity, score };
     },
     symptoms: ['Diamond-shaped grey lesions with brown margins on leaves', 'Neck blast causing panicle breakage', 'White to grey fungal sporulation on lesions'],
-    culturalControl: ['Use blast-resistant varieties (NERICA, IR64)', 'Avoid excess nitrogen; maintain continuous flooding where feasible', 'Destroy stubble and ratoon after harvest'],
+    culturalControl: ['Use blast-resistant varieties recommended for your area', 'Avoid excess nitrogen; maintain continuous flooding where feasible', 'Destroy stubble and ratoon after harvest'],
     biologicalControl: ['Pseudomonas fluorescens seed treatment'],
-    chemicalIntervention: 'Tricyclazole or isoprothiolane at tillering and heading when forecast favors blast.',
+    chemicalIntervention: 'A fungicide registered for rice blast in your country, timed as its label and the local blast forecast advise.',
   },
   {
     condition: 'Wheat Stem Rust',
@@ -475,7 +475,7 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
     symptoms: ['Brick-red elongated pustules on stems and leaf sheaths', 'Epidermal rupture and spore powder release', 'Lodging and shriveled grains at severity'],
     culturalControl: ['Deploy resistant varieties (e.g. Kingbird)', 'Eliminate volunteer wheat and barberry alternate hosts', 'Early sowing to escape peak spore load'],
     biologicalControl: ['No effective bio-control; cultural/genetic control preferred'],
-    chemicalIntervention: 'Preventive propiconazole or tebuconazole at booting if regional warning active.',
+    chemicalIntervention: 'When a regional rust warning is active: a fungicide registered for wheat rust in your country, at the label rate.',
   },
   {
     condition: 'Tomato Early Blight',
@@ -490,9 +490,9 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
       return { match, confidence, severity, score };
     },
     symptoms: ['Dark brown concentric target-spot lesions with yellow halos on older leaves', 'Stem cankers near soil line', 'Dark leathery sunken spots on fruit stem end'],
-    culturalControl: ['Prune lower foliage touching soil', 'Avoid overhead watering; use drip lines', 'Rotate with non-solanaceous crops for 2-3 seasons'],
+    culturalControl: ['Prune lower foliage touching soil', 'Avoid overhead watering; use drip lines', 'Rotate with crops outside the tomato and potato family'],
     biologicalControl: ['Bacillus subtilis foliar spray', 'Copper octanoate bio-fungicide'],
-    chemicalIntervention: 'Apply protective chlorothalonil or mancozeb at first sign; alternate with difenoconazole to prevent resistance.',
+    chemicalIntervention: 'A fungicide registered for early blight on tomato in your country, at the label rate; alternate modes of action to slow resistance.',
   },
   {
     condition: 'Potato Late Blight',
@@ -509,7 +509,7 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
     symptoms: ['Water-soaked purplish-brown lesions on leaves and stems', 'White mildew growth on lower leaf surfaces in high humidity', 'Dry granular reddish-brown rot beneath potato tuber skin'],
     culturalControl: ['Plant certified disease-free seed tubers (e.g. Shangi, Asante)', 'Destroy cull piles and volunteer potatoes', 'Hill up soil well to protect tubers from spores washing down'],
     biologicalControl: ['Trichoderma viride preventative drench'],
-    chemicalIntervention: 'Preventive sprays with Mancozeb 80% WP or cymoxanil + mancozeb. Apply systemic metalaxyl-M immediately if active lesions appear.',
+    chemicalIntervention: 'A fungicide registered for late blight on potato in your country: protective before disease, systemic once lesions appear, at the label rate and interval. Rotate modes of action.',
   },
   {
     condition: 'Northern Corn Leaf Blight (NCLB)',
@@ -524,9 +524,9 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
       return { match, confidence, severity, score };
     },
     symptoms: ['Long, elliptical cigar-shaped grayish-green to tan lesions (2.5 to 15 cm)', 'Lesions coalesce causing extensive canopy blighting', 'Dark sporulation inside lesions under humid conditions'],
-    culturalControl: ['Plant tolerant/resistant hybrid varieties (e.g. H614, H628)', 'Deep ploughing to bury infested maize residue', 'One- to two-year crop rotation with legumes or sunflower'],
+    culturalControl: ['Plant tolerant or resistant varieties recommended for your area', 'Deep ploughing to bury infested maize residue', 'Crop rotation with legumes or sunflower'],
     biologicalControl: ['Trichoderma harzianum foliar application at early vegetative stage'],
-    chemicalIntervention: 'Apply azoxystrobin + difenoconazole or pyraclostrobin if lesions reach ear leaf before or at tasseling.',
+    chemicalIntervention: 'If lesions are spreading towards the ear leaf around tasselling: a fungicide registered for maize leaf blight in your country, at the label rate.',
   },
   {
     condition: 'Maize Common Rust',
@@ -543,7 +543,7 @@ const KNOWN_CONDITIONS: KnownConditionRule[] = [
     symptoms: ['Oval to elongate golden-brown to cinnamon-brown pustules scattered on both leaf surfaces', 'Powdery brick-red urediniospores rub off easily on fingertips', 'Pustules turn dark brownish-black late in season'],
     culturalControl: ['Plant certified rust-resistant maize hybrids', 'Early planting to avoid high airborne spore loads', 'Adequate plant spacing to facilitate sunlight and rapid canopy drying'],
     biologicalControl: ['Bacillus pumilus biofungicide foliar applications'],
-    chemicalIntervention: 'Apply triazole fungicides (tebuconazole or propiconazole) if severe infection develops before blister stage.',
+    chemicalIntervention: 'If infection is severe before grain fill: a fungicide registered for maize rust in your country, at the label rate.',
   },
 ];
 

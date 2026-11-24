@@ -84,7 +84,7 @@ export const AuditIntegrityPanel: React.FC = () => {
           )}
           {data.unverifiableEntries > 0 && (
             <p className="text-xs text-slate-600 dark:text-theme-text-muted">
-              {t('audit_chain_unverifiable', { defaultValue: '{count} entries from before 3 December 2026 cannot be checked: their account was deleted, and the log did not yet keep its own copy of who wrote them. Their place in the chain is still checked.', count: formatNumber(data.unverifiableEntries, 0) })}
+              {t('audit_chain_unverifiable', { defaultValue: '{count} older entries cannot be checked: their account was deleted before the log kept its own copy of who wrote them. Their place in the chain is still checked.', count: formatNumber(data.unverifiableEntries, 0) })}
             </p>
           )}
           {data.head && (

@@ -20,7 +20,6 @@ const SOURCE_LABELS: Record<string, string> = {
   faostat_producer_prices: 'FAOSTAT Producer Prices',
   giews_fpma: 'GIEWS FPMA',
   usda_fas_psd: 'USDA FAS PSD',
-  baseline_estimate: 'Baseline Estimate',
   fewsnet: 'FEWS NET Retail',
   wfp: 'WFP Retail',
 };
@@ -29,7 +28,6 @@ const SOURCE_ICONS: Record<string, React.ElementType> = {
   faostat_producer_prices: Globe,
   giews_fpma: Globe,
   usda_fas_psd: Globe,
-  baseline_estimate: Database,
   fewsnet: Globe,
   wfp: Globe,
 };

@@ -21,7 +21,7 @@ export interface MarketPrice {
   priceValue?: number;
   trend: string;
   updatedAt: Date;
-  source: 'faostat_producer_prices' | 'giews_fpma' | 'usda_fas_psd' | 'baseline_estimate' | 'fewsnet' | 'wfp';
+  source: 'faostat_producer_prices' | 'giews_fpma' | 'usda_fas_psd' | 'fewsnet' | 'wfp';
   dataStatus: MarketDataStatus;
   fetchedAt: string;
   exchangeRateSource: 'live' | 'fallback' | 'native';
@@ -258,8 +258,9 @@ async function fetchGiewsPrices(country: string, cropFilter: string[]): Promise<
   }
 }
 
-// ─── GIEWS → baseline fallback chain ──────────────────────────────
-async function resolveGiewsOrBaseline(
+// ─── GIEWS fallback ───────────────────────────────────────────────
+/** GIEWS rows when FAOSTAT has none; an empty list when neither answers, never a made-up price. */
+async function resolveGiewsPrices(
   country: string,
   exchangeRate: ExchangeRateResult,
   targetCurrency: string,
@@ -273,44 +274,32 @@ async function resolveGiewsOrBaseline(
   } catch (err) {
     logger.warn(`GIEWS fallback failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
   }
-  logger.warn(`No live market data available for ${country}. Using baseline estimates.`);
-  return buildBaselinePrices(exchangeRate, targetCurrency, fetchedAt);
+  logger.warn(`No market data available for ${country}; showing no prices.`);
+  return [];
 }
 
 // FAOSTAT producer prices are published yearly, so live rows are kept for 6 h;
-// estimates and baselines for 30 min, so a recovered upstream is picked up soon.
+// estimated or empty results for 30 min, so a recovered upstream is picked up soon.
 // Without this every page load waited on up to four upstream calls (20-40 s
 // when FAOSTAT is slow), which left the price cards spinning.
 const PRICE_CACHE_TTL_LIVE_S = 6 * 60 * 60;
 const PRICE_CACHE_TTL_ESTIMATE_S = 30 * 60;
 const inFlightPrices = new Map<string, Promise<MarketPrice[]>>();
 
-const priceCacheKey = (country: string) => `market-prices:v1:${country}`;
+// v2: v1 entries could hold the unsourced baseline prices this service no longer gives.
+const priceCacheKey = (country: string) => `market-prices:v2:${country}`;
 
 // A cold lookup tries four upstream sources in turn (up to ~27 s). Callers wait
-// at most this long, then get the labelled baseline estimate while the live
-// fetch carries on and fills the cache for the next request.
+// at most this long, then get an empty list while the live fetch carries on and
+// fills the cache for the next request.
 function priceLookupBudgetMs(): number {
   const parsed = Number(process.env.MARKET_PRICE_BUDGET_MS ?? 5000);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : 5000;
 }
 
 /**
- * The baseline describes East African markets (90 kg bags, finger millet), so it is only
- * offered there; anywhere else an empty list says plainly that there are no prices yet.
- */
-const BASELINE_COUNTRIES = new Set(['KE', 'UG', 'TZ', 'RW']);
-
-function estimatedPricesFor(country: string): MarketPrice[] {
-  const iso = findCountry(country)?.iso2;
-  if (!iso || !BASELINE_COUNTRIES.has(iso)) return [];
-  const currency = getCurrencyForCountry(country);
-  return buildBaselinePrices(fallbackExchangeRate(currency), currency, new Date().toISOString());
-}
-
-/**
  * Waits at most the lookup budget for `fetching`. `null` means the budget ran
- * out: the caller serves its labelled fallback while the fetch keeps running
+ * out: the caller shows no prices yet while the fetch keeps running
  * and fills the cache for the next request.
  */
 async function withinBudget<T>(country: string, fetching: Promise<T>): Promise<T | null> {
@@ -323,7 +312,7 @@ async function withinBudget<T>(country: string, fetching: Promise<T>): Promise<T
   } finally {
     clearTimeout(timer);
   }
-  logger.warn(`Market prices for ${country} not ready after ${budgetMs} ms; serving the labelled fallback meanwhile`);
+  logger.warn(`Market prices for ${country} not ready after ${budgetMs} ms; showing none until it arrives`);
   fetching.catch(error => logger.warn(
     `Background market price fetch for ${country} failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
   ));
@@ -425,7 +414,7 @@ export const marketPriceService = {
     const cached = await readCachedPrices(country);
     if (cached) return cached;
     const fetched = await withinBudget(country, inFlightPrices.get(country) ?? this.startPriceFetch(country));
-    return fetched ?? estimatedPricesFor(country);
+    return fetched ?? [];
   },
 
   /** Fetches upstream once and caches the result (live 6 h, estimates 30 min). */
@@ -519,7 +508,7 @@ export const marketPriceService = {
 
     const result = prices.length > 0
       ? mapFaostatPrices(prices, previousYearPrices, exchangeRate, targetCurrency, areaCode, fetchedAt)
-      : await resolveGiewsOrBaseline(country, exchangeRate, targetCurrency, fetchedAt);
+      : await resolveGiewsPrices(country, exchangeRate, targetCurrency, fetchedAt);
 
     // Record a daily history snapshot (only live data — estimates are excluded).
     recordPriceSnapshot(areaCode, result).catch(err => {
@@ -619,36 +608,6 @@ function mapGiewsPrices(
       exchangeRateSource: exchangeRate.source,
       currency: targetCurrency,
       priceType: 'wholesale' as const,
-    };
-  });
-}
-
-// ─── Baseline fallback prices (honest about being estimated) ────────
-function buildBaselinePrices(
-  exchangeRate: ExchangeRateResult,
-  targetCurrency: string,
-  fetchedAt: string,
-): MarketPrice[] {
-  const basePrices = [
-    { crop: 'White Maize (90kg)', baseUSD: 32.4 },
-    { crop: 'Dry Beans (90kg)', baseUSD: 96.5 },
-    { crop: 'Sorghum (90kg)', baseUSD: 29.3 },
-    { crop: 'Finger Millet (90kg)', baseUSD: 71 },
-  ];
-  return basePrices.map((item, index) => {
-    const finalPrice = roundPrice(item.baseUSD * exchangeRate.rate, targetCurrency);
-    return {
-      id: `baseline-${targetCurrency.toLowerCase()}-${index + 1}`,
-      crop: item.crop,
-      price: `${targetCurrency} ${finalPrice.toLocaleString()}`,
-      priceValue: finalPrice,
-      trend: 'Stable' as const,
-      updatedAt: new Date(fetchedAt),
-      source: 'baseline_estimate' as const,
-      dataStatus: 'estimated' as const,
-      fetchedAt,
-      exchangeRateSource: exchangeRate.source,
-      currency: targetCurrency,
     };
   });
 }

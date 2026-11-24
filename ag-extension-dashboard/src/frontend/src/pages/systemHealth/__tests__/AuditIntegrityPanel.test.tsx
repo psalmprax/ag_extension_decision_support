@@ -35,7 +35,7 @@ describe('AuditIntegrityPanel', () => {
   it('counts entries whose deleted account left them uncheckable apart, without calling them changed', async () => {
     check({ ...base, unverifiableEntries: 163 });
     expect(await screen.findByText(/Intact: the 1,041 entries since .* that can be checked/)).toBeInTheDocument();
-    expect(screen.getByText(/163 entries from before 3 December 2026 cannot be checked: their account was deleted/)).toBeInTheDocument();
+    expect(screen.getByText(/163 older entries cannot be checked: their account was deleted/)).toBeInTheDocument();
     expect(screen.queryByRole('alert')).toBeNull();
   });
 
