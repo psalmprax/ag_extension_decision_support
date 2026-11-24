@@ -6,6 +6,7 @@ import { logger } from '@/utils/logger';
 import { safeError } from '@/utils/safeResponse';
 import { viewerIsDemo } from '@/services/demoScope';
 import { rowsOfVisibleFarmersSql } from '@/services/access/farmerScope';
+import { addReviewedAnswerToKnowledge, validateReviewedAnswer } from '@/services/knowledge/reviewedAnswers';
 
 const router = Router();
 // Farmers may ask for a human to check advice they received (POST); listing and
@@ -21,7 +22,7 @@ function reviewersOnly(req: Request, res: Response, next: NextFunction): void {
 }
 
 const REVIEW_COLUMNS = `id, farmer_id, report_id, recommendation, confidence, evidence_status, trigger, status,
-                disposition, created_by, reviewed_by, created_at, reviewed_at`;
+                disposition, created_by, reviewed_by, created_at, reviewed_at, knowledge_article_id`;
 
 function principal(req: Request) {
   return req.user?.userId && req.user.role ? { userId: req.user.userId, role: req.user.role } : null;
@@ -140,6 +141,27 @@ router.patch('/:id', reviewersOnly, async (req: Request, res: Response) => {
   } catch (error) {
     logger.error('Update recommendation review error:', error);
     return safeError(res, 500, 'Failed to update recommendation review');
+  }
+});
+
+// Approved advice becomes a knowledge-base document, waiting for a manager's approval
+// before it grounds any answer (see services/knowledge/reviewedAnswers).
+router.post('/:id/knowledge-article', reviewersOnly, async (req: Request, res: Response) => {
+  try {
+    const user = principal(req);
+    if (!user) return res.status(401).json({ success: false, error: 'Authentication required' });
+    if (viewerIsDemo(req.user)) {
+      return res.status(403).json({ success: false, error: 'The demo cannot add to the knowledge base' });
+    }
+    const input = validateReviewedAnswer(req.body);
+    if (!input.ok) return res.status(400).json({ success: false, error: input.error });
+
+    const result = await addReviewedAnswerToKnowledge(req.params.id, input.value, user);
+    if (!result.ok) return res.status(result.status).json({ success: false, error: result.error });
+    return res.status(201).json({ success: true, data: { knowledgeArticleId: result.articleId, pendingReview: true } });
+  } catch (error) {
+    logger.error('Add reviewed advice to knowledge base error:', error);
+    return safeError(res, 500, 'Failed to add the advice to the knowledge base');
   }
 });
 

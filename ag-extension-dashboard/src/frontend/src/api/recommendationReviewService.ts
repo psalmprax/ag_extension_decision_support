@@ -17,6 +17,16 @@ export interface RecommendationReview {
   disposition?: string | null;
   created_at: string;
   reviewed_at?: string | null;
+  /** The knowledge-base document made from this advice, once added. */
+  knowledge_article_id?: string | null;
+}
+
+/** Approved advice, as the reviewer wants it in the knowledge base. */
+export interface ReviewedAdviceDocument {
+  title: string;
+  content: string;
+  crops: string[];
+  sources?: string;
 }
 
 export const fetchRecommendationReviews = async (
@@ -32,5 +42,14 @@ export const updateRecommendationReview = async (
   disposition: string
 ): Promise<{ success: boolean; data: RecommendationReview }> => {
   const response = await apiClient.patch(`/ai/reviews/${id}`, { status, disposition });
+  return response.data;
+};
+
+/** Adds approved advice to the knowledge base; it waits there for a manager's approval. */
+export const addReviewedAdviceToKnowledge = async (
+  id: string,
+  document: ReviewedAdviceDocument
+): Promise<{ success: boolean; data: { knowledgeArticleId: string; pendingReview: boolean } }> => {
+  const response = await apiClient.post(`/ai/reviews/${id}/knowledge-article`, document);
   return response.data;
 };

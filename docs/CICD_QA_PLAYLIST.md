@@ -123,6 +123,16 @@ The RAG answer cache uses policy namespace `rag:advisory-v6` so older answers
 incorrectly replaced by the warning are not reused. Regression coverage is in
 `advisoryPolicy.test.ts` and `askPipeline.advisoryPolicy.test.ts`.
 
+The same version (`ADVISORY_CACHE_VERSION` in `sharedAnswerCache.ts`) is part of
+the key of the shared answer cache (`shared_answer_cache` table): answers written
+from cited sources, reused for anyone who asks the same question for the same
+country, region, language and farm details in the same month. Answers with live
+data, tool output, photos, price or weather questions, safety-guard changes or
+invalid citations are never shared; a cached answer whose knowledge-base sources
+were since edited, re-tagged or deleted is dropped (`knowledge_sources_fingerprint()`
+in migration `20261204090000`). Bump the version to drop every cached answer after
+a policy change. Coverage: `sharedAnswerCache.test.ts`, `askPipeline.sharedCache.test.ts`.
+
 ### Q2d. Why does photo review show no lesion overlay or withhold treatment?
 
 The current image-diagnosis response supplies observations, not localized lesion

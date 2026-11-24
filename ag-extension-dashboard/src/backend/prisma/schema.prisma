@@ -355,6 +355,7 @@ model KnowledgeArticle {
    updatedAt   DateTime? @default(now()) @map("updated_at") @db.Timestamp(6)
    chunks      KnowledgeChunk[]
    relationships KnowledgeRelationship[]
+   reviewedAdvice RecommendationReview[]
 
    @@index([category])
    @@index([tags], type: Gin)
@@ -1130,15 +1131,36 @@ model RecommendationReview {
   reviewedBy     String?  @map("reviewed_by") @db.Uuid
   createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
   reviewedAt     DateTime? @map("reviewed_at") @db.Timestamp(6)
+  /// The knowledge-base document made from this advice after it was approved.
+  knowledgeArticleId String? @map("knowledge_article_id") @db.Uuid
   tenant         Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
   farmer         Farmer?  @relation(fields: [farmerId], references: [id], onDelete: SetNull)
   report         Report?  @relation(fields: [reportId], references: [id], onDelete: SetNull)
   creator        User     @relation("ReviewCreator", fields: [createdBy], references: [id])
   reviewer       User?    @relation("ReviewAssignee", fields: [reviewedBy], references: [id])
+  knowledgeArticle KnowledgeArticle? @relation(fields: [knowledgeArticleId], references: [id], onDelete: SetNull)
 
   @@index([tenantId, status])
   @@index([farmerId])
+  @@index([knowledgeArticleId])
   @@map("recommendation_reviews")
+}
+
+/// Answers written from cited sources, shared between users who ask the same question for the
+/// same place and language (services/knowledge/sharedAnswerCache.ts). Keyed by a hash only.
+/// The SQL function knowledge_sources_fingerprint() (migration 20261204090000) hashes the sources.
+model SharedAnswerCache {
+  scopeKey           String    @id @map("scope_key") @db.VarChar(64)
+  answer             Json
+  sourceIds          String[]  @default([]) @map("source_ids") @db.Uuid
+  sourcesFingerprint String    @map("sources_fingerprint") @db.VarChar(32)
+  hitCount           Int       @default(0) @map("hit_count")
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  lastHitAt          DateTime? @map("last_hit_at") @db.Timestamp(6)
+  expiresAt          DateTime  @map("expires_at") @db.Timestamp(6)
+
+  @@index([expiresAt])
+  @@map("shared_answer_cache")
 }
 
 model WebRTCRoom {

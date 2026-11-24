@@ -26,6 +26,14 @@ import {
 import type { AskOptions, FinalAnswer, KnowledgeAttachment, ReasonOptions } from '@/services/knowledge/types';
 import { AdvisoryTimeoutError, withAdvisoryTimeout } from './advisoryRuntime';
 import { selectEvidence } from './relevanceGate';
+import {
+    ADVISORY_CACHE_VERSION,
+    findSharedAnswer,
+    saveSharedAnswer,
+    sharedAnswerDays,
+    sharedAnswerKey,
+    type SharedAnswerCandidate,
+} from './sharedAnswerCache';
 
 /**
  * askQuestion pipeline: cache fast-path → parallel retrieval (categorize,
@@ -153,11 +161,23 @@ function handleAskQuestionFallback(queryText: string, contextResults: SearchResu
     return noResultAnswer;
 }
 
+/** This user's answer cache (Redis, one day) and the answer cache shared between users. */
+interface AnswerCacheKeys {
+    redisKey: string;
+    sharedKey: string;
+}
+
+/** Keep the answer for other people who ask the same thing, when it is safe to share. */
+function shareIfSafe(sharedKey: string, candidate: SharedAnswerCandidate): void {
+    const days = sharedAnswerDays(candidate);
+    if (days !== null) void saveSharedAnswer(sharedKey, candidate.response, days);
+}
+
 /** Post-process, attach context, cache-and-log, and return the final answer payload. */
 async function finalizeAnswer(
     userId: string,
     queryText: string,
-    redisKey: string,
+    keys: AnswerCacheKeys,
     queryCategories: string[],
     contextResults: SearchResult[],
     reasoningResult: ReasoningResult,
@@ -180,6 +200,7 @@ async function finalizeAnswer(
             ? 'Treatment details withheld pending current local label or soil-test verification.'
             : reasoningResult.reasoning,
         toolCalls: undefined,
+        toolsUsed: undefined,
         audio: undefined,
         confidence: undefined,
         visuals: guarded.boundaryCheck.violations.length > 0 || visualsUnsafe ? undefined : reasoningResult.visuals,
@@ -197,7 +218,8 @@ async function finalizeAnswer(
         cached: false
     };
 
-    await cacheAndLogResponse(userId, queryText, attachments, redisKey, queryCategories, response);
+    await cacheAndLogResponse(userId, queryText, attachments, keys.redisKey, queryCategories, response);
+    shareIfSafe(keys.sharedKey, { response, categories: queryCategories, attachments, toolsUsed: reasoningResult.toolsUsed });
     return response;
 }
 
@@ -252,14 +274,18 @@ export async function categorizeQuery(queryText: string, options?: ReasonOptions
     }
 }
 
-async function lookupScopedAnswer(queryText: string, redisKey: string, attachments?: KnowledgeAttachment[], options?: AskOptions): Promise<FinalAnswer | null> {
+/** A cached answer, unless the asker wants a new one or attached a photo or file. */
+async function lookupCachedAnswer(
+    lookup: () => Promise<FinalAnswer | null>,
+    label: string,
+    attachments?: KnowledgeAttachment[],
+    options?: AskOptions
+): Promise<FinalAnswer | null> {
     if (options?.bypassCache || attachments?.length) return null;
     try {
-        return await withAdvisoryTimeout(
-            () => checkExactCachesOnly(queryText, redisKey, true), 2000, 'Knowledge answer cache'
-        );
+        return await withAdvisoryTimeout(lookup, 2000, label);
     } catch (error) {
-        logger.warn('Knowledge cache unavailable; generating a fresh answer:', error);
+        logger.warn(`${label} unavailable; generating a fresh answer:`, error);
         return null;
     }
 }
@@ -424,21 +450,27 @@ export async function runAskQuestion(
         locationZone: reasonOptions.locationZone, soil: reasonOptions.soil,
         water: reasonOptions.water, goal: reasonOptions.goal,
     })).digest('hex');
-    const baseRedisKey = `rag:advisory-v6:${scope}`;
+    const redisKey = `rag:${ADVISORY_CACHE_VERSION}:${scope}`;
+    const sharedKey = sharedAnswerKey({
+        question: cleanQueryText, country: userContext.country, region: reasonOptions.region,
+        language: options?.language, locationZone: reasonOptions.locationZone, soil: reasonOptions.soil,
+        water: reasonOptions.water, goal: reasonOptions.goal, provider: options?.preferredProvider,
+    });
 
-    // Only reuse this user's context-scoped, policy-versioned answer cache.
-    const exactHit = await lookupScopedAnswer(cleanQueryText, baseRedisKey, attachments, options);
-    if (exactHit) {
-        logger.info(`Exact cache HIT (pre-categorization) for query: "${cleanQueryText}"`);
-        logSearchWithTimeout(userId, cleanQueryText, undefined, undefined, exactHit.answer, exactHit.reasoning, exactHit.visuals);
-        return exactHit;
+    // This user's context-scoped answer first, then one given to someone else for the same
+    // question, place and language from real sources.
+    const cachedAnswer =
+        await lookupCachedAnswer(() => checkExactCachesOnly(cleanQueryText, redisKey, true), 'Knowledge answer cache', attachments, options) ??
+        await lookupCachedAnswer(() => findSharedAnswer(sharedKey), 'Shared answer cache', attachments, options);
+    if (cachedAnswer) {
+        logger.info(`Answer cache HIT (pre-categorization) for query: "${cleanQueryText}"`);
+        logSearchWithTimeout(userId, cleanQueryText, undefined, undefined, cachedAnswer.answer, cachedAnswer.reasoning, cachedAnswer.visuals);
+        return cachedAnswer;
     }
 
     // Parallelize categorization and retrieval after resolving location scope.
     const { queryCategories, results: initialContextResults } =
         await fetchInitialContext(cleanQueryText, options);
-
-    const redisKey = baseRedisKey;
 
     const { contextResults, contextText } = await resolveAggregatedContext(
         cleanQueryText,
@@ -449,7 +481,7 @@ export async function runAskQuestion(
 
     try {
         const reasoningResult = await callReasoningAgentic(contextText, cleanQueryText, attachments, reasonOptions, queryCategories);
-        return await finalizeAnswer(userId, cleanQueryText, redisKey, queryCategories, contextResults, reasoningResult, attachments, reasonOptions);
+        return await finalizeAnswer(userId, cleanQueryText, { redisKey, sharedKey }, queryCategories, contextResults, reasoningResult, attachments, reasonOptions);
     } catch (error) {
         const fallback = handleAskQuestionFallback(cleanQueryText, contextResults, error);
         return buildFallbackResponse(userId, cleanQueryText, queryCategories, fallback, reasonOptions);

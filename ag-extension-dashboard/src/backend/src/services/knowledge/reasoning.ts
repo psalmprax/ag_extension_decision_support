@@ -132,7 +132,7 @@ async function synthesizeWithToolEvidence(
     }), budgetMs - (Date.now() - start), 'Tool evidence synthesis');
 
     if (synthesisRes?.answer && synthesisRes.answer.length > 100) {
-        return synthesisRes;
+        return { ...synthesisRes, toolsUsed: toolCalls.map(call => call.function.name) };
     }
     return null;
 }
