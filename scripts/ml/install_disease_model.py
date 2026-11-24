@@ -10,6 +10,7 @@ Usage: python scripts/ml/install_disease_model.py out ag-extension-dashboard/src
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import sys
@@ -36,6 +37,9 @@ def main(out: Path, models: Path) -> int:
     if passes(evaluation):
         shutil.copyfile(out / entry["file"], models / entry["file"])
         shutil.copyfile(out / "MODEL_CARD.md", models / "MODEL_CARD.md")
+        # The app loads the model at an address that carries this, so phones that keep the
+        # last model for 30 days download a new one instead of mixing it with new labels.
+        entry["sha256"] = hashlib.sha256((models / entry["file"]).read_bytes()).hexdigest()
         manifest = {"models": [entry]}
         verdict = "installed"
     else:

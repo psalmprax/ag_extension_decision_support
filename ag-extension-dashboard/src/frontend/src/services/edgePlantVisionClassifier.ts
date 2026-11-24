@@ -9,7 +9,7 @@
  *     offline result is the colour check, and the photo can be queued for the cloud analysis.
  */
 
-import { releasedEdgeModels, toProbabilities, type EdgeModelEntry } from './edgeModelManifest';
+import { modelUrl, releasedEdgeModels, toProbabilities, type EdgeModelEntry } from './edgeModelManifest';
 
 export interface EdgeVisualMetrics {
   greenCanopyIndex: number;
@@ -136,7 +136,7 @@ function loadReleasedModel(): Promise<LoadedModel | null> {
     if (!ort) return null;
     configureOrtWasm(ort);
     try {
-      const session = await ort.InferenceSession.create(`/models/${model.file}`, { executionProviders: ['wasm'], graphOptimizationLevel: 'basic' });
+      const session = await ort.InferenceSession.create(modelUrl(model), { executionProviders: ['wasm'], graphOptimizationLevel: 'basic' });
       return { session, ort, model };
     } catch (error) {
       console.warn(`On-device model ${model.file} could not load; using the colour check.`, error);

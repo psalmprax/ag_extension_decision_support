@@ -32,6 +32,27 @@ export interface EdgeModelEntry {
   output: 'probabilities' | 'logits';
   inputSize: number;
   fieldEvaluation?: FieldEvaluation;
+  /** SHA-256 of the model file, written by scripts/ml/install_disease_model.py. */
+  sha256?: string;
+}
+
+/** A short, stable hash of a string (djb2), for a version tag when no SHA-256 was recorded. */
+function shortHash(text: string): string {
+  let hash = 5381;
+  for (let i = 0; i < text.length; i += 1) hash = ((hash * 33) ^ text.charCodeAt(i)) >>> 0;
+  return hash.toString(36);
+}
+
+/**
+ * Where to load a model from. Phones keep a downloaded model for up to 30 days under its
+ * address, so each model gets its own: the file's SHA-256, or else a hash of its name, labels
+ * and scores. A new model under the same file name is then downloaded, never mixed with the
+ * old model's weights.
+ */
+export function modelUrl(entry: EdgeModelEntry): string {
+  const version = entry.sha256?.slice(0, 16)
+    ?? shortHash(JSON.stringify([entry.name, entry.labels, entry.inputSize, entry.fieldEvaluation ?? null]));
+  return `/models/${encodeURIComponent(entry.file)}?v=${version}`;
 }
 
 export const FIELD_EVALUATION_FLOOR = { images: 300, top3Accuracy: 0.7, cropTop1Accuracy: 0.6 } as const;

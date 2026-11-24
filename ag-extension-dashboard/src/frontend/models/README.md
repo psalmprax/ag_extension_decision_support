@@ -41,8 +41,12 @@ in fact the colour check, and are now labelled as such.
    per-label results, a fit check on training photos, and the data licences (one source is CC-BY-SA).
 3. Install it: `python scripts/ml/install_disease_model.py <unzipped artifact> ag-extension-dashboard/src/frontend/models`.
    A model that passes the gate replaces the listed one; one that does not is recorded as
-   `lastCandidate`, which the photo scanner shows as the reason no disease model runs. Commit the
-   folder.
+   `lastCandidate`, which the photo scanner shows as the reason no disease model runs. It also
+   records the file's SHA-256 in the manifest. Commit the folder.
+
+Phones keep a downloaded model for up to 30 days. The app loads each model at an address that
+carries its SHA-256 (or, without one, a hash of its name, labels and scores), so a new model is
+downloaded fresh even under the same file name, and never runs with another model's labels.
 
 The app loads a model only when its manifest entry passes the acceptance gate in
 `docs/specs/PHASE2-OFFLINE-DIAGNOSIS-MODEL.md`, checked in `src/services/edgeModelManifest.ts`:

@@ -9,7 +9,7 @@ const ort = vi.hoisted(() => ({
 }));
 vi.mock('onnxruntime-web/wasm', () => ort);
 
-import { FIELD_EVALUATION_FLOOR, meetsFieldFloor, rejectedCandidate, releasedEdgeModels, resetEdgeModelManifest, toProbabilities, type EdgeModelEntry } from '@/services/edgeModelManifest';
+import { FIELD_EVALUATION_FLOOR, meetsFieldFloor, modelUrl, rejectedCandidate, releasedEdgeModels, resetEdgeModelManifest, toProbabilities, type EdgeModelEntry } from '@/services/edgeModelManifest';
 import { diagnosePlantOffline, resetEdgeModel } from '@/services/edgePlantVisionClassifier';
 
 const LABELS = ['cassava___mosaic', 'corn___common_rust', 'corn___healthy'];
@@ -98,6 +98,14 @@ describe('which on-device models may run', () => {
     expect(await releasedEdgeModels()).toEqual([]);
   });
 
+  it('gives each model its own address, so a phone never keeps an old model under a new list of labels', () => {
+    const retrained = { ...passing, fieldEvaluation: { ...passing.fieldEvaluation!, top1Accuracy: 0.63 } };
+    expect(modelUrl(passing)).toBe(modelUrl({ ...passing }));
+    expect(modelUrl(retrained)).not.toBe(modelUrl(passing));
+    expect(modelUrl({ ...passing, sha256: 'ab12cd34ef56ab78cd90ef12' })).toBe('/models/plant-disease.onnx?v=ab12cd34ef56ab78');
+    expect(modelUrl({ ...passing, sha256: 'ff12cd34ef56ab78cd90ef12' })).not.toBe(modelUrl({ ...passing, sha256: 'ab12cd34ef56ab78cd90ef12' }));
+  });
+
   it('turns logits into probabilities and leaves probabilities alone', () => {
     const fromLogits = toProbabilities(new Float32Array([2, 0, 0]), 'logits');
     expect(fromLogits.reduce((a, b) => a + b, 0)).toBeCloseTo(1, 6);
@@ -122,7 +130,8 @@ describe('an offline photo check', () => {
       run: vi.fn().mockResolvedValue({ probabilities: { data: new Float32Array([0.05, 0.9, 0.05]) } }),
     });
     const result = await diagnosePlantOffline(leafCanvas(), 'Maize');
-    expect(ort.InferenceSession.create).toHaveBeenCalledWith('/models/plant-disease.onnx', expect.anything());
+    expect(ort.InferenceSession.create).toHaveBeenCalledWith(modelUrl(passing), expect.anything());
+    expect(modelUrl(passing)).toMatch(/^\/models\/plant-disease\.onnx\?v=[0-9a-z]+$/);
     expect(result.origin).toBe('onnx');
     expect(result.primaryDiagnosis.condition).toBe('Maize Common Rust');
     expect(result.heuristicDisclaimer).toMatch(/top three for 84% of 400 field photos, and first for 62%/);
