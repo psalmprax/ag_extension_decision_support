@@ -5,6 +5,7 @@ import { whatsappService } from '../services/whatsappService';
 import { emailService } from '../services/emailService';
 import { runIfLeader } from '../services/leaderElection';
 import { linkedDemoSql, type DemoViewer } from '@/services/demoScope';
+import { escapeHtml } from '@/utils/escapeHtml';
 
 /**
  * Outreach Worker
@@ -257,14 +258,6 @@ export class OutreachWorker {
             `(attempt ${row.attempts}/${MAX_ATTEMPTS}): ${error}`
         );
     }
-}
-
-function escapeHtml(text: string): string {
-    return text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
 }
 
 export interface OutreachDeliveryStats {

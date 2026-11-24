@@ -10,6 +10,7 @@ import { whatsappService } from './whatsappService';
 import { logger } from '../utils/logger';
 import { getPrisma } from './prismaService';
 import { demoWhere } from '@/services/demoScope';
+import { escapeHtml } from '@/utils/escapeHtml';
 
 export interface FarmerNotificationPrefs {
     farmerId: string;
@@ -26,16 +27,6 @@ export interface FarmerNotificationPrefs {
         email: boolean;
         whatsapp: boolean;
     };
-}
-
-function escapeHtml(value: string): string {
-    return value.replace(/[&<>"']/g, character => ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;',
-    })[character] || character);
 }
 
 export class AgriculturalReportService {

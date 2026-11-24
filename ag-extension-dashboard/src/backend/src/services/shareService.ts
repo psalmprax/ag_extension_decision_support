@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { randomBytes } from 'crypto';
 import { logger } from '../utils/logger';
 import { emailService } from './emailService';
@@ -7,6 +6,8 @@ import { getPrisma } from './prismaService';
 import { query } from './databaseService';
 import { canSeeFarmer, rowsOfVisibleFarmersSql, type ScopePrincipal } from './access/farmerScope';
 import { isUuid } from '../utils/uuid';
+import { escapeHtml } from '../utils/escapeHtml';
+import type { Share } from '@prisma/client';
 
 /** The entity does not exist, or the person may not share it: both answer 404. */
 export class ShareNotFoundError extends Error {
@@ -36,7 +37,7 @@ export interface ShareLink {
 
 export interface ShareAccessResult {
     allowed: boolean;
-    share?: any;
+    share?: Share;
     error?: string;
 }
 
@@ -117,7 +118,7 @@ class ShareService {
         return { allowed: true, share };
     }
 
-    async getShareData(token: string): Promise<Record<string, any> | null> {
+    async getShareData(token: string): Promise<object | null> {
         const validation = await this.validateShare(token);
         if (!validation.allowed) {
             throw new Error(validation.error);
@@ -129,13 +130,13 @@ class ShareService {
         // Fetch the actual entity data
         switch (entityType as string) {
             case 'farmer':
-                return await prisma.farmer.findUnique({ where: { id: entityId } }) as any;
+                return prisma.farmer.findUnique({ where: { id: entityId } });
             case 'visit':
-                return await prisma.visit.findUnique({ where: { id: entityId } }) as any;
+                return prisma.visit.findUnique({ where: { id: entityId } });
             case 'report':
-                return await prisma.report.findUnique({ where: { id: entityId } }) as any;
+                return prisma.report.findUnique({ where: { id: entityId } });
             case 'knowledge':
-                return await prisma.knowledgeArticle.findUnique({ where: { id: entityId } }) as any;
+                return prisma.knowledgeArticle.findUnique({ where: { id: entityId } });
             default:
                 throw new Error('Unknown entity type');
         }
@@ -150,10 +151,11 @@ class ShareService {
 
         const shareUrl = this.buildShareUrl(token);
         const subject = `Shared ${share.entityType} from GPExts`;
+        // The message is the sender's own words: escaped, so it cannot add links or markup to the email.
         const html = `
       <p>You have been shared a ${share.entityType} from GPExts.</p>
-      ${message ? `<p>${message}</p>` : ''}
-      <p><a href="${shareUrl}">View ${share.entityType}</a></p>
+      ${message ? `<p>${escapeHtml(message)}</p>` : ''}
+      <p><a href="${escapeHtml(shareUrl)}">View ${share.entityType}</a></p>
       ${share.expiresAt ? `<p>This link expires on ${share.expiresAt.toDateString()}.</p>` : ''}
     `;
 
@@ -190,12 +192,12 @@ class ShareService {
         return results.every(result => result);
     }
 
-    async getSharesByCreator(creatorId: string, tenantId?: string): Promise<any[]> {
+    async getSharesByCreator(creatorId: string, tenantId?: string): Promise<Share[]> {
         const prisma = getPrisma();
-        return await prisma.share.findMany({
+        return prisma.share.findMany({
             where: { createdBy: creatorId, ...(tenantId ? { tenantId } : {}) },
             orderBy: { createdAt: 'desc' },
-        }) as any[];
+        });
     }
 
     async deleteShare(token: string, creatorId: string, tenantId?: string): Promise<boolean> {

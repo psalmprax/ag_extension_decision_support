@@ -1,5 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { getPrisma } from './prismaService';
 import { logger } from '@/utils/logger';
 import { query } from './databaseService';
@@ -8,6 +7,32 @@ import { demoWhere } from '@/services/demoScope';
 import { farmerRecordFilter } from './demoRecordScope';
 import { toE164 } from '@/services/country/phone';
 import { farmerCountryFor } from '@/services/country/countryContext';
+
+type Tx = Prisma.TransactionClient;
+type BatchStats = { current: number; processed: number; failed: number; errors: string[] };
+
+/** Narrowing an export: one region, or a name or village containing the search text. */
+export interface FarmerExportFilters {
+    region?: string;
+    search?: string;
+}
+
+/** One CSV row as farmer columns; country is resolved before the row is saved. */
+type ImportedFarmer = {
+    firstName?: string;
+    lastName?: string;
+    phone?: string;
+    region?: string;
+    district?: string;
+    village?: string;
+    crops?: string[];
+    farmSizeHectares?: number | null;
+    vitalScore?: number | null;
+    locationLat?: number | null;
+    locationLng?: number | null;
+    languagePreference?: string;
+    country?: string;
+};
 
 export interface BulkOperationResult {
     success: boolean;
@@ -58,7 +83,7 @@ class BulkOperationsService {
         ids: string[],
         userId: string,
         userRole: string,
-        deleteItem: (id: string, tx: Record<string, any>) => Promise<void>
+        deleteItem: (id: string, tx: Tx) => Promise<void>
     ): Promise<BulkOperationResult> {
         const operationId = this.generateOperationId();
         let processed = 0;
@@ -149,21 +174,20 @@ class BulkOperationsService {
         }
     }
 
-    private async processKnowledgeArticleBatch(batch: string[], onProgress: ((update: ProgressUpdate) => void) | undefined, operationId: string, total: number, stats: Record<string, any>) {
-        await this.prisma.$transaction(async (tx) => {
-            for (const articleId of batch) {
-                try {
-                    await tx.knowledgeArticle.delete({ where: { id: articleId } });
-                    stats.processed++;
-                    stats.current++;
-                    this.notifyProgress(onProgress, operationId, stats.current, total);
-                } catch (error) {
-                    stats.failed++;
-                    stats.errors.push(`Failed to delete article ${articleId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                    stats.current++;
-                }
+    /** Each delete stands alone, so one that fails (a record still pointing at the article) cannot undo the others. */
+    private async processKnowledgeArticleBatch(batch: string[], onProgress: ((update: ProgressUpdate) => void) | undefined, operationId: string, total: number, stats: BatchStats) {
+        for (const articleId of batch) {
+            try {
+                await this.prisma.knowledgeArticle.delete({ where: { id: articleId } });
+                stats.processed++;
+                stats.current++;
+                this.notifyProgress(onProgress, operationId, stats.current, total);
+            } catch (error) {
+                stats.failed++;
+                stats.errors.push(`Failed to delete article ${articleId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+                stats.current++;
             }
-        });
+        }
     }
 
     async bulkDeleteKnowledgeArticles(request: BulkDeleteRequest, userId: string, userRole: string, onProgress?: (update: ProgressUpdate) => void): Promise<BulkOperationResult> {
@@ -185,7 +209,7 @@ class BulkOperationsService {
         return result;
     }
 
-    private async assertFarmerUpdateAllowed(prev: { assignedOfficerId: string | null; userId: string | null; region: string | null }, userId: string, userRole: string, tx: Record<string, any>): Promise<void> {
+    private async assertFarmerUpdateAllowed(prev: { assignedOfficerId: string | null; userId: string | null; region: string | null }, userId: string, userRole: string, tx: Tx): Promise<void> {
         if (userRole === 'admin') return;
         if (userRole === 'extension_officer') {
             if (prev.assignedOfficerId !== userId && prev.userId !== userId) throw new Error('Access denied');
@@ -199,7 +223,7 @@ class BulkOperationsService {
         if (manager?.region !== prev.region) throw new Error('Access denied');
     }
 
-    private async updateFarmerItem(farmerId: string, updates: Record<string, unknown>, userId: string, userRole: string, tx: Record<string, any>): Promise<void> {
+    private async updateFarmerItem(farmerId: string, updates: Record<string, unknown>, userId: string, userRole: string, tx: Tx): Promise<void> {
         const prev = await tx.farmer.findUnique({ where: { id: farmerId }, select: { assignedOfficerId: true, userId: true, region: true, tenantId: true } });
         if (!prev) throw new Error('Not found');
         await this.assertFarmerUpdateAllowed(prev, userId, userRole, tx);
@@ -226,9 +250,9 @@ class BulkOperationsService {
         );
     }
 
-    private async buildFarmerExportFilters(filters: Record<string, any>, userId: string, userRole: string): Promise<Record<string, any>> {
+    private async buildFarmerExportFilters(filters: FarmerExportFilters, userId: string, userRole: string): Promise<Prisma.FarmerWhereInput> {
         // Exports are for real accounts only: demo farmers are never exported.
-        const where: Record<string, any> = { ...demoWhere(), AND: [farmerRecordFilter(false)] };
+        const where: Prisma.FarmerWhereInput = { ...demoWhere(), AND: [farmerRecordFilter(false)] };
 
         if (userRole === 'extension_officer') {
             where.assignedOfficerId = userId;
@@ -260,7 +284,7 @@ class BulkOperationsService {
      * Export data to CSV format
      */
     async exportFarmersToCSV(
-        filters: Record<string, any>,
+        filters: FarmerExportFilters,
         userId: string,
         userRole: string
     ): Promise<string> {
@@ -319,7 +343,7 @@ class BulkOperationsService {
         ).join('\n');
     }
 
-    private mapHeaderToField(header: string, value: string, farmerData: Record<string, any>) {
+    private mapHeaderToField(header: string, value: string, farmerData: ImportedFarmer) {
         switch (header.toLowerCase()) {
             case 'first name':
             case 'firstname':
@@ -365,20 +389,21 @@ class BulkOperationsService {
         }
     }
 
-    private async processCSVRow(row: string, headers: string[], tx: Record<string, any>, userRole: string, userId: string): Promise<Record<string, any>> {
+    private async processCSVRow(row: string, headers: string[], tx: Tx, userRole: string, userId: string): Promise<ImportedFarmer> {
         const values = this.parseCSVRow(row);
         if (values.length !== headers.length) {
             throw new Error(`Column count mismatch`);
         }
 
-        const farmerData: Record<string, any> = {};
+        const farmerData: ImportedFarmer = {};
         headers.forEach((header, index) => {
             const value = values[index]?.replace(/"/g, '').trim();
             this.mapHeaderToField(header, value, farmerData);
         });
 
         // Validate required fields
-        if (!farmerData.firstName || !farmerData.lastName) {
+        const { firstName, lastName } = farmerData;
+        if (!firstName || !lastName) {
             throw new Error(`Missing required fields (firstName, lastName)`);
         }
 
@@ -394,36 +419,34 @@ class BulkOperationsService {
         }
 
         // Country: the row's own, else the importer's. Phones are stored in E.164 for that country.
-        farmerData.country = await farmerCountryFor(farmerData.country, userId);
+        const country = await farmerCountryFor(farmerData.country, userId);
+        farmerData.country = country;
         if (farmerData.phone) {
-            const phone = toE164(String(farmerData.phone), farmerData.country);
-            if (!phone) throw new Error(`Phone number ${farmerData.phone} is not valid for ${farmerData.country}`);
+            const phone = toE164(String(farmerData.phone), country);
+            if (!phone) throw new Error(`Phone number ${farmerData.phone} is not valid for ${country}`);
             farmerData.phone = phone;
         }
 
-        await tx.farmer.create({
-            data: {
-                ...farmerData,
-                isActive: true
-            }
-        });
+        await tx.farmer.create({ data: { ...farmerData, firstName, lastName, country, isActive: true } });
 
         return farmerData;
     }
 
+    /**
+     * One transaction per row, as in executeBulkDelete: with a shared one, the first database
+     * error (a duplicate phone, say) aborted it on Postgres, and the rows counted as imported
+     * before it were rolled back on commit.
+     */
     private async processImportBatch(batch: string[], startIndex: number, headers: string[], userRole: string, userId: string, result: { imported: number; skipped: number; errors: string[] }) {
-        await this.prisma.$transaction(async (tx) => {
-            for (let j = 0; j < batch.length; j++) {
-                const row = batch[j];
-                try {
-                    await this.processCSVRow(row, headers, tx, userRole, userId);
-                    result.imported++;
-                } catch (error) {
-                    result.skipped++;
-                    result.errors.push(`Row ${startIndex + j + 2}: ${error instanceof Error ? error.message : 'Unknown error'}`);
-                }
+        for (let j = 0; j < batch.length; j++) {
+            try {
+                await this.prisma.$transaction(tx => this.processCSVRow(batch[j], headers, tx, userRole, userId));
+                result.imported++;
+            } catch (error) {
+                result.skipped++;
+                result.errors.push(`Row ${startIndex + j + 2}: ${error instanceof Error ? error.message : 'Unknown error'}`);
             }
-        });
+        }
     }
 
     /**

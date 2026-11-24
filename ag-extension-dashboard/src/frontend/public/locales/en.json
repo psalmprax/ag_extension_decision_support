@@ -3004,5 +3004,6 @@
   "pending_sync_hint": "Saved on this device. It is sent when there is a connection.",
   "saved_offline_notice": "Saved on this device. It syncs when you are back online.",
   "fields_offline_note": "No connection. These are the fields kept on this device; changes you make sync when you are back online.",
-  "weather_needs_connection": "Weather comes from NASA POWER, so it needs a connection, and a new field has to reach the server first."
+  "weather_needs_connection": "Weather comes from NASA POWER, so it needs a connection, and a new field has to reach the server first.",
+  "visit_farmers_unavailable": "Farmers could not be loaded. Close this and try again."
 }

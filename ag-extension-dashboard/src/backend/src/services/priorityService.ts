@@ -1,7 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { getPrisma } from './prismaService';
-import { FAOService } from './faoService';
+import { FAOService, type DiseaseAlert } from './faoService';
 import { WeatherService } from './weatherService';
 import { logger } from '@/utils/logger';
 import { defaultCountryName } from '@/services/country/phone';
@@ -20,6 +19,8 @@ export interface PriorityScore {
     recommendedAction: string;
 }
 
+type FarmerWithLastVisit = Prisma.FarmerGetPayload<{ include: { visits: true } }>;
+
 class PriorityService {
     private prisma: PrismaClient;
 
@@ -27,9 +28,9 @@ class PriorityService {
         this.prisma = getPrisma();
     }
 
-    private async calculateDiseaseScore(farmer: Record<string, any>): Promise<{ score: number; relevantAlerts: Record<string, any>[] }> {
+    private async calculateDiseaseScore(farmer: FarmerWithLastVisit): Promise<{ score: number; relevantAlerts: DiseaseAlert[] }> {
         let score = 0;
-        let relevantAlerts: Record<string, any>[] = [];
+        let relevantAlerts: DiseaseAlert[] = [];
         try {
             const region = farmer.region || farmer.country || defaultCountryName();
             const alerts = await FAOService.getDiseaseAlerts(region);
@@ -44,7 +45,7 @@ class PriorityService {
         return { score, relevantAlerts };
     }
 
-    private async calculateWeatherScore(farmer: Record<string, any>, reasons: string[]): Promise<number> {
+    private async calculateWeatherScore(farmer: FarmerWithLastVisit, reasons: string[]): Promise<number> {
         let score = 0;
         try {
             // The farmer's own place and country, never another country's weather.
@@ -68,14 +69,16 @@ class PriorityService {
         return score;
     }
 
-    private calculateRecencyScore(farmer: Record<string, any>, reasons: string[]): number {
-        const lastVisit = farmer.visits?.[0];
+    private calculateRecencyScore(farmer: FarmerWithLastVisit, reasons: string[]): number {
+        const lastVisit = farmer.visits[0];
         if (!lastVisit) {
             reasons.push('No recorded visits - initial assessment required');
             return 100; // Never visited
         }
+        // A completed visit with no completion time says nothing about how long ago it was.
+        if (!lastVisit.completedAt) return 0;
         
-        const daysSinceVisit = Math.floor((Date.now() - new Date(lastVisit.completedAt!).getTime()) / (1000 * 60 * 60 * 24));
+        const daysSinceVisit = Math.floor((Date.now() - new Date(lastVisit.completedAt).getTime()) / (1000 * 60 * 60 * 24));
         if (daysSinceVisit > 30) {
             reasons.push(`Overdue for visit (${daysSinceVisit} days since last visit)`);
             return Math.min((daysSinceVisit - 30) * 2, 100);

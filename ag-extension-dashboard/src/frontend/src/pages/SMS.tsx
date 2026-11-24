@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageSquare, MapPin, AlertTriangle } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
 import { useAppStore } from '../store/useAppStore';
-import { fetchSMSHistory, sendSMS, sendBulkSMS, translateMessage } from '../api/smsService';
-import { fetchFarmers } from '../api/farmerService';
-import { fetchUsage } from '../api/billingService';
+import { sendSMS, sendBulkSMS, translateMessage } from '../api/smsService';
 import { ChannelOnboardingModal } from '../components/channels/ChannelOnboardingModal';
 import { GoalModeCampaignModal } from '../components/campaigns/GoalModeCampaignModal';
 import toast from 'react-hot-toast';
-import type { Contact, SMSHistoryRecord, SMSMessage } from './sms/types';
+import type { Contact } from './sms/types';
+import { useSmsData } from './sms/useSmsData';
 import { SMSComposerPanel } from './sms/ComposerPanel';
 import { SMSContactsPanel } from './sms/ContactsPanel';
 import { SMSRightPanel } from './sms/RightPanel';
@@ -50,8 +49,6 @@ export function SMSPage() {
     },
   ];
 
-  const [recentContacts, setRecentContacts] = useState<Contact[]>([]);
-  const [isLoadingContacts, setIsLoadingContacts] = useState(false);
 
   // Form State
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -67,96 +64,7 @@ export function SMSPage() {
 
   const [response, setResponse] = useState<{ message?: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [history, setHistory] = useState<SMSMessage[]>([]);
-
-  // Quota State - fetched from billing API
-  const [quota, setQuota] = useState<{
-    current: number;
-    limit: number;
-    sent: number;
-    failed: number;
-  } | null>(null);
-  const [isLoadingQuota, setIsLoadingQuota] = useState(false);
-
-  // Fetch History
-  const loadHistory = useCallback(async () => {
-    try {
-      const data = await fetchSMSHistory();
-      if (!data.success) throw new Error('SMS history request failed');
-      setHistory(data.data.map(normalizeSmsHistory));
-    } catch (err) {
-      console.error('Failed to fetch SMS history:', err);
-      setHistory([]);
-      toast.error('SMS history is unavailable');
-    }
-  }, []);
-
-  const normalizeSmsHistory = (msg: SMSHistoryRecord): SMSMessage => ({
-    id: msg.id,
-    to: msg.recipient_phone,
-    message: msg.message,
-    status:
-      msg.status === 'sent' || msg.status === 'delivered'
-        ? 'success'
-        : msg.status === 'failed'
-          ? 'failed'
-          : 'pending',
-    timestamp: new Date(msg.created_at || Date.now()),
-  });
-
-  const loadContacts = async () => {
-    setIsLoadingContacts(true);
-    try {
-      const res = await fetchFarmers();
-      if (!res.success) throw new Error('Farmer contacts request failed');
-      setRecentContacts(
-        res.data.farmers.map(f => ({
-          id: f.id,
-          name: `${f.firstName} ${f.lastName}`,
-          phone: f.phone || '',
-        }))
-      );
-    } catch (err) {
-      console.error('Failed to fetch farmers for SMS contacts:', err);
-      setRecentContacts([]);
-      toast.error('Farmer contacts are unavailable');
-    } finally {
-      setIsLoadingContacts(false);
-    }
-  };
-
-  const loadQuota = async () => {
-    setIsLoadingQuota(true);
-    try {
-      const data = await fetchUsage();
-      const usageData = data?.success ? data.data : null;
-      const smsUsage = Array.isArray(usageData)
-        ? usageData.find((u: { type: string }) => u.type === 'sms' || u.type === 'SMS')
-        : usageData;
-      if (!smsUsage) {
-        setQuota(null);
-        return;
-      }
-      setQuota({
-        current: typeof smsUsage.current === 'number' ? smsUsage.current : 0,
-        limit: typeof smsUsage.limit === 'number' ? smsUsage.limit : 0,
-        sent: typeof smsUsage.sent === 'number' ? smsUsage.sent : 0,
-        failed: typeof smsUsage.failed === 'number' ? smsUsage.failed : 0,
-      });
-    } catch (err) {
-      console.error('Failed to fetch SMS quota:', err);
-      setQuota(null);
-      toast.error('SMS quota is unavailable');
-    } finally {
-      setIsLoadingQuota(false);
-    }
-  };
-
-  useEffect(() => {
-    loadHistory();
-    loadContacts();
-    loadQuota();
-  }, [loadHistory]);
+  const { history, loadHistory, recentContacts, isLoadingContacts, quota, isLoadingQuota } = useSmsData();
 
   // Check for pending SMS on mount
   useEffect(() => {

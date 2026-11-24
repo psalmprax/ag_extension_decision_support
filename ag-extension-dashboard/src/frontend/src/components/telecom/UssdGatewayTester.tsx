@@ -2,6 +2,16 @@ import React, { useRef, useState } from 'react';
 import { PhoneCall, Send, Radio, CheckCircle2, Smartphone, RotateCcw } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 
+// A preview of the USSD menu: nothing is sent and nothing is booked.
+const USSD_WELCOME = 'CON Welcome to GPExts Farmer Advisory:\n1. Maize Armyworm Alert\n2. Soil NPK Test Request\n3. Book Extension Visit\n4. Swahili Language';
+const USSD_REPLIES: Record<string, string> = {
+  '1': 'END Example only: record crop symptoms and consult a local extension officer. No SMS was sent.',
+  '2': 'END Example only: contact a local soil specialist. No visit was scheduled.',
+  '3': 'END Example only: contact an extension officer to request a visit. No visit was scheduled.',
+  '4': 'END Mfano pekee: wasiliana na afisa ugani. Hakuna ujumbe uliotumwa.',
+};
+const USSD_GOODBYE = 'END Thank you for using GPExts Agricultural Advisory. Session closed.';
+
 export const UssdGatewayTester: React.FC = () => {
   const { t } = useLanguage();
   const [activeChannel, setActiveChannel] = useState<'ussd' | 'sms'>('ussd');
@@ -10,9 +20,7 @@ export const UssdGatewayTester: React.FC = () => {
   // USSD State
   const ussdDialCode = '*123#';
   const [ussdSessionActive, setUssdSessionActive] = useState(false);
-  const [ussdScreen, setUssdScreen] = useState<string>(
-    'CON Welcome to GPExts Farmer Advisory:\n1. Maize Armyworm Alert\n2. Soil NPK Test Request\n3. Book Extension Visit\n4. Swahili Language'
-  );
+  const [ussdScreen, setUssdScreen] = useState<string>(USSD_WELCOME);
   const [ussdInput, setUssdInput] = useState('');
   const [ussdHistory, setUssdHistory] = useState<string[]>([]);
 
@@ -33,9 +41,7 @@ export const UssdGatewayTester: React.FC = () => {
   const handleDialUssd = () => {
     setUssdSessionActive(true);
     setUssdHistory([`Dialed ${ussdDialCode}`]);
-    setUssdScreen(
-      'CON Welcome to GPExts Farmer Advisory:\n1. Maize Armyworm Alert\n2. Soil NPK Test Request\n3. Book Extension Visit\n4. Swahili Language'
-    );
+    setUssdScreen(USSD_WELCOME);
   };
 
   const handleSendUssdInput = (e: React.FormEvent) => {
@@ -46,33 +52,13 @@ export const UssdGatewayTester: React.FC = () => {
     setUssdHistory(prev => [...prev, `> User entered: ${input}`]);
     setUssdInput('');
 
-    if (input === '1') {
-      setUssdScreen(
-        'END Example only: record crop symptoms and consult a local extension officer. No SMS was sent.'
-      );
-    } else if (input === '2') {
-      setUssdScreen(
-        'END Example only: contact a local soil specialist. No visit was scheduled.'
-      );
-    } else if (input === '3') {
-      setUssdScreen(
-        'END Example only: contact an extension officer to request a visit. No visit was scheduled.'
-      );
-    } else if (input === '4') {
-      setUssdScreen(
-        'END Mfano pekee: wasiliana na afisa ugani. Hakuna ujumbe uliotumwa.'
-      );
-    } else {
-      setUssdScreen('END Thank you for using GPExts Agricultural Advisory. Session closed.');
-    }
+    setUssdScreen(USSD_REPLIES[input] ?? USSD_GOODBYE);
   };
 
   const handleResetUssd = () => {
     setUssdSessionActive(false);
     setUssdHistory([]);
-    setUssdScreen(
-      'CON Welcome to GPExts Farmer Advisory:\n1. Maize Armyworm Alert\n2. Soil NPK Test Request\n3. Book Extension Visit\n4. Swahili Language'
-    );
+    setUssdScreen(USSD_WELCOME);
   };
 
   const handleSendSms = (e: React.FormEvent) => {

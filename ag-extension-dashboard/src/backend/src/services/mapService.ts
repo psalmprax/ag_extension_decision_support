@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { query, getPool } from './databaseService';
 import { logger } from '../utils/logger';
 import { farmerScopeSql, type ScopePrincipal } from '@/services/access/farmerScope';
@@ -17,6 +16,27 @@ export interface MapFeature {
     };
 }
 
+interface FarmPointRow {
+    id: string;
+    first_name: string;
+    last_name: string;
+    region: string;
+    village: string;
+    crops: string[];
+    lat: string | number;
+    lng: string | number;
+}
+
+interface AlertRow {
+    id: string;
+    title: string;
+    location: string;
+    severity: string;
+}
+
+const SEVERITIES: ReadonlyArray<NonNullable<MapFeature['properties']['severity']>> = ['low', 'medium', 'high'];
+const severityOf = (value: string) => SEVERITIES.find(level => level === value?.toLowerCase());
+
 /** Farms (only those the viewer may see) and active alerts, for the map. */
 export const getMapData = async (viewer: ScopePrincipal): Promise<MapFeature[]> => {
     try {
@@ -25,7 +45,7 @@ export const getMapData = async (viewer: ScopePrincipal): Promise<MapFeature[]> 
 
         // Fetch farmers with real coordinates
         const scope = await farmerScopeSql(viewer, 'f');
-        const farmersResult = await query(`
+        const farmersResult = await query<FarmPointRow>(`
             SELECT f.id, f.first_name, f.last_name, f.region, f.village, f.crops,
                    f.location_lat as lat, f.location_lng as lng
             FROM farmers f
@@ -34,14 +54,14 @@ export const getMapData = async (viewer: ScopePrincipal): Promise<MapFeature[]> 
         `, scope.params);
 
         // Fetch active alerts
-        const alertsResult = await query(`
+        const alertsResult = await query<AlertRow>(`
             SELECT id, title, type, location, severity
             FROM alerts
             WHERE is_active = true
         `);
 
         // Map farmers
-        const features: MapFeature[] = farmersResult.rows.map((f: any) => ({
+        const features: MapFeature[] = farmersResult.rows.map(f => ({
             id: f.id,
             type: 'farmer',
             coordinates: [Number(f.lat), Number(f.lng)],
@@ -66,8 +86,11 @@ export const getMapData = async (viewer: ScopePrincipal): Promise<MapFeature[]> 
             'North Eastern': [0.3500, 40.1667]
         };
 
-        alertsResult.rows.forEach((a: any) => {
-            const coords = regionCoords[a.location] || [-1.2863, 36.8172];
+        alertsResult.rows.forEach(a => {
+            // An alert for a place without known coordinates is left off the map: it used to be
+            // drawn in Nairobi, wherever it was.
+            const coords = regionCoords[a.location];
+            if (!coords) return;
             features.push({
                 id: a.id,
                 type: 'alert',
@@ -76,7 +99,7 @@ export const getMapData = async (viewer: ScopePrincipal): Promise<MapFeature[]> 
                     name: a.title,
                     region: a.location,
                     village: '',
-                    severity: a.severity as any
+                    severity: severityOf(a.severity)
                 }
             });
         });
