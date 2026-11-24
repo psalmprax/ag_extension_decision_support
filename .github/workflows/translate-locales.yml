@@ -1,8 +1,10 @@
 name: Translate locales
 
-# Machine-translates the strings that are still English in the 23 non-English
-# locale files (QA v1 #9: mixed-language pages), with the repository's Groq key
-# or, when that is not set, the AIHubMix key the app already uses.
+# Machine-translates the strings that are still English in the non-English locale
+# files (QA v1 #9: mixed-language pages). Providers are tried in order (AIHubMix,
+# Groq, NVIDIA, OpenRouter), using whichever keys are set; one that refuses (no
+# credit, bad key) hands its strings to the next, so an empty account does not
+# stop the run.
 # Interpolation tokens and protected terms are checked per string; anything
 # that fails the check stays English. The result is uploaded as an artifact
 # for review and commit — this workflow never pushes. Dispatch only: a full run
@@ -40,10 +42,15 @@ jobs:
     # One model call per 25 strings per language: all 36 languages in one job
     # takes close to two hours, so groups run in parallel. With a `languages`
     # input only the first group's job translates (those languages).
+    # The twelve languages that are still mostly English (about 2,500 strings each) get a job
+    # each, so none runs into the time limit; at most eight run at once, to stay under the
+    # providers' request limits.
     strategy:
       fail-fast: false
+      max-parallel: 8
       matrix:
-        group: ['ar de es fr', 'hi pt sw zu', 'zh it ru tr', 'nl pl el cs', 'hu ro bg da', 'sk uk ug', 'ha yo ig am', 'om ny lg rw', 'so bn id vi ur']
+        group: ['ar de es fr', 'hi pt sw zu', 'zh it ru tr', 'nl pl el cs', 'hu ro bg da', 'sk uk ug ha',
+                'yo', 'ig', 'am', 'om', 'ny', 'lg', 'rw', 'so', 'bn', 'id', 'vi', 'ur']
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -57,6 +64,8 @@ jobs:
         working-directory: ag-extension-dashboard
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           AIHUBMIX_API_KEY: ${{ secrets.AIHUBMIX_API_KEY || vars.AIHUBMIX_API_KEY || secrets.AIHUBMIX_KEY || vars.AIHUBMIX_KEY || '' }}
           TRANSLATE_MODEL: ${{ vars.TRANSLATE_MODEL }}
           TRANSLATE_CHUNK_SIZE: '25'
@@ -71,8 +80,8 @@ jobs:
           fi
           KEYS_ARG=""
           if [ -n "$ONLY_KEYS" ]; then KEYS_ARG="--keys=$ONLY_KEYS"; fi
-          if [ -z "$GROQ_API_KEY" ] && [ -z "$AIHUBMIX_API_KEY" ]; then
-            echo "::error::Neither GROQ_API_KEY nor AIHUBMIX_API_KEY is set as a repository secret"
+          if [ -z "$GROQ_API_KEY$AIHUBMIX_API_KEY$NVIDIA_API_KEY$OPENROUTER_API_KEY" ]; then
+            echo "::error::None of AIHUBMIX_API_KEY, GROQ_API_KEY, NVIDIA_API_KEY or OPENROUTER_API_KEY is set as a repository secret"
             exit 1
           fi
           # shellcheck disable=SC2086 # word-splitting the language list is intended
