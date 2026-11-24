@@ -9,6 +9,7 @@ import { BoundaryOutline } from './boundary/BoundaryOutline';
 import { useBoundaryDescription } from './boundary/useBoundaryDescription';
 import { storedBoundary, type FieldBoundary } from './boundary/boundaryModel';
 import type { FieldRecordsTab } from './records/FieldRecordsDialog';
+import { PendingSyncBadge } from '@/components/common/PendingSyncBadge';
 
 interface FieldCardProps {
   field: Field;
@@ -51,7 +52,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({ field, cardClass, onEdit, 
         <div className="flex justify-between items-start mb-4">
           <div>
             <h3 className="text-xl font-medium text-slate-900 dark:text-white">{field.name}</h3>
-            <p className="text-xs text-slate-500 mt-1 tabular-nums">ID: {field.id.slice(0, 8)}</p>
+            {field.pendingSync ? <PendingSyncBadge className="mt-1" /> : <p className="text-xs text-slate-500 mt-1 tabular-nums">ID: {field.id.slice(0, 8)}</p>}
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => onEdit(field)} aria-label={t('field_edit_named', { defaultValue: 'Edit {name}', name: field.name })} className="p-1.5 hover:bg-slate-100 dark:hover:bg-white/5 text-slate-400 hover:text-primary-600 dark:hover:text-primary-400 rounded-lg transition-colors">
@@ -111,7 +112,7 @@ export const FieldCard: React.FC<FieldCardProps> = ({ field, cardClass, onEdit, 
                 {currentCycle.cropName} ({currentCycle.variety || 'Standard'})
               </h4>
               {currentCycle.notes && <p className="text-xs text-slate-600 dark:text-theme-text-muted mt-1 italic line-clamp-1">"{currentCycle.notes}"</p>}
-              <FarmPlanSection cropCycleId={currentCycle.id} />
+              {currentCycle.pendingSync ? <PendingSyncBadge className="mt-2" /> : <FarmPlanSection cropCycleId={currentCycle.id} />}
             </div>
           </div>
         ) : (

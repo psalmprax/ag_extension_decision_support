@@ -32,7 +32,6 @@
   "components/telecom/UssdGatewayTester.tsx": 306,
   "components/ui/InfoPrompt.tsx": 568,
   "pages/AdvisoryStudioPage.tsx": 368,
-  "pages/CropsFields.tsx": 421,
   "pages/DashboardPage.tsx": 581,
   "pages/DemoPage.tsx": 395,
   "pages/FarmerChatPage.tsx": 437,

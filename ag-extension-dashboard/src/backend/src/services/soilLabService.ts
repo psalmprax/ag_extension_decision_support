@@ -169,20 +169,31 @@ export const soilLabService = {
         return rows.map(mapSoilLabRow);
     },
 
-    async addForField(field: { id: string; farmerId: string }, input: SoilTestInput): Promise<SoilTest> {
+    /**
+     * Saves one result. A result saved offline carries the id the device gave it and may arrive
+     * more than once: the copy already on this field is returned, and null means another record
+     * already uses that id.
+     */
+    async addForField(field: { id: string; farmerId: string }, input: SoilTestInput): Promise<SoilTest | null> {
         const { rows } = await query<SoilLabRow>(
             `INSERT INTO soil_lab_results
-                 (farmer_id, field_id, lab_name, sample_ref, ph, organic_carbon_pct, organic_matter_pct,
+                 (id, farmer_id, field_id, lab_name, sample_ref, ph, organic_carbon_pct, organic_matter_pct,
                   nitrogen_ppm, phosphorus_ppm, potassium_ppm, tested_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11::date)
+             VALUES (COALESCE($1::uuid, gen_random_uuid()), $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12::date)
+             ON CONFLICT (id) DO NOTHING
              RETURNING ${SOIL_LAB_COLUMNS}`,
             [
-                field.farmerId, field.id, input.labName || null, input.sampleRef || null, input.ph ?? null,
+                input.id ?? null, field.farmerId, field.id, input.labName || null, input.sampleRef || null, input.ph ?? null,
                 input.organicCarbonPct ?? null, input.organicMatterPct ?? null, input.nitrogenPpm ?? null,
                 input.phosphorusPpm ?? null, input.potassiumPpm ?? null, input.testedAt,
             ]
         );
-        return mapSoilLabRow(rows[0]);
+        if (rows[0]) return mapSoilLabRow(rows[0]);
+        const { rows: saved } = await query<SoilLabRow>(
+            `SELECT ${SOIL_LAB_COLUMNS} FROM soil_lab_results WHERE id = $1 AND field_id = $2`,
+            [input.id, field.id]
+        );
+        return saved[0] ? mapSoilLabRow(saved[0]) : null;
     },
 
     /** Removes one result from a field; false when the field has no such result. */

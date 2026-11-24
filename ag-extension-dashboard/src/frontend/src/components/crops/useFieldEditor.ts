@@ -4,6 +4,7 @@ import { useUnits } from '@/hooks/useUnits';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { boundaryMetrics } from '@ag-extension/shared/api';
 import { storedBoundary, type FieldBoundary } from './boundary/boundaryModel';
+import { useSavedNotice } from './useCropCycleActions';
 
 export type FieldForm = {
   name: string;
@@ -24,6 +25,7 @@ type Notify = (notification: { type: 'success' | 'error' | 'warning'; message: s
 /** The add and edit field dialog: its form, and saving it for the chosen farmer. */
 export function useFieldEditor({ farmerId, notify, onSaved }: { farmerId: string | undefined; notify: Notify; onSaved: () => void }) {
   const units = useUnits();
+  const savedNotice = useSavedNotice();
   const [showFieldModal, setShowFieldModal] = useState(false);
   const [editingField, setEditingField] = useState<Field | null>(null);
   const [fieldForm, setFieldForm] = useState<FieldForm>(EMPTY_FORM);
@@ -78,7 +80,7 @@ export function useFieldEditor({ farmerId, notify, onSaved }: { farmerId: string
     try {
       const res = editingField ? await updateField(editingField.id, data) : await createField(data);
       if (!res.success) throw new Error(res.error || 'Failed to save field record');
-      notify({ type: 'success', message: editingField ? 'Field updated successfully' : 'Field created successfully' });
+      notify({ type: 'success', message: savedNotice(res.queued, editingField ? 'Field updated successfully' : 'Field created successfully') });
       setShowFieldModal(false);
       onSaved();
     } catch (error) {

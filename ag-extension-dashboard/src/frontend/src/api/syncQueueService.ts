@@ -2,6 +2,7 @@ import apiClient from './client';
 import { resolveOfflineConflict, type FieldConflict } from '@/services/offlineConflictResolver';
 import { randomId } from '@/lib/randomId';
 import { safeStorage } from '@/lib/safeStorage';
+import { deviceOwner } from '@/lib/offlineReadCache';
 
 export type SyncState = 'pending' | 'failed' | 'conflict';
 
@@ -25,6 +26,15 @@ export interface SyncQueueItem {
   lastError?: string;
   /** Epoch ms before which an automatic retry must not run (exponential backoff). */
   nextAttemptAt?: number;
+  /** Who saved it. Only that person's session sends it, so a shared phone never mixes accounts. */
+  ownerId?: string;
+  /** What the person saved, in their words, for the queue review list. */
+  label?: string;
+}
+
+/** Items saved before writes were stamped with their owner belong to whoever is signed in. */
+function isMine(item: SyncQueueItem): boolean {
+  return !item.ownerId || item.ownerId === deviceOwner();
 }
 
 const STORAGE_KEY = 'ag-sync-queue';
@@ -179,27 +189,20 @@ class SyncQueueService {
    * diagnosis (often a base64 image) could fail to save and vanish on reload silently.
    */
   private persistNow(): void {
-    let failure: unknown = null;
-    try {
-      safeStorage.set(STORAGE_KEY, JSON.stringify(this.queue));
-    } catch (error) {
-      failure = error;
-    }
-    // Best-effort upgrade to IndexedDB (the fallback above already guarantees storage).
-    void idbPutAll(this.queue);
-
-    if (!failure) {
-      this.lastPersistenceError = null;
-      return;
-    }
-
-    const isQuota = failure instanceof Error
-      && (failure.name === 'QuotaExceededError' || failure.name === 'NS_ERROR_DOM_QUOTA_REACHED');
-    this.lastPersistenceError = isQuota
-      ? 'Device storage is full — this queued item was NOT saved. Free up space, then retry.'
-      : 'Could not persist the offline queue — this queued item may be lost on reload.';
-    console.error('Failed to persist sync queue:', failure);
-    this.persistenceErrorListeners.forEach(cb => cb(this.lastPersistenceError as string));
+    // safeStorage reports a full or blocked store by returning false rather than throwing, so
+    // the result is what tells whether the queue survived. IndexedDB is the second copy; the
+    // queue is lost on reload only when neither store took it.
+    const savedLocally = safeStorage.set(STORAGE_KEY, JSON.stringify(this.queue));
+    if (savedLocally) this.lastPersistenceError = null;
+    void idbPutAll(this.queue).then(savedInIdb => {
+      if (savedLocally || savedInIdb) {
+        this.lastPersistenceError = null;
+        return;
+      }
+      this.lastPersistenceError = 'Device storage is full or blocked, so this change was not kept on the phone. Free up space, then save it again.';
+      console.error('Failed to persist sync queue in localStorage and IndexedDB');
+      this.persistenceErrorListeners.forEach(cb => cb(this.lastPersistenceError as string));
+    });
   }
 
   /** Last persistence failure, if any (null when the queue is durably stored). */
@@ -216,11 +219,13 @@ class SyncQueueService {
   }
 
   private notifyListeners(): void {
-    this.listeners.forEach(cb => cb(this.queue.length));
+    const count = this.getPendingCount();
+    this.listeners.forEach(cb => cb(count));
   }
 
+  /** Writes the signed-in person has waiting. */
   getPendingCount(): number {
-    return this.queue.length;
+    return this.queue.filter(isMine).length;
   }
 
   onCountChange(callback: (count: number) => void): () => void {
@@ -230,11 +235,12 @@ class SyncQueueService {
     };
   }
 
-  enqueue(item: Omit<SyncQueueItem, 'id' | 'idempotencyKey' | 'timestamp' | 'retryCount' | 'state'> & { idempotencyKey?: string }): string {
+  enqueue(item: Omit<SyncQueueItem, 'id' | 'idempotencyKey' | 'timestamp' | 'retryCount' | 'state' | 'ownerId'> & { idempotencyKey?: string }): string {
     const id = randomId('sync_');
     const queueItem: SyncQueueItem = {
       ...item,
       id,
+      ownerId: deviceOwner() ?? undefined,
       idempotencyKey: item.idempotencyKey || id,
       timestamp: Date.now(),
       retryCount: 0,
@@ -255,8 +261,9 @@ class SyncQueueService {
     this.notifyListeners();
   }
 
+  /** Discards the signed-in person's waiting writes; another account's stay. */
   clear(): void {
-    this.queue = [];
+    this.queue = this.queue.filter(item => !isMine(item));
     this.saveToStorage();
     this.notifyListeners();
   }
@@ -377,6 +384,8 @@ class SyncQueueService {
       if (response?.status === 409) {
         return this.handleConflict(item, respData);
       }
+      // A delete the server no longer finds has already happened, perhaps from another device.
+      if (item.method === 'DELETE' && response?.status === 404) return 'success';
 
       return this.scheduleRetryOrDrop(item);
     }
@@ -395,7 +404,7 @@ class SyncQueueService {
 
     const now = Date.now();
     const pendingItems = this.queue.filter(
-      queueItem => queueItem.state === 'pending' && (!queueItem.nextAttemptAt || queueItem.nextAttemptAt <= now)
+      queueItem => isMine(queueItem) && queueItem.state === 'pending' && (!queueItem.nextAttemptAt || queueItem.nextAttemptAt <= now)
     );
     for (const item of pendingItems) {
       const result = await this.executeSyncItem(item);
@@ -417,13 +426,14 @@ class SyncQueueService {
     return { success, failed, conflicts };
   }
 
+  /** The signed-in person's waiting writes, oldest first. */
   getQueue(): SyncQueueItem[] {
-    return [...this.queue];
+    return this.queue.filter(isMine);
   }
 
   /** Items that need a human decision (exhausted retries or server-side conflict). */
   getStuckItems(): SyncQueueItem[] {
-    return this.queue.filter(i => i.state === 'failed' || i.state === 'conflict');
+    return this.getQueue().filter(i => i.state === 'failed' || i.state === 'conflict');
   }
 
   /** Earliest scheduled automatic retry among pending items, if any. */

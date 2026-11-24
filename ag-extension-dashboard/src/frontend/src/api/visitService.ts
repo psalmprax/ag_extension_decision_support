@@ -1,6 +1,7 @@
 import apiClient from './client';
 import { fetchAllPages } from './fetchAllPages';
 import { syncQueue } from './syncQueueService';
+import { isNetworkFailure } from './offlineWrites';
 import { randomId } from '@/lib/randomId';
 import type { DevicePosition } from '@/lib/devicePosition';
 
@@ -61,10 +62,6 @@ type VisitMutationResponse = { success: boolean; data: Visit; queued?: boolean }
 
 function createMutationKey(): string {
   return randomId('visit_');
-}
-
-function isNetworkFailure(error: unknown): boolean {
-  return typeof error === 'object' && error !== null && !('response' in error);
 }
 
 function queueVisitMutation(

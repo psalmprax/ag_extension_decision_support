@@ -7,6 +7,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { uuidSchema } from '@ag-extension/shared/api';
 import { SoilTestsPanel } from './SoilTestsPanel';
 import { FieldWeatherPanel } from './FieldWeatherPanel';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
 export type FieldRecordsTab = 'soil' | 'weather';
 
@@ -21,6 +22,7 @@ interface FieldRecordsDialogProps {
 export const FieldRecordsDialog: React.FC<FieldRecordsDialogProps> = ({ field, tab, onTabChange, onClose }) => {
   const { t } = useLanguage();
   const saved = uuidSchema.safeParse(field.id).success;
+  const online = useOnlineStatus();
   const hasLocation = field.latitude !== null && field.latitude !== undefined && field.longitude !== null && field.longitude !== undefined;
   const tabs: Array<{ id: FieldRecordsTab; label: string; Icon: typeof FlaskConical }> = [
     { id: 'soil', label: t('field_records_soil', { defaultValue: 'Soil tests' }), Icon: FlaskConical },
@@ -51,6 +53,10 @@ export const FieldRecordsDialog: React.FC<FieldRecordsDialogProps> = ({ field, t
             </p>
           ) : tab === 'soil' ? (
             <SoilTestsPanel fieldId={field.id} fieldName={field.name} />
+          ) : !online || field.pendingSync ? (
+            <p className="py-6 text-sm text-slate-600 dark:text-theme-text-secondary">
+              {t('weather_needs_connection', { defaultValue: 'Weather comes from NASA POWER, so it needs a connection, and a new field has to reach the server first.' })}
+            </p>
           ) : (
             <FieldWeatherPanel fieldId={field.id} hasLocation={hasLocation} />
           )}

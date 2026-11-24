@@ -7,6 +7,7 @@ import { randomId } from '@/lib/randomId';
 import { toast } from 'react-hot-toast';
 import { isDemoSession } from '@/demo/demoSession';
 import { safeStorage } from '@/lib/safeStorage';
+import { setDeviceOwner } from '@/lib/offlineReadCache';
 
 // Types
 export interface User {
@@ -447,5 +448,9 @@ export const useAppStore = create<AppState>()(
     }
   )
 );
+
+// Copies kept for offline use and writes waiting to sync belong to whoever is signed in.
+setDeviceOwner(useAppStore.getState().user?.id ?? null);
+useAppStore.subscribe(state => setDeviceOwner(state.user?.id ?? null));
 
 export default useAppStore;

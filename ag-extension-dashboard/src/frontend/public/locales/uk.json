@@ -2999,5 +2999,10 @@
     "advisory_step_delete": "Delete step",
     "billing_renews_yearly": "Yearly, renews automatically",
     "billing_renews_monthly": "Monthly, renews automatically",
-    "page_not_found": "There is no page at {path}."
+    "page_not_found": "There is no page at {path}.",
+    "pending_sync_badge": "Waiting to sync",
+    "pending_sync_hint": "Saved on this device. It is sent when there is a connection.",
+    "saved_offline_notice": "Saved on this device. It syncs when you are back online.",
+    "fields_offline_note": "No connection. These are the fields kept on this device; changes you make sync when you are back online.",
+    "weather_needs_connection": "Weather comes from NASA POWER, so it needs a connection, and a new field has to reach the server first."
 }

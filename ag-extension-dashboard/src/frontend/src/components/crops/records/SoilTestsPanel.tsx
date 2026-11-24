@@ -10,6 +10,9 @@ import { SECONDARY_BUTTON } from '@/components/ui/controlStyles';
 import { formatNumber } from '@/components/charts/chartFormat';
 import { SoilCarbonChart } from './SoilCarbonChart';
 import { SoilTestForm } from './SoilTestForm';
+import { PendingSyncBadge } from '@/components/common/PendingSyncBadge';
+import { useSavedNotice } from '../useCropCycleActions';
+import { useQueueDrained } from '@/hooks/useQueueDrained';
 
 const formatDate = (value: string | null) => (value ? new Date(`${value}T00:00:00`).toLocaleDateString(appLocale(), { day: 'numeric', month: 'short', year: 'numeric' }) : '—');
 const value = (n: number | null, suffix = '') => (n === null ? '—' : `${formatNumber(n, 2)}${suffix}`);
@@ -20,19 +23,24 @@ export const SoilTestsPanel: React.FC<{ fieldId: string; fieldName: string }> = 
   const notify = useAppStore(state => state.addNotification);
   const queryClient = useQueryClient();
   const [adding, setAdding] = useState(false);
+  const savedNotice = useSavedNotice();
   const queryKey = ['field-soil-tests', fieldId];
-  const { data: tests = [], isLoading, isError } = useQuery({ queryKey, queryFn: () => fieldRecordsService.soilTests(fieldId) });
+  // networkMode always: with no connection the service answers from this device instead of waiting.
+  const { data: tests = [], isLoading, isError } = useQuery({ queryKey, networkMode: 'always', queryFn: () => fieldRecordsService.soilTests(fieldId) });
+  useQueueDrained(() => void queryClient.invalidateQueries({ queryKey }));
 
   const add = useMutation({
+    networkMode: 'always',
     mutationFn: (input: SoilTestInput) => fieldRecordsService.addSoilTest(fieldId, input),
-    onSuccess: () => {
+    onSuccess: ({ queued }) => {
       setAdding(false);
-      notify({ type: 'success', message: t('soil_test_saved', { defaultValue: 'Soil test saved' }) });
+      notify({ type: 'success', message: savedNotice(queued, t('soil_test_saved', { defaultValue: 'Soil test saved' })) });
       void queryClient.invalidateQueries({ queryKey });
     },
     onError: error => notify({ type: 'error', message: getApiErrorMessage(error, t('soil_test_save_failed', { defaultValue: 'The soil test was not saved. Try again.' })) }),
   });
   const remove = useMutation({
+    networkMode: 'always',
     mutationFn: (test: SoilTest) => fieldRecordsService.deleteSoilTest(fieldId, test.id),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey }),
     onError: error => notify({ type: 'error', message: getApiErrorMessage(error, t('soil_test_delete_failed', { defaultValue: 'The soil test was not deleted. Try again.' })) }),
@@ -85,7 +93,10 @@ export const SoilTestsPanel: React.FC<{ fieldId: string; fieldName: string }> = 
             <tbody>
               {tests.toReversed().map(test => (
                 <tr key={test.id} className="border-b border-slate-900/[0.06] dark:border-white/[0.06] text-slate-800 dark:text-theme-text-primary">
-                  <td className="py-2 pe-3 whitespace-nowrap">{formatDate(test.testedAt)}</td>
+                  <td className="py-2 pe-3 whitespace-nowrap">
+                    {formatDate(test.testedAt)}
+                    {test.pendingSync && <PendingSyncBadge className="ms-2" />}
+                  </td>
                   <td className="py-2 pe-3">{test.labName || '—'}</td>
                   <td className="py-2 pe-3 text-end tabular-nums">{value(test.ph)}</td>
                   <td className="py-2 pe-3 text-end tabular-nums">{value(test.organicCarbonPct, '%')}</td>

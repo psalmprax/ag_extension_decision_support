@@ -69,8 +69,14 @@ export const fieldWriteSchema = z.object({
   boundaryAccuracyM: z.number().positive().max(1000).nullable().optional(),
 });
 
+/**
+ * An id chosen on the device, so records saved while offline can refer to each other before
+ * they reach the server. Sending the same id again returns the record already saved.
+ */
+export const clientRecordIdSchema = uuidSchema.optional();
+
 /** POST /api/v1/fields — write contract (camelCase, same as the frontend sends). */
-export const createFieldSchema = fieldWriteSchema.extend({ farmerId: uuidSchema.optional() });
+export const createFieldSchema = fieldWriteSchema.extend({ id: clientRecordIdSchema, farmerId: uuidSchema.optional() });
 
 /** PUT /api/v1/fields/:id */
 export const updateFieldSchema = fieldWriteSchema.partial();

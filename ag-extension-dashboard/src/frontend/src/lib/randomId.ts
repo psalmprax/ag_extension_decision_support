@@ -30,3 +30,16 @@ export function randomId(prefix = ''): string {
 
   return prefix ? `${prefix}${value}` : value;
 }
+
+/**
+ * A version 4 UUID for a record created on this device, so records saved offline can refer to
+ * each other before the server has seen them. Needs Web Crypto, which every supported browser has.
+ */
+export function newRecordId(): string {
+  if (typeof crypto.randomUUID === 'function') return crypto.randomUUID();
+  const hex = randomHex(16).split('');
+  hex[12] = '4';
+  hex[16] = ((parseInt(hex[16], 16) & 0x3) | 0x8).toString(16);
+  const s = hex.join('');
+  return `${s.slice(0, 8)}-${s.slice(8, 12)}-${s.slice(12, 16)}-${s.slice(16, 20)}-${s.slice(20)}`;
+}

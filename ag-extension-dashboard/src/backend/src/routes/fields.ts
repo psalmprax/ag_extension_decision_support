@@ -7,7 +7,7 @@ import { mapFieldStatsRows, mapCountRow } from '@/types/dtos';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
-import { UUID_REGEX } from '@/utils/uuid';
+import { UUID_REGEX, isUuid } from '@/utils/uuid';
 import { demoWhere, linkedDemoSql } from '@/services/demoScope';
 import { canSeeFarmer, requestCanSeeFarmer, rowsOfVisibleFarmersSql, visibleFarmerIds } from '@/services/access/farmerScope';
 import { createFieldSchema, updateFieldSchema } from '@/shared-api/field';
@@ -200,8 +200,16 @@ router.post('/', async (req: Request, res: Response) => {
         }
         const columns = fieldColumnsFromWrite(parsed.data);
         if (!columns.ok) return res.status(400).json({ success: false, error: columns.error });
+        const { id } = parsed.data;
+        if (id) {
+            // A field saved offline arrives with the id the device gave it, possibly more than once.
+            const existing = await prisma.field.findUnique({ where: { id } });
+            if (existing?.farmerId === farmerId) return res.json({ success: true, data: existing });
+            if (existing) return res.status(409).json({ success: false, error: 'Another record already uses this id' });
+        }
         const field = await prisma.field.create({
             data: {
+                ...(id ? { id } : {}),
                 soilType: null,
                 soilPh: null,
                 ...(columns.data as Prisma.FieldUncheckedCreateInput),
@@ -280,6 +288,9 @@ router.post('/:fieldId/cycles', async (req: Request, res: Response) => {
             return res.status(400).json({ success: false, error: 'fieldId is required' });
         }
         const body = req.body;
+        if (body.id !== undefined && !isUuid(body.id)) {
+            return res.status(400).json({ success: false, error: 'id must be a UUID' });
+        }
         const cropName = body.cropName || body.crop_name;
         const variety = body.variety ?? null;
         const status = body.status || 'planned';
@@ -295,8 +306,14 @@ router.post('/:fieldId/cycles', async (req: Request, res: Response) => {
         if (!field || !(await requestCanSeeFarmer(req, field.farmerId))) {
             return res.status(404).json({ success: false, error: 'Field not found' });
         }
+        if (body.id) {
+            const existing = await prisma.cropCycle.findUnique({ where: { id: body.id } });
+            if (existing?.fieldId === fieldId) return res.json({ success: true, data: existing });
+            if (existing) return res.status(409).json({ success: false, error: 'Another record already uses this id' });
+        }
         const cycle = await prisma.cropCycle.create({
             data: {
+                ...(body.id ? { id: body.id } : {}),
                 fieldId,
                 cropName,
                 variety,

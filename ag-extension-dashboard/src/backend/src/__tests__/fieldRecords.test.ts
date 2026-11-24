@@ -10,22 +10,39 @@ const FARMER = '11111111-1111-1111-1111-111111111111';
 const FIELD = '22222222-2222-2222-2222-222222222222';
 const UNLOCATED_FIELD = '33333333-3333-3333-3333-333333333333';
 const TEST_ID = '44444444-4444-4444-4444-444444444444';
+/** A result id another field's record already has. */
+const TAKEN_ID = '66666666-6666-6666-6666-666666666666';
+
+const soilRow = (overrides: Record<string, unknown> = {}) => ({
+    id: TEST_ID, field_id: FIELD, lab_name: 'KALRO', sample_ref: null, ph: '6.10', organic_carbon_pct: '1.80', organic_matter_pct: null,
+    nitrogen_ppm: null, phosphorus_ppm: null, potassium_ppm: null, tested_at: '2026-03-14', ...overrides,
+});
+const rows = (list: unknown[]) => ({ rows: list, rowCount: list.length });
+
+/** The soil_lab_results statements; undefined for any other SQL. */
+function soilLabQuery(sql: string, params: unknown[]) {
+    if (sql.startsWith('INSERT INTO soil_lab_results')) {
+        // TEST_ID and TAKEN_ID are already saved, so ON CONFLICT (id) DO NOTHING inserts nothing.
+        if (params[0] === TEST_ID || params[0] === TAKEN_ID) return rows([]);
+        return rows([soilRow({ id: params[0] ?? TEST_ID, lab_name: params[3] })]);
+    }
+    if (sql.includes('FROM soil_lab_results WHERE id = $1 AND field_id = $2')) {
+        return rows(params[0] === TEST_ID && params[1] === FIELD ? [soilRow()] : []);
+    }
+    if (sql.includes('FROM soil_lab_results WHERE field_id')) {
+        return rows([soilRow({ ph: '5.90', organic_carbon_pct: '1.50', tested_at: new Date(2025, 2, 14) })]);
+    }
+    if (sql.startsWith('DELETE FROM soil_lab_results')) return { rows: [], rowCount: params[0] === TEST_ID ? 1 : 0 };
+    return undefined;
+}
 
 const dbQuery = jest.fn(async (sql: string, params: unknown[] = []) => {
     if (sql.includes('FROM farmers f WHERE f.id = $1')) {
         const [farmerId, ...scope] = params;
-        const visible = farmerId === FARMER && (scope.length === 0 || scope.includes('farm-1'));
-        return { rows: visible ? [{ visible: 1 }] : [], rowCount: visible ? 1 : 0 };
+        return rows(farmerId === FARMER && (scope.length === 0 || scope.includes('farm-1')) ? [{ visible: 1 }] : []);
     }
-    if (sql.includes('FROM user_sessions')) return { rows: [{ is_revoked: false, is_active: true, expires_at: '2099-01-01T00:00:00Z' }], rowCount: 1 };
-    if (sql.startsWith('INSERT INTO soil_lab_results')) {
-        return { rows: [{ id: TEST_ID, field_id: FIELD, lab_name: params[2], sample_ref: null, ph: '6.10', organic_carbon_pct: '1.80', organic_matter_pct: null, nitrogen_ppm: null, phosphorus_ppm: null, potassium_ppm: null, tested_at: '2026-03-14' }], rowCount: 1 };
-    }
-    if (sql.includes('FROM soil_lab_results WHERE field_id')) {
-        return { rows: [{ id: TEST_ID, field_id: FIELD, lab_name: 'KALRO', sample_ref: null, ph: '5.90', organic_carbon_pct: '1.50', organic_matter_pct: null, nitrogen_ppm: null, phosphorus_ppm: null, potassium_ppm: null, tested_at: new Date(2025, 2, 14) }], rowCount: 1 };
-    }
-    if (sql.startsWith('DELETE FROM soil_lab_results')) return { rows: [], rowCount: params[0] === TEST_ID ? 1 : 0 };
-    return { rows: [], rowCount: 0 };
+    if (sql.includes('FROM user_sessions')) return rows([{ is_revoked: false, is_active: true, expires_at: '2099-01-01T00:00:00Z' }]);
+    return soilLabQuery(sql, params) ?? rows([]);
 });
 
 jest.mock('../services/databaseService', () => ({
@@ -92,6 +109,24 @@ describe('field soil tests', () => {
             .set('Authorization', token('farm-1', 'farmer', { isDemo: true }))
             .send({ testedAt: '2026-03-14', ph: 6 });
         expect(res.status).toBe(403);
+    });
+
+    it('keeps one copy of a result saved offline and sent again', async () => {
+        const input = { id: TEST_ID, testedAt: '2026-03-14', labName: 'KALRO', ph: 6.1 };
+        const res = await request(app).post(`/api/v1/fields/${FIELD}/soil-tests`).set('Authorization', farmer).send(input);
+        expect(res.status).toBe(201);
+        expect(res.body.data).toMatchObject({ id: TEST_ID, ph: 6.1 });
+    });
+
+    it('saves a new result under the id the device chose, and refuses an id another record has', async () => {
+        const fresh = '77777777-7777-4777-8777-777777777777';
+        const saved = await request(app).post(`/api/v1/fields/${FIELD}/soil-tests`).set('Authorization', farmer).send({ id: fresh, testedAt: '2026-03-14', ph: 6.1 });
+        expect(saved.status).toBe(201);
+        expect(saved.body.data.id).toBe(fresh);
+        const taken = await request(app).post(`/api/v1/fields/${FIELD}/soil-tests`).set('Authorization', farmer).send({ id: TAKEN_ID, testedAt: '2026-03-14', ph: 6.1 });
+        expect(taken.status).toBe(409);
+        const notAnId = await request(app).post(`/api/v1/fields/${FIELD}/soil-tests`).set('Authorization', farmer).send({ id: 'abc', testedAt: '2026-03-14', ph: 6.1 });
+        expect(notAnId.status).toBe(400);
     });
 
     it('deletes one result, and says so when there is no such result', async () => {

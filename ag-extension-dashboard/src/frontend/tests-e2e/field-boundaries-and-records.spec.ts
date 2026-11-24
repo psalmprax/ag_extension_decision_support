@@ -51,8 +51,10 @@ test.describe('field boundaries and records', () => {
     await expect(editor.getByText(/Drawn on satellite imagery/)).toBeVisible();
     await editor.getByRole('button', { name: 'Use this boundary' }).click();
 
-    await expect(page.getByText('measured from the boundary')).toBeVisible();
-    await expect(page.getByLabel('Area (hectares)')).toHaveCount(0);
+    // Within the dialog: earlier fields on this farm have the same words on their cards.
+    const fieldDialog = page.getByRole('dialog', { name: 'Add field' });
+    await expect(fieldDialog.getByText('measured from the boundary')).toBeVisible();
+    await expect(fieldDialog.getByLabel('Area (hectares)')).toHaveCount(0);
     await page.getByRole('button', { name: 'Save field' }).click();
 
     const card = cardFor(page, name);
@@ -84,7 +86,7 @@ test.describe('field boundaries and records', () => {
     await expect(stats).toContainText('±5 m');
     await expect(editor.getByText(/the area could be off by up to about/)).toBeVisible();
     await editor.getByRole('button', { name: 'Use this boundary' }).click();
-    await expect(page.getByText(/Walked with GPS, typical error ±5 m/)).toBeVisible();
+    await expect(page.getByRole('dialog', { name: 'Add field' }).getByText(/Walked with GPS, typical error ±5 m/)).toBeVisible();
     await context.close();
   });
 

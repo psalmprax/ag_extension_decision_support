@@ -92,7 +92,7 @@ export const SyncQueuePanel: React.FC = () => {
                   item.state === 'conflict' ? 'bg-amber-500/15 text-amber-300' :
                   'bg-rose-500/15 text-rose-300'
                 }`}>{formatLabel(item.state)}</span>
-                <span className="text-white/80 font-medium truncate">{item.method} {item.endpoint}</span>
+                <span className="text-white/80 font-medium truncate">{item.label || `${item.method} ${item.endpoint}`}</span>
               </div>
               <div className="text-white/40 mt-0.5 flex flex-wrap items-center gap-2">
                 <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {t('ui_sync_queue_panel_queued')} {new Date(item.timestamp).toLocaleString(appLocale())} {t('ui_sync_queue_panel_attempts')} {item.retryCount}</span>

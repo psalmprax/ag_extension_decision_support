@@ -3,6 +3,7 @@
  * soil test results over the years, and daily solar radiation and rainfall from NASA POWER.
  */
 import { z } from 'zod';
+import { clientRecordIdSchema } from './field';
 
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const measurement = (max: number) => z.number().min(0).max(max).nullable().optional();
@@ -14,6 +15,7 @@ export type SoilTestMeasurement = (typeof SOIL_TEST_MEASUREMENTS)[number];
 /** POST /api/v1/fields/:fieldId/soil-tests — one lab result as the lab reported it. */
 export const soilTestInputSchema = z
   .object({
+    id: clientRecordIdSchema,
     /** The day the sample was taken or tested (YYYY-MM-DD). */
     testedAt: z.string().regex(DAY, 'Use a date like 2026-03-14'),
     labName: z.string().trim().max(150).nullable().optional(),

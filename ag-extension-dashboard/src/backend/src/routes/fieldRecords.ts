@@ -74,7 +74,9 @@ router.post('/:fieldId/soil-tests', fieldUsers, rejectDemoChanges, async (req: R
         }
         const field = await visibleField(req, res);
         if (!field) return;
-        return res.status(201).json({ success: true, data: await soilLabService.addForField(field, parsed.data) });
+        const saved = await soilLabService.addForField(field, parsed.data);
+        if (!saved) return res.status(409).json({ success: false, error: 'Another record already uses this id' });
+        return res.status(201).json({ success: true, data: saved });
     } catch (error) {
         logger.error('Failed to save soil test:', error);
         return safeError(res, 500, 'Failed to save soil test');
