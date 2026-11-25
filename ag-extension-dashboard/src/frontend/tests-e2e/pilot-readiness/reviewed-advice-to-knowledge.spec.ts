@@ -9,7 +9,8 @@ import { JOURNEY, apiAs, e2eAdmin, signedIn } from '../helpers/journey';
  * approves the document. Until then it answers no one.
  */
 const onSharedSite = Boolean(process.env.E2E_BASE_URL);
-const RUN = Date.now();
+// A marker of letters only: a long run of digits would rightly be refused as a phone number.
+const RUN = Date.now().toString(36).replace(/\d/g, digit => 'abcdefghij'[Number(digit)]);
 const ADVICE =
   `Scout maize for fall armyworm twice a week from emergence (run ${RUN}): walk a W pattern, check 20 plants at `
   + 'each of five points, and look for window-pane feeding and fresh frass in the funnel. Act when a fifth of plants show fresh damage.';
