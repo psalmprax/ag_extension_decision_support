@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
@@ -15,6 +15,8 @@ import { EncryptedStorageService } from '@/services/encryptedStorageService';
 import { AuthLayout } from '@/components/auth/AuthLayout';
 import { AUTH_CARD } from '@/components/ui/controlStyles';
 import { safeStorage } from '@/lib/safeStorage';
+import { useSignupChallenge } from '@/hooks/useSignupChallenge';
+import { SignupHoneypot } from '@/components/auth/SignupHoneypot';
 
 interface PublicConsultationSession {
   messages: Array<{ sender: 'user' | 'assistant'; text: string; language?: string; sourceBadge?: string }>;
@@ -97,6 +99,8 @@ export function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [managerNotice, setManagerNotice] = useState('');
+  const formToken = useSignupChallenge();
+  const honeypotRef = useRef<HTMLInputElement>(null);
 
   const regionOptions = getCountryConfig(formData.country)?.regions ?? [];
 
@@ -138,7 +142,7 @@ export function Register() {
         country: formData.country || undefined,
         region: formData.region.trim() || undefined,
       };
-      const data = await register(payload);
+      const data = await register(payload, { formToken, website: honeypotRef.current?.value ?? '' });
 
       // Handle nested response structure { success: true, data: { token, user } }
       // The JWT arrives as an httpOnly cookie — only the profile is stored.
@@ -230,6 +234,7 @@ export function Register() {
 
             {!managerNotice && (
               <form onSubmit={handleSubmit} className="space-y-4">
+                <SignupHoneypot ref={honeypotRef} />
                 <RegisterAccountFields
                   formData={formData}
                   onChange={handleChange}
