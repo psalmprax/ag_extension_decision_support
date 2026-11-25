@@ -7,8 +7,10 @@ const maxJavaScriptBytes = 700 * 1024;
 const maxTotalBytes = 6 * 1024 * 1024;
 // One translation file is fetched per user (LanguageContext: /locales/<lang>.json), and
 // nginx serves it gzipped (nginx.conf: gzip_comp_level 6), so the cap is on those bytes.
-// 80KB leaves room for every UI string translated, including 3-byte scripts (hi, zh, ar).
-const maxLocaleGzipBytes = 80 * 1024;
+// With about 3,070 strings fully translated the largest files are near 82KB (Greek, then
+// Russian, Ukrainian, Bengali and Hindi, whose letters take two or three bytes each); 96KB
+// leaves room for some 15% more strings while still failing a file that is bloated.
+const maxLocaleGzipBytes = 96 * 1024;
 const NGINX_GZIP_LEVEL = 6;
 
 async function collectFiles(directory) {

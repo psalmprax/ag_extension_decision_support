@@ -34,6 +34,12 @@ router.post('/quarantine/:id/clear', authorize(['admin', 'regional_manager']), a
       return res.status(400).json({ success: false, error: "verdict must be 'approve' or 'reject'" });
     }
     const result = await reviewQuarantinedDocument(req.params.id, verdict, reviewerId(req));
+    if (result.ownReviewedAdvice) {
+      return res.status(403).json({
+        success: false,
+        error: 'You approved this advice in the review queue; another manager or administrator must approve the document.',
+      });
+    }
     if (!result.cleared && !result.deleted) {
       return res.status(404).json({ success: false, error: 'Document not found or not quarantined' });
     }

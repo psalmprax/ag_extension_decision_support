@@ -15,6 +15,7 @@ import { resolveLocationFromHeaders } from '@/services/loginHistoryService';
 import { setAuthCookie } from '@/middleware/authCookie';
 import { buildUserProfileColumns } from '@/services/userQueryBuilder';
 import { resolveRegionalManager } from '@/services/regionalManagerResolver';
+import { joinNewUserTenant } from '@/services/newUserTenant';
 import { signSessionToken } from '@/utils/sessionToken';
 import { findCountry } from '@/shared-api/countries';
 import { toE164 } from '@/services/country/phone';
@@ -167,6 +168,12 @@ router.post('/register', [auditMiddleware('auth_register'), validate(registerSch
             userAgent: req.get('user-agent') || null,
             location: resolveLocationFromHeaders(req.headers, clientIp, newUser.region),
         }).catch(err => logger.warn(`Session for new user ${newUser.id} could not be persisted:`, err));
+
+        // An officer works in their regional manager's organisation; without one they could
+        // not open any farmer, even those their manager assigns to them.
+        await joinNewUserTenant((text, params) => query<{ tenant_id: string | null }>(text, params), newUser.id, {
+            managerId: managerResolution.managerId,
+        });
 
         setAuthCookie(res, token);
 

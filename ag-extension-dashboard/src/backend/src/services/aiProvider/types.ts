@@ -147,6 +147,8 @@ export interface ReasoningResult {
         videos?: Array<{ url: string; caption?: string }>;
     };
     toolCalls?: ToolCall[];
+    /** Tools whose output the answer was written from (the answer may depend on today's data). */
+    toolsUsed?: string[];
 }
 
 export interface ImageAnalysisOptions {

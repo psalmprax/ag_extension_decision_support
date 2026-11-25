@@ -76,19 +76,47 @@ export interface AskResponse {
   };
 }
 
+function knowledgeSearchPath(query: string, category?: string, crop?: string, v2 = true): string {
+  const params = new URLSearchParams();
+  if (query) params.append('q', query);
+  if (category) params.append('category', category);
+  if (crop) params.append('crop', crop);
+  if (v2) params.append('v2', 'true');
+  return `/knowledge/search?${params.toString()}`;
+}
+
 export const searchKnowledge = async (
   query: string,
   category?: string,
   crop?: string,
   v2: boolean = true
 ): Promise<SearchResponse> => {
-  const params = new URLSearchParams();
-  if (query) params.append('q', query);
-  if (category) params.append('category', category);
-  if (crop) params.append('crop', crop);
-  if (v2) params.append('v2', 'true');
+  const response = await apiClient.get<SearchResponse>(knowledgeSearchPath(query, category, crop, v2));
+  return response.data;
+};
 
-  const response = await apiClient.get<SearchResponse>(`/knowledge/search?${params.toString()}`);
+/**
+ * A keyword search hit as the API sends it. Searching with a term returns the title and
+ * category inside `metadata`; listing without one returns article rows with them at the top
+ * level. Either may be missing, so a hit is not yet a `KnowledgeArticle`.
+ */
+export interface KnowledgeSearchHit {
+  id: string;
+  content?: string;
+  title?: string;
+  category?: string;
+  score?: number;
+  metadata?: { title?: unknown; category?: unknown; [key: string]: unknown };
+}
+
+export interface KnowledgeSearchHitsResponse {
+  success: boolean;
+  data?: { articles?: KnowledgeSearchHit[]; total?: number };
+}
+
+/** Keyword search for quick lookups, such as the app-wide search box. */
+export const searchKnowledgeHits = async (query: string): Promise<KnowledgeSearchHitsResponse> => {
+  const response = await apiClient.get<KnowledgeSearchHitsResponse>(knowledgeSearchPath(query, undefined, undefined, false));
   return response.data;
 };
 

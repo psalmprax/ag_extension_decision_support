@@ -117,6 +117,50 @@ describe('Auth Routes', () => {
         });
     });
 
+    describe('POST /api/auth/login for a switched-off account', () => {
+        it('refuses the right password with 403 and issues no token', async () => {
+            mockQuery
+                .mockResolvedValueOnce({
+                    rows: [{
+                        id: 'user-left', email: 'left@example.com', password_hash: '$2a$10$hash', first_name: 'Gone',
+                        last_name: 'Officer', role: 'extension_officer', region: 'Rift Valley', mfa_enabled: false,
+                        is_demo: false, lockout_until: null, is_active: false,
+                    }],
+                    rowCount: 1,
+                })
+                .mockResolvedValue({ rows: [], rowCount: 0 });
+            mockVerifyPassword.mockResolvedValue(true);
+
+            const res = await request(app)
+                .post('/api/auth/login')
+                .send({ email: 'left@example.com', password: 'correctpassword' })
+                .expect(403);
+
+            expect(res.body).toMatchObject({ success: false, errorCode: 'ACCOUNT_DISABLED' });
+            expect(res.body.data).toBeUndefined();
+        });
+
+        it('answers a wrong password as for any account', async () => {
+            mockQuery
+                .mockResolvedValueOnce({
+                    rows: [{
+                        id: 'user-left', email: 'left@example.com', password_hash: '$2a$10$hash', first_name: 'Gone',
+                        last_name: 'Officer', role: 'extension_officer', region: 'Rift Valley', mfa_enabled: false,
+                        is_demo: false, lockout_until: null, is_active: false,
+                    }],
+                    rowCount: 1,
+                })
+                .mockResolvedValue({ rows: [], rowCount: 0 });
+            mockVerifyPassword.mockResolvedValue(false);
+
+            const res = await request(app)
+                .post('/api/auth/login')
+                .send({ email: 'left@example.com', password: 'wrong' })
+                .expect(401);
+            expect(res.body.errorCode).toBeUndefined();
+        });
+    });
+
     describe('POST /api/auth/demo', () => {
         it('returns 404 when demo not enabled', async () => {
             // Test with demo disabled via config

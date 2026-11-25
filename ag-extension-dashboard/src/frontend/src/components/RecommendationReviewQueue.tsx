@@ -7,6 +7,7 @@ import {
   updateRecommendationReview,
 } from '@/api/recommendationReviewService';
 import { useLanguage } from '@/lib/LanguageContext';
+import { ReviewedAdviceForm } from '@/components/ReviewedAdviceForm';
 
 interface RecommendationReviewQueueProps {
   addNotification: (notification: { type: 'info' | 'warning' | 'error' | 'success'; message: string }) => void;
@@ -38,7 +39,8 @@ function errorMessage(error: unknown, fallback: string): string {
 /**
  * AI recommendations awaiting a human check. Each decision needs a written
  * reason, which is stored with the review; the person who submitted an item
- * cannot decide it (the API enforces this and its message is shown).
+ * cannot decide it (the API enforces this and its message is shown). Approved
+ * advice stays open so the reviewer can add it to the knowledge base.
  */
 export function RecommendationReviewQueue({ addNotification }: RecommendationReviewQueueProps) {
   const { t } = useLanguage();
@@ -46,6 +48,16 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
   const [state, setState] = useState<'loading' | 'ready' | 'hidden' | 'error'>('loading');
   const [activeId, setActiveId] = useState<string | null>(null);
   const [reasons, setReasons] = useState<Record<string, string>>({});
+  const [approvedIds, setApprovedIds] = useState<Set<string>>(() => new Set());
+
+  const removeReview = (id: string) => {
+    setReviews(current => current.filter(reviewItem => reviewItem.id !== id));
+    setApprovedIds(current => {
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
+  };
 
   const loadReviews = useCallback(async () => {
     setState('loading');
@@ -73,7 +85,8 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
     setActiveId(item.id);
     try {
       await updateRecommendationReview(item.id, decision, reason);
-      setReviews(current => current.filter(reviewItem => reviewItem.id !== item.id));
+      if (decision === 'approved') setApprovedIds(current => new Set(current).add(item.id));
+      else removeReview(item.id);
       addNotification({ type: 'success', message: `Recommendation ${DECISION_LABEL[decision]}.` });
     } catch (error) {
       addNotification({ type: 'error', message: errorMessage(error, 'Unable to update recommendation review.') });
@@ -104,7 +117,7 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
           <h2 id="recommendation-review-heading" className="font-medium text-amber-950 dark:text-amber-100">{t('ui_recommendation_review_queue_recommendations_needing_review')}</h2>
           <p className="text-xs text-amber-800/80 dark:text-amber-200/70">{t('ui_recommendation_review_queue_check_ai_guidance_before_it_is_treat')}</p>
         </div>
-        <span className="ms-auto rounded-md bg-amber-200 px-2 py-1 font-mono text-xs font-medium text-amber-900 dark:bg-amber-900/60 dark:text-amber-100">{reviews.length}</span>
+        <span className="ms-auto rounded-md bg-amber-200 px-2 py-1 font-mono text-xs font-medium text-amber-900 dark:bg-amber-900/60 dark:text-amber-100">{reviews.length - approvedIds.size}</span>
       </div>
       <div className="space-y-3">
         {reviews.map(item => {
@@ -121,27 +134,33 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
               {item.trigger && (
                 <p className="mt-2 text-xs text-amber-800 dark:text-amber-200">{t('ui_recommendation_review_queue_queued_because')} {TRIGGER_LABEL[item.trigger]}</p>
               )}
-              <label htmlFor={reasonId} className="mt-3 block text-xs font-medium text-slate-700 dark:text-theme-text-secondary">{t('ui_recommendation_review_queue_reason_for_your_decision')}</label>
-              <textarea
-                id={reasonId}
-                rows={2}
-                maxLength={5000}
-                value={reasons[item.id] || ''}
-                onChange={e => setReasons(current => ({ ...current, [item.id]: e.target.value }))}
-                placeholder="What you checked and what the farmer should be told"
-                className="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 text-xs text-slate-800 dark:border-white/[0.12] dark:bg-theme-bg-primary dark:text-theme-text-primary"
-              />
-              <div className="mt-3 flex flex-wrap gap-2">
-                <button type="button" disabled={busy} onClick={() => void decide(item, 'approved')} className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50">
-                  {busy ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> : <Check className="h-3 w-3" aria-hidden="true" />} {t('ui_recommendation_review_queue_approve')}
-                </button>
-                <button type="button" disabled={busy} onClick={() => void decide(item, 'escalated')} className="inline-flex items-center gap-1 rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-800 disabled:opacity-50 dark:border-amber-700 dark:text-amber-200">
-                  <ChevronUp className="h-3 w-3" aria-hidden="true" /> {t('ui_recommendation_review_queue_escalate')}
-                </button>
-                <button type="button" disabled={busy} onClick={() => void decide(item, 'dismissed')} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 disabled:opacity-50 dark:border-white/[0.12] dark:text-theme-text-primary">
-                  <X className="h-3 w-3" aria-hidden="true" /> {t('ui_recommendation_review_queue_dismiss')}
-                </button>
-              </div>
+              {approvedIds.has(item.id) ? (
+                <ReviewedAdviceForm item={item} addNotification={addNotification} onDone={() => removeReview(item.id)} />
+              ) : (
+                <>
+                  <label htmlFor={reasonId} className="mt-3 block text-xs font-medium text-slate-700 dark:text-theme-text-secondary">{t('ui_recommendation_review_queue_reason_for_your_decision')}</label>
+                  <textarea
+                    id={reasonId}
+                    rows={2}
+                    maxLength={5000}
+                    value={reasons[item.id] || ''}
+                    onChange={e => setReasons(current => ({ ...current, [item.id]: e.target.value }))}
+                    placeholder="What you checked and what the farmer should be told"
+                    className="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 text-xs text-slate-800 dark:border-white/[0.12] dark:bg-theme-bg-primary dark:text-theme-text-primary"
+                  />
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button type="button" disabled={busy} onClick={() => void decide(item, 'approved')} className="inline-flex items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white disabled:opacity-50">
+                      {busy ? <Loader2 className="h-3 w-3 animate-spin" aria-hidden="true" /> : <Check className="h-3 w-3" aria-hidden="true" />} {t('ui_recommendation_review_queue_approve')}
+                    </button>
+                    <button type="button" disabled={busy} onClick={() => void decide(item, 'escalated')} className="inline-flex items-center gap-1 rounded-lg border border-amber-300 px-3 py-1.5 text-xs font-medium text-amber-800 disabled:opacity-50 dark:border-amber-700 dark:text-amber-200">
+                      <ChevronUp className="h-3 w-3" aria-hidden="true" /> {t('ui_recommendation_review_queue_escalate')}
+                    </button>
+                    <button type="button" disabled={busy} onClick={() => void decide(item, 'dismissed')} className="inline-flex items-center gap-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 disabled:opacity-50 dark:border-white/[0.12] dark:text-theme-text-primary">
+                      <X className="h-3 w-3" aria-hidden="true" /> {t('ui_recommendation_review_queue_dismiss')}
+                    </button>
+                  </div>
+                </>
+              )}
             </article>
           );
         })}

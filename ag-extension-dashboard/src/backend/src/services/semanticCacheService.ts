@@ -52,6 +52,26 @@ export class SemanticCacheService {
     }
 
     /**
+     * The entry stored under exactly this text (trimmed, lower case), without an embedding call.
+     * For answers that belong to one input, such as a summary of one officer's visit notes, where
+     * a merely similar input (another visit, another officer) must never be answered from cache.
+     */
+    static async findExact(queryText: string): Promise<CacheEntry | null> {
+        try {
+            const result = await query(`
+                SELECT query_text as "queryText", answer, context_used as "contextUsed", visuals, 1 as similarity
+                FROM search_cache
+                WHERE normalized_query = $1
+                LIMIT 1
+            `, [queryText.trim().toLowerCase()]);
+            return result.rows.length > 0 ? (result.rows[0] as CacheEntry) : null;
+        } catch (error) {
+            logger.error('Exact cache lookup failed:', error);
+            return null;
+        }
+    }
+
+    /**
      * Save a new result into the semantic cache
      */
     static async save(queryText: string, answer: string, contextUsed: any, visuals?: any): Promise<void> {

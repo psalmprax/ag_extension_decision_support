@@ -33,7 +33,15 @@ describe('Quarantine review (parole path for grounding quarantine)', () => {
     const result = await reviewQuarantinedDocument('doc-1', 'approve', 'admin-1');
     expect(result).toEqual({ cleared: true, deleted: false });
     expect(mockQuery.mock.calls[0][0]).toContain("array_remove(array_remove(tags, 'unverified_scrape'), 'pending_review')");
-    expect(mockQuery.mock.calls[0][1]).toEqual(['doc-1']);
+    expect(mockQuery.mock.calls[0][1]).toEqual(['doc-1', 'admin-1']);
+  });
+
+  it('does not let the agronomist who approved advice in the review queue also approve it as a document', async () => {
+    mockQuery.mockResolvedValueOnce({ rowCount: 0 }).mockResolvedValueOnce({ rowCount: 1 });
+    const result = await reviewQuarantinedDocument('doc-3', 'approve', 'agronomist-1');
+    expect(result).toEqual({ cleared: false, deleted: false, ownReviewedAdvice: true });
+    expect(mockQuery.mock.calls[0][0]).toContain('r.reviewed_by::text = $2');
+    expect(mockQuery.mock.calls[1][1]).toEqual(['doc-3', 'agronomist-1']);
   });
 
   it('rejects by deleting the poisoned row', async () => {
@@ -44,7 +52,7 @@ describe('Quarantine review (parole path for grounding quarantine)', () => {
   });
 
   it('reports not-found instead of succeeding silently', async () => {
-    mockQuery.mockResolvedValueOnce({ rowCount: 0 });
+    mockQuery.mockResolvedValueOnce({ rowCount: 0 }).mockResolvedValueOnce({ rowCount: 0 });
     const result = await reviewQuarantinedDocument('missing', 'approve', 'admin-1');
     expect(result).toEqual({ cleared: false, deleted: false });
   });

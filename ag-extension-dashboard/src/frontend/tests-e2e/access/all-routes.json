@@ -230,6 +230,7 @@
   "POST /api/v1/ai/execute",
   "POST /api/v1/ai/memories",
   "POST /api/v1/ai/reviews",
+  "POST /api/v1/ai/reviews/:id/knowledge-article",
   "POST /api/v1/ai/stop/:agentId",
   "POST /api/v1/ai/synthesize-visit",
   "POST /api/v1/ai/transcribe-audio",

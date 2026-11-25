@@ -1,8 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import { appLocale } from '@/lib/appLocale';
-import { searchKnowledge, KnowledgeArticle } from '@/api/knowledgeService';
+import { searchKnowledgeHits, type KnowledgeSearchHit } from '@/api/knowledgeService';
 import { Farmer, Visit, Report } from '../types/dashboard';
 import { useDemoMode, DEMO_FARMERS, DEMO_VISITS, DEMO_REPORTS } from '@/demo';
+
+/**
+ * A text field of a knowledge-base search hit. Searching with a term returns the title and
+ * category inside `metadata`; listing returns them at the top level. A missing title must not
+ * reach the search box: clicking such a result used to set the app's search text to undefined
+ * and crash the page.
+ */
+function articleField(article: KnowledgeSearchHit, field: 'title' | 'category'): string {
+  const value = article[field] ?? article.metadata?.[field];
+  return typeof value === 'string' ? value.trim() : '';
+}
 
 interface SearchResult {
   type: string;
@@ -161,19 +172,12 @@ export const useAppSearch = (
       };
     }
     try {
-      const knowledgeResults = await searchKnowledge(query, undefined, undefined, false);
-      if (knowledgeResults.success && knowledgeResults.data?.articles?.length > 0) {
-        return {
-          type: 'Knowledge',
-          items: knowledgeResults.data.articles
-            .slice(0, 3)
-            .map((a: KnowledgeArticle) => ({
-              id: a.id,
-              label: a.title,
-              sublabel: a.category || '',
-            })),
-        };
-      }
+      const knowledgeResults = await searchKnowledgeHits(query);
+      const items = (knowledgeResults.success ? knowledgeResults.data?.articles ?? [] : [])
+        .map(a => ({ id: a.id, label: articleField(a, 'title'), sublabel: articleField(a, 'category') }))
+        .filter(item => item.label)
+        .slice(0, 3);
+      if (items.length > 0) return { type: 'Knowledge', items };
     } catch {
       /* knowledge search optional */
     }

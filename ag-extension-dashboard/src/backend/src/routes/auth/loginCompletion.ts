@@ -64,6 +64,8 @@ export interface LoginUser {
 export interface LoginUserRow extends LoginUser {
     lockout_until?: Date | string | null;
     email_verified?: boolean | null;
+    /** false once an administrator switched the account off (someone who left). */
+    is_active?: boolean | null;
 }
 
 async function completePasswordLogin(req: Request, res: Response, user: LoginUser, clientIp: string | null): Promise<void> {

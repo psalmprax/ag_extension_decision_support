@@ -5,6 +5,8 @@ import { query, getPool, withTransaction, type TypedQueryResult } from '@/servic
 import type { CountRow, UserRow, UserPublicRow } from '@/types/rowTypes';
 import { mapUserPublicRows, mapUserPublicRow, mapUserRows } from '@/types/dtos';
 import { logger } from '@/utils/logger';
+import { resolveRegionalManager } from '@/services/regionalManagerResolver';
+import { joinNewUserTenant } from '@/services/newUserTenant';
 import { authorize } from '@/middleware/authorize';
 import { safeError } from '@/utils/safeResponse';
 import { countActiveSystemAdmins, isSystemAdminUser } from '@/services/systemAdminService';
@@ -820,6 +822,15 @@ router.post('/', authorize(['admin']), async (req: Request, res: Response) => {
         if (!dto) {
             return res.status(409).json({ success: false, error: 'Email already registered' });
         }
+        // The new account joins an organisation: an officer their region's manager's, anyone
+        // else the creating administrator's. Without one it could not open any farmer.
+        const regionManager = data.normalizedRole === 'extension_officer'
+            ? (await resolveRegionalManager(data.region, data.country)).managerId
+            : null;
+        await joinNewUserTenant((text, params) => query<{ tenant_id: string | null }>(text, params), dto.id, {
+            managerId: regionManager,
+            creatorId: req.user?.userId,
+        });
 
         return res.status(201).json({ success: true, data: dto });
     } catch (error) {

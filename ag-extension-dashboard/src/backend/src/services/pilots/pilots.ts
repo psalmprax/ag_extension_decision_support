@@ -86,7 +86,8 @@ export async function startPilot(principal: PilotPrincipal, id: string): Promise
     if (pilot.status !== 'draft') throw new PilotError('This pilot has already started.', 409);
     const { rows } = await query<{ id: string; farm_size_hectares: number | null }>(
         `SELECT f.id, f.farm_size_hectares FROM farmers f
-          WHERE f.region = $1 AND ($2::text IS NULL OR f.country = $2) AND COALESCE(f.is_demo, false) = false`,
+          WHERE f.region = $1 AND ($2::text IS NULL OR f.country = $2) AND COALESCE(f.is_demo, false) = false
+            AND COALESCE(f.is_active, true) = true`,
         [pilot.region, pilot.country],
     );
     if (rows.length < 2) throw new PilotError('A pilot needs at least two farmers in the region.');

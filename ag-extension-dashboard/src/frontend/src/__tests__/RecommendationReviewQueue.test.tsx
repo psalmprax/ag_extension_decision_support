@@ -1,15 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { RecommendationReviewQueue } from '@/components/RecommendationReviewQueue';
-import { fetchRecommendationReviews, updateRecommendationReview } from '@/api/recommendationReviewService';
+import { addReviewedAdviceToKnowledge, fetchRecommendationReviews, updateRecommendationReview } from '@/api/recommendationReviewService';
 
 vi.mock('@/api/recommendationReviewService', () => ({
   fetchRecommendationReviews: vi.fn(),
   updateRecommendationReview: vi.fn(),
+  addReviewedAdviceToKnowledge: vi.fn(),
 }));
 
 const mockFetch = fetchRecommendationReviews as unknown as ReturnType<typeof vi.fn>;
 const mockUpdate = updateRecommendationReview as unknown as ReturnType<typeof vi.fn>;
+const mockAddToKnowledge = vi.mocked(addReviewedAdviceToKnowledge);
+const ADVICE = 'Scout 20 plants in a W pattern each week and record the share with fresh damage and live larvae; confirm the local threshold with the extension office.';
 
 const item = {
   id: 'r1', farmer_id: 'f1', report_id: null, recommendation: 'Apply 50 kg/ha urea at knee height.',
@@ -22,7 +25,57 @@ describe('RecommendationReviewQueue', () => {
   beforeEach(() => {
     mockFetch.mockReset();
     mockUpdate.mockReset();
+    mockAddToKnowledge.mockReset();
     addNotification.mockReset();
+  });
+
+  const approve = async (recommendation = item.recommendation) => {
+    mockFetch.mockResolvedValue({ success: true, data: [{ ...item, recommendation }] });
+    mockUpdate.mockResolvedValue({ success: true, data: { ...item, status: 'approved' } });
+    render(<RecommendationReviewQueue addNotification={addNotification} />);
+    fireEvent.change(await screen.findByLabelText('Reason for your decision'), { target: { value: 'Matches the county scouting guide.' } });
+    fireEvent.click(screen.getByRole('button', { name: /Approve/ }));
+    await screen.findByRole('heading', { name: 'Approved. Add this advice to the knowledge base?' });
+  };
+
+  it('after approving, offers to add the advice to the knowledge base, prefilled and editable', async () => {
+    await approve(ADVICE);
+    expect(screen.getByLabelText('Advice')).toHaveValue(ADVICE);
+    mockAddToKnowledge.mockResolvedValue({ success: true, data: { knowledgeArticleId: 'a1', pendingReview: true } });
+
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Fall armyworm scouting' } });
+    fireEvent.change(screen.getByLabelText('Crops'), { target: { value: 'maize, sorghum ' } });
+    fireEvent.change(screen.getByLabelText('Sources (optional)'), { target: { value: 'County scouting guide 2024' } });
+    fireEvent.click(screen.getByRole('button', { name: /Add to knowledge base/ }));
+
+    await waitFor(() => expect(mockAddToKnowledge).toHaveBeenCalledWith('r1', {
+      title: 'Fall armyworm scouting', content: ADVICE, crops: ['maize', 'sorghum'], sources: 'County scouting guide 2024',
+    }));
+    expect(addNotification).toHaveBeenCalledWith({ type: 'success', message: 'Added. It will answer questions once a manager approves the document.' });
+    await waitFor(() => expect(screen.queryByText(ADVICE)).not.toBeInTheDocument());
+  });
+
+  it('asks for a title and enough advice before sending', async () => {
+    await approve(ADVICE);
+    fireEvent.click(screen.getByRole('button', { name: /Add to knowledge base/ }));
+    expect(mockAddToKnowledge).not.toHaveBeenCalled();
+    expect(addNotification).toHaveBeenCalledWith({ type: 'warning', message: 'Give it a title and at least 80 characters of advice.' });
+  });
+
+  it("shows the API's refusal, e.g. the farmer's name is still in the text, and keeps the form", async () => {
+    await approve(ADVICE);
+    mockAddToKnowledge.mockRejectedValue({ response: { status: 400, data: { error: "Remove the farmer's name first" } } });
+    fireEvent.change(screen.getByLabelText('Title'), { target: { value: 'Fall armyworm scouting' } });
+    fireEvent.click(screen.getByRole('button', { name: /Add to knowledge base/ }));
+    await waitFor(() => expect(addNotification).toHaveBeenCalledWith({ type: 'error', message: "Remove the farmer's name first" }));
+    expect(screen.getByLabelText('Advice')).toBeInTheDocument();
+  });
+
+  it('can be closed without adding anything', async () => {
+    await approve(ADVICE);
+    fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
+    expect(mockAddToKnowledge).not.toHaveBeenCalled();
+    await waitFor(() => expect(screen.queryByLabelText('Advice')).not.toBeInTheDocument());
   });
 
   it('shows why each item was queued', async () => {
