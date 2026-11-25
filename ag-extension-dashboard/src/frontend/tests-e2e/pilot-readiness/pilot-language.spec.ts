@@ -49,7 +49,7 @@ test('a farmer asks in Swahili and is answered in Swahili', async ({ browser }) 
   await expect(page.getByRole('heading', { name: 'Afisa wangu wa ugani' })).toBeVisible();
   await expectNoRawKeys(page, 'the farmer\'s conversation page');
 
-  const sent = page.waitForRequest(request => request.url().includes('/api/v1/chatbot/messages') && request.method() === 'POST');
+  const sent = page.waitForRequest(request => new URL(request.url()).pathname.endsWith('/chatbot/messages') && request.method() === 'POST');
   await page.getByLabel('Ujumbe kwa afisa wako').fill(`Majani ya mahindi yangu yana madoa ya njano (${RUN}). Nifanye nini?`);
   await page.getByRole('button', { name: 'Uliza AI', exact: true }).click();
   expect((await sent).postDataJSON().language, 'the question is saved as Swahili').toBe('sw');

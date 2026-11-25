@@ -18,7 +18,8 @@ import { imageSizeOf, openMenu, pngPhoto } from '../helpers/journey';
  * phone's ONNX runtime, the manifest rules, the screens and the online check.
  */
 const STAND_IN_MODEL = readFileSync(new URL('../fixtures/stand-in-disease-model.onnx', import.meta.url));
-const ONLINE_CHECK = '/api/v1/ai/diseases/diagnose/image';
+// The app calls it under /api or /api/v1, depending on how the site is built.
+const ONLINE_CHECK = '/ai/diseases/diagnose/image';
 const MAX_SIDE = 1024;
 
 /** The manifest the app reads: one model that passes the field gate, sure from 60% for maize or for no crop. */
@@ -84,7 +85,8 @@ test.describe.serial('a leaf photo is checked on the phone first', () => {
 
     await expect(page.getByText('Checked on this phone').first()).toBeVisible({ timeout: 60_000 });
     await expect(page.getByText('The model on this phone was sure enough, so the photo was not sent for the online check.')).toBeVisible();
-    await expect(page.getByText('Maize fall armyworm').first()).toBeVisible();
+    // The label maps to the known condition, shown by its own name.
+    await expect(page.getByText('Fall Armyworm (FAW) Infestation').first()).toBeVisible();
     // A phone answer is never a prescription.
     await expect(page.getByText(/Not confirmed\. Treatment advice is held back until an extension officer confirms the diagnosis\./)).toBeVisible();
     await expect(page.getByRole('button', { name: 'Check with the online model' })).toBeVisible();

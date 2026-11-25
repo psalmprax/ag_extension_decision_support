@@ -22,11 +22,15 @@ test('when an officer leaves, their farmers move to a colleague with their histo
   test.skip(Boolean(process.env.E2E_BASE_URL), 'adds and removes staff accounts');
   const administrator = await apiAs(request, admin!.email, admin!.password);
 
-  // A new officer joins the region's team, in the regional manager's organisation.
+  // A new officer joins the region's team, in the regional manager's organisation, on the
+  // Pro plan the pilot's field staff work on (visits are a paid feature).
+  const plans = ((await (await administrator.get('/api/v1/billing/quotas')).json()) as { data: Array<{ id: string; name: string }> }).data;
+  const pro = plans.find(plan => /^pro$/i.test(plan.name));
+  expect(pro, 'the Pro plan').toBeTruthy();
   const email = uniqueOfficerEmail();
   const created = await administrator.post('/api/v1/users', {
     email, password: SEEDED_PASSWORD, firstName: 'Grace', lastName: `Leaving${RUN}`,
-    role: 'extension_officer', region: SEEDED.managerNakuru.region, country: 'Kenya',
+    role: 'extension_officer', region: SEEDED.managerNakuru.region, country: 'Kenya', planId: pro!.id,
   });
   expect(created.status(), await created.text()).toBe(201);
   const leaverId = ((await created.json()) as { data: { id: string } }).data.id;
