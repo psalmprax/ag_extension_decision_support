@@ -3054,7 +3054,7 @@
     "weather_recent_summary": "{rain} mm of rain; daily mean temperature {min} to {max} °C",
     "weather_recent_rain_by_day": "Rain by day, mm",
     "ui_reviewed_advice_heading": "Approved. Add this advice to the knowledge base?",
-    "ui_reviewed_advice_explainer": "Other people's questions can then be answered from it, once a manager or administrator approves the document. Correct the advice here if needed, and take out the farmer's name and phone number: everyone can read it.",
+    "ui_reviewed_advice_explainer": "Other people's questions can then be answered from it, once a manager or administrator approves the document. Correct the advice here if needed, and take out the farmer's name, phone number and email address: everyone can read it.",
     "ui_reviewed_advice_title": "Title",
     "ui_reviewed_advice_title_placeholder": "For example: Fall armyworm scouting",
     "ui_reviewed_advice_crops": "Crops",
