@@ -2,7 +2,7 @@ import express from 'express';
 import request from 'supertest';
 import { query, withTransaction } from '../services/databaseService';
 import { getFarmerForPrincipal } from '../services/dataGovernanceService';
-import { VectorService } from '../services/vectorService';
+import { getEmbedding } from '../services/embeddingCache';
 import { countryOfUser } from '../services/country/countryContext';
 import { findPersonalDetails } from '../services/knowledge/reviewedAnswers';
 
@@ -11,7 +11,7 @@ jest.mock('../services/dataGovernanceService', () => ({
     getFarmerForPrincipal: jest.fn(),
     getPrincipalTenantId: jest.fn(),
 }));
-jest.mock('../services/vectorService', () => ({ VectorService: { upsertDocument: jest.fn() } }));
+jest.mock('../services/embeddingCache', () => ({ getEmbedding: jest.fn() }));
 jest.mock('../services/country/countryContext', () => ({ countryOfUser: jest.fn() }));
 jest.mock('../utils/logger', () => ({
     logger: { info: jest.fn(), warn: jest.fn(), error: jest.fn(), debug: jest.fn() },
@@ -32,7 +32,7 @@ app.use('/ai/reviews', reviewsRouter);
 const mockQuery = query as jest.Mock;
 const mockTransaction = withTransaction as jest.Mock;
 const mockFarmer = getFarmerForPrincipal as jest.Mock;
-const mockUpsert = VectorService.upsertDocument as jest.Mock;
+const mockEmbedding = getEmbedding as jest.Mock;
 const mockCountry = countryOfUser as jest.Mock;
 const client = { query: jest.fn() };
 
@@ -59,7 +59,7 @@ beforeEach(() => {
     jest.clearAllMocks();
     mockFarmer.mockResolvedValue({ id: 'f1', tenant_id: 't1' });
     mockCountry.mockResolvedValue(null);
-    mockUpsert.mockResolvedValue(undefined);
+    mockEmbedding.mockResolvedValue([0.1, 0.2, 0.3]);
     mockTransaction.mockImplementation(async (callback: (c: typeof client) => Promise<unknown>) => callback(client));
     client.query.mockReset()
         .mockResolvedValueOnce({ rows: [{ knowledge_article_id: null }] })
@@ -69,7 +69,7 @@ beforeEach(() => {
 
 describe('adding approved advice to the knowledge base', () => {
     it('saves it for document review, with who approved it, when, and its sources', async () => {
-        mockQuery.mockResolvedValueOnce({ rows: [reviewRow()] });
+        mockQuery.mockResolvedValueOnce({ rows: [reviewRow()] }).mockResolvedValueOnce({ rows: [], rowCount: 1 });
 
         const res = await request(app).post('/ai/reviews/r1/knowledge-article').set(as('extension_officer', 'agronomist-1')).send(ADVICE);
 
@@ -84,16 +84,22 @@ describe('adding approved advice to the knowledge base', () => {
         expect(params[6]).toEqual(['Kenya']);
         expect(params[7]).toBe('Advice approved by Achieng Otieno, 2026-11-20');
         expect(client.query.mock.calls[2]).toEqual(['UPDATE recommendation_reviews SET knowledge_article_id = $1 WHERE id = $2', ['article-1', 'r1']]);
-        expect(mockUpsert).toHaveBeenCalledWith('article-1', expect.any(String), expect.objectContaining({ tags: ['reviewed_answer', 'pending_review'] }));
+        // Only the embedding is written afterwards: no insert, and the tags are left as they are.
+        expect(mockEmbedding).toHaveBeenCalledWith(params[1]);
+        expect(mockQuery.mock.calls[1]).toEqual([
+            'UPDATE knowledge_articles SET embedding = $1::double precision[] WHERE id = $2',
+            [[0.1, 0.2, 0.3], 'article-1'],
+        ]);
     });
 
     it('still saves it when the embedding cannot be made (keyword search finds it; the backfill embeds it)', async () => {
         mockQuery.mockResolvedValueOnce({ rows: [reviewRow()] });
-        mockUpsert.mockRejectedValueOnce(new Error('embedding provider out of credit'));
+        mockEmbedding.mockRejectedValueOnce(new Error('embedding provider out of credit'));
 
         const res = await request(app).post('/ai/reviews/r1/knowledge-article').set(as('extension_officer', 'agronomist-1')).send(ADVICE);
 
         expect(res.status).toBe(201);
+        expect(mockQuery).toHaveBeenCalledTimes(1);
     });
 
     it("refuses text with the farmer's name, a phone number or an email address", async () => {
@@ -104,6 +110,18 @@ describe('adding approved advice to the knowledge base', () => {
 
         expect(res.status).toBe(400);
         expect(res.body.error).toContain("the farmer's name");
+        expect(mockTransaction).not.toHaveBeenCalled();
+    });
+
+    it.each([
+        ['the category', { category: 'Advice for Wanjiru' }],
+        ['a crop', { crops: ['maize', 'Kamau plot'] }],
+    ])("checks %s for personal details too", async (_field, overrides) => {
+        mockQuery.mockResolvedValue({ rows: [reviewRow()] });
+
+        const res = await request(app).post('/ai/reviews/r1/knowledge-article').set(as('extension_officer', 'agronomist-1')).send({ ...ADVICE, ...overrides });
+
+        expect(res.status).toBe(400);
         expect(mockTransaction).not.toHaveBeenCalled();
     });
 
@@ -162,7 +180,15 @@ describe('personal details in shared text', () => {
         expect(findPersonalDetails('Write to agent@example.org.', farmer)).toEqual(['an email address']);
     });
 
-    it('does not flag ordinary agronomic text', () => {
+    it('finds a short full name such as "Bo Li", but not inside other words', () => {
+        const shortNames = { first_name: 'Bo', last_name: 'Li', phone: null };
+        expect(findPersonalDetails('Bo Li should scout again on Friday.', shortNames)).toEqual(["the farmer's name"]);
+        expect(findPersonalDetails('Ask bo  li about the plot.', shortNames)).toEqual(["the farmer's name"]);
+        expect(findPersonalDetails('Bolivia and boli beans; Li is not the whole name.', shortNames)).toEqual([]);
+    });
+
+    it('does not flag ordinary agronomic text, categories or crops', () => {
+        expect(findPersonalDetails('Reviewed advice\nmaize\nsorghum', farmer)).toEqual([]);
         expect(findPersonalDetails('Plant in rows 75 cm apart with 25 cm between plants; scout 20 plants weekly from 2 to 8 weeks.', farmer)).toEqual([]);
         expect(findPersonalDetails('Amaranth and mensahweed are not names here.', farmer)).toEqual([]);
     });

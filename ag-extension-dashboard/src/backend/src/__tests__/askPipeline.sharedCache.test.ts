@@ -3,7 +3,7 @@ import { checkExactCachesOnly } from '@/services/knowledge/cacheLookup';
 import { callReasoningAgentic } from '@/services/knowledge/reasoning';
 import { logSearch } from '@/services/knowledge/searchLog';
 import { VectorService } from '@/services/vectorService';
-import { findSharedAnswer, saveSharedAnswer, KNOWLEDGE_BASE_DAYS } from '@/services/knowledge/sharedAnswerCache';
+import { findSharedAnswer, knowledgeSourcesRevision, saveSharedAnswer, KNOWLEDGE_BASE_DAYS } from '@/services/knowledge/sharedAnswerCache';
 import type { SearchResult } from '@/services/vectorService';
 import type { ReasoningResult } from '@/services/aiProvider/aiProvider';
 import type { FinalAnswer } from '@/services/knowledge/types';
@@ -18,6 +18,7 @@ jest.mock('@/services/knowledge/sharedAnswerCache', () => ({
     ...jest.requireActual('@/services/knowledge/sharedAnswerCache'),
     findSharedAnswer: jest.fn().mockResolvedValue(null),
     saveSharedAnswer: jest.fn().mockResolvedValue(undefined),
+    knowledgeSourcesRevision: jest.fn(),
 }));
 jest.mock('@/services/knowledge/userContext', () => ({
     resolveUserContext: jest.fn(async () => ({ crop: 'maize', country: 'Kenya', region: 'Nakuru' })),
@@ -43,6 +44,7 @@ jest.mock('@/utils/logger', () => ({
 }));
 
 const QUESTION = 'How do I control fall armyworm in maize?';
+const REVISION = { articleIds: [ARTICLE], fingerprint: 'as-retrieved' };
 
 describe('answers shared between users', () => {
     beforeEach(() => {
@@ -54,6 +56,7 @@ describe('answers shared between users', () => {
             score: 0.9,
         }]);
         jest.mocked(callReasoningAgentic).mockResolvedValue({ answer: ANSWER, reasoning: 'From the scouting guide.' });
+        jest.mocked(knowledgeSourcesRevision).mockResolvedValue(REVISION);
     });
 
     it('keeps an answer written from knowledge-base sources for 30 days, under a key without the user', async () => {
@@ -61,9 +64,11 @@ describe('answers shared between users', () => {
         await runAskQuestion('user-2', QUESTION, undefined, { language: 'en' });
 
         expect(saveSharedAnswer).toHaveBeenCalledTimes(2);
-        const [firstKey, response, days] = jest.mocked(saveSharedAnswer).mock.calls[0]!;
+        const [firstKey, response, days, revision] = jest.mocked(saveSharedAnswer).mock.calls[0]!;
         expect(jest.mocked(saveSharedAnswer).mock.calls[1]![0]).toBe(firstKey);
         expect(days).toBe(KNOWLEDGE_BASE_DAYS);
+        expect(revision).toBe(REVISION);
+        expect(jest.mocked(knowledgeSourcesRevision).mock.calls[0]![0].map(item => item.id)).toEqual([ARTICLE]);
         expect(response.answer).toContain('Scout 20 plants');
         expect(jest.mocked(findSharedAnswer).mock.calls[0]![0]).toBe(firstKey);
     });
@@ -106,6 +111,21 @@ describe('answers shared between users', () => {
 
         expect(saveSharedAnswer).not.toHaveBeenCalled();
         expect(result.toolsUsed).toBeUndefined();
+    });
+
+    it('does not share the answer when its sources could not be fingerprinted when retrieved', async () => {
+        jest.mocked(knowledgeSourcesRevision).mockResolvedValueOnce(null);
+
+        await runAskQuestion('user-1', QUESTION);
+
+        expect(saveSharedAnswer).not.toHaveBeenCalled();
+    });
+
+    it('does not fingerprint sources for questions that are never shared', async () => {
+        await runAskQuestion('user-1', QUESTION, [{ type: 'image', data: 'photo' }]);
+
+        expect(knowledgeSourcesRevision).not.toHaveBeenCalled();
+        expect(saveSharedAnswer).not.toHaveBeenCalled();
     });
 
     it('uses a different shared answer for another country or language', async () => {

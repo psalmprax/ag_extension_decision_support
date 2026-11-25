@@ -2,6 +2,7 @@ import { createHash } from 'crypto';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
 import type { FinalAnswer, KnowledgeAttachment } from '@/services/knowledge/types';
+import type { SearchResult } from '@/services/vectorService';
 
 /**
  * Answers shared between users: when one person's question was answered from real sources,
@@ -16,9 +17,10 @@ import type { FinalAnswer, KnowledgeAttachment } from '@/services/knowledge/type
  *   - no photo or file was attached.
  * Answers from knowledge-base articles are kept 30 days; answers that also drew on web search
  * results (searched over the past week) are kept 7. The month is part of the key, so a seasonal
- * answer is never reused in a later month. Before reuse, the knowledge-base articles behind the
- * answer are compared with how they were when it was saved: an article since edited, re-tagged
- * for review or deleted means the answer is dropped and a new one is made.
+ * answer is never reused in a later month. The knowledge-base articles behind the answer are
+ * fingerprinted when they are retrieved; the answer is saved only if they are unchanged when it
+ * is written, and before reuse they are compared again: an article since edited, re-tagged for
+ * review or deleted means the answer is dropped and a new one is made.
  *
  * The key is a hash: no user id and no question text is stored.
  */
@@ -86,10 +88,14 @@ export interface SharedAnswerCandidate {
     toolsUsed?: string[];
 }
 
+/** Whether an answer to this question could be shared at all, before it is written. */
+export function mayBeShared(categories: string[], attachments?: KnowledgeAttachment[]): boolean {
+    return !attachments?.length && !categories.some(category => REAL_TIME_CATEGORIES.has(category));
+}
+
 /** How many days this answer may be shared, or null when it must not be. */
 export function sharedAnswerDays({ response, categories, attachments, toolsUsed }: SharedAnswerCandidate): number | null {
-    if (attachments?.length || toolsUsed?.length) return null;
-    if (categories.some(category => REAL_TIME_CATEGORIES.has(category))) return null;
+    if (toolsUsed?.length || !mayBeShared(categories, attachments)) return null;
     if (response.answerMode !== 'generated') return null;
     if (typeof response.answer !== 'string' || response.answer.length < MIN_ANSWER_LENGTH) return null;
 
@@ -106,8 +112,29 @@ export function sharedAnswerDays({ response, categories, attachments, toolsUsed 
     return ids.some(id => WEB_RESULT_ID.test(id)) ? WEB_SOURCE_DAYS : KNOWLEDGE_BASE_DAYS;
 }
 
-function knowledgeArticleIds(response: FinalAnswer): string[] {
-    return [...new Set(response.contextUsed.map(source => String(source.id)).filter(id => KNOWLEDGE_ARTICLE_ID.test(id)))];
+function knowledgeArticleIds(sources: SearchResult[]): string[] {
+    return [...new Set(sources.map(source => String(source.id)).filter(id => KNOWLEDGE_ARTICLE_ID.test(id)))];
+}
+
+/** The knowledge-base articles an answer is written from, as they were when retrieved. */
+export interface SourcesRevision {
+    articleIds: string[];
+    fingerprint: string;
+}
+
+export async function knowledgeSourcesRevision(sources: SearchResult[]): Promise<SourcesRevision | null> {
+    const articleIds = knowledgeArticleIds(sources);
+    try {
+        const result = await query<{ fingerprint: string }>(
+            'SELECT knowledge_sources_fingerprint($1::uuid[]) AS fingerprint',
+            [articleIds],
+        );
+        const fingerprint = result.rows[0]?.fingerprint;
+        return fingerprint ? { articleIds, fingerprint } : null;
+    } catch (error) {
+        logger.warn('Could not fingerprint the answer sources; the answer will not be shared:', error);
+        return null;
+    }
 }
 
 /** What is stored: the answer without its spoken audio and without the per-request cache flag. */
@@ -124,11 +151,17 @@ function isStoredAnswer(value: unknown): value is Omit<FinalAnswer, 'cached'> {
     return typeof answer.answer === 'string' && answer.answer.length >= MIN_ANSWER_LENGTH && Array.isArray(answer.contextUsed);
 }
 
-export async function saveSharedAnswer(key: string, response: FinalAnswer, days: number): Promise<void> {
+/**
+ * Saves the answer only while its sources still match `revision`, taken when they were
+ * retrieved: an article edited while the answer was being written would otherwise be stored
+ * with the new article's fingerprint and an answer written from the old one.
+ */
+export async function saveSharedAnswer(key: string, response: FinalAnswer, days: number, revision: SourcesRevision): Promise<void> {
     try {
-        await query(
+        const saved = await query(
             `INSERT INTO shared_answer_cache (scope_key, answer, source_ids, sources_fingerprint, expires_at)
-             VALUES ($1, $2::jsonb, $3::uuid[], knowledge_sources_fingerprint($3::uuid[]), NOW() + make_interval(days => $4::int))
+             SELECT $1, $2::jsonb, $3::uuid[], knowledge_sources_fingerprint($3::uuid[]), NOW() + make_interval(days => $4::int)
+             WHERE knowledge_sources_fingerprint($5::uuid[]) = $6
              ON CONFLICT (scope_key) DO UPDATE SET
                  answer = EXCLUDED.answer,
                  source_ids = EXCLUDED.source_ids,
@@ -137,8 +170,11 @@ export async function saveSharedAnswer(key: string, response: FinalAnswer, days:
                  created_at = NOW(),
                  last_hit_at = NULL,
                  expires_at = EXCLUDED.expires_at`,
-            [key, JSON.stringify(storedAnswer(response)), knowledgeArticleIds(response), days],
+            [key, JSON.stringify(storedAnswer(response)), knowledgeArticleIds(response.contextUsed), days, revision.articleIds, revision.fingerprint],
         );
+        if ((saved.rowCount ?? 0) === 0) {
+            logger.info('Not saving the answer for reuse: a source article changed while it was being written.');
+        }
         await query('DELETE FROM shared_answer_cache WHERE expires_at <= NOW()');
     } catch (error) {
         logger.warn('Could not save the answer for reuse:', error);

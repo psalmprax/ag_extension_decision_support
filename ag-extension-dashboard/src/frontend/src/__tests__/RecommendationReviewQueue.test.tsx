@@ -11,7 +11,7 @@ vi.mock('@/api/recommendationReviewService', () => ({
 
 const mockFetch = fetchRecommendationReviews as unknown as ReturnType<typeof vi.fn>;
 const mockUpdate = updateRecommendationReview as unknown as ReturnType<typeof vi.fn>;
-const mockAddToKnowledge = addReviewedAdviceToKnowledge as unknown as ReturnType<typeof vi.fn>;
+const mockAddToKnowledge = vi.mocked(addReviewedAdviceToKnowledge);
 const ADVICE = 'Scout 20 plants in a W pattern each week and record the share with fresh damage and live larvae; confirm the local threshold with the extension office.';
 
 const item = {

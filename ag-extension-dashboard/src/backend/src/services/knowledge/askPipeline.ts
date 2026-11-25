@@ -29,10 +29,13 @@ import { selectEvidence } from './relevanceGate';
 import {
     ADVISORY_CACHE_VERSION,
     findSharedAnswer,
+    knowledgeSourcesRevision,
+    mayBeShared,
     saveSharedAnswer,
     sharedAnswerDays,
     sharedAnswerKey,
     type SharedAnswerCandidate,
+    type SourcesRevision,
 } from './sharedAnswerCache';
 
 /**
@@ -165,12 +168,15 @@ function handleAskQuestionFallback(queryText: string, contextResults: SearchResu
 interface AnswerCacheKeys {
     redisKey: string;
     sharedKey: string;
+    /** The knowledge-base sources as retrieved; null when the answer cannot be shared. */
+    sourcesRevision: SourcesRevision | null;
 }
 
 /** Keep the answer for other people who ask the same thing, when it is safe to share. */
-function shareIfSafe(sharedKey: string, candidate: SharedAnswerCandidate): void {
+function shareIfSafe(keys: AnswerCacheKeys, candidate: SharedAnswerCandidate): void {
+    if (!keys.sourcesRevision) return;
     const days = sharedAnswerDays(candidate);
-    if (days !== null) void saveSharedAnswer(sharedKey, candidate.response, days);
+    if (days !== null) void saveSharedAnswer(keys.sharedKey, candidate.response, days, keys.sourcesRevision);
 }
 
 /** Post-process, attach context, cache-and-log, and return the final answer payload. */
@@ -219,7 +225,7 @@ async function finalizeAnswer(
     };
 
     await cacheAndLogResponse(userId, queryText, attachments, keys.redisKey, queryCategories, response);
-    shareIfSafe(keys.sharedKey, { response, categories: queryCategories, attachments, toolsUsed: reasoningResult.toolsUsed });
+    shareIfSafe(keys, { response, categories: queryCategories, attachments, toolsUsed: reasoningResult.toolsUsed });
     return response;
 }
 
@@ -479,9 +485,12 @@ export async function runAskQuestion(
         userContext
     );
 
+    // Fingerprint the sources now, before the answer is written from them (see saveSharedAnswer).
+    const sourcesRevision = mayBeShared(queryCategories, attachments) ? await knowledgeSourcesRevision(contextResults) : null;
+
     try {
         const reasoningResult = await callReasoningAgentic(contextText, cleanQueryText, attachments, reasonOptions, queryCategories);
-        return await finalizeAnswer(userId, cleanQueryText, { redisKey, sharedKey }, queryCategories, contextResults, reasoningResult, attachments, reasonOptions);
+        return await finalizeAnswer(userId, cleanQueryText, { redisKey, sharedKey, sourcesRevision }, queryCategories, contextResults, reasoningResult, attachments, reasonOptions);
     } catch (error) {
         const fallback = handleAskQuestionFallback(cleanQueryText, contextResults, error);
         return buildFallbackResponse(userId, cleanQueryText, queryCategories, fallback, reasonOptions);

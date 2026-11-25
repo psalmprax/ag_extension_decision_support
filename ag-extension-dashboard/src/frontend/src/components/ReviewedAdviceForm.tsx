@@ -17,8 +17,14 @@ const MIN_ADVICE = 80;
 const FIELD_CLASS = 'mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 text-xs text-slate-800 dark:border-white/[0.12] dark:bg-theme-bg-primary dark:text-theme-text-primary';
 const LABEL_CLASS = 'mt-3 block text-xs font-medium text-slate-700 dark:text-theme-text-secondary';
 
+function field(value: unknown, name: string): unknown {
+  return typeof value === 'object' && value !== null ? (value as Record<string, unknown>)[name] : undefined;
+}
+
+/** The API's own message (`response.data.error`) when there is one. */
 function apiError(error: unknown): string | undefined {
-  return (error as { response?: { data?: { error?: string } } })?.response?.data?.error;
+  const message = field(field(field(error, 'response'), 'data'), 'error');
+  return typeof message === 'string' ? message : undefined;
 }
 
 /**

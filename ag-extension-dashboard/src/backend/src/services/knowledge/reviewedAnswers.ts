@@ -2,7 +2,7 @@ import type { PoolClient } from 'pg';
 import { query, withTransaction } from '@/services/databaseService';
 import { getFarmerForPrincipal, type RequestPrincipal } from '@/services/dataGovernanceService';
 import { countryOfUser } from '@/services/country/countryContext';
-import { VectorService } from '@/services/vectorService';
+import { getEmbedding } from '@/services/embeddingCache';
 import { findCountry } from '@/shared-api/countries';
 import { logger } from '@/utils/logger';
 
@@ -81,11 +81,21 @@ function escapeRegExp(value: string): string {
 const PHONE_NUMBER = /\+?\d(?:[\s().-]*\d){8,}/;
 const EMAIL_ADDRESS = /[^\s@]+@[^\s@]+\.[a-z]{2,}/i;
 
+function containsWords(value: string, words: string): boolean {
+    const phrase = words.split(/\s+/).map(escapeRegExp).join('\\s+');
+    return new RegExp(`(^|[^\\p{L}])${phrase}([^\\p{L}]|$)`, 'iu').test(value);
+}
+
 /** Personal details in text meant for everyone: the farmer's name, phone numbers, email addresses. */
 export function findPersonalDetails(value: string, farmer: FarmerNames | null): string[] {
     const found: string[] = [];
-    const names = [farmer?.first_name, farmer?.last_name].map(text).filter(name => name.length >= 3);
-    if (names.some(name => new RegExp(`(^|[^\\p{L}])${escapeRegExp(name)}([^\\p{L}]|$)`, 'iu').test(value))) {
+    const first = text(farmer?.first_name);
+    const last = text(farmer?.last_name);
+    // A name on its own is matched from three letters (shorter ones are too often ordinary words);
+    // the full name is matched at any length, so "Bo Li" is found too. Whole words only.
+    const names = [first, last].filter(name => name.length >= 3);
+    if (first && last) names.push(`${first} ${last}`);
+    if (names.some(name => containsWords(value, name))) {
         found.push("the farmer's name");
     }
     const farmerDigits = text(farmer?.phone).replace(/\D/g, '');
@@ -162,18 +172,15 @@ async function insertDocument(
     return articleId;
 }
 
-/** Search by meaning needs an embedding; when that fails the keyword search still finds it and a later backfill embeds it. */
-async function embedDocument(articleId: string, document: { title: string; content: string; category: string; crops: string[]; regions: string[]; source: string }): Promise<void> {
+/**
+ * Search by meaning needs an embedding; when that fails the keyword search still finds it and a
+ * later backfill embeds it. Only the embedding is written, so a document approved or rejected in
+ * the meantime keeps its tags, and a deleted one is not brought back.
+ */
+async function embedDocument(articleId: string, content: string): Promise<void> {
     try {
-        await VectorService.upsertDocument(articleId, document.content, {
-            title: document.title,
-            category: document.category,
-            tags: [REVIEWED_ANSWER_TAG, 'pending_review'],
-            crops: document.crops,
-            regions: document.regions,
-            source: document.source,
-            contentType: 'text',
-        });
+        const embedding = await getEmbedding(content);
+        await query('UPDATE knowledge_articles SET embedding = $1::double precision[] WHERE id = $2', [embedding, articleId]);
     } catch (error) {
         logger.warn(`Reviewed advice ${articleId} saved without an embedding; the backfill will add it:`, error);
     }
@@ -197,7 +204,7 @@ export async function addReviewedAnswerToKnowledge(
     if (review.knowledge_article_id) {
         return { ok: false, status: 409, error: 'This advice is already in the knowledge base.' };
     }
-    const personal = findPersonalDetails([input.title, input.content, input.sources ?? ''].join('\n'), review);
+    const personal = findPersonalDetails([input.title, input.content, input.sources ?? '', input.category, ...input.crops].join('\n'), review);
     if (personal.length > 0) {
         return { ok: false, status: 400, error: `Remove ${joinList(personal)} first: everyone who asks a question can read knowledge-base documents.` };
     }
@@ -217,6 +224,6 @@ export async function addReviewedAnswerToKnowledge(
     if (!articleId) return { ok: false, status: 409, error: 'This advice is already in the knowledge base.' };
 
     logger.info(`Approved advice ${reviewId} added to the knowledge base as ${articleId} by ${principal.userId}; waiting for document approval`);
-    await embedDocument(articleId, document);
+    await embedDocument(articleId, document.content);
     return { ok: true, articleId };
 }

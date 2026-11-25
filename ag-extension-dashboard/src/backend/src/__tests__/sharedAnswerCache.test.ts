@@ -1,6 +1,7 @@
 import {
     findSharedAnswer,
     KNOWLEDGE_BASE_DAYS,
+    knowledgeSourcesRevision,
     normalizeSharedQuestion,
     saveSharedAnswer,
     sharedAnswerDays,
@@ -10,6 +11,7 @@ import {
 } from '@/services/knowledge/sharedAnswerCache';
 import { query } from '@/services/databaseService';
 import { logger } from '@/utils/logger';
+import type { TypedQueryResult } from '@/services/db/query';
 import type { FinalAnswer } from '@/services/knowledge/types';
 
 jest.mock('@/services/databaseService', () => ({ query: jest.fn() }));
@@ -18,6 +20,11 @@ jest.mock('@/utils/logger', () => ({
 }));
 
 const mockQuery = jest.mocked(query);
+
+/** A query result as the database helper returns it. */
+function result<T>(rows: T[], rowCount = rows.length): TypedQueryResult<T> {
+    return { rows, rowCount };
+}
 const ARTICLE = '3f1c2b4a-8d6e-4f7a-9b0c-1d2e3f4a5b6c';
 const OTHER_ARTICLE = '9a8b7c6d-5e4f-4a3b-8c2d-1e0f9a8b7c6d';
 const ANSWER = 'Scout 20 plants in a W pattern each week and record the share with fresh window-pane damage and live larvae [1]. '
@@ -107,13 +114,29 @@ describe('which answers may be shared', () => {
 });
 
 describe('saving and finding shared answers', () => {
+    const REVISION = { articleIds: [ARTICLE, OTHER_ARTICLE], fingerprint: 'fingerprint-at-retrieval' };
+
     beforeEach(() => jest.clearAllMocks());
 
+    it('fingerprints the knowledge-base sources when they are retrieved', async () => {
+        mockQuery.mockResolvedValueOnce(result([{ fingerprint: 'f1' }]));
+
+        const revision = await knowledgeSourcesRevision([source(ARTICLE), source('web-0-1'), source(ARTICLE)]);
+
+        expect(revision).toEqual({ articleIds: [ARTICLE], fingerprint: 'f1' });
+        expect(mockQuery).toHaveBeenCalledWith('SELECT knowledge_sources_fingerprint($1::uuid[]) AS fingerprint', [[ARTICLE]]);
+    });
+
+    it('gives no revision (so nothing is shared) when the fingerprint cannot be read', async () => {
+        mockQuery.mockRejectedValueOnce(new Error('database down'));
+        await expect(knowledgeSourcesRevision([source(ARTICLE)])).resolves.toBeNull();
+    });
+
     it('stores the answer without its audio, with its knowledge-base sources, then clears expired answers', async () => {
-        mockQuery.mockResolvedValue({ rows: [], rowCount: 1 } as never);
+        mockQuery.mockResolvedValue(result([], 1));
         const response = answer({ contextUsed: [source(ARTICLE), source(ARTICLE), source(OTHER_ARTICLE), source('web-1-9')] });
 
-        await saveSharedAnswer('key-1', response, KNOWLEDGE_BASE_DAYS);
+        await saveSharedAnswer('key-1', response, KNOWLEDGE_BASE_DAYS, REVISION);
 
         const [sql, params] = mockQuery.mock.calls[0]!;
         expect(sql).toContain('knowledge_sources_fingerprint($3::uuid[])');
@@ -127,17 +150,27 @@ describe('saving and finding shared answers', () => {
         expect(mockQuery.mock.calls[1]![0]).toContain('DELETE FROM shared_answer_cache WHERE expires_at <= NOW()');
     });
 
+    it('writes only while the sources still match how they were retrieved', async () => {
+        mockQuery.mockResolvedValue(result([], 0));
+
+        await saveSharedAnswer('key-1', answer(), KNOWLEDGE_BASE_DAYS, REVISION);
+
+        const [sql, params] = mockQuery.mock.calls[0]!;
+        expect(sql).toContain('WHERE knowledge_sources_fingerprint($5::uuid[]) = $6');
+        expect(params!.slice(4)).toEqual([REVISION.articleIds, REVISION.fingerprint]);
+        expect(logger.info).toHaveBeenCalledWith('Not saving the answer for reuse: a source article changed while it was being written.');
+    });
+
     it('never fails the answer when the cache cannot be written', async () => {
         mockQuery.mockRejectedValueOnce(new Error('database down'));
-        await expect(saveSharedAnswer('key-1', answer(), 30)).resolves.toBeUndefined();
+        await expect(saveSharedAnswer('key-1', answer(), 30, REVISION)).resolves.toBeUndefined();
         expect(logger.warn).toHaveBeenCalled();
     });
 
     it('returns a stored answer whose sources are unchanged, marked as cached, and counts the reuse', async () => {
-        const stored = storedForm();
         mockQuery
-            .mockResolvedValueOnce({ rows: [{ answer: stored, sources_unchanged: true }], rowCount: 1 } as never)
-            .mockResolvedValueOnce({ rows: [], rowCount: 1 } as never);
+            .mockResolvedValueOnce(result([{ answer: storedForm(), sources_unchanged: true }]))
+            .mockResolvedValueOnce(result([], 1));
 
         const hit = await findSharedAnswer('key-1');
 
@@ -147,17 +180,16 @@ describe('saving and finding shared answers', () => {
     });
 
     it('drops an answer whose knowledge-base sources were edited, re-tagged or deleted', async () => {
-        const stored = storedForm();
         mockQuery
-            .mockResolvedValueOnce({ rows: [{ answer: stored, sources_unchanged: false }], rowCount: 1 } as never)
-            .mockResolvedValueOnce({ rows: [], rowCount: 1 } as never);
+            .mockResolvedValueOnce(result([{ answer: storedForm(), sources_unchanged: false }]))
+            .mockResolvedValueOnce(result([], 1));
 
         await expect(findSharedAnswer('key-1')).resolves.toBeNull();
         expect(mockQuery.mock.calls[1]).toEqual(['DELETE FROM shared_answer_cache WHERE scope_key = $1', ['key-1']]);
     });
 
     it('finds nothing when there is no stored answer or the database fails', async () => {
-        mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 } as never);
+        mockQuery.mockResolvedValueOnce(result([]));
         await expect(findSharedAnswer('key-1')).resolves.toBeNull();
         mockQuery.mockRejectedValueOnce(new Error('database down'));
         await expect(findSharedAnswer('key-1')).resolves.toBeNull();
