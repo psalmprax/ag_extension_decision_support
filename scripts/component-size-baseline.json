@@ -27,7 +27,7 @@
   "components/forms/FarmerRegistrationForm.tsx": 625,
   "components/forms/VisitSynthesisForm.tsx": 690,
   "components/ui/InfoPrompt.tsx": 568,
-  "pages/AdvisoryStudioPage.tsx": 368,
+  "pages/AdvisoryStudioPage.tsx": 352,
   "pages/DashboardPage.tsx": 581,
   "pages/DemoPage.tsx": 395,
   "pages/FarmerChatPage.tsx": 437,

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AdvisoryRatesNotice } from './advisoryStudio/AdvisoryRatesNotice';
-import { Smartphone, CheckCircle, Plus, Layers, Save, ShieldCheck, Download, AlertCircle, X } from 'lucide-react';
+import { CheckCircle, Plus, Layers, Save, ShieldCheck, Download, AlertCircle, X } from 'lucide-react';
 import apiClient from '@/api/client';
 import { useQueryClient } from '@tanstack/react-query';
 import { SavedProtocols } from './advisoryStudio/SavedProtocols';
@@ -8,7 +8,7 @@ import { SAVED_PROTOCOLS_KEY, type SavedProtocol } from './advisoryStudio/savedP
 import { useLanguage } from '@/lib/LanguageContext';
 import { DEFAULT_TEMPLATES, PALETTE_ITEMS, renderStepIcon, type PaletteItem, type WorkflowStep } from './advisoryStudio/studioModel';
 import { StepCard } from './advisoryStudio/StepCard';
-import { PhoneSimulator } from './advisoryStudio/PhoneSimulator';
+import { PhonePreviewPanel } from './advisoryStudio/PhonePreviewPanel';
 
 export function AdvisoryStudioPage() {
   const { t } = useLanguage();
@@ -344,23 +344,7 @@ export function AdvisoryStudioPage() {
           </div>
         </main>
 
-        <aside className="w-full lg:w-84 border-t lg:border-t-0 lg:border-s border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] p-4 sm:p-5 flex flex-col items-center shrink-0 lg:overflow-y-auto">
-          <div className="w-full flex items-center justify-between mb-4">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-theme-text-secondary">
-              <Smartphone className="w-4 h-4 text-slate-400" />
-              <span>{t('ui_advisory_studio_page_mobile_pwa_preview')}</span>
-            </div>
-            <span className="text-xs px-1.5 py-0.5 rounded bg-slate-100 dark:bg-white/[0.07] text-slate-700 dark:text-theme-text-secondary border border-slate-900/[0.08] dark:border-white/[0.08]">
-              {t('ui_advisory_studio_page_offline_ready')}
-            </span>
-          </div>
-
-          <PhoneSimulator steps={steps} />
-
-          <div className="mt-4 w-full p-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] text-slate-500 dark:text-theme-text-muted text-xs text-center">
-            {t('ui_advisory_studio_page_rule_updates_on_canvas_reflect_immed')}
-          </div>
-        </aside>
+        <PhonePreviewPanel steps={steps} />
       </div>
     </div>
   );
