@@ -14,7 +14,7 @@ describe('PhonePreviewPanel', () => {
   it('starts open, with the phone and its note', () => {
     render(<PhonePreviewPanel steps={steps} />);
     expect(toggle()).toHaveAttribute('aria-expanded', 'true');
-    expect(phone()).toBeInTheDocument();
+    expect(phone()).toBeVisible();
     expect(screen.getByText('Offline ready')).toBeInTheDocument();
   });
 
@@ -23,14 +23,25 @@ describe('PhonePreviewPanel', () => {
     fireEvent.click(toggle());
 
     expect(toggle()).toHaveAttribute('aria-expanded', 'false');
-    expect(phone()).not.toBeInTheDocument();
+    expect(phone()).not.toBeVisible();
     expect(document.getElementById(toggle().getAttribute('aria-controls')!)).toHaveAttribute('hidden');
     // Folded on a wide screen, it is a narrow strip, not a full-width panel over the canvas.
     expect(screen.getByRole('complementary', { name: 'Mobile PWA preview' })).toHaveClass('lg:w-12');
 
     fireEvent.click(toggle());
     expect(toggle()).toHaveAttribute('aria-expanded', 'true');
-    expect(phone()).toBeInTheDocument();
+    expect(phone()).toBeVisible();
+  });
+
+  it('keeps what was set on the phone while folded', () => {
+    render(<PhonePreviewPanel steps={steps} />);
+    const crop = screen.getByRole('combobox');
+    fireEvent.change(crop, { target: { value: 'Sorghum' } });
+
+    fireEvent.click(toggle());
+    fireEvent.click(toggle());
+
+    expect(screen.getByRole('combobox')).toHaveValue('Sorghum');
   });
 
   it('remembers that it was closed', () => {
@@ -41,7 +52,7 @@ describe('PhonePreviewPanel', () => {
 
     render(<PhonePreviewPanel steps={steps} />);
     expect(toggle()).toHaveAttribute('aria-expanded', 'false');
-    expect(phone()).not.toBeInTheDocument();
+    expect(phone()).not.toBeVisible();
   });
 
   it('has a set width beside the canvas on a wide screen', () => {

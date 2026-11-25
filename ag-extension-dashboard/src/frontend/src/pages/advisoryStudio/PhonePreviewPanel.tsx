@@ -12,7 +12,7 @@ export const PREVIEW_OPEN_KEY = 'advisory-studio-preview-open';
 /**
  * The phone preview beside the protocol canvas. It folds away to give the canvas room: on a
  * wide screen to a narrow strip at the side, on a narrow one to its heading. The choice is
- * remembered in this browser.
+ * remembered in this browser, and the phone keeps its state while folded.
  */
 export function PhonePreviewPanel({ steps }: { steps: WorkflowStep[] }) {
   const { t } = useLanguage();
@@ -57,15 +57,13 @@ export function PhonePreviewPanel({ steps }: { steps: WorkflowStep[] }) {
         )}
       </div>
 
+      {/* Hidden, not unmounted: folding keeps what the person set on the phone (crop,
+          severity, soil pH, a submitted reading). */}
       <div id={bodyId} hidden={!open} className={cn('w-full flex-col items-center', open && 'flex')}>
-        {open && (
-          <>
-            <PhoneSimulator steps={steps} />
-            <div className="mt-4 w-full p-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] text-slate-500 dark:text-theme-text-muted text-xs text-center">
-              {t('ui_advisory_studio_page_rule_updates_on_canvas_reflect_immed')}
-            </div>
-          </>
-        )}
+        <PhoneSimulator steps={steps} />
+        <div className="mt-4 w-full p-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] text-slate-500 dark:text-theme-text-muted text-xs text-center">
+          {t('ui_advisory_studio_page_rule_updates_on_canvas_reflect_immed')}
+        </div>
       </div>
     </aside>
   );
