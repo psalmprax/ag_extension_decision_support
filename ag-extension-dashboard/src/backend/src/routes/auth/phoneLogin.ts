@@ -22,6 +22,7 @@ import {
 } from '@/services/phoneLoginService';
 import { finishSignIn } from './loginCompletion';
 import { clientIpOf } from '@/utils/clientIp';
+import { smsRequestIpRateLimit } from '@/middleware/botDefense';
 
 const router = Router();
 
@@ -31,7 +32,7 @@ const verifySchema = z.object({
 });
 
 
-router.post('/phone/request', validate(requestSchema), async (req: Request, res: Response) => {
+router.post('/phone/request', [smsRequestIpRateLimit, validate(requestSchema)], async (req: Request, res: Response) => {
     const phone = normalisePhone(req.body.phone, req.body.country);
     if (!phone) return res.status(400).json({ success: false, error: 'Enter the phone number with its country code, for example +254 712 345 678.' });
     try {

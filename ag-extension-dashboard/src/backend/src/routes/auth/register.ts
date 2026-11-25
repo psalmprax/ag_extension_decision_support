@@ -20,8 +20,13 @@ import { signSessionToken } from '@/utils/sessionToken';
 import { findCountry } from '@/shared-api/countries';
 import { toE164 } from '@/services/country/phone';
 import { clientIpOf } from '@/utils/clientIp';
+import { registerIpRateLimit, signupHumanCheck, issueSignupChallenge } from '@/middleware/botDefense';
 
 const router = Router();
+
+// Issues the short-lived token the sign-up form submits back, so a bot cannot post
+// the form faster than a person could fill it in. No account or auth needed.
+router.get('/register/challenge', issueSignupChallenge);
 
 /** Shared helper — create or reset a Free subscription + usage row for a user. */
 async function createFreeSubscription(userId: string): Promise<void> {
@@ -76,7 +81,7 @@ async function createFreeSubscription(userId: string): Promise<void> {
  *       400:
  *         description: Email already registered or invalid input
  */
-router.post('/register', [auditMiddleware('auth_register'), validate(registerSchema)], async (req: Request, res: Response) => {
+router.post('/register', [registerIpRateLimit, signupHumanCheck, auditMiddleware('auth_register'), validate(registerSchema)], async (req: Request, res: Response) => {
     try {
         const { email, password, firstName, lastName, role, region, country, phone, phoneNumber } = req.body;
 
