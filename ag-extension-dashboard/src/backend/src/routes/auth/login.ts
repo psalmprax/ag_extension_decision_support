@@ -125,6 +125,25 @@ router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], as
         // Reset failed login attempts on valid password
         await resetFailedAttempts(user.id);
 
+        // A switched-off account (someone who left) cannot sign in. Checked after the password,
+        // so the answer never tells a stranger which addresses have accounts.
+        if (user.is_active === false) {
+            await recordLoginAttempt({
+                userId: user.id,
+                email,
+                status: 'failed',
+                failureReason: 'account_disabled',
+                ipAddress: clientIp,
+                userAgent: req.get('user-agent'),
+                location: resolveLocationFromHeaders(req.headers, clientIp, user.region),
+            });
+            return res.status(403).json({
+                success: false,
+                error: 'This account has been switched off. Ask your administrator if you still need access.',
+                errorCode: 'ACCOUNT_DISABLED',
+            });
+        }
+
         // Optional hard gate: REQUIRE_EMAIL_VERIFICATION=true blocks sign-in until the
         // address is confirmed. Accounts created before the feature were grandfathered
         // as verified by the migration, so enabling this never locks out existing users.

@@ -37,7 +37,8 @@ test('approved advice waits for a second person before it answers questions', as
   await item.getByRole('textbox', { name: 'Crops', exact: true }).fill('maize');
   await item.getByRole('textbox', { name: 'Sources (optional)', exact: true }).fill('National fall armyworm scouting guide');
   await item.getByRole('button', { name: 'Add to knowledge base' }).click();
-  await expect(page.getByText('Added. It will answer questions once a manager approves the document.')).toBeVisible();
+  // Done with: it leaves the queue (an error would keep it there, with the reason).
+  await expect(item).toHaveCount(0);
   await context.close();
 
   // The document waits in quarantine, credited to the agronomist who approved the advice.

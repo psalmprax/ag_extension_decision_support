@@ -99,7 +99,7 @@ test.describe.serial('a leaf photo is checked on the phone first', () => {
     await checkPhoto(page, pngPhoto('no-signal-leaf.png', [110, 140, 60], { width: 2400, height: 1800 }));
 
     await expect(page.getByText('No connection. The photo is queued for the online check.')).toBeVisible({ timeout: 60_000 });
-    await expect(page.getByText('Queued for the online check')).toBeVisible();
+    await expect(page.getByText('Queued for the online check', { exact: true })).toBeVisible();
     expect(sentOnline).toHaveLength(0);
 
     const replay = page.waitForRequest(request => request.url().includes(ONLINE_CHECK) && request.method() === 'POST', { timeout: 90_000 });
