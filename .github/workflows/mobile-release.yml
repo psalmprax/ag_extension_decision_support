@@ -65,6 +65,12 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '21'
+          # Keeps Gradle's downloads between runs: every run fetched all of them from
+          # Maven Central, which answered 429 Too Many Requests on 25 Nov.
+          cache: 'gradle'
+          cache-dependency-path: |
+            ag-extension-dashboard/src/frontend/android/**/*.gradle*
+            ag-extension-dashboard/src/frontend/android/gradle/wrapper/gradle-wrapper.properties
 
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -91,16 +97,26 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
+          # Maven Central rate-limits busy runners (429): a refused download is retried
+          # after a pause, up to three tries. A real build error fails all three alike.
+          gradle_with_retries() {
+            for attempt in 1 2 3; do
+              ./gradlew "$@" && return 0
+              [ "$attempt" -lt 3 ] || return 1
+              echo "::warning::Gradle attempt $attempt failed; retrying in $((attempt * 60))s"
+              sleep $((attempt * 60))
+            done
+          }
           if [ -n "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 -d > app/keystore.jks
-            ./gradlew assembleRelease bundleRelease \
+            gradle_with_retries assembleRelease bundleRelease \
               -Pandroid.injected.signing.store.file=app/keystore.jks \
               -Pandroid.injected.signing.store.password="$KEYSTORE_PASSWORD" \
               -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
               -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
           else
             echo "No keystore secrets — building unsigned debug APK for validation"
-            ./gradlew assembleDebug
+            gradle_with_retries assembleDebug
           fi
 
       - name: Create Release Summary

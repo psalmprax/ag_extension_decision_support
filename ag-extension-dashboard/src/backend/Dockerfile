@@ -137,18 +137,24 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates tini curl ffmpeg && rm -rf /var/lib/apt/lists/*
 
+# Files are copied in already owned by the app user. A `chown -R /app` afterwards
+# rewrote every file of node_modules into a second layer: about 4.5 minutes on the
+# stage host, enough to push the deploy past its SSH time limit, and a bigger image.
+# /app itself stays writable for what the app creates at runtime (local uploads).
+RUN chown node:node /app
+
 # Copy production node_modules
-COPY --from=deps /app/node_modules ./node_modules
+COPY --chown=node:node --from=deps /app/node_modules ./node_modules
 
 # Copy compiled output + prisma schema
-COPY --from=build /app/dist ./dist
-COPY --from=build /app/package*.json ./
-COPY --from=build /app/prisma ./prisma
-COPY --from=build /app/prisma.config.ts ./prisma.config.ts
+COPY --chown=node:node --from=build /app/dist ./dist
+COPY --chown=node:node --from=build /app/package*.json ./
+COPY --chown=node:node --from=build /app/prisma ./prisma
+COPY --chown=node:node --from=build /app/prisma.config.ts ./prisma.config.ts
 ARG BACKEND_DIR=ag-extension-dashboard/src/backend
-COPY ${BACKEND_DIR}/docker-entrypoint.sh ./docker-entrypoint.sh
+COPY --chown=node:node ${BACKEND_DIR}/docker-entrypoint.sh ./docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 
-RUN chmod +x /app/docker-entrypoint.sh && chown -R node:node /app
 USER node
 
 EXPOSE 3001
