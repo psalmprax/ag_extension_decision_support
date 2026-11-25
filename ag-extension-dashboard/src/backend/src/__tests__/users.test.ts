@@ -269,7 +269,11 @@ describe('Users Route — Mapper-before-response: mapUserPublicRows + mapUserPub
         expect(response.body.data.id).toBe('user-fallback');
         expect(response.body.data.firstName).toBe('Grace');
         expect(response.body.data.lastName).toBe('Hopper');
-        expect(mockQuery).toHaveBeenCalledTimes(2);
+        const inserts = mockQuery.mock.calls.filter(([sql]) => String(sql).includes('INSERT INTO users'));
+        expect(inserts).toHaveLength(2);
+        // The new account is then placed in an organisation (here the creating administrator's).
+        const joined = mockQuery.mock.calls.find(([sql]) => String(sql).includes('SET tenant_id = source.tenant_id'));
+        expect(joined?.[1]?.[0]).toBe('user-fallback');
     });
 
     it('GET / gracefully falls back if country column does not exist (code 42703)', async () => {

@@ -159,13 +159,25 @@ router.delete('/farmers/:farmerId', async (req: Request, res: Response) => {
     if (!result.rows[0]) return res.status(404).json({ success: false, error: 'Farmer not found' });
 
     await query(`UPDATE visits SET notes = NULL, outcomes = NULL, updated_at = NOW() WHERE farmer_id = $1`, [farmerId]);
+    // The farmer's conversations: what they wrote and what was written to them. Messages are
+    // withdrawn the way a sender withdraws one, so threads keep their shape and counts.
+    const erased = await query(
+      `UPDATE chat_messages
+       SET content = '[deleted]', translated_content = NULL, entities = NULL, audio_url = NULL,
+           metadata = COALESCE(metadata, '{}'::jsonb) || $2::jsonb
+       WHERE conversation_id IN (SELECT id FROM chat_conversations WHERE farmer_id = $1)
+         AND content <> '[deleted]'`,
+      [farmerId, JSON.stringify({ deletedAt: new Date().toISOString(), deletedBy: user.userId, erasure: true })]
+    );
     const uploads = await query<{ storage_key: string }>(
       `UPDATE upload_records SET status = 'deleted', deleted_at = COALESCE(deleted_at, NOW())
        WHERE farmer_id = $1 AND status = 'active' RETURNING storage_key`,
       [farmerId]
     );
     await Promise.all(uploads.rows.map(upload => purgeStoredUpload(upload.storage_key)));
-    await auditDataAction(user, 'farmer_data_deleted', { farmerId, idempotent: farmer.is_active === false, purgedUploads: uploads.rows.length });
+    await auditDataAction(user, 'farmer_data_deleted', {
+      farmerId, idempotent: farmer.is_active === false, purgedUploads: uploads.rows.length, erasedMessages: erased.rowCount ?? 0,
+    });
 
     return res.json({ success: true, data: { farmerId, status: 'deleted' } });
   } catch (error) {

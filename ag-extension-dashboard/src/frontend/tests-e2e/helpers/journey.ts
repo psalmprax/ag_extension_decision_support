@@ -30,9 +30,12 @@ export const JOURNEY = {
 } as const;
 
 /** A real PNG (solid colour), so the upload route's file-signature check passes. */
-export function pngPhoto(name: string, rgb: [number, number, number] = [72, 140, 48]): { name: string; mimeType: string; buffer: Buffer } {
-  const width = 24;
-  const height = 24;
+export function pngPhoto(
+  name: string,
+  rgb: [number, number, number] = [72, 140, 48],
+  size: { width: number; height: number } = { width: 24, height: 24 },
+): { name: string; mimeType: string; buffer: Buffer } {
+  const { width, height } = size;
   const row = Buffer.concat([Buffer.from([0]), Buffer.alloc(width * 3, Buffer.from(rgb))]);
   const raw = Buffer.concat(Array.from({ length: height }, () => row));
   const crcTable = Array.from({ length: 256 }, (_, n) => {
@@ -109,15 +112,24 @@ export const E2E_SYSTEM_ADMIN = {
   },
 };
 
-/** Bearer-token API access as one seeded account. */
-export async function apiAs(request: APIRequestContext, email: string) {
-  const headers = { Authorization: `Bearer ${await apiToken(request, email)}` };
+/**
+ * The administrator for this run: the one global-setup creates locally, or the one a shared
+ * site's workflow passes in. Undefined when neither is set (admin-only steps are skipped).
+ */
+export function e2eAdmin(): { email: string; password: string } | undefined {
+  const password = process.env.E2E_ADMIN_PASSWORD ?? process.env.E2E_SYSTEM_ADMIN_PASSWORD;
+  return password ? { email: process.env.E2E_ADMIN_EMAIL ?? E2E_SYSTEM_ADMIN.email, password } : undefined;
+}
+
+/** Bearer-token API access as one seeded account (or another, with its password). */
+export async function apiAs(request: APIRequestContext, email: string, password?: string) {
+  const headers = { Authorization: `Bearer ${await apiToken(request, email, password)}` };
   return {
     get: (url: string) => request.get(url, { headers }),
     post: (url: string, data: unknown) => request.post(url, { headers, data }),
     patch: (url: string, data: unknown) => request.patch(url, { headers, data }),
     put: (url: string, data: unknown) => request.put(url, { headers, data }),
-    delete: (url: string) => request.delete(url, { headers }),
+    delete: (url: string, data?: unknown) => request.delete(url, { headers, ...(data === undefined ? {} : { data }) }),
     upload: (farmerId: string, photo: ReturnType<typeof pngPhoto>) =>
       request.post('/api/v1/upload/upload', { headers, multipart: { file: photo, farmerId } }),
   };
@@ -143,4 +155,21 @@ export function daysFromNow(days: number): { date: string; dateTimeLocal: string
 /** A phone number no other farmer has. */
 export function uniquePhone(countryCode = '+254'): string {
   return `${countryCode}7${String(Date.now()).slice(-8)}`;
+}
+
+/** Width and height of a PNG or JPEG, given as bytes, base64 or a data URL. */
+export function imageSizeOf(image: Buffer | string): { width: number; height: number } {
+  const bytes = typeof image === 'string' ? Buffer.from(image.replace(/^data:[^,]*,/, ''), 'base64') : image;
+  if (bytes.subarray(1, 4).toString('ascii') === 'PNG') {
+    return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
+  }
+  // JPEG: walk the segments to the start-of-frame marker, which holds the size.
+  for (let at = 2; at + 9 < bytes.length;) {
+    if (bytes[at] !== 0xff) throw new Error(`not a JPEG segment at byte ${at}`);
+    const marker = bytes[at + 1];
+    const length = bytes.readUInt16BE(at + 2);
+    if (marker >= 0xc0 && marker <= 0xc3) return { height: bytes.readUInt16BE(at + 5), width: bytes.readUInt16BE(at + 7) };
+    at += 2 + length;
+  }
+  throw new Error('image size not found');
 }

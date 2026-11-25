@@ -1,6 +1,7 @@
 import { getPrisma } from '@/services/prismaService';
 
-type Prisma = ReturnType<typeof getPrisma>;
+/** The client, or a transaction on it: only user lookups are needed. */
+type Prisma = Pick<ReturnType<typeof getPrisma>, 'user'>;
 
 interface Creator {
     userId?: string;

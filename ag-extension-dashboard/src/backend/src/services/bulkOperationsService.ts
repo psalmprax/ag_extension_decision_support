@@ -7,6 +7,7 @@ import { demoWhere } from '@/services/demoScope';
 import { farmerRecordFilter } from './demoRecordScope';
 import { toE164 } from '@/services/country/phone';
 import { farmerCountryFor } from '@/services/country/countryContext';
+import { resolveCreationOfficer } from '@/services/farmerOfficerAssignment';
 
 type Tx = Prisma.TransactionClient;
 type BatchStats = { current: number; processed: number; failed: number; errors: string[] };
@@ -33,6 +34,9 @@ type ImportedFarmer = {
     languagePreference?: string;
     country?: string;
 };
+
+/** What a bulk update may change for anyone but an administrator (BulkUpdateModal, reassignment). */
+const BULK_FARMER_FIELDS = new Set(['region', 'languagePreference', 'crops', 'assignedOfficerId']);
 
 export interface BulkOperationResult {
     success: boolean;
@@ -223,13 +227,30 @@ class BulkOperationsService {
         if (manager?.region !== prev.region) throw new Error('Access denied');
     }
 
+    /**
+     * A farmer moves to another officer the same way one is first assigned: only by a manager or
+     * an administrator, only to an active, real officer, and a manager only to an officer of their
+     * own region (services/farmerOfficerAssignment.ts).
+     */
+    private async assertReassignmentAllowed(officerId: string | null, farmerRegion: string | null, userId: string, userRole: string, tx: Tx): Promise<void> {
+        if (userRole !== 'admin' && userRole !== 'regional_manager') throw new Error('Only a regional manager or an administrator can reassign farmers');
+        if (officerId === null) return;
+        const assignment = await resolveCreationOfficer(tx, { userId, role: userRole }, officerId, farmerRegion);
+        if (!assignment.ok) throw new Error(assignment.error);
+    }
+
     private async updateFarmerItem(farmerId: string, updates: Record<string, unknown>, userId: string, userRole: string, tx: Tx): Promise<void> {
         const prev = await tx.farmer.findUnique({ where: { id: farmerId }, select: { assignedOfficerId: true, userId: true, region: true, tenantId: true } });
         if (!prev) throw new Error('Not found');
         await this.assertFarmerUpdateAllowed(prev, userId, userRole, tx);
+        // Only the fields the bulk update form sets, plus the officer; an administrator may set any.
+        const refused = userRole === 'admin' ? [] : Object.keys(updates).filter(key => !BULK_FARMER_FIELDS.has(key));
+        if (refused.length > 0) throw new Error(`These fields cannot be changed in bulk: ${refused.join(', ')}`);
         const nextOfficerId = updates.assignedOfficerId as string | null | undefined;
-        // Record assignment history whenever the officer assignment changes.
         if (nextOfficerId !== undefined && nextOfficerId !== prev.assignedOfficerId) {
+            const farmerRegion = typeof updates.region === 'string' ? updates.region : prev.region;
+            await this.assertReassignmentAllowed(nextOfficerId, farmerRegion, userId, userRole, tx);
+            // Record assignment history whenever the officer assignment changes.
             await tx.farmerAssignmentHistory.create({
                 data: {
                     farmerId,

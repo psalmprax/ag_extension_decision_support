@@ -25,7 +25,7 @@ const fixtureOwned = (authorColumn: string) =>
  * whoever made the change, and an attachment cannot outlive the fixture
  * account's upload it points at.
  */
-const DEPENDENT_DELETES: Array<{ table: string; where: string; set?: string }> = [
+const DEPENDENT_DELETES: Array<{ table: string; where: string; set?: string; requires?: { table: string; column: string } }> = [
     { table: 'chat_messages', where: `conversation_id IN (SELECT id FROM chat_conversations WHERE ${fixtureOwned('officer_id')})` },
     { table: 'chat_conversations', where: fixtureOwned('officer_id') },
     { table: 'chat_conversations', where: `officer_id IN ${RW_USERS}`, set: 'officer_id = NULL' },
@@ -59,6 +59,10 @@ const DEPENDENT_DELETES: Array<{ table: string; where: string; set?: string }> =
     { table: 'webrtc_rooms', where: 'host_id IN (SELECT id FROM rw_users)' },
     { table: 'data_consents', where: 'recorded_by IN (SELECT id FROM rw_users)' },
     { table: 'data_export_requests', where: 'requested_by IN (SELECT id FROM rw_users)' },
+    // Knowledge-base documents made from fixture advice in the review queue (reviewedAnswers.ts).
+    { table: 'knowledge_articles', where: `id IN (SELECT knowledge_article_id FROM recommendation_reviews
+        WHERE created_by IN ${RW_USERS} OR reviewed_by IN ${RW_USERS} OR farmer_id IN ${RW_FARMERS})`,
+      requires: { table: 'recommendation_reviews', column: 'knowledge_article_id' } },
     { table: 'recommendation_reviews', where: 'created_by IN (SELECT id FROM rw_users)' },
     { table: 'users', where: 'id IN (SELECT id FROM rw_users)' },
 ];
@@ -114,9 +118,10 @@ export async function resetRealWorldFixtures(client: Client): Promise<void> {
                  OR user_id IN (SELECT id FROM rw_users)`,
             [REAL_WORLD_TENANT_ID]
         );
-        for (const { table, where, set } of DEPENDENT_DELETES) {
+        for (const { table, where, set, requires } of DEPENDENT_DELETES) {
             const columns = await columnsOf(client, table);
             if (columns.size === 0) continue;
+            if (requires && !(await columnsOf(client, requires.table)).has(requires.column)) continue;
             const needed = [...referencedColumns(where), ...(set ? [set.split('=')[0].trim()] : [])];
             if (!needed.every(column => column === 'id' || columns.has(column))) continue;
             await client.query(set ? `UPDATE ${table} SET ${set} WHERE ${where}` : `DELETE FROM ${table} WHERE ${where}`);
