@@ -34,10 +34,10 @@ describe('ImageAnalysisTab Provenance Display', () => {
       />
     );
 
-    const sourceEl = screen.getByText(/Checked by:/i);
-    expect(sourceEl).toHaveTextContent('Checked by: AI vision analysis via AIMixHub');
-    // Ensure it does not duplicate as "Checked by: AI vision analysis via AIMixHub (AIMixHub)"
-    expect(sourceEl.textContent?.trim()).toBe('Checked by: AI vision analysis via AIMixHub');
+    const sourceEl = screen.getByText(/Source:/i);
+    expect(sourceEl).toHaveTextContent('Source: AI vision analysis via AIMixHub');
+    // Ensure it does not duplicate as "Source: AI vision analysis via AIMixHub (AIMixHub)"
+    expect(sourceEl.textContent?.trim()).toBe('Source: AI vision analysis via AIMixHub');
   });
 
   it('appends provider in parentheses when source does not already mention provider', () => {
@@ -59,8 +59,8 @@ describe('ImageAnalysisTab Provenance Display', () => {
       />
     );
 
-    const sourceEl = screen.getByText(/Checked by:/i);
-    expect(sourceEl).toHaveTextContent('Checked by: AI vision analysis (AIMixHub)');
+    const sourceEl = screen.getByText(/Source:/i);
+    expect(sourceEl).toHaveTextContent('Source: AI vision analysis (AIMixHub)');
   });
 
   it('clearly marks fallback results as unavailable instead of displaying a confidence score', () => {

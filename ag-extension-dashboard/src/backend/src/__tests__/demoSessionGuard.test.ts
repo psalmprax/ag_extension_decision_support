@@ -51,6 +51,7 @@ jest.mock('../middleware/usageMiddleware', () => ({
 
 import fs from 'fs';
 import path from 'path';
+import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
@@ -131,19 +132,26 @@ describe('demo session guard', () => {
         expect(isGuardRefusal(challenge)).toBe(false);
     });
 
-    it('decides on its own (no database) which ways out of the demo are open', () => {
-        const guard = (method: string, path: string) => {
-            const next = jest.fn();
-            const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
-            const req = { method, path, user: { userId: 'demo-1', email: 'demo@agridemo.com', role: 'extension_officer', isDemo: true } };
-            demoSessionGuard(req as never, res as never, next);
-            return next.mock.calls.length === 1 ? 'allowed' : `refused ${res.status.mock.calls[0]?.[0]}`;
+    it('decides on its own (no database) which ways out of the demo are open', async () => {
+        // A small Express app with only the guard: real request and response objects, no database.
+        const guardOnly = express();
+        guardOnly.use((req: Request, _res: Response, next: NextFunction) => {
+            req.user = { userId: 'demo-1', email: 'demo@agridemo.com', role: 'extension_officer', isDemo: true };
+            next();
+        });
+        guardOnly.use(demoSessionGuard);
+        guardOnly.use((_req: Request, res: Response) => {
+            res.json({ reached: true });
+        });
+        const guard = async (method: 'get' | 'post', path: string) => {
+            const res = await request(guardOnly)[method](path);
+            return res.body?.reached === true ? 'allowed' : `refused ${res.status}`;
         };
-        expect(guard('POST', '/api/auth/login')).toBe('allowed');
-        expect(guard('POST', '/api/v1/auth/register')).toBe('allowed');
-        expect(guard('GET', '/api/auth/register/challenge')).toBe('allowed');
-        expect(guard('POST', '/api/auth/resend-verification')).toBe('refused 403');
-        expect(guard('POST', '/api/v1/farmers')).toBe('refused 403');
+        expect(await guard('post', '/api/auth/login')).toBe('allowed');
+        expect(await guard('post', '/api/v1/auth/register')).toBe('allowed');
+        expect(await guard('get', '/api/auth/register/challenge')).toBe('allowed');
+        expect(await guard('post', '/api/auth/resend-verification')).toBe('refused 403');
+        expect(await guard('post', '/api/v1/farmers')).toBe('refused 403');
     });
 
     it('still refuses the demo resending a verification email for its own account', async () => {

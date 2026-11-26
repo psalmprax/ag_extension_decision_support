@@ -3,7 +3,9 @@ import { useEffect, useRef, type KeyboardEvent, type RefObject } from 'react';
 /**
  * The keyboard behaviour a menu (role="menu") promises: opening it moves focus to the
  * first item, the arrow keys (and Home and End) move between items, and Escape closes
- * it and puts focus back on the button that opened it. Tab closes it and moves on.
+ * it and puts focus back on the button that opened it. Tab closes it too, and focus
+ * also goes back to the button: the menu stays mounted while it animates away, so
+ * letting Tab move on could land focus on one of its leaving items.
  */
 export function useMenuKeyboard(open: boolean, close: () => void, triggerRef: RefObject<HTMLElement>) {
   const menuRef = useRef<HTMLDivElement>(null);
@@ -21,6 +23,11 @@ export function useMenuKeyboard(open: boolean, close: () => void, triggerRef: Re
       event.preventDefault();
       list[(next + list.length) % list.length]?.focus();
     };
+    const leave = () => {
+      event.preventDefault();
+      close();
+      triggerRef.current?.focus();
+    };
     switch (event.key) {
       case 'ArrowDown':
         return moveTo(index + 1);
@@ -32,14 +39,10 @@ export function useMenuKeyboard(open: boolean, close: () => void, triggerRef: Re
         return moveTo(list.length - 1);
       case 'Escape':
         // Handled here, not by the app-wide Escape, so focus can go back to the button.
-        event.preventDefault();
         event.stopPropagation();
-        close();
-        triggerRef.current?.focus();
-        return undefined;
+        return leave();
       case 'Tab':
-        close();
-        return undefined;
+        return leave();
       default:
         return undefined;
     }

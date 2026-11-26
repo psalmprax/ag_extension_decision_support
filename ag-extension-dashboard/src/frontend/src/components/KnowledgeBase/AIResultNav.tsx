@@ -17,6 +17,8 @@ export const AIResultNav: React.FC<{
   <div className="flex items-center justify-between gap-2 pt-4 overflow-x-auto custom-scrollbar">
     <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-theme-bg-primary/60 rounded-xl border border-slate-200 dark:border-white/10">
       <button
+        type="button"
+        aria-pressed={viewMode === 'synthesis'}
         onClick={() => setViewMode('synthesis')}
         className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
           viewMode === 'synthesis'
@@ -29,6 +31,8 @@ export const AIResultNav: React.FC<{
       </button>
 
       <button
+        type="button"
+        aria-pressed={viewMode === 'graph'}
         onClick={() => setViewMode('graph')}
         className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
           viewMode === 'graph'
@@ -45,6 +49,8 @@ export const AIResultNav: React.FC<{
 
       {hasVisuals && (
         <button
+          type="button"
+          aria-pressed={viewMode === 'visuals'}
           onClick={() => setViewMode('visuals')}
           className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
             viewMode === 'visuals'
@@ -58,6 +64,8 @@ export const AIResultNav: React.FC<{
       )}
 
       <button
+        type="button"
+        aria-pressed={viewMode === 'evidence'}
         onClick={() => setViewMode('evidence')}
         className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
           viewMode === 'evidence'

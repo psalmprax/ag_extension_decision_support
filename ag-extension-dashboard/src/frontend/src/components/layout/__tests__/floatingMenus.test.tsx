@@ -79,6 +79,28 @@ describe('floating menus are solid and readable in both themes', () => {
     expect(document.activeElement).toBe(screen.getByRole('button', { name: /profile menu/i }));
   });
 
+  it('Tab from Profile closes the account menu and leaves focus outside it while it animates away', () => {
+    const setOpen = vi.fn();
+    render(
+      <ProfileMenu
+        isProfileMenuOpen
+        setIsProfileMenuOpen={setOpen}
+        storeUser={{ id: 'u1', firstName: 'Demo', lastName: 'User', email: 'demo@example.test' }}
+        setShowProfileModal={vi.fn()}
+        handleLogout={vi.fn()}
+      />
+    );
+    const [profile] = screen.getAllByRole('menuitem');
+    expect(document.activeElement).toBe(profile);
+
+    // The menu stays rendered here, as it does during its exit animation.
+    const tab = fireEvent.keyDown(profile, { key: 'Tab' });
+    expect(tab).toBe(false);
+    expect(setOpen).toHaveBeenCalledWith(false);
+    expect(screen.getByRole('menu').contains(document.activeElement)).toBe(false);
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: /profile menu/i }));
+  });
+
   it('the theme picker is plain buttons on a solid surface, and closes with Escape', () => {
     render(<ThemeSwitcher currentTheme="forest" onThemeChange={vi.fn()} />);
     const trigger = screen.getByRole('button', { expanded: false });
