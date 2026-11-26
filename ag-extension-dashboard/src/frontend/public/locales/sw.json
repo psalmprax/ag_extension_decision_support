@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Rekodi yako iko chini ya matokeo. Hamisha ulichofanya au kushauri kwenye kisanduku kilicho chini.",
     "chat_speak_reply_on": "Jibu lako pia linatumwa kama ujumbe wa sauti kwenye WhatsApp",
     "chat_speak_reply_off": "Tuma pia kama ujumbe wa sauti (WhatsApp)",
-    "ui_officer_chat_message_label": "Ujumbe kwa mkulima"
+    "ui_officer_chat_message_label": "Ujumbe kwa mkulima",
+    "voice_dictate": "Zungumza badala ya kuandika"
 }

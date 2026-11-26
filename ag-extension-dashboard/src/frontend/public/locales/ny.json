@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Mawu anu ojambulidwa ali pansi pa zomwe zapezeka. Sunthani zomwe munachita kapena kulangiza ku bokosi lili m'munsimu.",
     "chat_speak_reply_on": "Yankho lanu limatumizidwanso ngati uthenga wa mawu pa WhatsApp",
     "chat_speak_reply_off": "Tumizaninso ngati uthenga wa mawu (WhatsApp)",
-    "ui_officer_chat_message_label": "Uthenga kwa mlimi"
+    "ui_officer_chat_message_label": "Uthenga kwa mlimi",
+    "voice_dictate": "Lankhulani m'malo molemba"
 }

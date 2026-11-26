@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Eddoboozi lyo liri wansi w'ebyazuuliddwa. Kyusa by'okoze oba amagezi g'owadde obiteeke mu kabookisi wansi.",
     "chat_speak_reply_on": "Okuddamu kwo nakwo kusindikibwa ng'obubaka bw'eddoboozi ku WhatsApp",
     "chat_speak_reply_off": "Sindika era ng'obubaka bw'eddoboozi (WhatsApp)",
-    "ui_officer_chat_message_label": "Obubaka eri omulimi"
+    "ui_officer_chat_message_label": "Obubaka eri omulimi",
+    "voice_dictate": "Yogera mu kifo ky'okuwandiika"
 }

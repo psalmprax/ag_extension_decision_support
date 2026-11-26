@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Din optagelse står under fund. Flyt det, du gjorde eller rådede til, til feltet nedenfor.",
     "chat_speak_reply_on": "Dit svar sendes også som talebesked på WhatsApp",
     "chat_speak_reply_off": "Send også som talebesked (WhatsApp)",
-    "ui_officer_chat_message_label": "Besked til landmanden"
+    "ui_officer_chat_message_label": "Besked til landmanden",
+    "voice_dictate": "Tal i stedet for at skrive"
 }

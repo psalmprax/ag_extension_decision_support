@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "您的录音已放在“发现”中。请把您做过或建议的内容移到下面的框中。",
     "chat_speak_reply_on": "您的回复也会以语音消息发送到 WhatsApp",
     "chat_speak_reply_off": "同时以语音消息发送（WhatsApp）",
-    "ui_officer_chat_message_label": "给农户的消息"
+    "ui_officer_chat_message_label": "给农户的消息",
+    "voice_dictate": "用说话代替打字"
 }

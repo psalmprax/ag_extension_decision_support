@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "আপনার রেকর্ডিং পর্যবেক্ষণে রাখা আছে। আপনি যা করেছেন বা পরামর্শ দিয়েছেন তা নিচের বাক্সে সরিয়ে নিন।",
     "chat_speak_reply_on": "আপনার উত্তর WhatsApp-এ ভয়েস বার্তা হিসেবেও পাঠানো হয়",
     "chat_speak_reply_off": "ভয়েস বার্তা হিসেবেও পাঠান (WhatsApp)",
-    "ui_officer_chat_message_label": "কৃষকের জন্য বার্তা"
+    "ui_officer_chat_message_label": "কৃষকের জন্য বার্তা",
+    "voice_dictate": "টাইপের বদলে বলুন"
 }

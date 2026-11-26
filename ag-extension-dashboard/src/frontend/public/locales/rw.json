@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Amajwi yawe ari mu byo wabonye. Imura ibyo wakoze cyangwa inama watanze ubishyire mu gasanduku kari hasi.",
     "chat_speak_reply_on": "Igisubizo cyawe nacyo cyoherezwa nk'ubutumwa bw'ijwi kuri WhatsApp",
     "chat_speak_reply_off": "Ohereza nanone nk'ubutumwa bw'ijwi (WhatsApp)",
-    "ui_officer_chat_message_label": "Ubutumwa bugenewe umuhinzi"
+    "ui_officer_chat_message_label": "Ubutumwa bugenewe umuhinzi",
+    "voice_dictate": "Vuga aho kwandika"
 }

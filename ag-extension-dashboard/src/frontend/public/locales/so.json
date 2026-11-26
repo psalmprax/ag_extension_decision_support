@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Duubistaadu waxay ku jirtaa natiijooyinka. U wareeji waxaad samaysay ama kula talisay sanduuqa hoose.",
     "chat_speak_reply_on": "Jawaabtaada waxaa sidoo kale loo diraa fariin cod ah WhatsApp",
     "chat_speak_reply_off": "Sidoo kale u dir fariin cod ah (WhatsApp)",
-    "ui_officer_chat_message_label": "Fariin loogu talagalay beeraleyda"
+    "ui_officer_chat_message_label": "Fariin loogu talagalay beeraleyda",
+    "voice_dictate": "Hadal halkii aad wax qori lahayd"
 }

@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Ihre Aufnahme steht unter Befunde. Verschieben Sie, was Sie getan oder geraten haben, in das Feld darunter.",
     "chat_speak_reply_on": "Ihre Antwort wird auch als Sprachnachricht über WhatsApp gesendet",
     "chat_speak_reply_off": "Auch als Sprachnachricht senden (WhatsApp)",
-    "ui_officer_chat_message_label": "Nachricht an den Landwirt"
+    "ui_officer_chat_message_label": "Nachricht an den Landwirt",
+    "voice_dictate": "Sprechen statt tippen"
 }

@@ -47,8 +47,9 @@ describe('the officer message box', () => {
     expect(screen.getByRole('button', { name: 'Your reply is also sent as a voice message on WhatsApp' }).getAttribute('aria-pressed')).toBe('true');
   });
 
-  it('names the dictation mic after the message box', () => {
+  it('keeps the message box as the only thing named after it', () => {
     renderComposer();
-    expect(screen.getByRole('button', { name: 'Speak instead of typing: Message to the farmer' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Speak instead of typing' }).getAttribute('title')).toBe('Speak instead of typing: Message to the farmer');
+    expect(screen.getAllByLabelText('Message to the farmer')).toEqual([screen.getByRole('textbox')]);
   });
 });

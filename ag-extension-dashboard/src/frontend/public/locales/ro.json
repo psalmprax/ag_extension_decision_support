@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Înregistrarea dvs. este la constatări. Mutați ce ați făcut sau sfătuit în caseta de mai jos.",
     "chat_speak_reply_on": "Răspunsul dvs. este trimis și ca mesaj vocal pe WhatsApp",
     "chat_speak_reply_off": "Trimiteți și ca mesaj vocal (WhatsApp)",
-    "ui_officer_chat_message_label": "Mesaj pentru fermier"
+    "ui_officer_chat_message_label": "Mesaj pentru fermier",
+    "voice_dictate": "Vorbiți în loc să scrieți"
 }

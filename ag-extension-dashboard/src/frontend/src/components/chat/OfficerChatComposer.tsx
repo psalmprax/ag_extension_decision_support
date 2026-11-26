@@ -33,7 +33,7 @@ export const OfficerChatComposer: React.FC<OfficerChatComposerProps> = ({
   // Kept on until turned off, for officers whose farmers listen rather than read.
   const [speak, setSpeak] = useState(false);
   const messageLabel = t('ui_officer_chat_message_label', 'Message to the farmer');
-  const dictateLabel = t('voice_dictate_field', { defaultValue: 'Speak instead of typing: {field}', field: messageLabel });
+  const dictateTooltip = t('voice_dictate_field', { defaultValue: 'Speak instead of typing: {field}', field: messageLabel });
 
   return (
     <form
@@ -49,8 +49,8 @@ export const OfficerChatComposer: React.FC<OfficerChatComposerProps> = ({
               ? 'bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/40'
               : 'bg-white dark:bg-theme-bg-secondary text-slate-700 dark:text-white/70 hover:text-slate-900 dark:hover:text-white border-slate-200 dark:border-white/[0.1] hover:border-slate-300 dark:hover:border-white/20'
           }`}
-          title={dictateLabel}
-          aria-label={dictateLabel}
+          title={dictateTooltip}
+          aria-label={t('voice_dictate', 'Speak instead of typing')}
           aria-pressed={voiceOpen}
         >
           <Mic className="w-4 h-4" />

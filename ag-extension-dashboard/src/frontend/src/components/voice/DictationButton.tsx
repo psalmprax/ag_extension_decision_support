@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useId } from 'react';
 import { CloudOff, Loader2, Mic, Square } from 'lucide-react';
 import { useFieldVoiceRecorder } from '@/hooks/useFieldVoiceRecorder';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -35,8 +35,13 @@ export const DictationButton: React.FC<DictationButtonProps> = ({
     draftKey,
     messages: voiceMessages(t),
   });
-  const label = isRecording
-    ? t('chat_voice_stop', 'Stop recording')
+  // The mic's name never repeats the field's label, so the label names only its field
+  // (for screen readers and for finding the field by its label); the field it fills is
+  // given as the mic's description instead.
+  const fieldId = useId();
+  const label = isRecording ? t('chat_voice_stop', 'Stop recording') : t('voice_dictate', 'Speak instead of typing');
+  const tooltip = isRecording
+    ? label
     : t('voice_dictate_field', { defaultValue: 'Speak instead of typing: {field}', field: fieldLabel });
 
   return (
@@ -52,8 +57,9 @@ export const DictationButton: React.FC<DictationButtonProps> = ({
         onClick={() => void toggleRecording()}
         disabled={disabled || isTranscribing}
         aria-label={label}
+        aria-describedby={fieldId}
         aria-pressed={isRecording}
-        title={label}
+        title={tooltip}
         className={`inline-flex items-center justify-center gap-1 h-10 min-w-10 rounded-lg border text-xs disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 ${
           isRecording
             ? 'px-2 border-rose-400 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300'
@@ -71,6 +77,7 @@ export const DictationButton: React.FC<DictationButtonProps> = ({
           <Mic className="w-4 h-4" aria-hidden="true" />
         )}
       </button>
+      <span id={fieldId} className="sr-only">{fieldLabel}</span>
     </span>
   );
 };

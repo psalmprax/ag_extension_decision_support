@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Kaydınız bulgular bölümünde. Yaptığınız veya önerdiğiniz şeyleri aşağıdaki kutuya taşıyın.",
     "chat_speak_reply_on": "Yanıtınız WhatsApp'ta sesli mesaj olarak da gönderilir",
     "chat_speak_reply_off": "Sesli mesaj olarak da gönder (WhatsApp)",
-    "ui_officer_chat_message_label": "Çiftçiye mesaj"
+    "ui_officer_chat_message_label": "Çiftçiye mesaj",
+    "voice_dictate": "Yazmak yerine konuşun"
 }

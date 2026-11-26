@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Your recording is under findings. Move anything you did or advised to the box below.",
     "chat_speak_reply_on": "Your reply is also sent as a voice message on WhatsApp",
     "chat_speak_reply_off": "Also send as a voice message (WhatsApp)",
-    "ui_officer_chat_message_label": "Message to the farmer"
+    "ui_officer_chat_message_label": "Message to the farmer",
+    "voice_dictate": "Speak instead of typing"
 }

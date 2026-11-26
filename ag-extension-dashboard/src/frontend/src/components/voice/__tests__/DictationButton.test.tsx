@@ -45,13 +45,16 @@ beforeEach(() => {
 });
 
 describe('DictationLabel', () => {
-  it('names the mic after the field and records in the app language for that field', () => {
+  it('describes the mic by its field and records in the app language for that field', () => {
     render(<Findings />);
-    fireEvent.click(screen.getByRole('button', { name: 'Speak instead of typing: Findings' }));
+    const mic = screen.getByRole('button', { name: 'Speak instead of typing' });
+    expect(mic.getAttribute('aria-describedby') && document.getElementById(mic.getAttribute('aria-describedby')!)?.textContent).toBe('Findings');
+    fireEvent.click(mic);
 
     expect(recorder.toggleRecording).toHaveBeenCalled();
     expect(recorder.options).toMatchObject({ language: 'ha', draftKey: 'visit-findings:v1' });
-    expect(screen.getByLabelText('Findings')).toBeTruthy();
+    // The label names only its field, never the mic.
+    expect(screen.getAllByLabelText('Findings')).toEqual([screen.getByRole('textbox')]);
   });
 
   it('adds every phrase heard to the field, even several before a render', () => {

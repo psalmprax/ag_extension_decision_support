@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Ваш запис у спостереженнях. Перенесіть те, що ви зробили чи порадили, у поле нижче.",
     "chat_speak_reply_on": "Вашу відповідь також надіслано голосовим повідомленням у WhatsApp",
     "chat_speak_reply_off": "Також надіслати голосовим повідомленням (WhatsApp)",
-    "ui_officer_chat_message_label": "Повідомлення фермеру"
+    "ui_officer_chat_message_label": "Повідомлення фермеру",
+    "voice_dictate": "Говоріть замість набору"
 }

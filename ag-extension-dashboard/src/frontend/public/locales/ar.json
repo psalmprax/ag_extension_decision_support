@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "تسجيلك موجود تحت الملاحظات. انقل ما فعلته أو نصحت به إلى المربع أدناه.",
     "chat_speak_reply_on": "يُرسل ردك أيضاً كرسالة صوتية على WhatsApp",
     "chat_speak_reply_off": "أرسل أيضاً كرسالة صوتية (WhatsApp)",
-    "ui_officer_chat_message_label": "رسالة إلى المزارع"
+    "ui_officer_chat_message_label": "رسالة إلى المزارع",
+    "voice_dictate": "تحدّث بدل الكتابة"
 }

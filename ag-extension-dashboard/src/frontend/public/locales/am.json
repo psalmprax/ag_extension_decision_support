@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "ቅጂዎ በግኝቶች ስር ነው። ያደረጉትን ወይም የመከሩትን ከታች ወዳለው ሳጥን ያዛውሩ።",
     "chat_speak_reply_on": "መልስዎ በWhatsApp ላይ እንደ የድምጽ መልእክትም ይላካል",
     "chat_speak_reply_off": "እንደ የድምጽ መልእክትም ይላኩ (WhatsApp)",
-    "ui_officer_chat_message_label": "ለገበሬው መልእክት"
+    "ui_officer_chat_message_label": "ለገበሬው መልእክት",
+    "voice_dictate": "ከመጻፍ ይልቅ ይናገሩ"
 }

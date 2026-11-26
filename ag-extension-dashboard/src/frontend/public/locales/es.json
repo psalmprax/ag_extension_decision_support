@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Su grabación está en hallazgos. Mueva lo que hizo o aconsejó al recuadro de abajo.",
     "chat_speak_reply_on": "Su respuesta también se envía como mensaje de voz por WhatsApp",
     "chat_speak_reply_off": "Enviar también como mensaje de voz (WhatsApp)",
-    "ui_officer_chat_message_label": "Mensaje para el agricultor"
+    "ui_officer_chat_message_label": "Mensaje para el agricultor",
+    "voice_dictate": "Hablar en lugar de escribir"
 }

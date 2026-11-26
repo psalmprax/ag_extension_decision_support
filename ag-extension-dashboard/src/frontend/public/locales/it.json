@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "La tua registrazione è nelle osservazioni. Sposta ciò che hai fatto o consigliato nella casella sotto.",
     "chat_speak_reply_on": "La tua risposta viene inviata anche come messaggio vocale su WhatsApp",
     "chat_speak_reply_off": "Invia anche come messaggio vocale (WhatsApp)",
-    "ui_officer_chat_message_label": "Messaggio all'agricoltore"
+    "ui_officer_chat_message_label": "Messaggio all'agricoltore",
+    "voice_dictate": "Parla invece di scrivere"
 }

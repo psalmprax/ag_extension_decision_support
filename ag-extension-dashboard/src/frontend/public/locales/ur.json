@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "آپ کی ریکارڈنگ مشاہدات میں ہے۔ جو آپ نے کیا یا مشورہ دیا اسے نیچے والے خانے میں منتقل کریں۔",
     "chat_speak_reply_on": "آپ کا جواب WhatsApp پر صوتی پیغام کے طور پر بھی بھیجا جاتا ہے",
     "chat_speak_reply_off": "صوتی پیغام کے طور پر بھی بھیجیں (WhatsApp)",
-    "ui_officer_chat_message_label": "کسان کے لیے پیغام"
+    "ui_officer_chat_message_label": "کسان کے لیے پیغام",
+    "voice_dictate": "ٹائپ کرنے کے بجائے بولیں"
 }

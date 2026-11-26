@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Uw opname staat bij bevindingen. Verplaats wat u deed of adviseerde naar het vak hieronder.",
     "chat_speak_reply_on": "Uw antwoord wordt ook als spraakbericht via WhatsApp verstuurd",
     "chat_speak_reply_off": "Ook als spraakbericht versturen (WhatsApp)",
-    "ui_officer_chat_message_label": "Bericht aan de boer"
+    "ui_officer_chat_message_label": "Bericht aan de boer",
+    "voice_dictate": "Spreken in plaats van typen"
 }

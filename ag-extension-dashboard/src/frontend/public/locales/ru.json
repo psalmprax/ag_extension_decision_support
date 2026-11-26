@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Ваша запись находится в наблюдениях. Перенесите то, что вы сделали или посоветовали, в поле ниже.",
     "chat_speak_reply_on": "Ваш ответ также отправляется голосовым сообщением в WhatsApp",
     "chat_speak_reply_off": "Также отправить голосовым сообщением (WhatsApp)",
-    "ui_officer_chat_message_label": "Сообщение фермеру"
+    "ui_officer_chat_message_label": "Сообщение фермеру",
+    "voice_dictate": "Говорите вместо набора"
 }

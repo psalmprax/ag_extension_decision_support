@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "आपकी रिकॉर्डिंग निष्कर्षों में है। आपने जो किया या सलाह दी, उसे नीचे वाले खाने में ले जाएँ।",
     "chat_speak_reply_on": "आपका जवाब WhatsApp पर वॉइस संदेश के रूप में भी भेजा जाता है",
     "chat_speak_reply_off": "वॉइस संदेश के रूप में भी भेजें (WhatsApp)",
-    "ui_officer_chat_message_label": "किसान के लिए संदेश"
+    "ui_officer_chat_message_label": "किसान के लिए संदेश",
+    "voice_dictate": "टाइप करने के बजाय बोलें"
 }

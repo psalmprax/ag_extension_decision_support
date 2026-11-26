@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Twoje nagranie jest w ustaleniach. Przenieś to, co zrobiłeś lub doradziłeś, do pola poniżej.",
     "chat_speak_reply_on": "Twoja odpowiedź jest też wysyłana jako wiadomość głosowa na WhatsApp",
     "chat_speak_reply_off": "Wyślij też jako wiadomość głosową (WhatsApp)",
-    "ui_officer_chat_message_label": "Wiadomość do rolnika"
+    "ui_officer_chat_message_label": "Wiadomość do rolnika",
+    "voice_dictate": "Mów zamiast pisać"
 }

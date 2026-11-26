@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Waraabbiin kee argannoowwan jala jira. Waan hojjette ykn gorsite saanduqa gadii keessa galchi.",
     "chat_speak_reply_on": "Deebiin kee akka ergaa sagaleettis WhatsApp irratti ergama",
     "chat_speak_reply_off": "Akka ergaa sagaleettis ergi (WhatsApp)",
-    "ui_officer_chat_message_label": "Ergaa qonnaan bulaaf"
+    "ui_officer_chat_message_label": "Ergaa qonnaan bulaaf",
+    "voice_dictate": "Barreessuu mannaa dubbadhu"
 }

@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Bản ghi âm của bạn nằm trong phần phát hiện. Hãy chuyển những gì bạn đã làm hoặc khuyên vào ô bên dưới.",
     "chat_speak_reply_on": "Câu trả lời của bạn cũng được gửi dưới dạng tin nhắn thoại trên WhatsApp",
     "chat_speak_reply_off": "Gửi thêm dưới dạng tin nhắn thoại (WhatsApp)",
-    "ui_officer_chat_message_label": "Tin nhắn cho nông dân"
+    "ui_officer_chat_message_label": "Tin nhắn cho nông dân",
+    "voice_dictate": "Nói thay vì gõ"
 }

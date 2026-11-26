@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Vaše nahrávka je ve zjištěních. Přesuňte to, co jste udělali nebo poradili, do pole níže.",
     "chat_speak_reply_on": "Vaše odpověď se posílá i jako hlasová zpráva na WhatsApp",
     "chat_speak_reply_off": "Poslat i jako hlasovou zprávu (WhatsApp)",
-    "ui_officer_chat_message_label": "Zpráva pro zemědělce"
+    "ui_officer_chat_message_label": "Zpráva pro zemědělce",
+    "voice_dictate": "Mluvte místo psaní"
 }

@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Η εγγραφή σας βρίσκεται στα ευρήματα. Μετακινήστε ό,τι κάνατε ή συμβουλέψατε στο πλαίσιο παρακάτω.",
     "chat_speak_reply_on": "Η απάντησή σας στέλνεται και ως φωνητικό μήνυμα στο WhatsApp",
     "chat_speak_reply_off": "Αποστολή και ως φωνητικό μήνυμα (WhatsApp)",
-    "ui_officer_chat_message_label": "Μήνυμα προς τον αγρότη"
+    "ui_officer_chat_message_label": "Μήνυμα προς τον αγρότη",
+    "voice_dictate": "Μιλήστε αντί να πληκτρολογείτε"
 }

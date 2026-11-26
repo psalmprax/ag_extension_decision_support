@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Rekaman Anda ada di temuan. Pindahkan apa yang Anda lakukan atau sarankan ke kotak di bawah.",
     "chat_speak_reply_on": "Balasan Anda juga dikirim sebagai pesan suara di WhatsApp",
     "chat_speak_reply_off": "Kirim juga sebagai pesan suara (WhatsApp)",
-    "ui_officer_chat_message_label": "Pesan untuk petani"
+    "ui_officer_chat_message_label": "Pesan untuk petani",
+    "voice_dictate": "Bicara alih-alih mengetik"
 }

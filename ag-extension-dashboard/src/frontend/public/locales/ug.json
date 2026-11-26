@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "ئۈن خاتىرىڭىز بايقاشلار قىسمىدا. قىلغان ياكى مەسلىھەت بەرگەن ئىشلىرىڭىزنى تۆۋەندىكى رامكىغا يۆتكەڭ.",
     "chat_speak_reply_on": "جاۋابىڭىز WhatsApp دا ئاۋازلىق ئۇچۇر سۈپىتىدىمۇ ئەۋەتىلىدۇ",
     "chat_speak_reply_off": "ئاۋازلىق ئۇچۇر سۈپىتىدىمۇ ئەۋەتىش (WhatsApp)",
-    "ui_officer_chat_message_label": "دېھقانغا ئۇچۇر"
+    "ui_officer_chat_message_label": "دېھقانغا ئۇچۇر",
+    "voice_dictate": "يېزىشنىڭ ئورنىغا سۆزلەڭ"
 }

@@ -3088,5 +3088,6 @@
     "visit_talk_unsorted": "Записът ви е в констатациите. Преместете това, което направихте или посъветвахте, в полето по-долу.",
     "chat_speak_reply_on": "Отговорът ви се изпраща и като гласово съобщение в WhatsApp",
     "chat_speak_reply_off": "Изпрати и като гласово съобщение (WhatsApp)",
-    "ui_officer_chat_message_label": "Съобщение до фермера"
+    "ui_officer_chat_message_label": "Съобщение до фермера",
+    "voice_dictate": "Говорете вместо да пишете"
 }
