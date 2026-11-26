@@ -55,7 +55,7 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import app from '../app';
-import { apiEndpoint, DEMO_READS, DEMO_WRITES } from '../middleware/demoSessionGuard';
+import { apiEndpoint, DEMO_READS, DEMO_WRITES, LEAVING_THE_DEMO } from '../middleware/demoSessionGuard';
 
 const sign = (claims: Record<string, unknown>) =>
     jwt.sign(claims, config.jwt.secret as string, { expiresIn: '1h' });
@@ -88,7 +88,7 @@ describe('demo session guard', () => {
     it('refuses the demo every mounted route group it does not use', async () => {
         const leaked: string[] = [];
         for (const mount of mountedPaths) {
-            if (DEMO_READS.has(mount)) continue;
+            if (DEMO_READS.has(mount) || LEAVING_THE_DEMO.has(mount)) continue;
             const res = await request(app).get(`/api/v1${mount}`).set('Authorization', `Bearer ${DEMO}`);
             if (!isGuardRefusal(res)) leaked.push(`GET ${mount} -> ${res.status}`);
         }
@@ -120,6 +120,15 @@ describe('demo session guard', () => {
             const res = await request(app).post(`/api${endpoint}`).set('Authorization', `Bearer ${DEMO}`).send({ message: 'hi' });
             expect(isGuardRefusal(res)).toBe(false);
         }
+    });
+
+    it('lets someone still in the demo sign in, sign up or reset a password', async () => {
+        for (const endpoint of ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/phone/request']) {
+            const res = await request(app).post(`/api${endpoint}`).set('Authorization', `Bearer ${DEMO}`).send({});
+            expect({ endpoint, refusedAsDemo: isGuardRefusal(res) }).toEqual({ endpoint, refusedAsDemo: false });
+        }
+        const challenge = await request(app).get('/api/v1/auth/register/challenge').set('Authorization', `Bearer ${DEMO}`);
+        expect(isGuardRefusal(challenge)).toBe(false);
     });
 
     it('does not touch real accounts', async () => {
