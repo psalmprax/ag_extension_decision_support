@@ -37,6 +37,17 @@ describe('Page readiness — Accessibility & smoke', () => {
     expectNoOrphanButtons(container);
   });
 
+  it('Login demo button grows with its label instead of spilling out on a phone', async () => {
+    render(wrap(<Login />));
+    await settleLanguage();
+    const demo = screen.getByRole('button', { name: 'Try the demo' });
+    // A fixed height (h-8 was here) let a wrapped label spill below the border on
+    // narrow phones; a minimum height of 44px keeps it a proper touch target too.
+    expect(demo.className).not.toMatch(/(^|\s)h-\d/);
+    expect(demo).toHaveClass('min-h-11');
+    expect(demo.parentElement).toHaveClass('flex-wrap');
+  });
+
   it('LandingPage exposes a main region with no orphan icon buttons', async () => {
     const { container } = render(wrap(<LandingPage />));
     await settleLanguage();
