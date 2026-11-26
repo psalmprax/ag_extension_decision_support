@@ -110,14 +110,17 @@ export function Login({ onDemo }: LoginProps) {
             </div>
 
             {/* Demo Banner */}
-            <div className="mb-6 p-3.5 rounded-md border border-white/[0.1] flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm text-[#c5d3cb]">
+            {/* On a narrow phone, or with a longer translation, the button drops below the
+                question; a label still too long for the card wraps and the button grows with
+                it (min-height, never a fixed height, so text cannot spill out). */}
+            <div className="mb-6 p-3.5 rounded-md border border-white/[0.1] flex flex-wrap items-center justify-between gap-3">
+              <div className="flex min-w-0 flex-1 basis-40 items-center gap-2 text-sm text-[#c5d3cb]">
                 <span>{t('login_want_explore')}</span>
               </div>
               <button
                 type="button"
                 onClick={handleDemo}
-                className="h-8 px-3 text-sm rounded-md border border-white/[0.16] text-white hover:bg-white/[0.06] transition-colors"
+                className="min-h-11 max-w-full px-4 py-2 text-sm text-center rounded-md border border-white/[0.16] text-white hover:bg-white/[0.06] transition-colors"
               >
                 {t('login_try_demo')}
               </button>
