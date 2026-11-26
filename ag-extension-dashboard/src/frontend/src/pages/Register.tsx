@@ -99,7 +99,7 @@ export function Register() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [managerNotice, setManagerNotice] = useState('');
-  const formToken = useSignupChallenge();
+  const getFormToken = useSignupChallenge();
   const honeypotRef = useRef<HTMLInputElement>(null);
 
   const regionOptions = getCountryConfig(formData.country)?.regions ?? [];
@@ -142,6 +142,8 @@ export function Register() {
         country: formData.country || undefined,
         region: formData.region.trim() || undefined,
       };
+      // Waits out the form's minimum fill time if the form was filled very fast.
+      const formToken = await getFormToken();
       const data = await register(payload, { formToken, website: honeypotRef.current?.value ?? '' });
 
       // Handle nested response structure { success: true, data: { token, user } }
