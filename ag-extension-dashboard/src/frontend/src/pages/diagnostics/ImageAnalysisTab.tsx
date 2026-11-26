@@ -11,6 +11,8 @@ import { CropField } from '@/components/edgeVision/CropField';
 import { DiseaseSaliencyCanvas } from '@/components/canvas-ui/DiseaseSaliencyCanvas';
 import { useLanguage } from '@/lib/LanguageContext';
 import { DiagnosisValidationNote, type DiagnosisValidation } from '@/components/diagnosisTests/DiagnosisValidationNote';
+import { PossibleCause } from '@/components/diagnosis/PossibleCause';
+import { useHowSure } from '@/hooks/useHowSure';
 
 interface Props {
   cropType: string;
@@ -148,8 +150,9 @@ export const AnalysisResultsHUD: React.FC<{
   imagePreview: string | null;
   offlineQueued: boolean;
   getSeverityColor: (s: string) => string;
-}> = ({ imageAnalysis, imagePreview, offlineQueued, getSeverityColor }) => {
+}> = ({ imageAnalysis, imagePreview, offlineQueued, getSeverityColor: _getSeverityColor }) => {
   const { t } = useLanguage();
+  const howSure = useHowSure();
   if (offlineQueued) {
     return (
       <div className="p-5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-amber-500/40 flex flex-col justify-center space-y-4">
@@ -210,26 +213,19 @@ export const AnalysisResultsHUD: React.FC<{
         </div>
       ) : (
         /* Health Metric Banner */
-        <div className={`p-3.5 rounded-lg bg-slate-950 border ${needsReview ? 'border-amber-500/30' : 'border-emerald-500/30'} flex items-center justify-between`}>
-          <div>
-            <div className="flex items-center gap-2">
-              {needsReview
-                ? <ShieldAlert className="w-4 h-4 text-amber-400" />
-                : <CheckCircle className="w-4 h-4 text-emerald-400" />}
-              <h4 className="text-xs font-medium text-slate-900 dark:text-white">
-                {needsReview ? 'AI-observed health status' : 'Health status'}: {imageAnalysis.overallHealth}
-              </h4>
-            </div>
-            <p className="text-xxs text-slate-400 mt-1">
-              {t('ui_image_analysis_tab_source')} {diagnosticSourceLabel(imageAnalysis.provenance)}
-            </p>
+        <div className={`p-3.5 rounded-lg bg-white dark:bg-theme-bg-primary border ${needsReview ? 'border-amber-500/30' : 'border-emerald-500/30'} space-y-1`}>
+          <div className="flex items-center gap-2">
+            {needsReview
+              ? <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
+              : <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />}
+            <h4 className="text-sm font-medium text-slate-900 dark:text-theme-text-primary">
+              {t('diag_plant_health', { defaultValue: 'Plant health: {health}', health: imageAnalysis.overallHealth })}
+            </h4>
           </div>
-          <div className="text-end">
-            <span className={`text-xl font-medium ${needsReview ? 'text-amber-800 dark:text-amber-300' : 'text-emerald-400'} tabular-nums`}>
-              {(imageAnalysis.confidence * 100).toFixed(1)}%
-            </span>
-            <p className="text-xxs text-slate-400">{needsReview ? 'Model-reported confidence' : 'Confidence'}</p>
-          </div>
+          <p className="text-xs text-slate-700 dark:text-theme-text-secondary">{howSure(imageAnalysis.confidence)}</p>
+          <p className="text-xs text-slate-600 dark:text-theme-text-muted">
+            {t('ui_image_analysis_tab_source')} {diagnosticSourceLabel(imageAnalysis.provenance)}
+          </p>
         </div>
       )}
 
@@ -247,13 +243,13 @@ export const AnalysisResultsHUD: React.FC<{
               <li key={index}>{observation}</li>
             ))}
           </ul>
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-600 dark:text-theme-text-muted">
             {t('ui_image_analysis_tab_appearance_alone_cannot_confirm_a_de')}
           </p>
         </div>
       )}
 
-      {/* Detected Pathogens */}
+      {/* What it could be */}
       {imageAnalysis.diseases.length > 0 && (
         <div className="space-y-2">
           <h4 className="text-xs font-medium text-slate-900 dark:text-white">
@@ -261,35 +257,16 @@ export const AnalysisResultsHUD: React.FC<{
           </h4>
           <div className="space-y-2">
             {imageAnalysis.diseases.map(disease => (
-              <div
+              <PossibleCause
                 key={disease.disease}
-                className="p-3 rounded-lg bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-slate-900/[0.08] dark:hover:border-white/[0.08] transition-colors"
-              >
-                <div className="flex items-center justify-between mb-1">
-                  <h5 className="text-xs font-medium text-slate-900 dark:text-white">
-                    {disease.reviewStatus === 'needs_expert_review' || disease.provenance.evidenceStatus !== 'verified_source' ? 'Possible Match: ' : ''}
-                    {disease.disease}
-                  </h5>
-                  <span
-                    className={`px-2 py-0.5 rounded text-xs font-medium capitalize ${getSeverityColor(
-                      disease.severity
-                    )}`}
-                  >
-                    {disease.severity}
-                  </span>
-                </div>
-                <p className="text-xs text-emerald-400 tabular-nums">
-                  {t('ui_image_analysis_tab_model_reported_confidence')} {(disease.confidence * 100).toFixed(1)}%
-                </p>
-                <p className="mt-1 text-xs text-slate-700 dark:text-theme-text-secondary">{disease.description}</p>
-                {Array.isArray(disease.symptoms) && disease.symptoms.length > 0 && (
-                  <p className="mt-1 text-xs text-slate-400">{t('ui_image_analysis_tab_reported_symptoms')} {disease.symptoms.join('; ')}</p>
-                )}
-                <p className="mt-1 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-1">
-                  <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" />
-                  {disease.safetyNotice}
-                </p>
-              </div>
+                disease={disease.disease}
+                confidence={disease.confidence}
+                severity={disease.severity}
+                description={disease.description}
+                symptoms={Array.isArray(disease.symptoms) ? disease.symptoms : undefined}
+                safetyNotice={disease.safetyNotice}
+                confirmedBySource={disease.reviewStatus !== 'needs_expert_review' && disease.provenance.evidenceStatus === 'verified_source'}
+              />
             ))}
           </div>
         </div>

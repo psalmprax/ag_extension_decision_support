@@ -128,22 +128,20 @@ const resolveSearchResult = (
 const notifySearchResult = (
   res: AskResponse,
   bypassCache: boolean,
-  notify: (opts: { type: 'info' | 'success'; message: string }) => void
+  notify: (opts: { type: 'info' | 'success'; message: string }) => void,
+  t: (key: string, fallback: string) => string
 ): void => {
   // Never claim a fresh synthesis when the assistant answered nothing.
   if (res.data.evidenceStatus === 'no_verified_source') {
-    notify({ type: 'info', message: 'General guidance only — no supporting sources were retrieved.' });
+    notify({ type: 'info', message: t('kb_no_sources', 'We found no sources for this, so the answer is general advice only.') });
     return;
   }
   if (res.data.answerMode === 'extractive') {
-    notify({ type: 'info', message: 'AI synthesis unavailable — showing excerpts from retrieved sources.' });
+    notify({ type: 'info', message: t('kb_excerpts_only', 'The assistant is not available right now, so here are the most relevant passages from our sources.') });
     return;
   }
   if (res.data.cached) {
-    notify({
-      type: 'info',
-      message: 'This answer was saved from an earlier identical question.',
-    });
+    notify({ type: 'info', message: t('kb_saved_answer', 'Someone asked exactly this before, so here is the answer we gave then.') });
   } else if (bypassCache) {
     notify({
       type: 'success',
@@ -241,8 +239,8 @@ export const KnowledgeBase: React.FC = () => {
     setAttachments([]);
     applyQuotaUpdate(res.data.dailyRemaining, res.data.dailyLimit);
     fetchQuotaData();
-    notifySearchResult(res, bypassCache, addNotification);
-  }, [addNotification, applyQuotaUpdate, fetchQuotaData]);
+    notifySearchResult(res, bypassCache, addNotification, t);
+  }, [addNotification, applyQuotaUpdate, fetchQuotaData, t]);
 
   const fetchStats = async () => {
     try {
