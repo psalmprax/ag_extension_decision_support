@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { BarChart3, CheckCircle2, MessageSquare, Smartphone } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
 import { useLanguage } from '@/lib/LanguageContext';
+import { CARD_TITLE, SECTION_TITLE } from './sectionStyles';
 
 export function Features() {
   const { t } = useLanguage();
@@ -17,7 +18,7 @@ export function Features() {
               variants={stagger}
               className="text-center max-w-3xl mx-auto mb-14 sm:mb-20"
             >
-              <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-medium leading-tight text-white mb-4">
+              <motion.h2 variants={fadeUp} className={`${SECTION_TITLE} mb-4`}>
                 {t('ui_features_built_for_the_real_field')}
               </motion.h2>
               <motion.p
@@ -61,7 +62,7 @@ export function Features() {
 
                 <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between space-y-4">
                   <div>
-                    <h3 className="text-lg sm:text-xl font-medium text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                    <h3 className={`${CARD_TITLE} mb-2 group-hover:text-emerald-300 transition-colors`}>
                       {t('ui_features_the_smallholder_farmer')}
                     </h3>
                     <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
@@ -117,7 +118,7 @@ export function Features() {
 
                 <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between space-y-4">
                   <div>
-                    <h3 className="text-lg sm:text-xl font-medium text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                    <h3 className={`${CARD_TITLE} mb-2 group-hover:text-emerald-300 transition-colors`}>
                       {t('ui_features_the_field_extension_officer')}
                     </h3>
                     <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
@@ -173,7 +174,7 @@ export function Features() {
 
                 <div className="p-6 sm:p-7 flex-1 flex flex-col justify-between space-y-4">
                   <div>
-                    <h3 className="text-lg sm:text-xl font-medium text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                    <h3 className={`${CARD_TITLE} mb-2 group-hover:text-emerald-300 transition-colors`}>
                       {t('ui_features_regional_cooperative_directors')}
                     </h3>
                     <p className="text-xs sm:text-sm text-white/70 leading-relaxed">

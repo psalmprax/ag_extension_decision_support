@@ -5,7 +5,7 @@ import { fadeUp } from '../variants';
 import { capabilities, operationalStandards } from '../sectionData';
 import { useLanguage } from '@/lib/LanguageContext';
 import { SectionHeader } from './SectionHeader';
-import { CARD, CARD_BODY, CARD_LABEL, CONTAINER, ICON_TILE, SECTION } from './sectionStyles';
+import { CARD, CARD_BODY, CARD_LABEL, CARD_TITLE, CONTAINER, ICON_TILE, SECTION } from './sectionStyles';
 
 /** One reading in the illustrative intelligence trail: label, example value, and where it would come from. */
 function TrailReading({ label, value, note, source }: { label: string; value: string; note: string; source: string }) {
@@ -46,7 +46,7 @@ export function Ecosystem() {
                 <capability.icon className="w-6 h-6" aria-hidden="true" />
               </div>
               <div className={CARD_LABEL}>{t(capability.badge)}</div>
-              <h3 className="text-base font-medium text-white">{t(capability.title)}</h3>
+              <h3 className={CARD_TITLE}>{t(capability.title)}</h3>
               <p className={CARD_BODY}>{t(capability.desc)}</p>
             </motion.div>
           ))}
@@ -65,7 +65,7 @@ export function Ecosystem() {
                 <Sprout className="w-6 h-6" aria-hidden="true" />
               </div>
               <div>
-                <h3 className="text-base font-medium text-white flex flex-wrap items-center gap-2">
+                <h3 className={`${CARD_TITLE} flex flex-wrap items-center gap-2`}>
                   {t('ui_demo_agronomic_intelligence_trail')}
                   <span className="text-xs font-normal px-2 py-0.5 rounded-md bg-white/[0.06] border border-white/[0.1] text-[#c5d3cb]">
                     {t('ui_demo_illustrative_sample')}

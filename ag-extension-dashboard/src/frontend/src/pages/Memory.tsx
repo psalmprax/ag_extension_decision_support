@@ -15,6 +15,7 @@ import {
 } from '../api/memoryService';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 import { RagKnowledgeGraphCanvas } from '@/components/canvas-ui/RagKnowledgeGraphCanvas';
+import { CardHeading } from '@/components/ui/CardHeading';
 
 function Memory() {
   const { t } = useLanguage();
@@ -344,10 +345,7 @@ function Memory() {
       {/* ── Category Cluster Summary ── */}
       {memorySummary.length > 0 && (
         <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-4">
-          <h3 className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
-            <Layers className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
-            {t('ui_memory_category_vector_distribution_cluster')}
-          </h3>
+          <CardHeading className="mb-0" icon={<Layers className="w-[18px] h-[18px] text-emerald-600 dark:text-emerald-400" aria-hidden="true" />} title={t('ui_memory_category_vector_distribution_cluster')} subtitle={t('ui_memory_knowledge_by_topic_subtitle')} />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {memorySummary.map(category => (
               <div

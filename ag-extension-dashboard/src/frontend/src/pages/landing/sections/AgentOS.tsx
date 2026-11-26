@@ -5,7 +5,7 @@ import { fadeUp } from '../variants';
 import { useLanguage } from '@/lib/LanguageContext';
 import { SectionHeader } from './SectionHeader';
 import { AdvisorySimulator } from './AdvisorySimulator';
-import { CARD, CONTAINER, ICON_TILE, SECTION } from './sectionStyles';
+import { CARD, CARD_TITLE, CONTAINER, ICON_TILE, SECTION } from './sectionStyles';
 
 const CHIP = 'inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/[0.04] border border-white/[0.08] text-xs text-[#c5d3cb]';
 
@@ -26,7 +26,7 @@ export function AgentOS() {
             <Building2 className="w-6 h-6" aria-hidden="true" />
           </div>
           <div>
-            <h3 className="text-base sm:text-lg font-medium text-white mb-1">{t('ui_landing_page_autonomous_multi_agent_extension_os')}</h3>
+            <h3 className={`${CARD_TITLE} mb-1`}>{t('ui_landing_page_autonomous_multi_agent_extension_os')}</h3>
             <p className="text-xs sm:text-sm text-white/70 leading-relaxed">{t('ui_landing_page_simulate_regional_pest_intervention')}</p>
           </div>
         </motion.div>

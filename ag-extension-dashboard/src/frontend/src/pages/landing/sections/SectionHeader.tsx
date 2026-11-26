@@ -1,6 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { stagger, fadeUp } from '../variants';
+import { SECTION_TITLE } from './sectionStyles';
 
 /**
  * A section's centred heading and introduction, as the current landing sections set them.
@@ -15,7 +16,7 @@ export function SectionHeader({ title, intro, alone = false }: { title: string; 
       variants={stagger}
       className={`text-center max-w-3xl mx-auto ${alone ? '' : 'mb-14 sm:mb-16'}`}
     >
-      <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-medium leading-tight text-white mb-4">
+      <motion.h2 variants={fadeUp} className={`${SECTION_TITLE} mb-4`}>
         {title}
       </motion.h2>
       {intro && (

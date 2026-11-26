@@ -19,7 +19,7 @@ interface PilotRow { id: string; name: string; status: string; region: string }
 test('a manager sets up a pilot that only their region can see', async ({ browser, request }) => {
   const { context, page } = await signedIn(browser, SEEDED.managerNakuru.email);
   await openMenu(page, 'Analytics');
-  const pilots = page.getByRole('region', { name: 'Pilots: does the service raise harvests?' });
+  const pilots = page.getByRole('region', { name: 'Pilots', exact: true });
   await pilots.getByRole('button', { name: 'New pilot' }).click();
 
   const form = pilots.getByRole('form', { name: 'New pilot' });

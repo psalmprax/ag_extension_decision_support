@@ -12,6 +12,7 @@ import { globalTelemetryNodes } from '../data';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useLanguage } from '@/lib/LanguageContext';
 import { HeroHighlights } from './HeroHighlights';
+import { HERO_TITLE } from './sectionStyles';
 
 export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroOpacity: MotionValue<number> }) {
   const { t } = useLanguage();
@@ -78,7 +79,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
         <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-6 sm:space-y-8 text-center sm:text-start mx-auto sm:mx-0 min-w-0 max-w-full">
 
           {/* Main Headline */}
-          <motion.h1 variants={fadeUp} className="text-4xl sm:text-5xl lg:text-6xl font-medium leading-[1.05] text-white">
+          <motion.h1 variants={fadeUp} className={HERO_TITLE}>
             <span className="block">{t('ui_hero_heal_your_crops')}</span>
             <span className="block">{t('ui_hero_protect_your_harvest')}</span>
             <span className="block">{t('ui_hero_grow_with_confidence')}</span>

@@ -8,7 +8,13 @@ export const CARD =
   'rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/[0.08] hover:border-emerald-500/40 transition-all duration-300';
 export const ICON_TILE =
   'w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0';
-export const CARD_TITLE = 'text-lg font-medium text-white';
+/**
+ * Headings, in Literata (option B in docs/HEADINGS_AND_TYPE_PROPOSAL.md): the hero title,
+ * a section's title (48px on wide screens) and a card's title. Body text stays Atkinson.
+ */
+export const HERO_TITLE = 'font-title text-[32px] sm:text-5xl lg:text-[56px] font-medium leading-[1.08] text-white';
+export const SECTION_TITLE = 'font-title text-[32px] sm:text-5xl font-medium leading-[1.1] text-white';
+export const CARD_TITLE = 'font-title text-xl sm:text-2xl font-medium leading-snug text-white';
 export const CARD_BODY = 'text-xs sm:text-sm text-white/70 leading-relaxed';
 /** A short label on a card: sentence case, muted green. */
 export const CARD_LABEL = 'text-xs font-medium text-emerald-300';

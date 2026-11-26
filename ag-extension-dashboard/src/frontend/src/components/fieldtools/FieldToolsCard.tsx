@@ -4,6 +4,7 @@ import { Calculator, FlaskConical, Sprout, Droplets } from 'lucide-react';
 import { tankMix, fertilizerBlend, plantingDensity, herbicideTankDose } from '@/lib/agCalculators';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useLanguage } from '@/lib/LanguageContext';
+import { CardHeading } from '@/components/ui/CardHeading';
 
 type Tab = 'tank' | 'blend' | 'density';
 
@@ -88,15 +89,11 @@ export function FieldToolsCard() {
 
     return (
         <div className={`${cardClass} p-4 sm:p-5`}>
-            <div className="flex items-center gap-2 mb-3">
-                <Calculator className="w-4 h-4 text-primary-500" />
-                <h3 className="text-sm font-medium  ">
-                    {t('fieldtools_title', { defaultValue: 'Field Calculators' })}
-                </h3>
-                <span className="text-xxs text-gray-400 ms-auto">
-                    {t('fieldtools_works_offline', { defaultValue: 'works offline' })}
-                </span>
-            </div>
+            <CardHeading
+                icon={<Calculator className="w-[18px] h-[18px] text-primary-500" aria-hidden="true" />}
+                title={t('fieldtools_title', { defaultValue: 'Field tools' })}
+                subtitle={t('fieldtools_works_offline', { defaultValue: 'Calculators that work offline' })}
+            />
 
             <div className="flex gap-1.5 mb-3">
                 {tabs.map(({ key, label, Icon }) => (

@@ -35,7 +35,7 @@ describe('RecommendationReviewQueue', () => {
     render(<RecommendationReviewQueue addNotification={addNotification} />);
     fireEvent.change(await screen.findByLabelText('Reason for your decision'), { target: { value: 'Matches the county scouting guide.' } });
     fireEvent.click(screen.getByRole('button', { name: /Approve/ }));
-    await screen.findByRole('heading', { name: 'Approved. Add this advice to the knowledge base?' });
+    await screen.findByRole('heading', { name: 'Add to knowledge base' });
   };
 
   it('after approving, offers to add the advice to the knowledge base, prefilled and editable', async () => {

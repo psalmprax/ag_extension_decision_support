@@ -1,6 +1,9 @@
-# Headings and type: proposal (not started)
+# Headings and type: proposal
 
-Status: **waiting for a decision** (25 Nov 2026). Nothing in the app has changed yet.
+Status: **decided 27 Nov 2026: B on the public landing page, A inside the app**, with the
+rewritten headings below. Built first: the landing page, the dashboard, page titles and stat
+figures app-wide (shared `PageHeader` and `StatTile`), Pilots, Reviewed advice, Telemetry and
+Memory. Other screens' card headings move to `CardHeading` as they are next worked on.
 
 Visual sample: the design canvas "Heading style sample: dashboard" on claude.ai
 (https://claude.ai/artifact/EqUqP6dZsW5FM5bFjGXUCY, private to the owner). It shows the officer
@@ -62,12 +65,12 @@ Suggested: **B on the public landing page, A inside the app.**
 
 | Screen | Now | Proposed |
 |---|---|---|
-| Landing hero | Photograph a sick crop. See what it might be and who can confirm it. | **Photograph a sick crop.** / See what it might be, and who can confirm it. |
+| Landing hero | (since 26 Nov) Heal your crops. Protect your harvest. Grow with confidence. | Kept as three short lines in the title font |
 | Landing services | Four things you can do from a phone | **Farmer services** / Four things you can do from a phone, in plain language. Some work offline. |
 | Landing hero | Are you an extension officer, cooperative, or ministry? | **For extension officers, cooperatives and ministries** |
 | Analytics | Pilots: does the service raise harvests? | **Pilots** / Does the service raise harvests? |
 | Reports | Approved. Add this advice to the knowledge base? | **Add to knowledge base** / Approved advice can then answer other farmers' questions |
-| Dashboard | Proactive agronomic advisories | **Advisories** / Alerts sent to farmers who opted in |
+| Dashboard | Proactive agronomic advisories | **Advisories** / Planting, weather and pest alerts sent to farmers (advisories are opt-out, so not "who opted in") |
 | Dashboard | Field agronomy tools | **Field tools** / Calculators that work offline |
 | Dashboard | Record advice outcome | **Follow-ups** / Record whether the advice worked |
 | Dashboard | Support efficiency | **Support** / Questions resolved, and how farmers rated the help |

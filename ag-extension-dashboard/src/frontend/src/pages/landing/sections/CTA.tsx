@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { stagger, fadeUp } from '../variants';
 import { useLanguage } from '@/lib/LanguageContext';
 import { PhotoBackdrop } from './PhotoBackdrop';
+import { SECTION_TITLE } from './sectionStyles';
 
 export function CTA() {
   const { t } = useLanguage();
@@ -20,7 +21,7 @@ export function CTA() {
             variants={stagger}
             className="max-w-2xl mx-auto px-4 sm:px-6 text-center relative z-10"
           >
-            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-medium leading-tight text-white mb-4">
+            <motion.h2 variants={fadeUp} className={`${SECTION_TITLE} mb-4`}>
               {t('ui_cta_ready_to_protect_your_crops')}
             </motion.h2>
             <motion.p variants={fadeUp} className="text-sm sm:text-lg text-white/80 mb-6 sm:mb-8 px-2 font-normal">

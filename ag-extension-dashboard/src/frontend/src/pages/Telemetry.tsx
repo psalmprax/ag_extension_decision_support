@@ -16,6 +16,7 @@ import {
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 import { TelemetryBreakdowns, TelemetryStatTiles } from './telemetry/TelemetryPanels';
 import { SoilNutrientHeatmapCanvas } from '@/components/canvas-ui/SoilNutrientHeatmapCanvas';
+import { CARD_SUBTITLE, CARD_TITLE } from '@/components/ui/typography';
 
 function Telemetry() {
   const { t } = useLanguage();
@@ -120,13 +121,13 @@ function Telemetry() {
       <div className="card p-6">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <div>
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white flex items-center gap-2">
+            <h3 className={`flex flex-wrap items-center gap-2 ${CARD_TITLE}`}>
               <span>{t('ui_telemetry_spatial_soil_environmental_telemetry')}</span>
               <span className="px-2 py-0.5 rounded text-xxs font-mono bg-emerald-500/10 text-emerald-500 border border-emerald-500/20">
                 {t('ui_telemetry_soilgrids_v2_nasa_power')}
               </span>
             </h3>
-            <p className="text-xs text-gray-600 dark:text-theme-text-muted mt-1">
+            <p className={`mt-1 ${CARD_SUBTITLE}`}>
               {t('ui_telemetry_hardware_accelerated_2d_idw_interpol')}
             </p>
           </div>

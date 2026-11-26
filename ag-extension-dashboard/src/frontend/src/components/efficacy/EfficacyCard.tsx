@@ -5,6 +5,7 @@ import toast from 'react-hot-toast';
 import { efficacyService, OutcomeVerdict } from '@/api/efficacyService';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useLanguage } from '@/lib/LanguageContext';
+import { CardHeading } from '@/components/ui/CardHeading';
 
 const VERDICTS: { key: OutcomeVerdict; label: string; tone: string }[] = [
     { key: 'resolved', label: 'Resolved', tone: 'bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/30' },
@@ -107,10 +108,11 @@ export function EfficacyCard() {
 
     return (
         <div className={`${cardClass} p-4 sm:p-5`}>
-            <div className="flex items-center gap-2 mb-3">
-                <TrendingUp className="w-4 h-4 text-primary-500" />
-                <h3 className="text-sm font-medium  ">{t('ui_efficacy_card_advice_efficacy')}</h3>
-            </div>
+            <CardHeading
+                icon={<TrendingUp className="w-[18px] h-[18px] text-primary-500" aria-hidden="true" />}
+                title={t('ui_efficacy_card_advice_efficacy')}
+                subtitle={t('ui_efficacy_card_subtitle')}
+            />
 
             {summary.isLoading ? (
                 <div className="h-16 animate-pulse bg-gray-100 dark:bg-theme-bg-tertiary rounded-xl" data-testid="efficacy-skeleton" />

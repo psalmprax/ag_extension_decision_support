@@ -4,6 +4,7 @@ import { stagger, fadeUp } from '../variants';
 import { steps } from '../data';
 import { useLanguage } from '@/lib/LanguageContext';
 import { PhotoBackdrop } from './PhotoBackdrop';
+import { CARD_TITLE, SECTION_TITLE } from './sectionStyles';
 
 export function HowItWorks() {
   const { t } = useLanguage();
@@ -18,7 +19,7 @@ export function HowItWorks() {
               variants={stagger}
               className="text-center mb-20"
             >
-              <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-medium leading-tight text-white mb-4">
+              <motion.h2 variants={fadeUp} className={`${SECTION_TITLE} mb-4`}>
                 {t('ui_how_it_works_heal_your_crops_in')}
               </motion.h2>
               <motion.p
@@ -45,7 +46,7 @@ export function HowItWorks() {
                   <div className="w-16 h-16 rounded-xl bg-white/[0.04] border border-white/[0.12] flex items-center justify-center text-lg font-medium text-emerald-400 mx-auto mb-6 relative z-10 shadow-lg">
                     {step.num}
                   </div>
-                  <h3 className="text-lg font-medium mb-3 text-white/90">{t(step.title)}</h3>
+                  <h3 className={`${CARD_TITLE} mb-3`}>{t(step.title)}</h3>
                   <p className="text-sm text-white/70 max-w-[280px] mx-auto leading-relaxed">
                     {t(step.desc)}
                   </p>
