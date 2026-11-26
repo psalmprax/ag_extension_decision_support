@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { stagger, fadeUp } from '../variants';
 import { useLanguage } from '@/lib/LanguageContext';
+import { PhotoBackdrop } from './PhotoBackdrop';
 
 export function CTA() {
   const { t } = useLanguage();
@@ -10,19 +11,7 @@ export function CTA() {
 
   return (
         <section className="relative py-16 sm:py-28 overflow-hidden">
-          {/* Warm Sunlit Harvest Backdrop */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-            <img
-              src="/images/landing/maize-field-sunrise.webp"
-              alt=""
-              role="presentation"
-              aria-hidden="true"
-              width={1319}
-              height={860}
-              className="w-full h-full object-cover object-center opacity-20 filter saturate-125 contrast-105 pointer-events-none"
-            />
-            <div className="absolute inset-0 bg-[#0d1a14]/80" />
-          </div>
+          <PhotoBackdrop src="/images/landing/hero-aerial.webp" width={1376} height={768} />
 
           <motion.div
             initial="hidden"
