@@ -147,7 +147,9 @@ describe('demo session guard', () => {
     });
 
     it('still refuses the demo resending a verification email for its own account', async () => {
-        const res = await request(app).post('/api/auth/resend-verification').set('Authorization', `Bearer ${DEMO}`).send({});
+        // A fresh demo session: an earlier test logs DEMO out, and a revoked session never reaches the guard.
+        const demo = sign({ userId: 'demo-2', email: 'demo2@agridemo.com', role: 'extension_officer', isDemo: true });
+        const res = await request(app).post('/api/auth/resend-verification').set('Authorization', `Bearer ${demo}`).send({});
         expect(isGuardRefusal(res)).toBe(true);
     });
 
