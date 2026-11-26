@@ -22,6 +22,8 @@ export interface TranscribeAudioResponse {
   data: {
     text: string;
     language: string;
+    /** False when the transcriber does not know the language and guessed it, so the text needs checking. */
+    languageSupported?: boolean;
   };
 }
 
@@ -45,6 +47,22 @@ export const transcribeAudio = async (
     language,
   });
   return response.data;
+};
+
+/** A visit report drafted from what the officer said, built only from their own sentences. */
+export interface VisitReportDraft {
+  findings: string;
+  actions: string;
+  minutesOnFarm: number | null;
+  followUpRequired: boolean | null;
+  followUpInDays: number | null;
+  /** False when the sentences could not be sorted and are all under findings. */
+  organised: boolean;
+}
+
+export const draftVisitReport = async (transcript: string): Promise<VisitReportDraft> => {
+  const response = await apiClient.post<{ success: boolean; data: VisitReportDraft }>('/ai/draft-visit-report', { transcript });
+  return response.data.data;
 };
 
 export interface ImageAnalysisResponse {

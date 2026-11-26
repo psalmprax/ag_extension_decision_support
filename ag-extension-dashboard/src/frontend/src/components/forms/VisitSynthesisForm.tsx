@@ -5,6 +5,7 @@ import { fetchFarmers, type Farmer } from '@/api/farmerService';
 import { useAppStore } from '@/store/useAppStore';
 import { useDemoMode, DEMO_FARMERS } from '@/demo';
 import { useFieldVoiceRecorder } from '@/hooks/useFieldVoiceRecorder';
+import { voiceMessages } from '@/hooks/voiceMessages';
 import {
   FileCheck,
   Loader2,
@@ -46,20 +47,6 @@ const FIELD_PRESETS = [
     text: 'Field inspection of smallholder sorghum plot. Crops showing marked wilting and nitrogen deficiency yellowing due to 18-day dry spell. Advised organic mulching to conserve root zone moisture and scheduled foliar fertilizer application once rains resume.',
   },
 ];
-
-const SPEECH_LANG_MAP: Record<string, string> = {
-  en: 'en-US',
-  sw: 'sw-KE',
-  fr: 'fr-FR',
-  pt: 'pt-BR',
-  es: 'es-ES',
-  ar: 'ar-SA',
-  hi: 'hi-IN',
-  zh: 'zh-CN',
-  ru: 'ru-RU',
-  de: 'de-DE',
-  it: 'it-IT',
-};
 
 function filterFarmersList(farmers: Farmer[], query: string): Farmer[] {
   if (!query.trim()) return farmers;
@@ -398,6 +385,7 @@ export const VisitSynthesisForm: React.FC = () => {
     uploadAudioFile,
   } = useFieldVoiceRecorder({
     language,
+    messages: voiceMessages(t),
     onTranscriptChunk: chunk => {
       setNotes(prev => (prev.trim() ? `${prev.trim()} ${chunk}` : chunk));
     },
@@ -603,7 +591,7 @@ export const VisitSynthesisForm: React.FC = () => {
               }`}
             >
               {isRecording ? <Square className="w-3.5 h-3.5 text-rose-700 dark:text-rose-400 fill-rose-400" /> : <Mic className="w-3.5 h-3.5 text-emerald-700 dark:text-emerald-400" />}
-              <span>{isRecording ? `Stop Recording (${formatSecondsToMMSS(recordingDuration)})` : `Live Dictate (${SPEECH_LANG_MAP[language]?.slice(0, 2).toUpperCase() || 'EN'})`}</span>
+              <span>{isRecording ? `Stop Recording (${formatSecondsToMMSS(recordingDuration)})` : `Live Dictate (${language.slice(0, 2).toUpperCase()})`}</span>
             </button>
           </div>
         </div>

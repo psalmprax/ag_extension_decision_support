@@ -1083,7 +1083,7 @@ function LanguageSelector({ selectedLanguage, onSelectLanguage }: LanguageSelect
             className="appearance-none bg-white/[0.03] text-white text-xs font-medium ps-2.5 pe-7 py-1 rounded-lg border border-white/10 hover:border-emerald-500/40 focus:outline-none focus:border-emerald-500 cursor-pointer"
           >
             {languages.map((l) => (
-              <option key={l.code} value={l.code} className="bg-white/[0.03] text-white">
+              <option key={l.code} value={l.code}>
                 {l.name} ({l.code.toUpperCase()})
               </option>
             ))}

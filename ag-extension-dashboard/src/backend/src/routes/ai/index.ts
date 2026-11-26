@@ -5,6 +5,7 @@ import synthesisRouter from './synthesis';
 import speechRouter from './speech';
 import visionRouter from './vision';
 import agentsRouter from './agents';
+import visitReportDraftRouter from './visitReportDraft';
 
 const router = Router();
 
@@ -15,5 +16,6 @@ router.use(synthesisRouter);
 router.use(speechRouter);
 router.use(visionRouter);
 router.use(agentsRouter);
+router.use(visitReportDraftRouter);
 
 export default router;

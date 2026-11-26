@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { CheckCircle } from 'lucide-react';
 import { Field, CropCycle } from '@/api/fieldService';
 import { useLanguage } from '@/lib/LanguageContext';
+import { DictationLabel } from '@/components/voice/DictationButton';
+import { appendDictation } from '@/lib/dictationText';
 
 interface HarvestModalProps {
   showHarvestModal: boolean;
@@ -122,10 +124,13 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 dark:text-theme-text-secondary mb-1">
+              <DictationLabel htmlFor="harvest-notes" className="block text-xs font-medium text-slate-600 dark:text-theme-text-secondary mb-1"
+                draftKey={selectedCycle ? `harvest-notes:${selectedCycle.id}` : undefined}
+                onTranscript={text => setHarvestForm(prev => ({ ...prev, notes: appendDictation(prev.notes, text) }))}>
                 {t('ui_harvest_modal_harvest_notes_remarks')}
-              </label>
+              </DictationLabel>
               <textarea
+                id="harvest-notes"
                 value={harvestForm.notes}
                 onChange={e => setHarvestForm(prev => ({ ...prev, notes: e.target.value }))}
                 placeholder="Add concluding notes on yield, conditions, or causes of crop failure..."

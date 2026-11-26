@@ -228,6 +228,7 @@
   "POST /api/v1/ai/diseases/diagnose",
   "POST /api/v1/ai/diseases/diagnose/image",
   "POST /api/v1/ai/diseases/diagnose/soil",
+  "POST /api/v1/ai/draft-visit-report",
   "POST /api/v1/ai/execute",
   "POST /api/v1/ai/memories",
   "POST /api/v1/ai/reviews",

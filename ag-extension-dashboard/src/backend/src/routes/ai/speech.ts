@@ -52,6 +52,8 @@ router.post('/transcribe-audio', [checkUsageLimit('speech', { meter: false })], 
             data: {
                 text: result.transcription,
                 language: result.detectedLanguage,
+                // False: the transcriber does not know this language, so the text needs checking.
+                languageSupported: result.languageSupported !== false,
             }
         });
     } catch (error) {

@@ -55,7 +55,9 @@ export const sendThreadMessage = async (
   language?: string,
   attachmentIds?: string[],
   /** The copilot draft an officer's reply started from: the server marks the reply as AI-drafted. */
-  aiDraft?: string
+  aiDraft?: string,
+  /** Officers: also send it to the farmer as a spoken voice message (WhatsApp). */
+  speak?: boolean
 ) => {
   const { data } = await apiClient.post('/chatbot/messages', {
     conversationId,
@@ -63,6 +65,7 @@ export const sendThreadMessage = async (
     language,
     ...(attachmentIds?.length ? { attachmentIds } : {}),
     ...(aiDraft ? { aiDraft: { text: aiDraft } } : {}),
+    ...(speak ? { speak: true } : {}),
   });
   return data;
 };

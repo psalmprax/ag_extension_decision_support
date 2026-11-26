@@ -229,6 +229,10 @@ export const aiSchemas = {
         notes: z.string().min(10, 'Notes must be at least 10 characters'),
         farmerId: z.string().uuid().optional(),
     }),
+    /** What the officer said about a visit, already turned into text. */
+    draftVisitReport: z.object({
+        transcript: z.string().trim().min(1, 'Say something about the visit first').max(20000),
+    }),
 };
 
 /**

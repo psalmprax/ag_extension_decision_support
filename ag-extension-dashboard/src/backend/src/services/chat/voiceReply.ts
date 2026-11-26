@@ -8,8 +8,8 @@ import { synthesizeVoiceAdvisory } from '@/services/voiceAudioService';
  */
 export async function synthesizeVoiceReply(text: string, language?: string | null): Promise<string | undefined> {
     try {
-        const langCode = language === 'sw' || language === 'en' ? language : 'sw';
-        const syn = await synthesizeVoiceAdvisory({ text, language: langCode });
+        // The speech model reads the text in whatever language it is written in.
+        const syn = await synthesizeVoiceAdvisory({ text, language: language || undefined });
         if (syn?.audioBase64) return `data:${syn.format};base64,${syn.audioBase64}`;
     } catch (err) {
         logger.warn('Failed to synthesize a voice reply:', err);

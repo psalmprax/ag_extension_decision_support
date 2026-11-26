@@ -20,6 +20,7 @@ import { useThreadHistory } from './useThreadHistory';
 import { queryClient } from '@/lib/queryClient';
 import { UNREAD_CHATS_KEY } from '@/hooks/useUnreadChats';
 import { safeStorage } from '@/lib/safeStorage';
+import type { ReplySendOptions } from '@/components/chat/threadProps';
 
 interface QueuedChatItem {
   conversationId: string | null;
@@ -32,13 +33,15 @@ interface QueuedChatItem {
    * existed are sent as completions, as they were then.
    */
   via?: 'message' | 'completion';
+  /** An officer's reply to be sent spoken too (WhatsApp). */
+  speak?: boolean;
 }
 
 /** Send one queued item; true when it drained (caller may drop it from the queue). */
 async function sendQueuedChatItem(item: QueuedChatItem): Promise<boolean> {
   try {
     if (item.via === 'message' && item.conversationId) {
-      await sendThreadMessage(item.conversationId, item.message, item.language);
+      await sendThreadMessage(item.conversationId, item.message, item.language, undefined, undefined, item.speak);
     } else {
       await getChatCompletion(item.message, item.conversationId || undefined, item.language);
     }
@@ -261,7 +264,7 @@ export const useAppChat = (language: string) => {
     }
   }, [setActiveFarmerConvId, loadFarmerMessages, freePlan]);
 
-  const handleFarmerChatSend = async (e?: React.FormEvent) => {
+  const handleFarmerChatSend = async (e?: React.FormEvent, options: ReplySendOptions = {}) => {
     if (e) e.preventDefault();
     if (!farmerChatInput.trim()) return;
 
@@ -285,7 +288,7 @@ export const useAppChat = (language: string) => {
     const queueKey = `chatOfflineQueue:${activeFarmerConvId || 'new'}`;
     const offline = typeof navigator !== 'undefined' && !navigator.onLine;
     if (offline) {
-      enqueueOfflineMessage(queueKey, { conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now(), via });
+      enqueueOfflineMessage(queueKey, { conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now(), via, speak: options.speak });
       console.warn('Chat offline queued:', currentInput.slice(0, 40));
       return;
     }
@@ -294,7 +297,7 @@ export const useAppChat = (language: string) => {
       // A plain message never triggers an AI reply. AI help: the officer's private
       // copilot draft, the farmer's Ask AI button, or the turn-taking fallback.
       const res = via === 'message' && activeFarmerConvId
-        ? await sendThreadMessage(activeFarmerConvId, currentInput, language, undefined, takeCopilotDraft(activeFarmerConvId))
+        ? await sendThreadMessage(activeFarmerConvId, currentInput, language, undefined, takeCopilotDraft(activeFarmerConvId), options.speak)
         : await getChatCompletion(currentInput, activeFarmerConvId || undefined, language);
       if (res.success && activeFarmerConvId) {
         loadFarmerMessages(activeFarmerConvId);
@@ -303,7 +306,7 @@ export const useAppChat = (language: string) => {
     } catch (error) {
       const isNetwork = (error as Error)?.message?.toLowerCase().includes('network') || !navigator.onLine;
       if (isNetwork) {
-        enqueueOfflineMessage(queueKey, { conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now(), via });
+        enqueueOfflineMessage(queueKey, { conversationId: activeFarmerConvId, message: currentInput, language, at: Date.now(), via, speak: options.speak });
         console.warn('Chat queued after failure:', currentInput.slice(0, 40));
       } else {
         // Refused (rate limit, plan, access): give the text back so nothing typed is lost.

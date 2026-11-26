@@ -117,6 +117,28 @@ describe('replies go out on the channel the farmer used', () => {
         }));
     });
 
+    it('speaks the reply on WhatsApp when the officer chose to send it as a voice message', async () => {
+        thread('whatsapp');
+        await deliverToFarmerChannel('conv-1', 'msg-1', 'Scout twenty plants', { speak: true });
+
+        expect(whatsappService.sendMessage).toHaveBeenCalledWith(expect.objectContaining({
+            message: 'Scout twenty plants', mediaUrl: 'data:audio/ogg;base64,AAAA', isVoiceNote: true,
+        }));
+    });
+
+    it('sends text only on WhatsApp when the farmer typed and the officer did not ask for voice', async () => {
+        thread('whatsapp');
+        await deliverToFarmerChannel('conv-1', 'msg-1', 'Scout twenty plants');
+
+        expect(whatsappService.sendMessage).toHaveBeenCalledWith(expect.objectContaining({ mediaUrl: undefined, isVoiceNote: false }));
+    });
+
+    it('still sends a voice-requested reply as text by SMS, which cannot carry sound', async () => {
+        thread('sms');
+        await expect(deliverToFarmerChannel('conv-1', 'msg-1', 'Scout twenty plants', { speak: true })).resolves.toBe('sms');
+        expect(whatsappService.sendMessage).not.toHaveBeenCalled();
+    });
+
     it('uses the WhatsApp button template when it is set up, plain text otherwise', async () => {
         thread('whatsapp');
         (whatsappService.sendTemplateMessage as jest.Mock).mockResolvedValueOnce({ success: false });

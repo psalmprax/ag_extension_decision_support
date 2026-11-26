@@ -173,7 +173,7 @@ export async function deliverToFarmerChannel(
     conversationId: string,
     messageId: string | null,
     text: string,
-    options: { askAiButton?: boolean } = {},
+    options: { askAiButton?: boolean; speak?: boolean } = {},
 ): Promise<FarmerChannel | null> {
     try {
         const route = await replyRouteFor(conversationId);
@@ -181,8 +181,9 @@ export async function deliverToFarmerChannel(
         const { channel } = route;
         const address = await farmerAddress(conversationId);
         if (!address) return null;
-        const voice = route.isVoice ? { language: route.language } : undefined;
-        const sent = await sendOnChannel(channel, address, text, { ...options, voice });
+        // Spoken when the farmer sent a voice note, or when the officer chose to send it spoken.
+        const voice = route.isVoice || options.speak ? { language: route.language ?? address.language_preference } : undefined;
+        const sent = await sendOnChannel(channel, address, text, { askAiButton: options.askAiButton, voice });
         if (!sent) {
             logger.warn(`Could not deliver a reply in thread ${conversationId} by ${channel}`);
             return null;

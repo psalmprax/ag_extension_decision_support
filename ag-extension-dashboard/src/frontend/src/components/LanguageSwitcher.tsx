@@ -46,6 +46,7 @@ export const LanguageSwitcher: React.FC<LanguageSwitcherProps> = ({
           className="flex items-center gap-1.5 h-10 px-2.5 rounded-md text-sm text-slate-600 dark:text-theme-text-secondary hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] hover:text-slate-900 dark:hover:text-white transition-colors"
           aria-label={`${current.code.toUpperCase()} · ${t('common_select_language')}`}
           aria-expanded={open}
+          aria-haspopup="listbox"
         >
           <Globe className="w-4 h-4" aria-hidden="true" />
           <span>{current.code.toUpperCase()}</span>
@@ -122,23 +123,25 @@ const LanguageDropdown: React.FC<DropdownProps> = ({
   currentCode,
   onSelect,
 }) => (
-  <div className="absolute end-0 mt-2 w-64 bg-white dark:bg-theme-bg-secondary border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
+  // Sets its own text colour: the switcher also sits on pages that are dark in both themes
+  // (landing, sign-in), and inherited white text would vanish on this panel in light mode.
+  <div className="absolute end-0 mt-2 w-64 bg-white dark:bg-theme-bg-secondary text-slate-900 dark:text-theme-text-primary border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
     <div className="p-2 border-b border-gray-100 dark:border-white/10">
       <div className="relative">
-        <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+        <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-500 dark:text-theme-text-muted" />
         <input
           type="text"
           autoFocus
           value={query}
           onChange={e => setQuery(e.target.value)}
           placeholder="Search languages"
-          className="w-full ps-8 pe-2 py-1.5 text-xs bg-gray-50 dark:bg-theme-bg-tertiary border border-gray-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
+          className="w-full ps-8 pe-2 py-1.5 text-xs bg-gray-50 dark:bg-theme-bg-tertiary text-slate-900 dark:text-theme-text-primary placeholder:text-slate-500 dark:placeholder:text-theme-text-muted border border-gray-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
         />
       </div>
     </div>
     <ul role="listbox" className="max-h-64 overflow-y-auto py-1">
       {filtered.length === 0 ? (
-        <li className="px-3 py-2 text-xs text-gray-400">No languages match "{query}"</li>
+        <li className="px-3 py-2 text-xs text-slate-500 dark:text-theme-text-muted">No languages match "{query}"</li>
       ) : (
         filtered.map(lang => (
           <li key={lang.code}>

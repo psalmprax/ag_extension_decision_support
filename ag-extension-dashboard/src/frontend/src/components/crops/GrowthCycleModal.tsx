@@ -3,6 +3,8 @@ import { motion } from 'framer-motion';
 import { Sprout } from 'lucide-react';
 import { Field } from '@/api/fieldService';
 import { useLanguage } from '@/lib/LanguageContext';
+import { DictationLabel } from '@/components/voice/DictationButton';
+import { appendDictation } from '@/lib/dictationText';
 
 interface GrowthCycleModalProps {
   showCycleModal: boolean;
@@ -118,10 +120,13 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 dark:text-theme-text-secondary mb-1">
+              <DictationLabel htmlFor="cycle-notes" className="block text-xs font-medium text-slate-600 dark:text-theme-text-secondary mb-1"
+                draftKey={selectedField ? `cycle-notes:${selectedField.id}` : undefined}
+                onTranscript={text => setCycleForm(prev => ({ ...prev, notes: appendDictation(prev.notes, text) }))}>
                 {t('ui_growth_cycle_modal_notes_recommendations')}
-              </label>
+              </DictationLabel>
               <textarea
+                id="cycle-notes"
                 value={cycleForm.notes}
                 onChange={e => setCycleForm(prev => ({ ...prev, notes: e.target.value }))}
                 placeholder="Add details on fertilizers applied or seeds used..."

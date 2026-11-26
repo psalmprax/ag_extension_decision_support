@@ -7,6 +7,12 @@ export interface ThreadHistory {
   loadEarlier: () => void | Promise<void>;
 }
 
+/** How an officer asked for a reply to be sent. */
+export interface ReplySendOptions {
+  /** Also send it as a spoken voice message where the farmer's channel can carry one (WhatsApp). */
+  speak?: boolean;
+}
+
 /** The thread state both chat pages share (officers' Farmer Chat and the farmer's own). */
 export interface ThreadPageProps {
   farmerConversations: Conversation[];
@@ -17,7 +23,7 @@ export interface ThreadPageProps {
   farmerHistory: ThreadHistory;
   farmerChatInput: string;
   setFarmerChatInput: (value: string) => void;
-  handleFarmerChatSend: (e?: FormEvent) => void | Promise<void>;
+  handleFarmerChatSend: (e?: FormEvent, options?: ReplySendOptions) => void | Promise<void>;
 }
 
 type ThreadSource = Omit<ThreadPageProps, 'farmerConversations' | 'farmerChatMessages'> & {

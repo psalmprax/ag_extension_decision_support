@@ -111,7 +111,13 @@ function invertScale(scale: ColorScale): ColorScale {
   return inverted;
 }
 
-/** Dark-mode primary shift: low steps become neutral grays, high steps stay brand. */
+/**
+ * Dark-mode primary shift: the palest tint steps (50–200, used for tinted panels such as
+ * bg-primary-50) become dark neutrals, so a tint never glows on a dark page. Steps 300
+ * and up stay brand: they are what dark text, focus rings and accents use
+ * (dark:text-primary-400 and the like), and greying 300/400 too left that text at
+ * 2.1–3.4:1 on dark panels, below AA, and every focus ring grey.
+ */
 function darkPrimaryStep(step: string, value: string): string {
   switch (step) {
     case '50':
@@ -120,10 +126,6 @@ function darkPrimaryStep(step: string, value: string): string {
       return '#1f2937';
     case '200':
       return '#374151';
-    case '300':
-      return '#4b5563';
-    case '400':
-      return '#6b7280';
     default:
       return value;
   }

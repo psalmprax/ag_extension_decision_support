@@ -64,6 +64,21 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /*
+   * The open list of every native <select> follows the theme. Without this, an option
+   * inherits the select's text colour (often white in dark mode) while the list's
+   * background comes from the select's own, frequently see-through, background, which
+   * some browsers put over white: white text on a white list. Canvas / CanvasText are
+   * the theme's own page and text colours (they follow color-scheme above), so the
+   * list is dark with light text in dark mode and the reverse in light mode, on any
+   * surface. A class on an option (more specific) still wins where one is needed.
+   */
+  select option,
+  select optgroup {
+    background-color: Canvas;
+    color: CanvasText;
+  }
+
   /* Prevent browser autofill from turning inputs white with invisible white text */
   input:-webkit-autofill,
   input:-webkit-autofill:hover,
