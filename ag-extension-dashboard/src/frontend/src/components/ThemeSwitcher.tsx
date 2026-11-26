@@ -28,7 +28,6 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
       <button
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
-        aria-haspopup="listbox"
         className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] hover:border-primary-400/50 transition-all text-slate-800 hover:text-primary-700 dark:text-theme-text-secondary dark:hover:text-primary-400"
       >
         <Palette className="w-4 h-4" aria-hidden="true" />
@@ -48,14 +47,13 @@ export const ThemeSwitcher: React.FC<ThemeSwitcherProps> = ({ currentTheme, onTh
               </p>
             </div>
 
-            <div role="listbox" aria-label={t('theme_choose')} className="p-2 space-y-1 max-h-80 overflow-y-auto custom-scrollbar">
+            <div role="group" aria-label={t('theme_choose')} className="p-2 space-y-1 max-h-80 overflow-y-auto custom-scrollbar">
               {themeKeys.map(theme => {
                 const isActive = theme === currentTheme;
                 return (
                   <button
                     key={theme}
-                    role="option"
-                    aria-selected={isActive}
+                    aria-pressed={isActive}
                     onClick={() => {
                       onThemeChange(theme);
                       setIsOpen(false);

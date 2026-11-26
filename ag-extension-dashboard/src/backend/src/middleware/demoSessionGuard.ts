@@ -46,7 +46,8 @@ export const DEMO_WRITES: ReadonlySet<string> = new Set([
 
 /**
  * The ways out of the demo: signing in, signing up, recovering a password. They are
- * public (anyone signed out may call them), so allowing them shows the demo nothing,
+ * public (anyone signed out may call them) and act on no account of the session's own,
+ * so allowing them shows or changes nothing of the demo's,
  * and refusing them meant a visitor still holding a demo session could not sign in
  * to their own account without signing out of the demo first.
  */
@@ -60,7 +61,7 @@ export const LEAVING_THE_DEMO: ReadonlySet<string> = new Set([
   '/auth/forgot-password',
   '/auth/reset-password',
   '/auth/verify-email',
-  '/auth/resend-verification',
+  // Not /auth/resend-verification: it acts on the signed-in account (the demo's own).
 ]);
 
 const READ_METHODS = new Set(['GET', 'HEAD']);

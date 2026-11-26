@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, LogOut } from 'lucide-react';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
@@ -7,6 +7,7 @@ import { dropdownVariants } from '@/lib/animations';
 import { useLanguage } from '@/lib/LanguageContext';
 import { AVATAR_PRESETS } from '@/components/profileDefaults';
 import { safeStorage } from '@/lib/safeStorage';
+import { useMenuKeyboard } from '@/hooks/useMenuKeyboard';
 
 interface ProfileMenuProps {
   isProfileMenuOpen: boolean;
@@ -26,6 +27,8 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
   const { subtextClass } = useThemeClasses();
   const { t } = useLanguage();
   const [avatarId, setAvatarId] = useState('');
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const { menuRef, onKeyDown } = useMenuKeyboard(isProfileMenuOpen, () => setIsProfileMenuOpen(false), triggerRef);
 
   useEffect(() => {
     const updateAvatar = () => {
@@ -46,6 +49,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
   return (
     <div className="relative">
       <button
+        ref={triggerRef}
         onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
         className="flex items-center gap-2 sm:gap-3 rounded-md p-1 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] transition-colors"
         aria-expanded={isProfileMenuOpen}
@@ -78,6 +82,8 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
               initial="initial"
               animate="animate"
               exit="exit"
+              ref={menuRef}
+              onKeyDown={onKeyDown}
               role="menu"
               aria-label={t('header_account_info', { defaultValue: 'Account info' })}
               className="absolute end-0 mt-2 w-56 popover-surface rounded-xl p-2 z-50"

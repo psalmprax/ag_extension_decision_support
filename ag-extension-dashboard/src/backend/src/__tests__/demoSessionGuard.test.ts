@@ -55,7 +55,7 @@ import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import app from '../app';
-import { apiEndpoint, DEMO_READS, DEMO_WRITES, LEAVING_THE_DEMO } from '../middleware/demoSessionGuard';
+import { apiEndpoint, demoSessionGuard, DEMO_READS, DEMO_WRITES, LEAVING_THE_DEMO } from '../middleware/demoSessionGuard';
 
 const sign = (claims: Record<string, unknown>) =>
     jwt.sign(claims, config.jwt.secret as string, { expiresIn: '1h' });
@@ -129,6 +129,26 @@ describe('demo session guard', () => {
         }
         const challenge = await request(app).get('/api/v1/auth/register/challenge').set('Authorization', `Bearer ${DEMO}`);
         expect(isGuardRefusal(challenge)).toBe(false);
+    });
+
+    it('decides on its own (no database) which ways out of the demo are open', () => {
+        const guard = (method: string, path: string) => {
+            const next = jest.fn();
+            const res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
+            const req = { method, path, user: { userId: 'demo-1', email: 'demo@agridemo.com', role: 'extension_officer', isDemo: true } };
+            demoSessionGuard(req as never, res as never, next);
+            return next.mock.calls.length === 1 ? 'allowed' : `refused ${res.status.mock.calls[0]?.[0]}`;
+        };
+        expect(guard('POST', '/api/auth/login')).toBe('allowed');
+        expect(guard('POST', '/api/v1/auth/register')).toBe('allowed');
+        expect(guard('GET', '/api/auth/register/challenge')).toBe('allowed');
+        expect(guard('POST', '/api/auth/resend-verification')).toBe('refused 403');
+        expect(guard('POST', '/api/v1/farmers')).toBe('refused 403');
+    });
+
+    it('still refuses the demo resending a verification email for its own account', async () => {
+        const res = await request(app).post('/api/auth/resend-verification').set('Authorization', `Bearer ${DEMO}`).send({});
+        expect(isGuardRefusal(res)).toBe(true);
     });
 
     it('does not touch real accounts', async () => {
