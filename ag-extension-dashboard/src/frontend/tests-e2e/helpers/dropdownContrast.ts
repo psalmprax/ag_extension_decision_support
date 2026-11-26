@@ -188,11 +188,36 @@ function measureSelects(): string[] {
   return problems;
 }
 
+/**
+ * A menu floating over the page must be solid. Its text is measured against its own
+ * layers, so a see-through surface could pass while the page behind it (buttons, other
+ * text) shows through and prints over its items. Checked from the menu up to the layer
+ * that floats (positioned absolute or fixed): the first background colour found there
+ * must be opaque.
+ */
+function checkSolidSurface(problems: string[], popup: Element): void {
+  // Lists that sit in the page's flow (not floating) are covered by the text checks.
+  let floating: Element | null = popup;
+  while (floating && !['absolute', 'fixed'].includes(getComputedStyle(floating).position)) floating = floating.parentElement;
+  if (!floating) return;
+  for (let node: Element | null = popup; node; node = node.parentElement) {
+    const color = parseColor(getComputedStyle(node).backgroundColor);
+    if (color && color.a > 0) {
+      if (color.a < 1) problems.push(`${describeElement(popup)} (open): floats over the page on a see-through background (${Math.round(color.a * 100)}% opaque)`);
+      return;
+    }
+    if (node === floating) break;
+  }
+  problems.push(`${describeElement(popup)} (open): floats over the page with no background of its own`);
+}
+
 /** The text inside every open listbox or menu, and a search box the dropdown focused. */
 function measurePopups(): string[] {
   const problems: string[] = [];
   for (const popup of Array.from(document.querySelectorAll('[role="listbox"], [role="menu"]'))) {
-    if (isShown(popup) && popup.tagName !== 'SELECT') checkTextIn(problems, popup, `${describeElement(popup)} (open)`);
+    if (!isShown(popup) || popup.tagName === 'SELECT') continue;
+    checkSolidSurface(problems, popup);
+    checkTextIn(problems, popup, `${describeElement(popup)} (open)`);
   }
   const focused = document.activeElement;
   if (focused instanceof HTMLInputElement && isShown(focused)) checkTextIn(problems, focused, 'search box (open)');
@@ -211,7 +236,7 @@ function measureTrigger(): string[] {
 
 const IN_PAGE = [
   parseColor, over, contrastRatio, canvasColor, backgroundOf, describeElement, isShown, minimumFor,
-  checkText, ownText, checkField, checkTextIn, checkOptions, measureSelects, measurePopups, measureTrigger,
+  checkText, ownText, checkField, checkTextIn, checkOptions, measureSelects, checkSolidSurface, measurePopups, measureTrigger,
 ].map((fn) => fn.toString()).join('\n');
 
 /**
@@ -241,7 +266,8 @@ async function checkCustomDropdown(page: Page, trigger: Locator, key: string): P
   }
   problems.push(...(await runInPage(page, 'measurePopups')).map((line) => `opened "${key}": ${line}`));
   await page.keyboard.press('Escape');
-  if ((await trigger.getAttribute('aria-expanded')) === 'true') await trigger.click();
+  // A menu that ignores Escape: its click-away layer may cover the trigger, so click through it.
+  if ((await trigger.getAttribute('aria-expanded')) === 'true') await trigger.click({ force: true });
   return problems;
 }
 

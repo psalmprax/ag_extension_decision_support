@@ -49,6 +49,7 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
         onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
         className="flex items-center gap-2 sm:gap-3 rounded-md p-1 hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] transition-colors"
         aria-expanded={isProfileMenuOpen}
+        aria-haspopup="menu"
       >
         <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center bg-emerald-100 dark:bg-emerald-400/[0.15] shrink-0">
           {AvatarIcon ? (
@@ -77,9 +78,11 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
               initial="initial"
               animate="animate"
               exit="exit"
-              className="absolute end-0 mt-2 w-56 glass-panel rounded-xl shadow-2xl p-2 z-50"
+              role="menu"
+              aria-label={t('header_account_info', { defaultValue: 'Account info' })}
+              className="absolute end-0 mt-2 w-56 popover-surface rounded-xl p-2 z-50"
             >
-              <div className="p-3 mb-2 border-b border-white/10">
+              <div className="p-3 mb-2 border-b border-slate-900/[0.08] dark:border-white/[0.08]">
                 <p
                   className={cn('text-xs mb-1', subtextClass)}
                 >
@@ -91,22 +94,24 @@ export const ProfileMenu: React.FC<ProfileMenuProps> = ({
               </div>
 
               <button
+                role="menuitem"
                 onClick={() => {
                   setIsProfileMenuOpen(false);
                   setShowProfileModal(true);
                 }}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/5 text-slate-300"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-900/[0.05] dark:hover:bg-white/[0.06] text-slate-800 dark:text-theme-text-secondary"
               >
-                <User className="w-4 h-4 text-primary-400" />
+                <User className="w-4 h-4 text-primary-700 dark:text-primary-400" aria-hidden="true" />
                 <span className="text-xs font-medium  ">
                   {t('header_profile', { defaultValue: 'Profile' })}
                 </span>
               </button>
               <button
+                role="menuitem"
                 onClick={handleLogout}
-                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-rose-500/10 text-rose-400"
+                className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-rose-500/10 text-rose-700 dark:text-rose-400"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-4 h-4" aria-hidden="true" />
                 <span className="text-xs font-medium  ">
                   {t('header_sign_out', { defaultValue: 'Sign out' })}
                 </span>
