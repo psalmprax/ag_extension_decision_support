@@ -36,8 +36,26 @@ export const verifyPhoneCode = async (phone: string, code: string, country?: str
   return response.data;
 };
 
-export const register = async (userData: RegisterData): Promise<AuthResponse> => {
-  const response = await apiClient.post<AuthResponse>('/auth/register', userData);
+/**
+ * Anti-bot fields sent with a sign-up: the form token proves the form was loaded
+ * a few seconds before it was posted, and `website` is a hidden field that only a
+ * bot fills in. They are not part of the account, so they stay out of RegisterData.
+ */
+export interface SignupHumanCheck {
+  formToken?: string;
+  website?: string;
+}
+
+/** A short-lived token for the sign-up form (see the backend's botDefense). */
+export const fetchSignupChallenge = async (): Promise<{ token: string; minFillMs: number }> => {
+  const response = await apiClient.get<{ success: boolean; data: { token: string; minFillMs: number } }>(
+    '/auth/register/challenge',
+  );
+  return response.data.data;
+};
+
+export const register = async (userData: RegisterData, humanCheck?: SignupHumanCheck): Promise<AuthResponse> => {
+  const response = await apiClient.post<AuthResponse>('/auth/register', { ...userData, ...humanCheck });
   return response.data;
 };
 

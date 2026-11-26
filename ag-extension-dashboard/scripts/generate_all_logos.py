@@ -53,6 +53,8 @@ resize_icon(img, 512, pad_ratio=0.25, bg_color=(12, 10, 9, 255)).save(os.path.jo
 # Favicon
 resize_icon(img, 64).save(os.path.join(pwa_public, "favicon.png"))
 resize_icon(img, 32).save(os.path.join(pwa_public, "favicon-32x32.png"))
+# Browsers also ask for /favicon.ico on their own (bookmarks, some tab views).
+resize_icon(img, 48).save(os.path.join(pwa_public, "favicon.ico"), sizes=[(16, 16), (32, 32), (48, 48)])
 
 # 2. Native iOS Xcode AppIcon
 ios_iconset = os.path.join(FRONTEND_DIR, "ios", "App", "App", "Assets.xcassets", "AppIcon.appiconset")

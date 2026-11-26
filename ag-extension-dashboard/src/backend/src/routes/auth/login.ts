@@ -11,6 +11,7 @@ import { verifyPassword } from '@/utils/password';
 import { safeError } from '@/utils/safeResponse';
 import { finishSignIn, type LoginUserRow } from './loginCompletion';
 import { clientIpOf } from '@/utils/clientIp';
+import { loginIpRateLimit } from '@/middleware/botDefense';
 
 const router = Router();
 
@@ -39,7 +40,7 @@ const DUMMY_BCRYPT_HASH = '$2a$10$NVqK3ijujMkE3ZwVVOLruutAEJwLmNCDXAGVKvTqLGxhBp
  *       401:
  *         description: Invalid credentials
  */
-router.post('/login', [auditMiddleware('auth_login'), validate(loginSchema)], async (req: Request, res: Response) => {
+router.post('/login', [loginIpRateLimit, auditMiddleware('auth_login'), validate(loginSchema)], async (req: Request, res: Response) => {
     try {
         const { email, password } = req.body;
         const clientIp = clientIpOf(req);

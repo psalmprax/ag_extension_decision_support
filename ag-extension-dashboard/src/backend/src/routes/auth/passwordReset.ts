@@ -8,6 +8,7 @@ import { forgotPasswordSchema, resetPasswordSchema, verifyEmailSchema } from '@/
 import { passwordProblems } from '@/utils/passwordPolicy';
 import { emailService } from '@/services/emailService';
 import { revokeAllUserSessions, hashToken } from '@/services/sessionService';
+import { passwordResetIpRateLimit } from '@/middleware/botDefense';
 import { safeError } from '@/utils/safeResponse';
 import { authorize, AuthRequest } from '@/middleware/authorize';
 import { auditMiddleware } from '@/middleware/auditMiddleware';
@@ -32,7 +33,7 @@ const GENERIC_FORGOT_RESPONSE = {
  * POST /auth/forgot-password
  * Always responds 200 with the same body so it cannot be used to enumerate accounts.
  */
-router.post('/forgot-password', validate(forgotPasswordSchema), async (req: Request, res: Response) => {
+router.post('/forgot-password', [passwordResetIpRateLimit, validate(forgotPasswordSchema)], async (req: Request, res: Response) => {
     const email = String(req.body.email).trim().toLowerCase();
     try {
         const userRes = await query<{ id: string; first_name: string }>(

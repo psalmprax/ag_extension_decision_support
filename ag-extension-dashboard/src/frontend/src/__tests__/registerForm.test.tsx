@@ -22,6 +22,7 @@ vi.mock('@/api/client', () => ({
 
 vi.mock('@/api/authService', () => ({
   register: vi.fn(),
+  fetchSignupChallenge: vi.fn().mockResolvedValue({ token: 'v1.1.sig', minFillMs: 0 }),
 }));
 
 vi.mock('@/components/canvas-ui/AgroEcosystemCanvasScrubber', () => ({

@@ -110,7 +110,7 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'robots.txt', 'apple-touch-icon.png'],
+      includeAssets: ['favicon.ico', 'favicon-32x32.png', 'favicon.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'GPExts - Agricultural Decision Support',
         short_name: 'GPExts',
