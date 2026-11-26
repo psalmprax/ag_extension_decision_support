@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getDarkThemeCSS, getThemeCSS } from '@/theme';
+import { getDarkThemeCSS, getThemeCSS, themes, type ThemeName } from '@/theme';
 
 const value = (css: string, name: string) => css.match(new RegExp(`${name}: ([^;]+);`))?.[1];
 
@@ -46,6 +46,33 @@ describe('dark mode text', () => {
 
   it('defines the text steps in light mode too', () => {
     expect(value(getThemeCSS('forest'), '--color-text-primary')).toBe('#1f2937');
+  });
+
+  /** WCAG contrast between two #rrggbb colours. */
+  const contrast = (a: string, b: string) => {
+    const lum = (hex: string) => {
+      const [r, g, bl] = [1, 3, 5].map((i) => {
+        const c = parseInt(hex.slice(i, i + 2), 16) / 255;
+        return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+    };
+    const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x);
+    return (hi + 0.05) / (lo + 0.05);
+  };
+
+  it('keeps brand primary 300/400 in dark mode, readable as text on the dark panels', () => {
+    for (const name of Object.keys(themes) as ThemeName[]) {
+      const css = getDarkThemeCSS(name);
+      const background = value(css, '--color-bg-secondary') as string;
+      for (const step of [300, 400]) {
+        const shade = value(css, `--color-primary-${step}`) as string;
+        expect(shade, `${name} primary-${step}`).toBe(themes[name].primary[step]);
+        expect(contrast(shade, background), `${name} primary-${step} on ${background}`).toBeGreaterThanOrEqual(4.5);
+      }
+      // The palest tints still become dark neutrals, so tinted panels do not glow.
+      expect(value(css, '--color-primary-50')).toBe('#111827');
+    }
   });
 });
 

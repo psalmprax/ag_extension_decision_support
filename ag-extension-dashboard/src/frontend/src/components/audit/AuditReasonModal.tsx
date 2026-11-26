@@ -108,7 +108,7 @@ export const AuditReasonModal: React.FC<AuditReasonModalProps> = ({
             className="w-full px-3 py-2.5 rounded-lg bg-slate-950 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500 transition-all font-sans"
           >
             {STANDARD_REASON_CODES.map(rc => (
-              <option key={rc.code} value={rc.code} className="bg-slate-900 text-white py-1">
+              <option key={rc.code} value={rc.code}>
                 {rc.label}
               </option>
             ))}
