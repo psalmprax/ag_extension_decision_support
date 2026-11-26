@@ -28,6 +28,7 @@
   "/api/v1/auth/login-history",
   "/api/v1/auth/login-stats",
   "/api/v1/auth/me",
+  "/api/v1/auth/register/challenge",
   "/api/v1/auth/sessions",
   "/api/v1/billing/analytics/churn",
   "/api/v1/billing/analytics/cohorts",

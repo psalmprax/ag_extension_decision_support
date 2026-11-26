@@ -56,6 +56,7 @@
   "GET /api/v1/auth/login-history",
   "GET /api/v1/auth/login-stats",
   "GET /api/v1/auth/me",
+  "GET /api/v1/auth/register/challenge",
   "GET /api/v1/auth/sessions",
   "GET /api/v1/billing/analytics/churn",
   "GET /api/v1/billing/analytics/cohorts",

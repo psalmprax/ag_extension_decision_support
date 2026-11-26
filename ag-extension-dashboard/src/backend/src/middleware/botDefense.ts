@@ -21,7 +21,8 @@ import { SharedStateStore } from './rateLimitMiddleware';
 
 /** Rate limiting is turned off for CI/local E2E and unit tests, same as the other limiters. */
 function limitsDisabled(): boolean {
-    return process.env.RATE_LIMIT_DISABLED === 'true' || config.nodeEnv === 'test';
+    // NODE_ENV too: tests that mock the config module lose config.nodeEnv.
+    return process.env.RATE_LIMIT_DISABLED === 'true' || config.nodeEnv === 'test' || process.env.NODE_ENV === 'test';
 }
 
 /**
@@ -35,6 +36,10 @@ function ipRateLimit(opts: { prefix: string; windowMs: number; max: number; mess
         windowMs: opts.windowMs,
         max: opts.max,
         skip: () => limitsDisabled(),
+        // If the counter store fails, let the request through (and log it): an outage of
+        // the shared state must never stop people signing in. The per-account lockout
+        // and the per-number SMS limit still apply.
+        passOnStoreError: true,
         standardHeaders: true,
         legacyHeaders: false,
         handler: (req: Request, res: Response) => {
