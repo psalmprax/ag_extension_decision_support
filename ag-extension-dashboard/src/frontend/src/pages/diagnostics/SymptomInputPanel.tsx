@@ -2,6 +2,8 @@ import { useLanguage } from '@/lib/LanguageContext';
 import React from 'react';
 import { Search, Loader2, X, Plus, Activity } from 'lucide-react';
 import { isActionEnter } from '@/lib/keyboard';
+import { DictationLabel } from '@/components/voice/DictationButton';
+import { useDictationAppend } from '@/hooks/useDictationAppend';
 
 const COMMON_SYMPTOM_PRESETS = [
   'Yellowing leaves',
@@ -36,6 +38,7 @@ export const SymptomInputPanel: React.FC<{
   isDiagnosing,
 }) => {
   const { t } = useLanguage();
+  const dictateSymptom = useDictationAppend(currentSymptom, setCurrentSymptom);
   return (
   <div className="p-5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] space-y-4">
     <div className="flex items-center justify-between">
@@ -61,9 +64,10 @@ export const SymptomInputPanel: React.FC<{
       </div>
 
       <div>
-        <label htmlFor="symptom-text" className="block text-sm text-slate-400 mb-1">
+        <DictationLabel htmlFor="symptom-text" className="block text-sm text-slate-600 dark:text-theme-text-secondary mb-1"
+          draftKey="symptom-text" onTranscript={dictateSymptom}>
           {t('symptoms_what', { defaultValue: 'What do you see?' })}
-        </label>
+        </DictationLabel>
         <div className="flex gap-2">
           <input
             id="symptom-text"

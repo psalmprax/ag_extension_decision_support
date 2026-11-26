@@ -8,6 +8,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { MessagePhotos } from '@/components/chat/MessagePhotos';
 import { calendarDateFromToday, formatCalendarDate } from '@/lib/calendarDate';
 import { useLanguage } from '@/lib/LanguageContext';
+import { DictationLabel } from '@/components/voice/DictationButton';
+import { appendDictation } from '@/lib/dictationText';
 
 const PROGRESS_KINDS: { value: ProgressKind; label: string; tone: string }[] = [
   { value: 'success', label: 'Success', tone: 'text-emerald-700 dark:text-emerald-400 border-emerald-500/30 bg-emerald-500/10' },
@@ -17,6 +19,7 @@ const PROGRESS_KINDS: { value: ProgressKind; label: string; tone: string }[] = [
   { value: 'observation', label: 'Observation', tone: 'text-slate-700 dark:text-theme-text-secondary border-slate-500/30 bg-slate-500/10' },
 ];
 
+const PROGRESS_LABEL = 'text-xs text-slate-700 dark:text-theme-text-secondary';
 const FIELD = 'w-full rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] bg-white dark:bg-theme-bg-primary px-3 py-2 text-sm text-slate-900 dark:text-theme-text-primary';
 
 /** The form an officer uses to add to a farmer's progress log. */
@@ -73,15 +76,21 @@ const ProgressEntryForm: React.FC<{ farmerId: string; crops: string[] }> = ({ fa
           <input type="date" value={occurredOn} max={calendarDateFromToday()} onChange={e => setOccurredOn(e.target.value)} className={FIELD} />
         </label>
       </div>
-      <label className="block text-xs text-slate-700 dark:text-theme-text-secondary space-y-1">
-        <span>{t('ui_farmer_progress_log_what_happened')}</span>
-        <input value={title} maxLength={200} onChange={e => setTitle(e.target.value)} className={FIELD}
+      <div className="space-y-1">
+        <DictationLabel htmlFor="progress-what" className={PROGRESS_LABEL} draftKey={`progress-title:${farmerId}`}
+          onTranscript={text => setTitle(current => appendDictation(current, text).slice(0, 200))}>
+          {t('ui_farmer_progress_log_what_happened')}
+        </DictationLabel>
+        <input id="progress-what" value={title} maxLength={200} onChange={e => setTitle(e.target.value)} className={FIELD}
           placeholder="e.g. Maize germination 92%, armyworm found in 3 of 20 plants" />
-      </label>
-      <label className="block text-xs text-slate-700 dark:text-theme-text-secondary space-y-1">
-        <span>{t('ui_farmer_progress_log_details')}</span>
-        <textarea value={details} rows={2} onChange={e => setDetails(e.target.value)} className={FIELD} />
-      </label>
+      </div>
+      <div className="space-y-1">
+        <DictationLabel htmlFor="progress-details" className={PROGRESS_LABEL} draftKey={`progress-details:${farmerId}`}
+          onTranscript={text => setDetails(current => appendDictation(current, text))}>
+          {t('ui_farmer_progress_log_details')}
+        </DictationLabel>
+        <textarea id="progress-details" value={details} rows={2} onChange={e => setDetails(e.target.value)} className={FIELD} />
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <label className="text-xs text-slate-700 dark:text-theme-text-secondary space-y-1">
           <span>{t('ui_goal_mode_campaign_modal_crop')}</span>

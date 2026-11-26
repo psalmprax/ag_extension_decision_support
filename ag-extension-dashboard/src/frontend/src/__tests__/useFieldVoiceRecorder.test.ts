@@ -8,18 +8,10 @@ vi.mock('@/api/aiService', () => ({
   transcribeAudio: vi.fn(),
 }));
 
-vi.mock('react-hot-toast', () => ({
-  default: {
-    loading: vi.fn(),
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-  toast: {
-    loading: vi.fn(),
-    success: vi.fn(),
-    error: vi.fn(),
-  },
-}));
+vi.mock('react-hot-toast', () => {
+  const toast = Object.assign(vi.fn(), { loading: vi.fn(), success: vi.fn(), error: vi.fn(), dismiss: vi.fn() });
+  return { default: toast, toast };
+});
 
 class MockMediaStream {
   tracks: Array<{ stop: () => void }> = [{ stop: vi.fn() }];
@@ -134,7 +126,7 @@ describe('useFieldVoiceRecorder (Firefox fallback & transcription behavior)', ()
     });
 
     expect(onTranscriptChunk).toHaveBeenCalledWith('Mahindi yameshambuliwa na viwavi');
-    expect(toast.success).toHaveBeenCalledWith('Audio memo transcribed!', { id: 'whisper-stt' });
+    expect(toast.success).toHaveBeenCalledWith('Done. Check the words before you save.', { id: 'whisper-stt' });
     expect(mockStream.tracks[0].stop).toHaveBeenCalled();
   });
 
@@ -206,6 +198,6 @@ describe('useFieldVoiceRecorder (Firefox fallback & transcription behavior)', ()
 
     expect(transcribeAudio).toHaveBeenCalledWith('data:audio/webm;base64,bW9ja2F1ZGlv', 'en');
     expect(onTranscriptChunk).toHaveBeenCalledWith('Uploaded field voice recording transcript');
-    expect(toast.success).toHaveBeenCalledWith('Voice memo transcribed (field-memo.m4a)!', { id: 'upload-stt' });
+    expect(toast.success).toHaveBeenCalledWith('Done. Check the words before you save.', { id: 'upload-stt' });
   });
 });

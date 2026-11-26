@@ -5,6 +5,7 @@ import { Bot, X, Camera, Mic, Send, MessageSquare, Smartphone, UploadCloud, Volu
 import { useLanguage } from '@/lib/LanguageContext';
 import { getChatCompletion, analyzeImage } from '@/api/aiService';
 import { useFieldVoiceRecorder } from '@/hooks/useFieldVoiceRecorder';
+import { voiceMessages } from '@/hooks/voiceMessages';
 import { ProgressiveProfileChips, ProfileParameter } from './ProgressiveProfileChips';
 import { useAppStore } from '@/store/useAppStore';
 import { SCREENS_WITH_COMPOSER } from '@/lib/composerScreens';
@@ -342,8 +343,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
 }) => {
   // On phones the button would sit over these screens' own message box.
   const hideOnPhone = SCREENS_WITH_COMPOSER.has(useAppStore(state => state.activeTab));
-  const { t } = useLanguage();
-  const { language } = useLanguage();
+  const { t, language } = useLanguage();
   const storeUser = useAppStore(s => s.user);
   const [isOpen, setIsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<TabType>('chat');
@@ -404,7 +404,7 @@ export const FloatingAIPill: React.FC<FloatingAIPillProps> = ({
     interimText,
     toggleRecording,
   } = useFieldVoiceRecorder({
-    language,
+    language, messages: voiceMessages(t),
     onTranscriptChunk: chunk => {
       setCapturedVoiceNote(prev => (prev ? `${prev} ${chunk}` : chunk));
     },

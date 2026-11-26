@@ -8,6 +8,8 @@ import {
 } from '@/api/recommendationReviewService';
 import { useLanguage } from '@/lib/LanguageContext';
 import { ReviewedAdviceForm } from '@/components/ReviewedAdviceForm';
+import { DictationLabel } from '@/components/voice/DictationButton';
+import { appendDictation } from '@/lib/dictationText';
 
 interface RecommendationReviewQueueProps {
   addNotification: (notification: { type: 'info' | 'warning' | 'error' | 'success'; message: string }) => void;
@@ -138,7 +140,11 @@ export function RecommendationReviewQueue({ addNotification }: RecommendationRev
                 <ReviewedAdviceForm item={item} addNotification={addNotification} onDone={() => removeReview(item.id)} />
               ) : (
                 <>
-                  <label htmlFor={reasonId} className="mt-3 block text-xs font-medium text-slate-700 dark:text-theme-text-secondary">{t('ui_recommendation_review_queue_reason_for_your_decision')}</label>
+                  <DictationLabel htmlFor={reasonId} className="block text-xs font-medium text-slate-700 dark:text-theme-text-secondary" rowClassName="mt-3"
+                    draftKey={`review-reason:${item.id}`}
+                    onTranscript={text => setReasons(current => ({ ...current, [item.id]: appendDictation(current[item.id] || '', text) }))}>
+                    {t('ui_recommendation_review_queue_reason_for_your_decision')}
+                  </DictationLabel>
                   <textarea
                     id={reasonId}
                     rows={2}

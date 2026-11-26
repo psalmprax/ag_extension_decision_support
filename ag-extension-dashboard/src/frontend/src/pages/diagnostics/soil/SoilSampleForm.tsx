@@ -1,6 +1,8 @@
 import React from 'react';
 import { Activity, FlaskConical, Loader2, Upload } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
+import { DictationLabel } from '@/components/voice/DictationButton';
+import { useDictationAppend } from '@/hooks/useDictationAppend';
 
 const FIELD = 'w-full px-3 py-2 bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-[3px] text-xs text-slate-900 dark:text-theme-text-primary placeholder-slate-400 dark:placeholder-white/40 focus:border-emerald-500/60';
 const LABEL = 'block text-[11px] font-medium text-slate-600 dark:text-theme-text-muted mb-1';
@@ -32,6 +34,7 @@ export const SoilSampleForm: React.FC<Props> = ({
   isAnalyzing,
 }) => {
   const { t } = useLanguage();
+  const dictateNotes = useDictationAppend(farmNotes, setFarmNotes);
   return (
     <div className="p-5 rounded-[4px] bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] flex flex-col justify-between space-y-4">
       <div className="space-y-3">
@@ -53,9 +56,9 @@ export const SoilSampleForm: React.FC<Props> = ({
           />
         </div>
         <div>
-          <label htmlFor="soil-notes" className={LABEL}>
+          <DictationLabel htmlFor="soil-notes" className={LABEL} draftKey="soil-notes" onTranscript={dictateNotes}>
             {t('ui_soil_sample_form_notes', 'Field notes')}
-          </label>
+          </DictationLabel>
           <textarea
             id="soil-notes"
             value={farmNotes}

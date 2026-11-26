@@ -7,6 +7,10 @@ import { getApiErrorMessage } from '@/lib/apiError';
 import { calendarDateFromToday } from '@/lib/calendarDate';
 import { useLanguage } from '@/lib/LanguageContext';
 import { currentPosition } from '@/lib/devicePosition';
+import { appendDictation } from '@/lib/dictationText';
+import type { VisitReportDraft } from '@/api/aiService';
+import { DictationLabel } from '@/components/voice/DictationButton';
+import { TalkTheVisit } from './TalkTheVisit';
 
 export interface VisitReportTarget {
   visitId: string;
@@ -38,6 +42,17 @@ export const VisitReportModal: React.FC<VisitReportModalProps> = ({ target, onCl
   const [followUpDate, setFollowUpDate] = useState(calendarDateFromToday(14));
   const [scheduleFollowUp, setScheduleFollowUp] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [drafted, setDrafted] = useState<VisitReportDraft | null>(null);
+
+  /** Adds a drafted report to what is already typed; only what the officer said is changed. */
+  const applyDraft = (draft: VisitReportDraft) => {
+    setFindings(current => appendDictation(current, draft.findings));
+    setActions(current => appendDictation(current, draft.actions));
+    if (draft.minutesOnFarm !== null) setMinutes(Math.min(600, Math.max(10, draft.minutesOnFarm)));
+    if (draft.followUpRequired !== null) setFollowUp(draft.followUpRequired);
+    if (draft.followUpInDays !== null) setFollowUpDate(calendarDateFromToday(draft.followUpInDays));
+    setDrafted(draft);
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,13 +114,28 @@ export const VisitReportModal: React.FC<VisitReportModalProps> = ({ target, onCl
           </button>
         </div>
 
+        <TalkTheVisit visitId={target.visitId} onDraft={applyDraft} />
+        {drafted && (
+          <p role="status" className="text-xs text-slate-700 dark:text-theme-text-secondary">
+            {drafted.organised
+              ? t('visit_talk_filled', 'Filled from your recording, in your own words. Check each field before you complete the visit.')
+              : t('visit_talk_unsorted', 'Your recording is under findings. Move anything you did or advised to the box below.')}
+          </p>
+        )}
+
         <div>
-          <label htmlFor="visit-findings" className={LABEL}>{t('ui_visit_report_modal_findings')}</label>
+          <DictationLabel htmlFor="visit-findings" className={LABEL} draftKey={`visit-findings:${target.visitId}`}
+            onTranscript={text => setFindings(current => appendDictation(current, text))}>
+            {t('ui_visit_report_modal_findings')}
+          </DictationLabel>
           <textarea id="visit-findings" required rows={3} value={findings} onChange={e => setFindings(e.target.value)}
             placeholder="What you saw on the farm: crop stage, pests, disease, soil, water" className={FIELD} />
         </div>
         <div>
-          <label htmlFor="visit-actions" className={LABEL}>{t('ui_visit_report_modal_actions_taken_and_advice_given')}</label>
+          <DictationLabel htmlFor="visit-actions" className={LABEL} draftKey={`visit-actions:${target.visitId}`}
+            onTranscript={text => setActions(current => appendDictation(current, text))}>
+            {t('ui_visit_report_modal_actions_taken_and_advice_given')}
+          </DictationLabel>
           <textarea id="visit-actions" rows={2} value={actions} onChange={e => setActions(e.target.value)} className={FIELD} />
         </div>
         <div className="grid grid-cols-2 gap-3">

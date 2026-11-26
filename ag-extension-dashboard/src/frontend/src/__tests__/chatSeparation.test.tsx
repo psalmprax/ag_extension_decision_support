@@ -43,7 +43,7 @@ describe('messages in a farmer thread', () => {
     vi.mocked(sendThreadMessage).mockResolvedValue({ success: true });
     await sendInThread('How many acres did you plant?');
 
-    expect(sendThreadMessage).toHaveBeenCalledWith('thread-1', 'How many acres did you plant?', 'en', undefined, undefined);
+    expect(sendThreadMessage).toHaveBeenCalledWith('thread-1', 'How many acres did you plant?', 'en', undefined, undefined, undefined);
     expect(getChatCompletion).not.toHaveBeenCalled();
   });
 
@@ -52,7 +52,7 @@ describe('messages in a farmer thread', () => {
     vi.mocked(sendThreadMessage).mockResolvedValue({ success: true });
     await sendInThread('My maize leaves are yellow');
 
-    expect(sendThreadMessage).toHaveBeenCalledWith('thread-1', 'My maize leaves are yellow', 'en', undefined, undefined);
+    expect(sendThreadMessage).toHaveBeenCalledWith('thread-1', 'My maize leaves are yellow', 'en', undefined, undefined, undefined);
     expect(getChatCompletion).not.toHaveBeenCalled();
   });
 });

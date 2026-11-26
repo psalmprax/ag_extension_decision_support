@@ -3,6 +3,7 @@ import { Mic, Square, RotateCcw, Check, FileText, Languages } from 'lucide-react
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useFieldVoiceRecorder } from '@/hooks/useFieldVoiceRecorder';
+import { voiceMessages } from '@/hooks/voiceMessages';
 import { useAppStore } from '@/store/useAppStore';
 import { AudioReaderButton } from './AudioReaderButton';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -66,6 +67,7 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
     toggleRecording,
   } = useFieldVoiceRecorder({
     language: currentLang,
+    messages: voiceMessages(t),
     onTranscriptChunk: chunk => {
       setTranscript(prev => (prev ? `${prev} ${chunk}` : chunk));
     },

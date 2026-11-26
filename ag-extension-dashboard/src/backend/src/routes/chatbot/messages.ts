@@ -179,6 +179,8 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
       attachmentIds?: unknown;
       /** The copilot draft this reply started from (officers only). */
       aiDraft?: { text?: unknown };
+      /** Officers: also send the reply as a voice message (WhatsApp). */
+      speak?: unknown;
     };
 
     const attachmentIds = parseAttachmentIds(body.attachmentIds);
@@ -216,7 +218,7 @@ const handleMessagePost = async (req: AuthedRequest, res: Response) => {
         fanoutNewMessage(conversationId, created);
         scheduleUrgentCheck(conversationId);
       } else {
-        afterOfficerReply(conversationId, created);
+        afterOfficerReply(conversationId, created, { speak: body.speak === true });
       }
     }
     return res.status(201).json({ success: true, data: created ? await messageWithPhotos(created, attachmentIds) : null });

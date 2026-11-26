@@ -270,10 +270,42 @@ describe('useAppChat sending', () => {
       'My maize has streaks',
       'en',
       undefined,
-      undefined // no copilot draft behind this message
+      undefined, // no copilot draft behind this message
+      undefined // not sent as a voice message
     );
     expect(aiApi.getChatCompletion).not.toHaveBeenCalled();
     expect(result.current.farmerChatInput).toBe('');
+  });
+
+  it('asks for the reply to be spoken too when the officer chose a voice message', async () => {
+    const { result } = renderHook(() => useAppChat('ha'));
+    act(() => {
+      result.current.setActiveFarmerConvId('t1');
+      result.current.setFarmerChatInput('Ka duba shuka ashirin');
+    });
+
+    await act(async () => {
+      await result.current.handleFarmerChatSend(undefined, { speak: true });
+    });
+
+    expect(chatApi.sendThreadMessage).toHaveBeenCalledWith('t1', 'Ka duba shuka ashirin', 'ha', undefined, undefined, true);
+  });
+
+  it('keeps the voice choice for a reply queued while offline', async () => {
+    setOnline(false);
+    const { result } = renderHook(() => useAppChat('en'));
+    act(() => {
+      result.current.setActiveFarmerConvId('t1');
+      result.current.setFarmerChatInput('Scout twenty plants');
+    });
+
+    await act(async () => {
+      await result.current.handleFarmerChatSend(undefined, { speak: true });
+    });
+
+    expect(JSON.parse(localStorage.getItem('chatOfflineQueue:t1') ?? '[]')).toEqual([
+      expect.objectContaining({ message: 'Scout twenty plants', speak: true }),
+    ]);
   });
 
   it('ignores an empty draft', async () => {
@@ -371,7 +403,7 @@ describe('useAppChat sending', () => {
     });
 
     await waitFor(() =>
-      expect(chatApi.sendThreadMessage).toHaveBeenCalledWith('t1', 'first', 'en')
+      expect(chatApi.sendThreadMessage).toHaveBeenCalledWith('t1', 'first', 'en', undefined, undefined, undefined)
     );
     await waitFor(() => expect(localStorage.getItem('chatOfflineQueue:t1')).toBeNull());
   });

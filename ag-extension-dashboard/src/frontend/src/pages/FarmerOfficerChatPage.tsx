@@ -4,7 +4,8 @@ import { Loader2, Send, UserCheck } from 'lucide-react';
 import { createConversation, sendThreadMessage } from '@/api/chatbotService';
 import { FarmerAskAi } from '@/components/chat/FarmerAskAi';
 import { ChatPhotoButton, type PhotoTarget } from '@/components/chat/ChatPhotoButton';
-import { ChatVoiceButton } from '@/components/chat/ChatVoiceButton';
+import { DictationButton } from '@/components/voice/DictationButton';
+import { useDictationAppend } from '@/hooks/useDictationAppend';
 import { FarmerChatMessage } from '@/components/chat/FarmerChatMessage';
 import { useConversationRealtime } from '@/hooks/useConversationRealtime';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -36,6 +37,7 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const endRef = useRef<HTMLDivElement | null>(null);
+  const dictateMessage = useDictationAppend(farmerChatInput, setFarmerChatInput);
 
   // Shared with the farmer dashboard's query, so it is usually already loaded.
   const { data: stats } = useQuery({ queryKey: ['farmer-stats'], queryFn: fetchFarmerStats });
@@ -159,10 +161,13 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
               onSent={id => loadFarmerMessages(id)}
               disabled={sending}
             />
-            <ChatVoiceButton
+            <DictationButton
               language={language}
               disabled={sending}
-              onTranscript={text => setFarmerChatInput(farmerChatInput.trim() ? `${farmerChatInput.trim()} ${text}` : text)}
+              preferServer
+              draftKey="farmer-chat-message"
+              fieldLabel={t('ui_farmer_officer_chat_page_message_to_your_officer')}
+              onTranscript={dictateMessage}
             />
             <label htmlFor="farmer-officer-message" className="sr-only">
               {t('ui_farmer_officer_chat_page_message_to_your_officer')}

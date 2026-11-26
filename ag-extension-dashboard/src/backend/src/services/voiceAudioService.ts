@@ -5,6 +5,7 @@
 import { logger } from '../utils/logger';
 import { whisperTranscriptionService } from './whisperTranscriptionService';
 import { SPEECH_PROVIDERS, speechClient } from './speechProviders';
+import { speechLanguageFor } from './speechLanguages';
 
 export interface VoiceTranscriptionResult {
   transcription: string;
@@ -12,6 +13,8 @@ export interface VoiceTranscriptionResult {
   confidence?: number;
   durationSeconds?: number;
   agronomicKeywords: string[];
+  /** False when the requested language is not one the transcriber knows, so it guessed the language. */
+  languageSupported?: boolean;
 }
 
 export interface VoiceSynthesisResult {
@@ -22,7 +25,7 @@ export interface VoiceSynthesisResult {
 }
 
 export function isVoiceHintSupported(hint: string): boolean {
-  return hint === 'auto' || /^[a-z]{2}$/i.test(hint);
+  return speechLanguageFor(hint).supported;
 }
 
 const COMMON_SWAHILI_AGRO_TERMS: Record<string, string> = {
@@ -72,10 +75,7 @@ export function detectVernacularKeywords(text: string): { keywords: string[]; de
   };
 }
 
-const toWhisperLanguage = (hint: string): string => {
-  const language = hint.trim().toLowerCase().split(/[-_]/)[0];
-  return isVoiceHintSupported(language) ? language : 'auto';
-};
+const toWhisperLanguage = (hint: string): string => speechLanguageFor(hint).code;
 
 /** Strategy 1: local whisper.cpp model (free, offline-capable). Throws if unavailable so the caller can fall back. */
 async function transcribeWithLocalWhisper(audioBuffer: Buffer | undefined, languageHint: string): Promise<VoiceTranscriptionResult> {
@@ -173,8 +173,8 @@ export async function transcribeVoiceNote(params: {
   skipLocal?: boolean;
 }): Promise<VoiceTranscriptionResult> {
   const { audioBuffer, audioUrl, mimeType, languageHint = 'sw', skipLocal = false } = params;
-  const effectiveHint = toWhisperLanguage(languageHint);
-  if (effectiveHint === 'auto' && languageHint.toLowerCase() !== 'auto') {
+  const { code: effectiveHint, supported: languageSupported } = speechLanguageFor(languageHint);
+  if (!languageSupported) {
     logger.warn(`Unsupported voice languageHint '${languageHint}' — using automatic language detection`);
   }
 
@@ -183,14 +183,14 @@ export async function transcribeVoiceNote(params: {
   // Try local Whisper first (free, offline-capable)
   if (!skipLocal) {
     try {
-      return await transcribeWithLocalWhisper(audioBuffer, effectiveHint);
+      return { ...(await transcribeWithLocalWhisper(audioBuffer, effectiveHint)), languageSupported };
     } catch (err) {
       logger.warn('Local Whisper transcription failed, falling back to the speech APIs:', err);
     }
   }
 
   const apiResult = await transcribeWithSpeechApi(audioBuffer, mimeType, effectiveHint);
-  if (apiResult) return apiResult;
+  if (apiResult) return { ...apiResult, languageSupported };
 
   // Test/no-audio fallback: deterministic sample so pillar tests stay green in offline CI.
   // Clearly marked as stub — not a real STT result; never used when a real buffer is provided.

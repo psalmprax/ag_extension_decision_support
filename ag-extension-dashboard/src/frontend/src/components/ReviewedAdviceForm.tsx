@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { BookPlus, Loader2 } from 'lucide-react';
 import { addReviewedAdviceToKnowledge, RecommendationReview } from '@/api/recommendationReviewService';
 import { useLanguage } from '@/lib/LanguageContext';
+import { DictationLabel } from '@/components/voice/DictationButton';
+import { appendDictation } from '@/lib/dictationText';
 
 interface ReviewedAdviceFormProps {
   item: RecommendationReview;
@@ -74,7 +76,10 @@ export function ReviewedAdviceForm({ item, addNotification, onDone }: ReviewedAd
       <label htmlFor={id('crops')} className={LABEL_CLASS}>{t('ui_reviewed_advice_crops')}</label>
       <input id={id('crops')} value={crops} maxLength={300} onChange={e => setCrops(e.target.value)} placeholder={t('ui_reviewed_advice_crops_placeholder')} className={FIELD_CLASS} />
 
-      <label htmlFor={id('text')} className={LABEL_CLASS}>{t('ui_reviewed_advice_text')}</label>
+      <DictationLabel htmlFor={id('text')} className="block text-xs font-medium text-slate-700 dark:text-theme-text-secondary" rowClassName="mt-3"
+        draftKey={`reviewed-advice:${item.id}`} onTranscript={text => setAdvice(current => appendDictation(current, text))}>
+        {t('ui_reviewed_advice_text')}
+      </DictationLabel>
       <textarea id={id('text')} rows={5} maxLength={20000} value={advice} onChange={e => setAdvice(e.target.value)} className={FIELD_CLASS} />
 
       <label htmlFor={id('sources')} className={LABEL_CLASS}>{t('ui_reviewed_advice_sources')}</label>

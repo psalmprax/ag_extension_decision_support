@@ -1,300 +1,255 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { transcribeAudio } from '@/api/aiService';
 import toast from 'react-hot-toast';
+import { browserDictationLocale } from '@/lib/voiceLanguages';
+import { pendingRecordings, type PendingRecordingStore } from '@/lib/pendingRecordings';
+import { stopStreamTracks, transcribeRecording, type TranscriptionOutcome, type VoiceMessages } from './voiceTranscription';
+import { ENGLISH_VOICE_MESSAGES } from './voiceMessages';
 
 export interface UseFieldVoiceRecorderOptions {
   language: string;
   onTranscriptChunk: (chunk: string) => void;
   /**
-   * Record and transcribe on the server first (OpenAI, then AIHubMix), and use the
-   * browser's own dictation only if recording is unavailable. Browser dictation is
-   * weak for many African languages, so farmers' voice messages go to the server.
+   * Record and transcribe on the server first, and use the browser's own dictation
+   * only if recording is unavailable. Browser dictation is weak for many African
+   * languages, so farmers' voice messages go to the server.
    */
   preferServer?: boolean;
+  /**
+   * The field these words are for, such as `visit-findings:<farmerId>`. With a key, a
+   * recording made with no signal is kept on the phone and its text is added to this
+   * field once there is a connection. Without one, an offline recording is not kept.
+   */
+  draftKey?: string;
+  /** Where kept recordings live; tests pass an in-memory store. */
+  store?: PendingRecordingStore;
+  /** What the recorder tells the user, in their language (see voiceMessages). English by default. */
+  messages?: VoiceMessages;
 }
 
-const SPEECH_LANG_MAP: Record<string, string> = {
-  en: 'en-US',
-  sw: 'sw-KE',
-  fr: 'fr-FR',
-  pt: 'pt-BR',
-  es: 'es-ES',
-  ar: 'ar-SA',
-  hi: 'hi-IN',
-  zh: 'zh-CN',
-  ru: 'ru-RU',
-  de: 'de-DE',
-  it: 'it-IT',
-};
+/** Browser dictation errors that just mean "nothing was said" or "the user stopped". */
+const QUIET_SPEECH_ERRORS = new Set(['no-speech', 'aborted']);
+/** The browser cannot dictate this language, or cannot reach its speech service: record for the server instead. */
+const RECORD_INSTEAD_ERRORS = new Set(['language-not-supported', 'network']);
 
-function blobToBase64(blob: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = reader.result as string;
-      resolve(result);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
+interface SpeechResultEvent {
+  resultIndex: number;
+  results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }>;
 }
 
-function stopStreamTracks(stream?: MediaStream): void {
-  try {
-    stream?.getTracks().forEach(t => t.stop());
-  } catch {
-    /* ignore */
-  }
+function speechRecognitionConstructor(): (new () => SpeechRecognitionLike) | null {
+  const win = window as unknown as Record<string, unknown>;
+  return (win.SpeechRecognition || win.webkitSpeechRecognition || null) as (new () => SpeechRecognitionLike) | null;
 }
 
-function handleTranscriptionError(err: unknown, toastId: string, defaultMsg: string): void {
-  console.error('Audio transcription error:', err);
-  const axiosErr = err as {
-    response?: {
-      status?: number;
-      data?: { error?: string; limitReached?: boolean; details?: { message?: string } };
-    };
-  };
-  const backendMsg =
-    axiosErr.response?.data?.details?.message ||
-    axiosErr.response?.data?.error;
-
-  if (axiosErr.response?.status === 403 && backendMsg) {
-    toast.error(backendMsg, { id: toastId, duration: 5000 });
-  } else {
-    toast.error(backendMsg || defaultMsg, { id: toastId });
-  }
+interface SpeechRecognitionLike {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  onresult: ((event: SpeechResultEvent) => void) | null;
+  onerror: ((event: { error?: string }) => void) | null;
+  onend: (() => void) | null;
+  start(): void;
+  stop(): void;
 }
 
-async function executeTranscription(
-  blob: Blob,
-  language: string,
-  onSuccess: (text: string) => void,
-  toastId: string,
-  loadingMsg: string,
-  successMsg: string,
-  fallbackMsg: string
-): Promise<void> {
-  try {
-    const base64Audio = await blobToBase64(blob);
-    toast.loading(loadingMsg, { id: toastId });
-    const res = await transcribeAudio(base64Audio, language);
-
-    if (res.success && res.data?.text) {
-      onSuccess(res.data.text.trim());
-      toast.success(successMsg, { id: toastId });
-    } else {
-      toast.error('Could not transcribe audio.', { id: toastId });
-    }
-  } catch (err: unknown) {
-    handleTranscriptionError(err, toastId, fallbackMsg);
-  }
-}
-
-export function useFieldVoiceRecorder({ language, onTranscriptChunk, preferServer = false }: UseFieldVoiceRecorderOptions) {
+export function useFieldVoiceRecorder({
+  language,
+  onTranscriptChunk,
+  preferServer = false,
+  draftKey,
+  store = pendingRecordings,
+  messages = ENGLISH_VOICE_MESSAGES,
+}: UseFieldVoiceRecorderOptions) {
   const [isRecording, setIsRecording] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [interimText, setInterimText] = useState('');
+  const [pendingCount, setPendingCount] = useState(0);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recognitionRef = useRef<any>(null);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<NodeJS.Timeout | null>(null);
   const onChunkRef = useRef(onTranscriptChunk);
+  const messagesRef = useRef(messages);
+  onChunkRef.current = onTranscriptChunk;
+  messagesRef.current = messages;
 
   useEffect(() => {
-    onChunkRef.current = onTranscriptChunk;
-  }, [onTranscriptChunk]);
-
-  // Duration ticker
-  useEffect(() => {
-    if (isRecording) {
-      setRecordingDuration(0);
-      timerRef.current = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
-      }, 1000);
-    } else {
-      if (timerRef.current) {
-        clearInterval(timerRef.current);
-        timerRef.current = null;
-      }
-    }
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    if (!isRecording) return undefined;
+    setRecordingDuration(0);
+    const timer = setInterval(() => setRecordingDuration(prev => prev + 1), 1000);
+    return () => clearInterval(timer);
   }, [isRecording]);
 
-  // Stop Web Speech Recognition
-  const stopWebSpeech = useCallback(() => {
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.stop();
-      } catch {
-        /* ignore */
+  /** Keeps a recording that could not be sent, when this field has a draft key. */
+  const keepForLater = useCallback(
+    async (audio: Blob) => {
+      if (!draftKey) {
+        toast.error(messagesRef.current.failed);
+        return;
       }
-      recognitionRef.current = null;
+      try {
+        await store.save(draftKey, language, audio);
+        setPendingCount(count => count + 1);
+        toast(messagesRef.current.savedOffline, { duration: 6000 });
+      } catch (err) {
+        console.error('Could not keep the recording offline:', err);
+        toast.error(messagesRef.current.failed);
+      }
+    },
+    [draftKey, language, store]
+  );
+
+  const transcribe = useCallback(
+    async (audio: Blob, toastId: string, successMessage?: string): Promise<TranscriptionOutcome> => {
+      setIsTranscribing(true);
+      try {
+        const outcome = await transcribeRecording(audio, language, messagesRef.current, toastId, successMessage);
+        if (outcome.status === 'done') onChunkRef.current(outcome.text);
+        if (outcome.status === 'offline') await keepForLater(audio);
+        return outcome;
+      } finally {
+        setIsTranscribing(false);
+      }
+    },
+    [language, keepForLater]
+  );
+
+  /** Turns recordings kept offline for this field into text, once there is a connection. */
+  const sendKept = useCallback(async () => {
+    if (!draftKey || !navigator.onLine) return;
+    try {
+      const kept = await store.list(draftKey);
+      setPendingCount(kept.length);
+      for (const item of kept) {
+        const outcome = await transcribeRecording(item.audio, item.language, messagesRef.current, `kept-${item.id}`);
+        if (outcome.status === 'offline') return;
+        if (outcome.status === 'done') onChunkRef.current(outcome.text);
+        // A recording the server refused is dropped: it would fail again on every retry.
+        await store.remove(item.id);
+        setPendingCount(count => Math.max(0, count - 1));
+      }
+    } catch (err) {
+      console.error('Could not send recordings kept offline:', err);
     }
+  }, [draftKey, store]);
+
+  useEffect(() => {
+    void sendKept();
+    window.addEventListener('online', sendKept);
+    return () => window.removeEventListener('online', sendKept);
+  }, [sendKept]);
+
+  const stopWebSpeech = useCallback(() => {
+    try {
+      recognitionRef.current?.stop();
+    } catch (err) {
+      console.warn('Browser dictation did not stop cleanly:', err);
+    }
+    recognitionRef.current = null;
     setIsRecording(false);
     setInterimText('');
   }, []);
 
-  // Stop MediaRecorder and transcribe via backend Whisper
-  const stopMediaRecorder = useCallback(async () => {
-    const recorder = mediaRecorderRef.current;
-    if (!recorder || recorder.state === 'inactive') {
-      setIsRecording(false);
-      return;
-    }
-
-    setIsTranscribing(true);
-    setIsRecording(false);
-
-    recorder.onstop = async () => {
-      const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-      audioChunksRef.current = [];
-      stopStreamTracks(recorder.stream as MediaStream | undefined);
-
-      await executeTranscription(
-        audioBlob,
-        language,
-        text => onChunkRef.current(text),
-        'whisper-stt',
-        'Transcribing field audio with Whisper AI...',
-        'Audio memo transcribed!',
-        'Failed to transcribe field recording.'
-      );
-
-      setIsTranscribing(false);
-      setInterimText('');
-    };
-
-    recorder.stop();
-  }, [language]);
-
-  // Start continuous Web Speech dictation
-  const startWebSpeech = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const win = window as any;
-    const SpeechRecognitionConstructor = win.SpeechRecognition || win.webkitSpeechRecognition;
-
-    if (!SpeechRecognitionConstructor) return false;
-
-    try {
-      const recognition = new SpeechRecognitionConstructor();
-      recognition.continuous = true;
-      recognition.interimResults = true;
-      recognition.lang = SPEECH_LANG_MAP[language] || 'en-US';
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      recognition.onresult = (event: any) => {
-        let interim = '';
-        for (let i = event.resultIndex; i < event.results.length; i += 1) {
-          const chunk = event.results[i][0].transcript;
-          if (event.results[i].isFinal) {
-            onChunkRef.current(chunk.trim());
-          } else {
-            interim += chunk;
-          }
-        }
-        setInterimText(interim);
-      };
-
-      recognition.onerror = () => {
-        stopWebSpeech();
-        toast.error('Voice dictation disconnected.');
-      };
-
-      recognition.onend = () => {
-        setIsRecording(false);
-        setInterimText('');
-      };
-
-      recognition.start();
-      recognitionRef.current = recognition;
-      setIsRecording(true);
-      toast.success(`Continuous dictation active (${recognition.lang})`);
-      return true;
-    } catch {
-      return false;
-    }
-  }, [language, stopWebSpeech]);
-
-  // Start MediaRecorder (Whisper AI fallback / mobile mic)
   const startMediaRecorder = useCallback(async () => {
-    if (!navigator.mediaDevices?.getUserMedia) {
-      toast.error('Microphone recording is not supported by your browser.');
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      toast.error(messagesRef.current.notSupported);
       return false;
     }
-
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          autoGainControl: true,
-        },
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
-
       audioChunksRef.current = [];
       const recorder = new MediaRecorder(stream);
-
-      recorder.ondataavailable = e => {
-        if (e.data.size > 0) {
-          audioChunksRef.current.push(e.data);
-        }
+      recorder.ondataavailable = event => {
+        if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
-
-      recorder.start(250); // Collect in 250ms chunks
+      recorder.start(250);
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
-      toast.success('Recording audio memo (Whisper AI)...');
+      toast.success(messagesRef.current.recording, { id: 'voice-status' });
       return true;
     } catch (err) {
       console.error('Microphone access error:', err);
-      toast.error('Microphone access was denied or unavailable.');
+      toast.error(messagesRef.current.micDenied);
       return false;
     }
   }, []);
 
-  // Main Toggle: tries WebSpeech continuous, falls back to MediaRecorder
+  const stopMediaRecorder = useCallback(async () => {
+    const recorder = mediaRecorderRef.current;
+    setIsRecording(false);
+    if (!recorder || recorder.state === 'inactive') return;
+    await new Promise<void>(resolve => {
+      recorder.onstop = () => resolve();
+      recorder.stop();
+    });
+    const audio = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
+    audioChunksRef.current = [];
+    stopStreamTracks(recorder.stream);
+    mediaRecorderRef.current = null;
+    setInterimText('');
+    await transcribe(audio, 'whisper-stt');
+  }, [transcribe]);
+
+  /** Live browser dictation; false when this browser or language cannot do it. */
+  const startWebSpeech = useCallback(() => {
+    const Recognition = speechRecognitionConstructor();
+    const locale = browserDictationLocale(language);
+    if (!Recognition || !locale) return false;
+    try {
+      const recognition = new Recognition();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.lang = locale;
+      recognition.onresult = event => {
+        let interim = '';
+        for (let i = event.resultIndex; i < event.results.length; i += 1) {
+          const result = event.results[i];
+          if (result.isFinal) onChunkRef.current(result[0].transcript.trim());
+          else interim += result[0].transcript;
+        }
+        setInterimText(interim);
+      };
+      recognition.onerror = event => {
+        stopWebSpeech();
+        if (RECORD_INSTEAD_ERRORS.has(event.error ?? '')) void startMediaRecorder();
+        else if (!QUIET_SPEECH_ERRORS.has(event.error ?? '')) toast.error(messagesRef.current.stopped);
+      };
+      recognition.onend = () => {
+        setIsRecording(false);
+        setInterimText('');
+      };
+      recognition.start();
+      recognitionRef.current = recognition;
+      setIsRecording(true);
+      toast.success(messagesRef.current.listening, { id: 'voice-status' });
+      return true;
+    } catch (err) {
+      console.warn('Browser dictation could not start:', err);
+      return false;
+    }
+  }, [language, stopWebSpeech, startMediaRecorder]);
+
+  /** Tap to start, tap again to stop. Browser dictation needs a connection, so offline it records instead. */
   const toggleRecording = useCallback(async () => {
     if (isRecording) {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
-        await stopMediaRecorder();
-      } else {
-        stopWebSpeech();
-      }
+      if (mediaRecorderRef.current?.state === 'recording') await stopMediaRecorder();
+      else stopWebSpeech();
       return;
     }
-
-    if (preferServer) {
-      if (!(await startMediaRecorder())) startWebSpeech();
-      return;
-    }
-    const startedWebSpeech = startWebSpeech();
-    if (!startedWebSpeech) {
-      await startMediaRecorder();
+    if (preferServer || !navigator.onLine || !startWebSpeech()) {
+      if (!(await startMediaRecorder()) && preferServer) startWebSpeech();
     }
   }, [isRecording, preferServer, startWebSpeech, startMediaRecorder, stopMediaRecorder, stopWebSpeech]);
 
-  // Upload an existing audio file (.mp3, .wav, .m4a, .ogg, .webm)
+  /** Turns an existing audio file (.mp3, .wav, .m4a, .ogg, .webm) into text. */
   const uploadAudioFile = useCallback(
     async (file: File) => {
-      setIsTranscribing(true);
-      await executeTranscription(
-        file,
-        language,
-        text => onChunkRef.current(text),
-        'upload-stt',
-        `Transcribing "${file.name}" with Whisper AI...`,
-        `Voice memo transcribed (${file.name})!`,
-        'Failed to transcribe audio file.'
-      );
-      setIsTranscribing(false);
+      await transcribe(file, 'upload-stt');
     },
-    [language]
+    [transcribe]
   );
 
   return {
@@ -302,6 +257,8 @@ export function useFieldVoiceRecorder({ language, onTranscriptChunk, preferServe
     isTranscribing,
     recordingDuration,
     interimText,
+    /** Recordings for this field still waiting for a connection. */
+    pendingCount,
     toggleRecording,
     uploadAudioFile,
   };

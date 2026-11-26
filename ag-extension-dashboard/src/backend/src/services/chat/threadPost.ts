@@ -19,10 +19,16 @@ export function fanoutNewMessage(conversationId: string, message: ChatMessageRow
     }
 }
 
+/** How an officer asked for a reply to be sent. */
+export interface OfficerReplyOptions {
+    /** Also send it as a spoken voice message where the channel can carry one (WhatsApp). */
+    speak?: boolean;
+}
+
 /** An officer's reply goes out on the channel the farmer last wrote from (SMS, WhatsApp, Telegram). */
-export function scheduleChannelDelivery(conversationId: string, messageId: string, content: string): void {
+export function scheduleChannelDelivery(conversationId: string, messageId: string, content: string, options: OfficerReplyOptions = {}): void {
     setImmediate(() => {
-        deliverToFarmerChannel(conversationId, messageId, content, { askAiButton: true })
+        deliverToFarmerChannel(conversationId, messageId, content, { askAiButton: true, speak: options.speak })
             .catch(error => logger.warn('Channel delivery failed:', error));
     });
 }
@@ -32,9 +38,9 @@ export function scheduleChannelDelivery(conversationId: string, messageId: strin
  * partner recording): show it live, send it to the farmer's channel and, in a running
  * pilot, ask the farmer later whether they followed the advice.
  */
-export function afterOfficerReply(conversationId: string, created: ChatMessageRow): void {
+export function afterOfficerReply(conversationId: string, created: ChatMessageRow, options: OfficerReplyOptions = {}): void {
     fanoutNewMessage(conversationId, created);
-    scheduleChannelDelivery(conversationId, created.id, created.content);
+    scheduleChannelDelivery(conversationId, created.id, created.content, options);
     setImmediate(() => {
         queueAdviceFollowUp(conversationId, created.id).catch(error => logger.warn('Could not queue a pilot follow-up:', error));
     });

@@ -5,6 +5,8 @@ import { useDemoMode } from '@/demo';
 import { useVisitScheduler } from './useVisitScheduler';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { DictationButton } from '@/components/voice/DictationButton';
+import { appendDictation } from '@/lib/dictationText';
 
 interface VisitModalProps {
   isOpen: boolean;
@@ -158,10 +160,17 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary mb-2">
-              <FileText className="w-4 h-4 inline me-1" />
-              {t('visit_notes') || 'Notes'} ({t('common_optional') || 'Optional'})
-            </label>
+            <div className="flex items-end justify-between gap-2 mb-2">
+              <label className="block text-sm font-medium text-gray-700 dark:text-theme-text-secondary">
+                <FileText className="w-4 h-4 inline me-1" />
+                {t('visit_notes') || 'Notes'} ({t('common_optional') || 'Optional'})
+              </label>
+              <DictationButton
+                fieldLabel={t('visit_notes') || 'Notes'}
+                draftKey={`visit-plan-notes:${formData.farmerId || 'new'}`}
+                onTranscript={text => setFormData(prev => ({ ...prev, notes: appendDictation(prev.notes, text) }))}
+              />
+            </div>
             <textarea aria-label="Visit notes"
               value={formData.notes}
               onChange={e => setFormData({ ...formData, notes: e.target.value })}
