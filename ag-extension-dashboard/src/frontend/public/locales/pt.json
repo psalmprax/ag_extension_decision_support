@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Concluído. Verifique as palavras antes de guardar.",
     "voice_failed": "Não foi possível transformar a gravação em texto. Tente novamente ou escreva.",
     "voice_language_limited": "A escrita por voz ainda não é fiável no seu idioma. Verifique bem as palavras antes de guardar.",
-    "voice_saved_offline": "Sem rede. A gravação fica guardada neste telemóvel e passa a texto quando voltar a ter ligação.",
+    "voice_saved_offline": "Sem rede. A gravação fica guardada neste telemóvel. Passa a texto quando tiver rede e este formulário estiver aberto.",
     "voice_mic_denied": "Permita o microfone para falar em vez de escrever.",
     "voice_not_supported": "Este navegador não consegue gravar som. Escreva em vez disso.",
     "voice_stopped": "A escrita por voz parou. Toque no microfone para recomeçar.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "A sua resposta também é enviada como mensagem de voz no WhatsApp",
     "chat_speak_reply_off": "Enviar também como mensagem de voz (WhatsApp)",
     "ui_officer_chat_message_label": "Mensagem para o agricultor",
-    "voice_dictate": "Falar em vez de escrever"
+    "voice_dictate": "Falar em vez de escrever",
+    "voice_saved_for_retry": "Não foi possível transformar a gravação em texto agora. Fica guardada neste telemóvel e será tentada de novo quando este formulário estiver aberto."
 }

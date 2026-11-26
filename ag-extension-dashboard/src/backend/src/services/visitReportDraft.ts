@@ -29,9 +29,10 @@ const MAX_SENTENCES = 120;
 
 /** Splits a transcript into sentences, keeping each sentence's own words and punctuation. */
 export function splitSentences(transcript: string): string[] {
+  // Lines first, so a note per line stays its own sentence; then sentences within each line.
   const parts = transcript
-    .replace(/\s+/g, ' ')
-    .split(/(?<=[.!?。؟።])\s+|\n+/u)
+    .split(/\n+/)
+    .flatMap(line => line.replace(/\s+/g, ' ').split(/(?<=[.!?。؟።])\s+/u))
     .map(part => part.trim())
     .filter(Boolean);
   if (parts.length <= MAX_SENTENCES) return parts;
@@ -56,12 +57,19 @@ function wholeNumberIn(value: unknown, min: number, max: number): number | null 
   return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max ? value : null;
 }
 
+/** A sorting is usable only with both lists of sentence numbers (either may be empty). */
+function isSorting(value: unknown): value is Sorting {
+  if (typeof value !== 'object' || value === null) return false;
+  const { findings, actions } = value as Sorting;
+  return Array.isArray(findings) && Array.isArray(actions);
+}
+
 function parseSorting(raw: string): Sorting | null {
   const json = raw.match(/\{[\s\S]*\}/)?.[0];
   if (!json) return null;
   try {
     const parsed: unknown = JSON.parse(json);
-    return typeof parsed === 'object' && parsed !== null ? (parsed as Sorting) : null;
+    return isSorting(parsed) ? parsed : null;
   } catch (err) {
     logger.warn('Visit report sorting was not valid JSON:', err);
     return null;

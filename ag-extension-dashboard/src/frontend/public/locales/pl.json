@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Gotowe. Sprawdź tekst przed zapisaniem.",
     "voice_failed": "Nie udało się zamienić nagrania na tekst. Spróbuj ponownie lub wpisz go.",
     "voice_language_limited": "Pisanie głosem nie jest jeszcze niezawodne w Twoim języku. Dokładnie sprawdź tekst przed zapisaniem.",
-    "voice_saved_offline": "Brak zasięgu. Nagranie jest zapisane w tym telefonie i zamieni się w tekst, gdy wrócisz do sieci.",
+    "voice_saved_offline": "Brak zasięgu. Nagranie jest zapisane w tym telefonie. Zamieni się w tekst, gdy będzie zasięg, a ten formularz będzie otwarty.",
     "voice_mic_denied": "Zezwól na mikrofon, aby mówić zamiast pisać.",
     "voice_not_supported": "Ta przeglądarka nie może nagrywać dźwięku. Wpisz tekst.",
     "voice_stopped": "Pisanie głosem zostało zatrzymane. Dotknij mikrofonu, aby zacząć ponownie.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Twoja odpowiedź jest też wysyłana jako wiadomość głosowa na WhatsApp",
     "chat_speak_reply_off": "Wyślij też jako wiadomość głosową (WhatsApp)",
     "ui_officer_chat_message_label": "Wiadomość do rolnika",
-    "voice_dictate": "Mów zamiast pisać"
+    "voice_dictate": "Mów zamiast pisać",
+    "voice_saved_for_retry": "Nie udało się teraz zamienić nagrania na tekst. Jest zapisane w tym telefonie i zostanie ponowione, gdy ten formularz będzie otwarty."
 }

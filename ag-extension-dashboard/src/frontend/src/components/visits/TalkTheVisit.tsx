@@ -8,7 +8,10 @@ import { voiceMessages } from '@/hooks/voiceMessages';
 interface TalkTheVisitProps {
   /** Recordings made with no signal are kept for this visit and used when it is opened online. */
   visitId: string;
-  onDraft: (draft: VisitReportDraft) => void;
+  /** `recordedAt`: when the officer spoke, so "come back in two weeks" counts from the visit. */
+  onDraft: (draft: VisitReportDraft, recordedAt: number) => void;
+  /** True from the start of a recording until its words are in the report. */
+  onBusyChange?: (busy: boolean) => void;
 }
 
 /**
@@ -17,11 +20,12 @@ interface TalkTheVisitProps {
  * possible everything goes under findings. Nothing is saved until the officer completes
  * the visit, so they check every field first.
  */
-export const TalkTheVisit: React.FC<TalkTheVisitProps> = ({ visitId, onDraft }) => {
+export const TalkTheVisit: React.FC<TalkTheVisitProps> = ({ visitId, onDraft, onBusyChange }) => {
   const { t, language } = useLanguage();
   const [drafting, setDrafting] = useState(false);
   const [heard, setHeard] = useState(0);
   const spoken = useRef<string[]>([]);
+  const firstSpokenAt = useRef<number | null>(null);
   const onDraftRef = useRef(onDraft);
   onDraftRef.current = onDraft;
 
@@ -30,8 +34,9 @@ export const TalkTheVisit: React.FC<TalkTheVisitProps> = ({ visitId, onDraft }) 
     preferServer: true,
     draftKey: `visit-talk:${visitId}`,
     messages: voiceMessages(t),
-    onTranscriptChunk: text => {
+    onTranscriptChunk: (text, { recordedAt }) => {
       spoken.current.push(text);
+      firstSpokenAt.current = Math.min(firstSpokenAt.current ?? recordedAt, recordedAt);
       setHeard(count => count + 1);
     },
   });
@@ -40,19 +45,25 @@ export const TalkTheVisit: React.FC<TalkTheVisitProps> = ({ visitId, onDraft }) 
   useEffect(() => {
     if (isRecording || isTranscribing || drafting || spoken.current.length === 0) return;
     const transcript = spoken.current.join(' ');
+    const recordedAt = firstSpokenAt.current ?? Date.now();
     spoken.current = [];
+    firstSpokenAt.current = null;
     setDrafting(true);
     draftVisitReport(transcript)
-      .then(draft => onDraftRef.current(draft))
+      .then(draft => onDraftRef.current(draft, recordedAt))
       .catch(err => {
         // The words are never lost: without the sorting they all go under findings.
         console.error('Drafting the visit report failed:', err);
-        onDraftRef.current({ findings: transcript, actions: '', minutesOnFarm: null, followUpRequired: null, followUpInDays: null, organised: false });
+        const unsorted = { findings: transcript, actions: '', minutesOnFarm: null, followUpRequired: null, followUpInDays: null, organised: false };
+        onDraftRef.current(unsorted, recordedAt);
       })
       .finally(() => setDrafting(false));
   }, [isRecording, isTranscribing, drafting, heard]);
 
   const busy = isTranscribing || drafting;
+  const onBusyRef = useRef(onBusyChange);
+  onBusyRef.current = onBusyChange;
+  useEffect(() => onBusyRef.current?.(busy || isRecording), [busy, isRecording]);
   return (
     <section className="rounded-lg border border-slate-200 dark:border-white/[0.08] bg-slate-50 dark:bg-theme-bg-tertiary p-3 space-y-2">
       <div className="flex items-center justify-between gap-3">

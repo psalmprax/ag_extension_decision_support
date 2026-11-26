@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Hotovo. Pred uložením skontrolujte text.",
     "voice_failed": "Nahrávku sa nepodarilo previesť na text. Skúste to znova alebo text napíšte.",
     "voice_language_limited": "Hlasové písanie vo vašom jazyku zatiaľ nie je spoľahlivé. Pred uložením text dôkladne skontrolujte.",
-    "voice_saved_offline": "Nie je signál. Nahrávka je uložená v tomto telefóne a po návrate online sa z nej stane text.",
+    "voice_saved_offline": "Nie je signál. Nahrávka je uložená v tomto telefóne. Stane sa z nej text, keď budete mať signál a tento formulár bude otvorený.",
     "voice_mic_denied": "Povoľte mikrofón, aby ste mohli hovoriť namiesto písania.",
     "voice_not_supported": "Tento prehliadač nevie nahrávať zvuk. Napíšte text.",
     "voice_stopped": "Hlasové písanie sa zastavilo. Ťuknutím na mikrofón začnete znova.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Vaša odpoveď sa posiela aj ako hlasová správa na WhatsApp",
     "chat_speak_reply_off": "Poslať aj ako hlasovú správu (WhatsApp)",
     "ui_officer_chat_message_label": "Správa pre farmára",
-    "voice_dictate": "Hovorte namiesto písania"
+    "voice_dictate": "Hovorte namiesto písania",
+    "voice_saved_for_retry": "Nahrávku sa teraz nepodarilo previesť na text. Je uložená v tomto telefóne a skúsi sa znova, keď bude tento formulár otvorený."
 }

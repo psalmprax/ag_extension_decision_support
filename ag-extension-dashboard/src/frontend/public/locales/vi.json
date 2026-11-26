@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Xong. Hãy kiểm tra chữ trước khi lưu.",
     "voice_failed": "Không thể chuyển bản ghi âm thành chữ. Hãy thử lại hoặc gõ vào.",
     "voice_language_limited": "Nhập bằng giọng nói chưa đáng tin cậy với ngôn ngữ của bạn. Hãy kiểm tra kỹ chữ trước khi lưu.",
-    "voice_saved_offline": "Không có sóng. Bản ghi âm được lưu trên điện thoại này và sẽ thành chữ khi bạn có mạng trở lại.",
+    "voice_saved_offline": "Không có sóng. Bản ghi âm được lưu trên điện thoại này. Bản ghi sẽ thành chữ khi có sóng và biểu mẫu này đang mở.",
     "voice_mic_denied": "Hãy cho phép micrô để nói thay vì gõ.",
     "voice_not_supported": "Trình duyệt này không ghi âm được. Hãy gõ thay vào đó.",
     "voice_stopped": "Nhập bằng giọng nói đã dừng. Chạm vào micrô để bắt đầu lại.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Câu trả lời của bạn cũng được gửi dưới dạng tin nhắn thoại trên WhatsApp",
     "chat_speak_reply_off": "Gửi thêm dưới dạng tin nhắn thoại (WhatsApp)",
     "ui_officer_chat_message_label": "Tin nhắn cho nông dân",
-    "voice_dictate": "Nói thay vì gõ"
+    "voice_dictate": "Nói thay vì gõ",
+    "voice_saved_for_retry": "Hiện chưa thể chuyển bản ghi âm thành chữ. Bản ghi được lưu trên điện thoại này và sẽ được thử lại khi biểu mẫu này đang mở."
 }

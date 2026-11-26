@@ -2,12 +2,19 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import toast from 'react-hot-toast';
 import { browserDictationLocale } from '@/lib/voiceLanguages';
 import { pendingRecordings, type PendingRecordingStore } from '@/lib/pendingRecordings';
-import { stopStreamTracks, transcribeRecording, type TranscriptionOutcome, type VoiceMessages } from './voiceTranscription';
+import { stopStreamTracks, transcribeRecording, type VoiceMessages } from './voiceTranscription';
 import { ENGLISH_VOICE_MESSAGES } from './voiceMessages';
+import { useKeptRecordings } from './useKeptRecordings';
+import { QUIET_SPEECH_ERRORS, RECORD_INSTEAD_ERRORS, speechRecognitionConstructor, type SpeechRecognitionLike } from './browserDictation';
+
+/** When the words were spoken: recordings kept offline are turned into text later. */
+export interface DictationMeta {
+  recordedAt: number;
+}
 
 export interface UseFieldVoiceRecorderOptions {
   language: string;
-  onTranscriptChunk: (chunk: string) => void;
+  onTranscriptChunk: (chunk: string, meta: DictationMeta) => void;
   /**
    * Record and transcribe on the server first, and use the browser's own dictation
    * only if recording is unavailable. Browser dictation is weak for many African
@@ -15,9 +22,9 @@ export interface UseFieldVoiceRecorderOptions {
    */
   preferServer?: boolean;
   /**
-   * The field these words are for, such as `visit-findings:<farmerId>`. With a key, a
-   * recording made with no signal is kept on the phone and its text is added to this
-   * field once there is a connection. Without one, an offline recording is not kept.
+   * The field these words are for, such as `visit-findings:<visitId>`. With a key, a
+   * recording that could not be turned into text yet is kept on the phone, and its text
+   * goes only into this field. Without one, such a recording is not kept.
    */
   draftKey?: string;
   /** Where kept recordings live; tests pass an in-memory store. */
@@ -26,30 +33,10 @@ export interface UseFieldVoiceRecorderOptions {
   messages?: VoiceMessages;
 }
 
-/** Browser dictation errors that just mean "nothing was said" or "the user stopped". */
-const QUIET_SPEECH_ERRORS = new Set(['no-speech', 'aborted']);
-/** The browser cannot dictate this language, or cannot reach its speech service: record for the server instead. */
-const RECORD_INSTEAD_ERRORS = new Set(['language-not-supported', 'network']);
-
-interface SpeechResultEvent {
-  resultIndex: number;
-  results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }>;
-}
-
-function speechRecognitionConstructor(): (new () => SpeechRecognitionLike) | null {
-  const win = window as unknown as Record<string, unknown>;
-  return (win.SpeechRecognition || win.webkitSpeechRecognition || null) as (new () => SpeechRecognitionLike) | null;
-}
-
-interface SpeechRecognitionLike {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  onresult: ((event: SpeechResultEvent) => void) | null;
-  onerror: ((event: { error?: string }) => void) | null;
-  onend: (() => void) | null;
-  start(): void;
-  stop(): void;
+/** Who a recording belongs to: the field on screen when it started, and when. */
+interface RecordingOwner {
+  key: string | undefined;
+  startedAt: number;
 }
 
 export function useFieldVoiceRecorder({
@@ -64,15 +51,27 @@ export function useFieldVoiceRecorder({
   const [isTranscribing, setIsTranscribing] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
   const [interimText, setInterimText] = useState('');
-  const [pendingCount, setPendingCount] = useState(0);
 
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const ownerRef = useRef<RecordingOwner>({ key: draftKey, startedAt: Date.now() });
+  const mountedRef = useRef(true);
   const onChunkRef = useRef(onTranscriptChunk);
   const messagesRef = useRef(messages);
+  const draftKeyRef = useRef(draftKey);
+  const languageRef = useRef(language);
   onChunkRef.current = onTranscriptChunk;
   messagesRef.current = messages;
+  draftKeyRef.current = draftKey;
+  languageRef.current = language;
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isRecording) return undefined;
@@ -81,64 +80,33 @@ export function useFieldVoiceRecorder({
     return () => clearInterval(timer);
   }, [isRecording]);
 
-  /** Keeps a recording that could not be sent, when this field has a draft key. */
-  const keepForLater = useCallback(
-    async (audio: Blob) => {
-      if (!draftKey) {
-        toast.error(messagesRef.current.failed);
-        return;
-      }
-      try {
-        await store.save(draftKey, language, audio);
-        setPendingCount(count => count + 1);
-        toast(messagesRef.current.savedOffline, { duration: 6000 });
-      } catch (err) {
-        console.error('Could not keep the recording offline:', err);
-        toast.error(messagesRef.current.failed);
-      }
-    },
-    [draftKey, language, store]
-  );
+  /** Text reaches the field only while that same field is on screen. */
+  const deliver = useCallback((text: string, ownerKey: string | undefined, recordedAt: number) => {
+    if (!mountedRef.current || draftKeyRef.current !== ownerKey) return false;
+    onChunkRef.current(text, { recordedAt });
+    return true;
+  }, []);
+
+  const { pendingCount, keep } = useKeptRecordings({ draftKey, language, store, messagesRef, deliver });
 
   const transcribe = useCallback(
-    async (audio: Blob, toastId: string, successMessage?: string): Promise<TranscriptionOutcome> => {
+    async (audio: Blob, toastId: string, owner: RecordingOwner) => {
       setIsTranscribing(true);
       try {
-        const outcome = await transcribeRecording(audio, language, messagesRef.current, toastId, successMessage);
-        if (outcome.status === 'done') onChunkRef.current(outcome.text);
-        if (outcome.status === 'offline') await keepForLater(audio);
-        return outcome;
+        const outcome = await transcribeRecording(audio, languageRef.current, messagesRef.current, toastId);
+        if (outcome.status === 'done' && !deliver(outcome.text, owner.key, owner.startedAt)) {
+          // The field was closed or replaced meanwhile: keep the words for the field they belong to.
+          await keep(audio, owner.key, owner.startedAt, 'retry', false);
+        }
+        if (outcome.status === 'offline' || outcome.status === 'retry') {
+          await keep(audio, owner.key, owner.startedAt, outcome.status, mountedRef.current);
+        }
       } finally {
         setIsTranscribing(false);
       }
     },
-    [language, keepForLater]
+    [deliver, keep]
   );
-
-  /** Turns recordings kept offline for this field into text, once there is a connection. */
-  const sendKept = useCallback(async () => {
-    if (!draftKey || !navigator.onLine) return;
-    try {
-      const kept = await store.list(draftKey);
-      setPendingCount(kept.length);
-      for (const item of kept) {
-        const outcome = await transcribeRecording(item.audio, item.language, messagesRef.current, `kept-${item.id}`);
-        if (outcome.status === 'offline') return;
-        if (outcome.status === 'done') onChunkRef.current(outcome.text);
-        // A recording the server refused is dropped: it would fail again on every retry.
-        await store.remove(item.id);
-        setPendingCount(count => Math.max(0, count - 1));
-      }
-    } catch (err) {
-      console.error('Could not send recordings kept offline:', err);
-    }
-  }, [draftKey, store]);
-
-  useEffect(() => {
-    void sendKept();
-    window.addEventListener('online', sendKept);
-    return () => window.removeEventListener('online', sendKept);
-  }, [sendKept]);
 
   const stopWebSpeech = useCallback(() => {
     try {
@@ -160,11 +128,17 @@ export function useFieldVoiceRecorder({
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
+      // The field closed while the microphone was being opened: let the microphone go.
+      if (!mountedRef.current) {
+        stopStreamTracks(stream);
+        return false;
+      }
       audioChunksRef.current = [];
       const recorder = new MediaRecorder(stream);
       recorder.ondataavailable = event => {
         if (event.data.size > 0) audioChunksRef.current.push(event.data);
       };
+      ownerRef.current = { key: draftKeyRef.current, startedAt: Date.now() };
       recorder.start(250);
       mediaRecorderRef.current = recorder;
       setIsRecording(true);
@@ -177,10 +151,8 @@ export function useFieldVoiceRecorder({
     }
   }, []);
 
-  const stopMediaRecorder = useCallback(async () => {
-    const recorder = mediaRecorderRef.current;
-    setIsRecording(false);
-    if (!recorder || recorder.state === 'inactive') return;
+  /** Stops the recorder and hands back what it recorded, releasing the microphone. */
+  const finishRecorder = useCallback(async (recorder: MediaRecorder): Promise<Blob> => {
     await new Promise<void>(resolve => {
       recorder.onstop = () => resolve();
       recorder.stop();
@@ -188,10 +160,18 @@ export function useFieldVoiceRecorder({
     const audio = new Blob(audioChunksRef.current, { type: recorder.mimeType || 'audio/webm' });
     audioChunksRef.current = [];
     stopStreamTracks(recorder.stream);
-    mediaRecorderRef.current = null;
+    if (mediaRecorderRef.current === recorder) mediaRecorderRef.current = null;
+    return audio;
+  }, []);
+
+  const stopMediaRecorder = useCallback(async () => {
+    const recorder = mediaRecorderRef.current;
+    setIsRecording(false);
     setInterimText('');
-    await transcribe(audio, 'whisper-stt');
-  }, [transcribe]);
+    if (!recorder || recorder.state === 'inactive') return;
+    const owner = ownerRef.current;
+    await transcribe(await finishRecorder(recorder), 'whisper-stt', owner);
+  }, [finishRecorder, transcribe]);
 
   /** Live browser dictation; false when this browser or language cannot do it. */
   const startWebSpeech = useCallback(() => {
@@ -200,6 +180,7 @@ export function useFieldVoiceRecorder({
     if (!Recognition || !locale) return false;
     try {
       const recognition = new Recognition();
+      const ownerKey = draftKeyRef.current;
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = locale;
@@ -207,7 +188,7 @@ export function useFieldVoiceRecorder({
         let interim = '';
         for (let i = event.resultIndex; i < event.results.length; i += 1) {
           const result = event.results[i];
-          if (result.isFinal) onChunkRef.current(result[0].transcript.trim());
+          if (result.isFinal) deliver(result[0].transcript.trim(), ownerKey, Date.now());
           else interim += result[0].transcript;
         }
         setInterimText(interim);
@@ -230,7 +211,7 @@ export function useFieldVoiceRecorder({
       console.warn('Browser dictation could not start:', err);
       return false;
     }
-  }, [language, stopWebSpeech, startMediaRecorder]);
+  }, [language, deliver, stopWebSpeech, startMediaRecorder]);
 
   /** Tap to start, tap again to stop. Browser dictation needs a connection, so offline it records instead. */
   const toggleRecording = useCallback(async () => {
@@ -244,10 +225,42 @@ export function useFieldVoiceRecorder({
     }
   }, [isRecording, preferServer, startWebSpeech, startMediaRecorder, stopMediaRecorder, stopWebSpeech]);
 
+  // Another field took this control's place (say another farmer was chosen): stop, so the
+  // recording stays with the field it was started for.
+  const shownKeyRef = useRef(draftKey);
+  useEffect(() => {
+    if (shownKeyRef.current === draftKey) return;
+    shownKeyRef.current = draftKey;
+    if (mediaRecorderRef.current?.state === 'recording') void stopMediaRecorder();
+    else if (recognitionRef.current) stopWebSpeech();
+  }, [draftKey, stopMediaRecorder, stopWebSpeech]);
+
+  // Leaving the screen mid-recording: release the microphone, and keep what was said
+  // for its field when it has one.
+  useEffect(
+    () => () => {
+      try {
+        recognitionRef.current?.stop();
+      } catch (err) {
+        console.warn('Browser dictation did not stop cleanly:', err);
+      }
+      recognitionRef.current = null;
+      const recorder = mediaRecorderRef.current;
+      if (!recorder || recorder.state === 'inactive') return;
+      const owner = ownerRef.current;
+      void finishRecorder(recorder).then(audio =>
+        owner.key && audio.size > 0
+          ? store.save(owner.key, languageRef.current, audio, owner.startedAt).catch(err => console.error('Could not keep the recording:', err))
+          : undefined
+      );
+    },
+    [finishRecorder, store]
+  );
+
   /** Turns an existing audio file (.mp3, .wav, .m4a, .ogg, .webm) into text. */
   const uploadAudioFile = useCallback(
     async (file: File) => {
-      await transcribe(file, 'upload-stt');
+      await transcribe(file, 'upload-stt', { key: draftKeyRef.current, startedAt: Date.now() });
     },
     [transcribe]
   );
@@ -257,7 +270,7 @@ export function useFieldVoiceRecorder({
     isTranscribing,
     recordingDuration,
     interimText,
-    /** Recordings for this field still waiting for a connection. */
+    /** Recordings for this field still waiting to become text. */
     pendingCount,
     toggleRecording,
     uploadAudioFile,

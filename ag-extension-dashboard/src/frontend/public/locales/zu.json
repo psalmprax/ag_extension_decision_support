@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Kuqediwe. Hlola amagama ngaphambi kokuthi ulondoloze.",
     "voice_failed": "Akukwazekanga ukuguqula okuqoshiwe kube umbhalo. Zama futhi noma ukubhale.",
     "voice_language_limited": "Ukubhala ngezwi akukathembeki olimini lwakho. Hlola amagama ngokucophelela ngaphambi kokuthi ulondoloze.",
-    "voice_saved_offline": "Ayikho inethiwekhi. Okuqoshiwe kugcinwe kule foni futhi kuzoba umbhalo uma usubuyele ku-inthanethi.",
+    "voice_saved_offline": "Ayikho inethiwekhi. Okuqoshiwe kugcinwe kule foni. Kuzoba umbhalo uma usunenethiwekhi futhi leli fomu livuliwe.",
     "voice_mic_denied": "Vumela imakrofoni ukuze ukhulume esikhundleni sokubhala.",
     "voice_not_supported": "Lesi siphequluli asikwazi ukuqopha umsindo. Bhala esikhundleni salokho.",
     "voice_stopped": "Ukubhala ngezwi kumile. Thinta imakrofoni ukuze uqale futhi.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Impendulo yakho iphinde ithunyelwe njengomlayezo wezwi ku-WhatsApp",
     "chat_speak_reply_off": "Thumela futhi njengomlayezo wezwi (WhatsApp)",
     "ui_officer_chat_message_label": "Umlayezo oya kumlimi",
-    "voice_dictate": "Khuluma esikhundleni sokubhala"
+    "voice_dictate": "Khuluma esikhundleni sokubhala",
+    "voice_saved_for_retry": "Okuqoshiwe akukwazanga ukuguqulwa kube umbhalo manje. Kugcinwe kule foni futhi kuzozanywa futhi uma leli fomu livuliwe."
 }

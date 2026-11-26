@@ -4,7 +4,7 @@ import toast from 'react-hot-toast';
 import { createVisit, updateVisit } from '@/api/visitService';
 import { uploadFile } from '@/api/uploadService';
 import { getApiErrorMessage } from '@/lib/apiError';
-import { calendarDateFromToday } from '@/lib/calendarDate';
+import { calendarDateFrom, calendarDateFromToday } from '@/lib/calendarDate';
 import { useLanguage } from '@/lib/LanguageContext';
 import { currentPosition } from '@/lib/devicePosition';
 import { appendDictation } from '@/lib/dictationText';
@@ -43,20 +43,28 @@ export const VisitReportModal: React.FC<VisitReportModalProps> = ({ target, onCl
   const [scheduleFollowUp, setScheduleFollowUp] = useState(true);
   const [saving, setSaving] = useState(false);
   const [drafted, setDrafted] = useState<VisitReportDraft | null>(null);
+  // A recording still being turned into the report: completing now would leave its words out.
+  const [talking, setTalking] = useState(false);
 
   /** Adds a drafted report to what is already typed; only what the officer said is changed. */
-  const applyDraft = (draft: VisitReportDraft) => {
+  const applyDraft = (draft: VisitReportDraft, recordedAt: number) => {
     setFindings(current => appendDictation(current, draft.findings));
     setActions(current => appendDictation(current, draft.actions));
-    if (draft.minutesOnFarm !== null) setMinutes(Math.min(600, Math.max(10, draft.minutesOnFarm)));
+    // As said; a time the visit cannot be saved with is explained by the field's limits on submit.
+    if (draft.minutesOnFarm !== null) setMinutes(draft.minutesOnFarm);
     if (draft.followUpRequired !== null) setFollowUp(draft.followUpRequired);
-    if (draft.followUpInDays !== null) setFollowUpDate(calendarDateFromToday(draft.followUpInDays));
+    if (draft.followUpInDays !== null) {
+      // Counted from the day of the visit; a date already past becomes today.
+      const due = calendarDateFrom(recordedAt, draft.followUpInDays);
+      const today = calendarDateFromToday(0);
+      setFollowUpDate(due < today ? today : due);
+    }
     setDrafted(draft);
   };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!findings.trim()) return;
+    if (!findings.trim() || talking) return;
     setSaving(true);
     try {
       // The position confirms the visit happened on the farm; a refusal never blocks the report.
@@ -114,7 +122,7 @@ export const VisitReportModal: React.FC<VisitReportModalProps> = ({ target, onCl
           </button>
         </div>
 
-        <TalkTheVisit visitId={target.visitId} onDraft={applyDraft} />
+        <TalkTheVisit visitId={target.visitId} onDraft={applyDraft} onBusyChange={setTalking} />
         {drafted && (
           <p role="status" className="text-xs text-slate-700 dark:text-theme-text-secondary">
             {drafted.organised
@@ -141,7 +149,7 @@ export const VisitReportModal: React.FC<VisitReportModalProps> = ({ target, onCl
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label htmlFor="visit-minutes" className={LABEL}>{t('ui_visit_report_modal_time_on_farm_minutes')}</label>
-            <input id="visit-minutes" type="number" min={10} max={600} required value={minutes}
+            <input id="visit-minutes" type="number" min={10} max={720} required value={minutes}
               onChange={e => setMinutes(Number(e.target.value))} className={FIELD} />
           </div>
           <div>
@@ -179,7 +187,7 @@ export const VisitReportModal: React.FC<VisitReportModalProps> = ({ target, onCl
           <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-sm text-slate-700 dark:text-white/70 hover:bg-slate-100 dark:hover:bg-white/5">
             {t('common_cancel')}
           </button>
-          <button type="submit" disabled={saving || !findings.trim()}
+          <button type="submit" disabled={saving || talking || !findings.trim()}
             className="px-4 py-2 rounded-lg text-sm font-medium bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50">
             {saving ? 'Saving…' : 'Complete visit'}
           </button>

@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Emechaala. Lelee okwu ndị ahụ tupu ịchekwaa.",
     "voice_failed": "Enweghị ike ịtụgharị ndekọ ahụ ka ọ bụrụ ederede. Nwaa ọzọ ma ọ bụ dee ya.",
     "voice_language_limited": "Iji olu ede ihe adịbeghị ntụkwasị obi n'asụsụ gị. Lelee okwu ndị ahụ nke ọma tupu ịchekwaa.",
-    "voice_saved_offline": "Enweghị netwọk. Echekwara ndekọ ahụ na ekwentị a, ọ ga-aghọ ederede mgbe ị laghachiri n'ịntanetị.",
+    "voice_saved_offline": "Enweghị netwọk. Echekwara ndekọ ahụ na ekwentị a. Ọ ga-aghọ ederede mgbe i nwere netwọk ma fọm a meghere.",
     "voice_mic_denied": "Kwe ka e jiri igwe okwu, ka ị kwuo okwu kama ide.",
     "voice_not_supported": "Ihe nchọgharị a enweghị ike ịdekọ ụda. Dee ya kama.",
     "voice_stopped": "Iji olu ede ihe akwụsịla. Pịa igwe okwu ka ịmalite ọzọ.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "A na-ezitekwa azịza gị dịka ozi olu na WhatsApp",
     "chat_speak_reply_off": "Zitekwa ya dịka ozi olu (WhatsApp)",
     "ui_officer_chat_message_label": "Ozi nye onye ọrụ ugbo",
-    "voice_dictate": "Kwuo okwu kama ide"
+    "voice_dictate": "Kwuo okwu kama ide",
+    "voice_saved_for_retry": "Enweghị ike ịtụgharị ndekọ ahụ ka ọ bụrụ ederede ugbu a. Echekwara ya na ekwentị a, a ga-anwa ọzọ mgbe fọm a meghere."
 }

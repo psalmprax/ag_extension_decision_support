@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Klaar. Controleer de woorden voordat u opslaat.",
     "voice_failed": "De opname kon niet worden omgezet in tekst. Probeer het opnieuw of typ het.",
     "voice_language_limited": "Spraakinvoer is in uw taal nog niet betrouwbaar. Controleer de woorden goed voordat u opslaat.",
-    "voice_saved_offline": "Geen bereik. De opname staat op deze telefoon en wordt tekst zodra u weer online bent.",
+    "voice_saved_offline": "Geen bereik. De opname staat op deze telefoon. Ze wordt tekst zodra u bereik hebt en dit formulier open is.",
     "voice_mic_denied": "Sta de microfoon toe om te spreken in plaats van te typen.",
     "voice_not_supported": "Deze browser kan geen geluid opnemen. Typ in plaats daarvan.",
     "voice_stopped": "Spraakinvoer is gestopt. Tik op de microfoon om opnieuw te beginnen.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Uw antwoord wordt ook als spraakbericht via WhatsApp verstuurd",
     "chat_speak_reply_off": "Ook als spraakbericht versturen (WhatsApp)",
     "ui_officer_chat_message_label": "Bericht aan de boer",
-    "voice_dictate": "Spreken in plaats van typen"
+    "voice_dictate": "Spreken in plaats van typen",
+    "voice_saved_for_retry": "De opname kon nu niet worden omgezet in tekst. Ze staat op deze telefoon en wordt opnieuw geprobeerd als dit formulier open is."
 }

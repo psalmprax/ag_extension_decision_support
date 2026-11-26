@@ -6,6 +6,9 @@ export type TranscriptionOutcome =
   | { status: 'done'; text: string; languageSupported: boolean }
   /** No connection: the recording can be kept and sent later. */
   | { status: 'offline' }
+  /** The service failed for now (overloaded, timed out, down): worth trying again later. */
+  | { status: 'retry' }
+  /** Refused for good (nothing heard, too long, over the plan's limit): trying again would fail the same way. */
   | { status: 'failed' };
 
 /** The words the recorder shows, in the user's language (see useVoiceMessages). */
@@ -17,6 +20,7 @@ export interface VoiceMessages {
   failed: string;
   languageLimited: string;
   savedOffline: string;
+  savedForRetry: string;
   micDenied: string;
   notSupported: string;
   stopped: string;
@@ -46,6 +50,15 @@ interface RequestError {
 /** True when the request never reached the server (no signal), as opposed to the server refusing it. */
 function isConnectionError(err: unknown): boolean {
   return typeof navigator !== 'undefined' && (!navigator.onLine || !(err as RequestError)?.response);
+}
+
+/**
+ * Server answers that mean "not now" rather than "never": a timeout, too many requests,
+ * or the service failing or unavailable. Everything else (a bad or too-long recording,
+ * no access, the plan's limit reached) is a refusal that would repeat on every retry.
+ */
+function isTransientStatus(status: number | undefined): boolean {
+  return status === 408 || status === 425 || status === 429 || (status !== undefined && status >= 500);
 }
 
 function showServerError(err: unknown, toastId: string, fallback: string): void {
@@ -89,6 +102,11 @@ export async function transcribeRecording(
     if (isConnectionError(err)) {
       toast.dismiss(toastId);
       return { status: 'offline' };
+    }
+    if (isTransientStatus((err as RequestError).response?.status)) {
+      console.warn('Transcription failed for now; the recording can be tried again:', err);
+      toast.dismiss(toastId);
+      return { status: 'retry' };
     }
     showServerError(err, toastId, messages.failed);
     return { status: 'failed' };

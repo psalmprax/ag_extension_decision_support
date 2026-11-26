@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Færdig. Tjek ordene, før du gemmer.",
     "voice_failed": "Optagelsen kunne ikke blive til tekst. Prøv igen, eller skriv det.",
     "voice_language_limited": "Taleindtastning er endnu ikke pålidelig på dit sprog. Tjek ordene grundigt, før du gemmer.",
-    "voice_saved_offline": "Ingen dækning. Optagelsen er gemt på denne telefon og bliver til tekst, når du er online igen.",
+    "voice_saved_offline": "Ingen dækning. Optagelsen er gemt på denne telefon. Den bliver til tekst, når du har dækning, og denne formular er åben.",
     "voice_mic_denied": "Tillad mikrofonen for at tale i stedet for at skrive.",
     "voice_not_supported": "Denne browser kan ikke optage lyd. Skriv i stedet.",
     "voice_stopped": "Taleindtastning stoppede. Tryk på mikrofonen for at starte igen.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Dit svar sendes også som talebesked på WhatsApp",
     "chat_speak_reply_off": "Send også som talebesked (WhatsApp)",
     "ui_officer_chat_message_label": "Besked til landmanden",
-    "voice_dictate": "Tal i stedet for at skrive"
+    "voice_dictate": "Tal i stedet for at skrive",
+    "voice_saved_for_retry": "Optagelsen kunne ikke blive til tekst lige nu. Den er gemt på denne telefon og prøves igen, når denne formular er åben."
 }

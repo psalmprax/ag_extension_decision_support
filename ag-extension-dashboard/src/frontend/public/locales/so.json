@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Waa dhammaatay. Hubi ereyada ka hor intaadan kaydin.",
     "voice_failed": "Duubista lama beddeli karin qoraal. Isku day mar kale ama qor.",
     "voice_language_limited": "Qorista codka weli lagu kalsoonaan karo ma aha luqaddaada. Si fiican u hubi ereyada ka hor intaadan kaydin.",
-    "voice_saved_offline": "Shabakad ma jirto. Duubista waxaa lagu kaydiyay taleefankan, waxayna noqon doontaa qoraal markaad internetka ku soo laabato.",
+    "voice_saved_offline": "Shabakad ma jirto. Duubista waxaa lagu kaydiyay taleefankan. Waxay noqon doontaa qoraal markaad shabakad hesho oo foomkan furan yahay.",
     "voice_mic_denied": "Oggolow makarafoonka si aad u hadasho halkii aad wax qori lahayd.",
     "voice_not_supported": "Biraawsarkan ma duubi karo cod. Qor halkii.",
     "voice_stopped": "Qorista codka way joogsatay. Taabo makarafoonka si aad dib ugu bilowdo.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Jawaabtaada waxaa sidoo kale loo diraa fariin cod ah WhatsApp",
     "chat_speak_reply_off": "Sidoo kale u dir fariin cod ah (WhatsApp)",
     "ui_officer_chat_message_label": "Fariin loogu talagalay beeraleyda",
-    "voice_dictate": "Hadal halkii aad wax qori lahayd"
+    "voice_dictate": "Hadal halkii aad wax qori lahayd",
+    "voice_saved_for_retry": "Duubista hadda lama beddeli karin qoraal. Waxaa lagu kaydiyay taleefankan, waxaana dib loo isku dayi doonaa marka foomkan furan yahay."
 }

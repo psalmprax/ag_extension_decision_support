@@ -3073,7 +3073,7 @@
     "voice_transcribed": "完成。保存前请检查文字。",
     "voice_failed": "无法把录音转成文字。请重试或直接输入。",
     "voice_language_limited": "语音输入在您的语言中还不可靠。保存前请仔细检查文字。",
-    "voice_saved_offline": "没有信号。录音已保存在这部手机上，恢复联网后会转成文字。",
+    "voice_saved_offline": "没有信号。录音已保存在这部手机上。有信号且此表单打开时，会转成文字。",
     "voice_mic_denied": "请允许使用麦克风，这样可以用说话代替打字。",
     "voice_not_supported": "此浏览器无法录音。请改为输入。",
     "voice_stopped": "语音输入已停止。点按麦克风重新开始。",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "您的回复也会以语音消息发送到 WhatsApp",
     "chat_speak_reply_off": "同时以语音消息发送（WhatsApp）",
     "ui_officer_chat_message_label": "给农户的消息",
-    "voice_dictate": "用说话代替打字"
+    "voice_dictate": "用说话代替打字",
+    "voice_saved_for_retry": "录音暂时无法转成文字。它已保存在这部手机上，此表单打开时会再次尝试。"
 }

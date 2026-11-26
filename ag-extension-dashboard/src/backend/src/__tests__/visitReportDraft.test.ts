@@ -37,6 +37,12 @@ describe('splitSentences', () => {
         expect(splitSentences('Maize is tall.  Leaves are yellow!\nSoil dry')).toEqual(['Maize is tall.', 'Leaves are yellow!', 'Soil dry']);
     });
 
+    it('keeps each line its own sentence, even without a full stop', () => {
+        expect(splitSentences('Leaves yellow on lower canopy\nAdvised top dressing at knee height\n\n  Soil   dry')).toEqual([
+            'Leaves yellow on lower canopy', 'Advised top dressing at knee height', 'Soil dry',
+        ]);
+    });
+
     it('splits Amharic and Arabic full stops', () => {
         expect(splitSentences('በቆሎ ደርሷል። ተባይ አለ።')).toHaveLength(2);
         expect(splitSentences('الذرة جيدة؟ نعم')).toHaveLength(2);
@@ -95,6 +101,22 @@ describe('POST /api/ai/draft-visit-report', () => {
         expect(res.status).toBe(200);
         expect(res.body.data).toMatchObject({ findings: splitSentences(TRANSCRIPT).join(' '), actions: '', organised: false });
         expect(usageService.incrementUsage).not.toHaveBeenCalled();
+    });
+
+    it('keeps everything under findings when the reply lacks either list of sentence numbers', async () => {
+        mockRouteRequest.mockResolvedValue(reply('{"actions":[3],"minutesOnFarm":40}'));
+
+        const res = await request(app).post('/api/ai/draft-visit-report').send({ transcript: TRANSCRIPT });
+
+        expect(res.body.data).toMatchObject({ findings: splitSentences(TRANSCRIPT).join(' '), actions: '', minutesOnFarm: null, organised: false });
+    });
+
+    it('accepts empty lists: nothing was about actions', async () => {
+        mockRouteRequest.mockResolvedValue(reply('{"findings":[1,2,3,4,5],"actions":[]}'));
+
+        const res = await request(app).post('/api/ai/draft-visit-report').send({ transcript: TRANSCRIPT });
+
+        expect(res.body.data).toMatchObject({ actions: '', organised: true });
     });
 
     it('rejects an empty transcript', async () => {

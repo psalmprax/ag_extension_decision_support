@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Kész. Mentés előtt ellenőrizze a szöveget.",
     "voice_failed": "A felvételt nem sikerült szöveggé alakítani. Próbálja újra, vagy írja be.",
     "voice_language_limited": "A hangalapú gépelés az Ön nyelvén még nem megbízható. Mentés előtt alaposan ellenőrizze a szöveget.",
-    "voice_saved_offline": "Nincs térerő. A felvétel ezen a telefonon van mentve, és szöveg lesz belőle, amint újra online lesz.",
+    "voice_saved_offline": "Nincs térerő. A felvétel ezen a telefonon van mentve. Szöveg lesz belőle, amint lesz térerő és ez az űrlap nyitva van.",
     "voice_mic_denied": "Engedélyezze a mikrofont, hogy gépelés helyett beszélhessen.",
     "voice_not_supported": "Ez a böngésző nem tud hangot rögzíteni. Gépeljen inkább.",
     "voice_stopped": "A hangalapú gépelés leállt. Koppintson a mikrofonra az újrakezdéshez.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "A válasza hangüzenetként is elmegy WhatsAppon",
     "chat_speak_reply_off": "Küldés hangüzenetként is (WhatsApp)",
     "ui_officer_chat_message_label": "Üzenet a gazdának",
-    "voice_dictate": "Beszéljen gépelés helyett"
+    "voice_dictate": "Beszéljen gépelés helyett",
+    "voice_saved_for_retry": "A felvételt most nem sikerült szöveggé alakítani. Ezen a telefonon van mentve, és újra megpróbáljuk, amikor ez az űrlap nyitva van."
 }

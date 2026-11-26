@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Selesai. Periksa kata-katanya sebelum menyimpan.",
     "voice_failed": "Rekaman tidak dapat diubah menjadi teks. Coba lagi atau ketik.",
     "voice_language_limited": "Mengetik dengan suara belum andal untuk bahasa Anda. Periksa kata-katanya dengan teliti sebelum menyimpan.",
-    "voice_saved_offline": "Tidak ada sinyal. Rekaman disimpan di ponsel ini dan menjadi teks saat Anda kembali online.",
+    "voice_saved_offline": "Tidak ada sinyal. Rekaman disimpan di ponsel ini. Rekaman menjadi teks saat ada sinyal dan formulir ini terbuka.",
     "voice_mic_denied": "Izinkan mikrofon agar Anda bisa berbicara alih-alih mengetik.",
     "voice_not_supported": "Browser ini tidak bisa merekam suara. Ketik saja.",
     "voice_stopped": "Mengetik dengan suara berhenti. Ketuk mikrofon untuk mulai lagi.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Balasan Anda juga dikirim sebagai pesan suara di WhatsApp",
     "chat_speak_reply_off": "Kirim juga sebagai pesan suara (WhatsApp)",
     "ui_officer_chat_message_label": "Pesan untuk petani",
-    "voice_dictate": "Bicara alih-alih mengetik"
+    "voice_dictate": "Bicara alih-alih mengetik",
+    "voice_saved_for_retry": "Rekaman belum bisa diubah menjadi teks saat ini. Rekaman disimpan di ponsel ini dan akan dicoba lagi saat formulir ini terbuka."
 }

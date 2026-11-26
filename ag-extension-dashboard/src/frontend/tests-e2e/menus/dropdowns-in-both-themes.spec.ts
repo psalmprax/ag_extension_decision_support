@@ -1,7 +1,7 @@
 import { test } from '@playwright/test';
 import { SEEDED } from '../helpers/auth';
 import { E2E_SYSTEM_ADMIN, JOURNEY, signedIn } from '../helpers/journey';
-import { dropdownProblems, setTheme, type Theme } from '../helpers/dropdownContrast';
+import { dropdownProblems, setTheme, sortFindings, type Theme } from '../helpers/dropdownContrast';
 import { expectNoProblems, menuItems, openItem } from './honesty';
 
 /**
@@ -24,6 +24,7 @@ test('dropdowns on the public pages are readable in light and dark mode', async 
   test.setTimeout(180_000);
   await page.goto('/');
   const report: string[] = [];
+  const unmeasured: string[] = [];
   for (const theme of THEMES) {
     await setTheme(page, theme);
     const seen = new Set<string>();
@@ -33,11 +34,13 @@ test('dropdowns on the public pages are readable in light and dark mode', async 
       // exists once the assistant is opened.
       const assistant = page.getByRole('button', { name: 'Open agronomic assistant' });
       if (path === '/' && (await assistant.isVisible())) await assistant.click();
-      const problems = await dropdownProblems(page, seen);
+      const { problems, notMeasured } = sortFindings(await dropdownProblems(page, seen));
       if (problems.length) report.push(`${theme} ${path}\n    ${problems.join('\n    ')}`);
+      if (notMeasured.length) unmeasured.push(`${theme} ${path}\n    ${notMeasured.join('\n    ')}`);
     }
   }
   await testInfo.attach('public-dropdown-problems.txt', { body: report.join('\n') || 'none', contentType: 'text/plain' });
+  await testInfo.attach('public-dropdown-not-measured.txt', { body: unmeasured.join('\n') || 'none', contentType: 'text/plain' });
   expectNoProblems('public pages', report);
 });
 
@@ -46,17 +49,21 @@ for (const { role, email, password } of ROLES) {
     test.setTimeout(600_000);
     const { context, page } = await signedIn(browser, email, password);
     const report: string[] = [];
+    const unmeasured: string[] = [];
     for (const theme of THEMES) {
       await setTheme(page, theme);
       const seen = new Set<string>();
       for (const item of await menuItems(page)) {
         await openItem(page, item);
-        const problems = await dropdownProblems(page, seen);
-        if (problems.length) report.push(`${theme} ${item.section} › ${item.label}\n    ${problems.join('\n    ')}`);
+        const { problems, notMeasured } = sortFindings(await dropdownProblems(page, seen));
+        const where = `${theme} ${item.section} › ${item.label}`;
+        if (problems.length) report.push(`${where}\n    ${problems.join('\n    ')}`);
+        if (notMeasured.length) unmeasured.push(`${where}\n    ${notMeasured.join('\n    ')}`);
       }
     }
     await context.close();
     await testInfo.attach(`${role}-dropdown-problems.txt`, { body: report.join('\n') || 'none', contentType: 'text/plain' });
+    await testInfo.attach(`${role}-dropdown-not-measured.txt`, { body: unmeasured.join('\n') || 'none', contentType: 'text/plain' });
     expectNoProblems(`${role} dropdowns`, report);
   });
 }

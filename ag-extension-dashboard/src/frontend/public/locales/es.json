@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Listo. Revise las palabras antes de guardar.",
     "voice_failed": "No se pudo convertir la grabación en texto. Inténtelo de nuevo o escríbalo.",
     "voice_language_limited": "El dictado por voz aún no es fiable en su idioma. Revise bien las palabras antes de guardar.",
-    "voice_saved_offline": "Sin señal. La grabación se guarda en este teléfono y se convertirá en texto cuando vuelva a tener conexión.",
+    "voice_saved_offline": "Sin señal. La grabación se guarda en este teléfono. Se convertirá en texto cuando tenga señal y este formulario esté abierto.",
     "voice_mic_denied": "Permita el micrófono para hablar en lugar de escribir.",
     "voice_not_supported": "Este navegador no puede grabar sonido. Escriba en su lugar.",
     "voice_stopped": "El dictado por voz se detuvo. Toque el micrófono para empezar de nuevo.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Su respuesta también se envía como mensaje de voz por WhatsApp",
     "chat_speak_reply_off": "Enviar también como mensaje de voz (WhatsApp)",
     "ui_officer_chat_message_label": "Mensaje para el agricultor",
-    "voice_dictate": "Hablar en lugar de escribir"
+    "voice_dictate": "Hablar en lugar de escribir",
+    "voice_saved_for_retry": "No se pudo convertir la grabación en texto ahora mismo. Se guarda en este teléfono y se volverá a intentar cuando este formulario esté abierto."
 }

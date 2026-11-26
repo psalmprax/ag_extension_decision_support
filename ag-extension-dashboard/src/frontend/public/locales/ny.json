@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Zatheka. Onani mawuwo musanasunge.",
     "voice_failed": "Sizinatheke kusintha mawu ojambulidwa kukhala olembedwa. Yesaninso kapena lembani.",
     "voice_language_limited": "Kulemba ndi mawu sikunadalirike m'chilankhulo chanu. Onani bwino mawuwo musanasunge.",
-    "voice_saved_offline": "Palibe netiweki. Mawu ojambulidwa asungidwa pa foni iyi ndipo adzakhala olembedwa mukabwerera pa intaneti.",
+    "voice_saved_offline": "Palibe netiweki. Mawu ojambulidwa asungidwa pa foni iyi. Adzakhala olembedwa mukakhala ndi netiweki ndipo fomu iyi ili yotsegula.",
     "voice_mic_denied": "Lolani maikolofoni kuti mulankhule m'malo molemba.",
     "voice_not_supported": "Msakatuli uyu sungathe kujambula mawu. Lembani m'malo mwake.",
     "voice_stopped": "Kulemba ndi mawu kwayima. Dinani maikolofoni kuti muyambenso.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Yankho lanu limatumizidwanso ngati uthenga wa mawu pa WhatsApp",
     "chat_speak_reply_off": "Tumizaninso ngati uthenga wa mawu (WhatsApp)",
     "ui_officer_chat_message_label": "Uthenga kwa mlimi",
-    "voice_dictate": "Lankhulani m'malo molemba"
+    "voice_dictate": "Lankhulani m'malo molemba",
+    "voice_saved_for_retry": "Mawu ojambulidwa sanathe kusinthidwa kukhala olembedwa pakali pano. Asungidwa pa foni iyi ndipo tidzayesanso fomu iyi ikakhala yotsegula."
 }

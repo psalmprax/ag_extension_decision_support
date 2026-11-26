@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Done. Check the words before you save.",
     "voice_failed": "Could not turn the recording into text. Try again or type it.",
     "voice_language_limited": "Voice typing is not reliable in your language yet. Check the words carefully before you save.",
-    "voice_saved_offline": "No signal. The recording is saved on this phone and becomes text when you are back online.",
+    "voice_saved_offline": "No signal. The recording is saved on this phone. It becomes text once you have signal and this form is open.",
     "voice_mic_denied": "Allow the microphone to speak instead of typing.",
     "voice_not_supported": "This browser cannot record sound. Type instead.",
     "voice_stopped": "Voice typing stopped. Tap the mic to start again.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Your reply is also sent as a voice message on WhatsApp",
     "chat_speak_reply_off": "Also send as a voice message (WhatsApp)",
     "ui_officer_chat_message_label": "Message to the farmer",
-    "voice_dictate": "Speak instead of typing"
+    "voice_dictate": "Speak instead of typing",
+    "voice_saved_for_retry": "The recording could not be turned into text just now. It is saved on this phone and will be tried again when this form is open."
 }

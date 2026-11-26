@@ -3066,14 +3066,14 @@
     "ui_reviewed_advice_not_now": "Si kati",
     "ui_reviewed_advice_added": "Kigattiddwa. Kijja kuddamu ebibuuzo singa omuduumizi akkiriza ekyawandiikiddwa.",
     "ui_reviewed_advice_failed": "Tewasobose okugatta amagezi gano ku kitabo ky'okumanya.",
-    "ui_reviewed_advice_too_short": "Gawa omutwe n'ebigambo by'amagezi ebitakka wansi wa 80.",
+    "ui_reviewed_advice_too_short": "Gawa omutwe n'amagezi agalimu ennukuta ezitakka wansi wa 80.",
     "voice_listening": "Mpuliriza. Nyiga ku makrofoni nate okugiyimiriza.",
     "voice_recording": "Kwata eddoboozi. Nyiga ku makrofoni nate okugiyimiriza.",
     "voice_transcribing": "Eddoboozi lyo likyusibwa okufuuka ebiwandiike…",
     "voice_transcribed": "Kiwedde. Kebera ebigambo nga tonnaterekera.",
     "voice_failed": "Tekisobose kukyusa ddoboozi kufuuka biwandiike. Gezaako nate oba kiwandiike.",
     "voice_language_limited": "Okuwandiika n'eddoboozi tekunnaba kwesigika mu lulimi lwo. Kebera bulungi ebigambo nga tonnaterekera.",
-    "voice_saved_offline": "Tewali mukutu. Eddoboozi literekeddwa ku ssimu eno era lijja kufuuka ebiwandiike ng'oddizza intaneti.",
+    "voice_saved_offline": "Tewali mukutu. Eddoboozi literekeddwa ku ssimu eno. Lijja kufuuka ebiwandiike ng'olina omukutu ate nga foomu eno nzigule.",
     "voice_mic_denied": "Kkiriza makrofoni osobole okwogera mu kifo ky'okuwandiika.",
     "voice_not_supported": "Brawuza eno tesobola kukwata ddoboozi. Wandiika mu kifo ky'ekyo.",
     "voice_stopped": "Okuwandiika n'eddoboozi kuyimiridde. Nyiga ku makrofoni otandike nate.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Okuddamu kwo nakwo kusindikibwa ng'obubaka bw'eddoboozi ku WhatsApp",
     "chat_speak_reply_off": "Sindika era ng'obubaka bw'eddoboozi (WhatsApp)",
     "ui_officer_chat_message_label": "Obubaka eri omulimi",
-    "voice_dictate": "Yogera mu kifo ky'okuwandiika"
+    "voice_dictate": "Yogera mu kifo ky'okuwandiika",
+    "voice_saved_for_retry": "Eddoboozi teryasobodde kufuuka biwandiike kati. Literekeddwa ku ssimu eno era lijja kugezesebwa nate ng'foomu eno nzigule."
 }

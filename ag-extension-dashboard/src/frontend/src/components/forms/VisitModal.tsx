@@ -167,7 +167,8 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
               </label>
               <DictationButton
                 fieldLabel={t('visit_notes') || 'Notes'}
-                draftKey={`visit-plan-notes:${formData.farmerId || 'new'}`}
+                // Kept recordings belong to one farmer's visit; none are kept before a farmer is chosen.
+                draftKey={formData.farmerId ? `visit-plan-notes:${formData.farmerId}` : undefined}
                 onTranscript={text => setFormData(prev => ({ ...prev, notes: appendDictation(prev.notes, text) }))}
               />
             </div>

@@ -121,7 +121,7 @@ export const GrowthCycleModal: React.FC<GrowthCycleModalProps> = ({
 
             <div>
               <DictationLabel htmlFor="cycle-notes" className="block text-xs font-medium text-slate-600 dark:text-theme-text-secondary mb-1"
-                draftKey={`cycle-notes:${selectedField?.id ?? 'new'}`}
+                draftKey={selectedField ? `cycle-notes:${selectedField.id}` : undefined}
                 onTranscript={text => setCycleForm(prev => ({ ...prev, notes: appendDictation(prev.notes, text) }))}>
                 {t('ui_growth_cycle_modal_notes_recommendations')}
               </DictationLabel>

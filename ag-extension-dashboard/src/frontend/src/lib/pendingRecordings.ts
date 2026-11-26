@@ -12,13 +12,15 @@ export interface PendingRecording {
   draftKey: string;
   language: string;
   audio: Blob;
+  /** When it was recorded, so "come back in two weeks" counts from the visit, not from when it was sent. */
   savedAt: number;
   /** Who recorded it: a shared phone never puts one officer's words in another's form. */
   ownerId: string | null;
 }
 
 export interface PendingRecordingStore {
-  save(draftKey: string, language: string, audio: Blob): Promise<void>;
+  /** Resolves once the recording is stored for good. `recordedAt` defaults to now. */
+  save(draftKey: string, language: string, audio: Blob, recordedAt?: number): Promise<void>;
   /** The signed-in person's recordings for one field, oldest first. */
   list(draftKey: string): Promise<PendingRecording[]>;
   remove(id: string): Promise<void>;
@@ -43,13 +45,26 @@ function openDatabase(): Promise<IDBDatabase> {
   });
 }
 
+/**
+ * Runs one request and resolves with its result once its transaction has completed, so
+ * a save is reported only when the recording is really stored (a request can succeed
+ * and its transaction still be aborted, for example when the phone runs out of space).
+ */
 async function run<T>(mode: IDBTransactionMode, work: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
   const db = await openDatabase();
   try {
     return await new Promise<T>((resolve, reject) => {
-      const request = work(db.transaction(STORE, mode).objectStore(STORE));
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error ?? new Error('Offline recordings could not be read or saved'));
+      const transaction = db.transaction(STORE, mode);
+      const request = work(transaction.objectStore(STORE));
+      const failed = () => reject(request.error ?? transaction.error ?? new Error('Offline recordings could not be read or saved'));
+      let result: T;
+      request.onsuccess = () => {
+        result = request.result;
+      };
+      request.onerror = failed;
+      transaction.oncomplete = () => resolve(result);
+      transaction.onabort = failed;
+      transaction.onerror = failed;
     });
   } finally {
     db.close();
@@ -57,8 +72,8 @@ async function run<T>(mode: IDBTransactionMode, work: (store: IDBObjectStore) =>
 }
 
 export const pendingRecordings: PendingRecordingStore = {
-  async save(draftKey, language, audio) {
-    const item: PendingRecording = { id: randomId(), draftKey, language, audio, savedAt: Date.now(), ownerId: deviceOwner() };
+  async save(draftKey, language, audio, recordedAt = Date.now()) {
+    const item: PendingRecording = { id: randomId(), draftKey, language, audio, savedAt: recordedAt, ownerId: deviceOwner() };
     await run('readwrite', store => store.put(item));
   },
   async list(draftKey) {

@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Ó ti parí. Ṣàyẹ̀wò àwọn ọ̀rọ̀ kí o tó fi pamọ́.",
     "voice_failed": "A kò lè yí ohùn náà padà sí ọ̀rọ̀ kíkọ. Gbìyànjú lẹ́ẹ̀kan sí i tàbí kọ ọ́.",
     "voice_language_limited": "Kíkọ pẹ̀lú ohùn kò tíì péye ní èdè rẹ. Ṣàyẹ̀wò àwọn ọ̀rọ̀ dáadáa kí o tó fi pamọ́.",
-    "voice_saved_offline": "Kò sí nẹ́tíwọ̀ọ̀kì. A ti fi ohùn náà pamọ́ sórí fóònù yìí, yóò sì di ọ̀rọ̀ kíkọ nígbà tí o bá padà sórí ayélujára.",
+    "voice_saved_offline": "Kò sí nẹ́tíwọ̀ọ̀kì. A ti fi ohùn náà pamọ́ sórí fóònù yìí. Yóò di ọ̀rọ̀ kíkọ nígbà tí nẹ́tíwọ̀ọ̀kì bá wà tí fọ́ọ̀mù yìí sì ṣí sílẹ̀.",
     "voice_mic_denied": "Gba makirofóònù láàyè kí o lè sọ̀rọ̀ dípò kíkọ.",
     "voice_not_supported": "Aṣàwákiri yìí kò lè gba ohùn sílẹ̀. Kọ ọ́ dípò bẹ́ẹ̀.",
     "voice_stopped": "Kíkọ pẹ̀lú ohùn ti dúró. Tẹ makirofóònù láti tún bẹ̀rẹ̀.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "A tún ń fi ìdáhùn rẹ ránṣẹ́ gẹ́gẹ́ bí ìfiránṣẹ́ ohùn lórí WhatsApp",
     "chat_speak_reply_off": "Tún fi ránṣẹ́ gẹ́gẹ́ bí ìfiránṣẹ́ ohùn (WhatsApp)",
     "ui_officer_chat_message_label": "Ìfiránṣẹ́ sí àgbẹ̀",
-    "voice_dictate": "Sọ̀rọ̀ dípò kíkọ"
+    "voice_dictate": "Sọ̀rọ̀ dípò kíkọ",
+    "voice_saved_for_retry": "A kò lè yí ohùn náà padà sí ọ̀rọ̀ kíkọ báyìí. A ti fi pamọ́ sórí fóònù yìí, a ó sì tún gbìyànjú nígbà tí fọ́ọ̀mù yìí bá ṣí sílẹ̀."
 }

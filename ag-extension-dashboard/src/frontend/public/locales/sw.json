@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Imekamilika. Kagua maneno kabla ya kuhifadhi.",
     "voice_failed": "Imeshindwa kugeuza rekodi kuwa maandishi. Jaribu tena au uandike.",
     "voice_language_limited": "Kuandika kwa sauti bado si sahihi kwa lugha yako. Kagua maneno kwa makini kabla ya kuhifadhi.",
-    "voice_saved_offline": "Hakuna mtandao. Rekodi imehifadhiwa kwenye simu hii na itakuwa maandishi utakapopata mtandao tena.",
+    "voice_saved_offline": "Hakuna mtandao. Rekodi imehifadhiwa kwenye simu hii. Itakuwa maandishi utakapopata mtandao na fomu hii ikiwa wazi.",
     "voice_mic_denied": "Ruhusu maikrofoni ili uzungumze badala ya kuandika.",
     "voice_not_supported": "Kivinjari hiki hakiwezi kurekodi sauti. Andika badala yake.",
     "voice_stopped": "Kuandika kwa sauti kumesimama. Gusa maikrofoni kuanza tena.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Jibu lako pia linatumwa kama ujumbe wa sauti kwenye WhatsApp",
     "chat_speak_reply_off": "Tuma pia kama ujumbe wa sauti (WhatsApp)",
     "ui_officer_chat_message_label": "Ujumbe kwa mkulima",
-    "voice_dictate": "Zungumza badala ya kuandika"
+    "voice_dictate": "Zungumza badala ya kuandika",
+    "voice_saved_for_retry": "Rekodi haikuweza kugeuzwa kuwa maandishi sasa hivi. Imehifadhiwa kwenye simu hii na itajaribiwa tena fomu hii ikiwa wazi."
 }

@@ -125,7 +125,7 @@ describe('useFieldVoiceRecorder (Firefox fallback & transcription behavior)', ()
       expect(transcribeAudio).toHaveBeenCalledWith('data:audio/webm;base64,bW9ja2F1ZGlv', 'sw');
     });
 
-    expect(onTranscriptChunk).toHaveBeenCalledWith('Mahindi yameshambuliwa na viwavi');
+    expect(onTranscriptChunk).toHaveBeenCalledWith('Mahindi yameshambuliwa na viwavi', expect.objectContaining({ recordedAt: expect.any(Number) }));
     expect(toast.success).toHaveBeenCalledWith('Done. Check the words before you save.', { id: 'whisper-stt' });
     expect(mockStream.tracks[0].stop).toHaveBeenCalled();
   });
@@ -197,7 +197,7 @@ describe('useFieldVoiceRecorder (Firefox fallback & transcription behavior)', ()
     });
 
     expect(transcribeAudio).toHaveBeenCalledWith('data:audio/webm;base64,bW9ja2F1ZGlv', 'en');
-    expect(onTranscriptChunk).toHaveBeenCalledWith('Uploaded field voice recording transcript');
+    expect(onTranscriptChunk).toHaveBeenCalledWith('Uploaded field voice recording transcript', expect.objectContaining({ recordedAt: expect.any(Number) }));
     expect(toast.success).toHaveBeenCalledWith('Done. Check the words before you save.', { id: 'upload-stt' });
   });
 });

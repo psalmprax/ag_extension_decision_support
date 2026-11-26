@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Fatto. Controlla le parole prima di salvare.",
     "voice_failed": "Impossibile trasformare la registrazione in testo. Riprova o scrivilo.",
     "voice_language_limited": "La dettatura vocale non è ancora affidabile nella tua lingua. Controlla bene le parole prima di salvare.",
-    "voice_saved_offline": "Nessun segnale. La registrazione è salvata su questo telefono e diventerà testo quando tornerai online.",
+    "voice_saved_offline": "Nessun segnale. La registrazione è salvata su questo telefono. Diventerà testo quando avrai segnale e questo modulo sarà aperto.",
     "voice_mic_denied": "Consenti il microfono per parlare invece di scrivere.",
     "voice_not_supported": "Questo browser non può registrare suoni. Scrivi invece.",
     "voice_stopped": "La dettatura vocale si è fermata. Tocca il microfono per ricominciare.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "La tua risposta viene inviata anche come messaggio vocale su WhatsApp",
     "chat_speak_reply_off": "Invia anche come messaggio vocale (WhatsApp)",
     "ui_officer_chat_message_label": "Messaggio all'agricoltore",
-    "voice_dictate": "Parla invece di scrivere"
+    "voice_dictate": "Parla invece di scrivere",
+    "voice_saved_for_retry": "Non è stato possibile trasformare la registrazione in testo ora. È salvata su questo telefono e verrà riprovata quando questo modulo sarà aperto."
 }

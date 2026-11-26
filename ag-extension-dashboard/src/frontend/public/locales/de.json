@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Fertig. Prüfen Sie den Text, bevor Sie speichern.",
     "voice_failed": "Die Aufnahme konnte nicht in Text umgewandelt werden. Versuchen Sie es erneut oder tippen Sie.",
     "voice_language_limited": "Die Spracheingabe ist in Ihrer Sprache noch nicht zuverlässig. Prüfen Sie den Text sorgfältig, bevor Sie speichern.",
-    "voice_saved_offline": "Kein Netz. Die Aufnahme ist auf diesem Telefon gespeichert und wird zu Text, sobald Sie wieder online sind.",
+    "voice_saved_offline": "Kein Netz. Die Aufnahme ist auf diesem Telefon gespeichert. Sie wird zu Text, sobald Sie Netz haben und dieses Formular offen ist.",
     "voice_mic_denied": "Erlauben Sie das Mikrofon, um zu sprechen statt zu tippen.",
     "voice_not_supported": "Dieser Browser kann keinen Ton aufnehmen. Tippen Sie stattdessen.",
     "voice_stopped": "Die Spracheingabe wurde beendet. Tippen Sie auf das Mikrofon, um neu zu beginnen.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Ihre Antwort wird auch als Sprachnachricht über WhatsApp gesendet",
     "chat_speak_reply_off": "Auch als Sprachnachricht senden (WhatsApp)",
     "ui_officer_chat_message_label": "Nachricht an den Landwirt",
-    "voice_dictate": "Sprechen statt tippen"
+    "voice_dictate": "Sprechen statt tippen",
+    "voice_saved_for_retry": "Die Aufnahme konnte gerade nicht in Text umgewandelt werden. Sie ist auf diesem Telefon gespeichert und wird erneut versucht, wenn dieses Formular offen ist."
 }

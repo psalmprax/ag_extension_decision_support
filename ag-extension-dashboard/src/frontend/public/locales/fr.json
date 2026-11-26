@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Terminé. Vérifiez le texte avant d'enregistrer.",
     "voice_failed": "Impossible de transformer l'enregistrement en texte. Réessayez ou tapez-le.",
     "voice_language_limited": "La saisie vocale n'est pas encore fiable dans votre langue. Vérifiez bien le texte avant d'enregistrer.",
-    "voice_saved_offline": "Pas de réseau. L'enregistrement est gardé sur ce téléphone et deviendra du texte dès votre retour en ligne.",
+    "voice_saved_offline": "Pas de réseau. L'enregistrement est gardé sur ce téléphone. Il deviendra du texte dès que vous aurez du réseau avec ce formulaire ouvert.",
     "voice_mic_denied": "Autorisez le micro pour parler au lieu de taper.",
     "voice_not_supported": "Ce navigateur ne peut pas enregistrer de son. Tapez plutôt.",
     "voice_stopped": "La saisie vocale s'est arrêtée. Touchez le micro pour recommencer.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Votre réponse est aussi envoyée en message vocal sur WhatsApp",
     "chat_speak_reply_off": "Envoyer aussi en message vocal (WhatsApp)",
     "ui_officer_chat_message_label": "Message à l'agriculteur",
-    "voice_dictate": "Parler au lieu de taper"
+    "voice_dictate": "Parler au lieu de taper",
+    "voice_saved_for_retry": "L'enregistrement n'a pas pu être transformé en texte pour l'instant. Il est gardé sur ce téléphone et sera réessayé quand ce formulaire sera ouvert."
 }

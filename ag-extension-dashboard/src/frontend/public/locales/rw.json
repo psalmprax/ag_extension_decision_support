@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Byarangiye. Genzura amagambo mbere yo kubika.",
     "voice_failed": "Ntibyashobotse guhindura amajwi inyandiko. Ongera ugerageze cyangwa uyandike.",
     "voice_language_limited": "Kwandika ukoresheje ijwi ntibiranizerwa mu rurimi rwawe. Genzura neza amagambo mbere yo kubika.",
-    "voice_saved_offline": "Nta murongo uhari. Amajwi abitswe kuri iyi telefoni kandi azahinduka inyandiko nusubira kuri interineti.",
+    "voice_saved_offline": "Nta murongo uhari. Amajwi abitswe kuri iyi telefoni. Azahinduka inyandiko nubona umurongo kandi iyi fomu ifunguye.",
     "voice_mic_denied": "Emerera mikoro kugira ngo uvuge aho kwandika.",
     "voice_not_supported": "Iyi mushakisha ntishobora gufata amajwi. Andika aho.",
     "voice_stopped": "Kwandika ukoresheje ijwi byahagaze. Kanda kuri mikoro kugira ngo wongere utangire.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Igisubizo cyawe nacyo cyoherezwa nk'ubutumwa bw'ijwi kuri WhatsApp",
     "chat_speak_reply_off": "Ohereza nanone nk'ubutumwa bw'ijwi (WhatsApp)",
     "ui_officer_chat_message_label": "Ubutumwa bugenewe umuhinzi",
-    "voice_dictate": "Vuga aho kwandika"
+    "voice_dictate": "Vuga aho kwandika",
+    "voice_saved_for_retry": "Amajwi ntiyashoboye guhindurwa inyandiko ubu. Abitswe kuri iyi telefoni kandi bizongera kugeragezwa iyi fomu ifunguye."
 }

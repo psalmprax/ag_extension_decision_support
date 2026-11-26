@@ -3073,7 +3073,7 @@
     "voice_transcribed": "An gama. Duba kalmomin kafin ka adana.",
     "voice_failed": "Ba a iya mayar da nadin zuwa rubutu ba. Sake gwadawa ko ka rubuta.",
     "voice_language_limited": "Rubutu da murya bai da tabbas a harshenka tukuna. Duba kalmomin da kyau kafin ka adana.",
-    "voice_saved_offline": "Babu sabis. An adana nadin a wannan wayar kuma zai zama rubutu idan ka dawo kan layi.",
+    "voice_saved_offline": "Babu sabis. An adana nadin a wannan wayar. Zai zama rubutu idan kana da sabis kuma wannan fom ɗin a buɗe yake.",
     "voice_mic_denied": "Ba da izinin makirufo don yin magana maimakon rubutu.",
     "voice_not_supported": "Wannan burauza ba za ta iya nadar sauti ba. Ka rubuta maimakon haka.",
     "voice_stopped": "Rubutu da murya ya tsaya. Taɓa makirufo don sake farawa.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Ana kuma aika amsarka a matsayin saƙon murya a WhatsApp",
     "chat_speak_reply_off": "Aika kuma a matsayin saƙon murya (WhatsApp)",
     "ui_officer_chat_message_label": "Saƙo ga manomi",
-    "voice_dictate": "Yi magana maimakon rubutu"
+    "voice_dictate": "Yi magana maimakon rubutu",
+    "voice_saved_for_retry": "Ba a iya mayar da nadin zuwa rubutu yanzu ba. An adana shi a wannan wayar kuma za a sake gwadawa idan wannan fom ɗin a buɗe yake."
 }

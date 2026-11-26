@@ -3073,7 +3073,7 @@
     "voice_transcribed": "Xumurameera. Osoo hin olkaa'in dura jechoota mirkaneessi.",
     "voice_failed": "Waraabbii gara barreeffamaatti jijjiiruun hin danda'amne. Irra deebi'ii yaali ykn barreessi.",
     "voice_language_limited": "Sagaleen barreessuun afaan keetiin ammallee amanamaa miti. Osoo hin olkaa'in dura jechoota of eeggannoon mirkaneessi.",
-    "voice_saved_offline": "Neetworkiin hin jiru. Waraabbiin bilbila kana irratti olkaa'ameera, yeroo interneetiitti deebitu barreeffama ta'a.",
+    "voice_saved_offline": "Neetworkiin hin jiru. Waraabbiin bilbila kana irratti olkaa'ameera. Yeroo neetworkiin jiruu fi unkaan kun banamee jiru barreeffama ta'a.",
     "voice_mic_denied": "Barreessuu mannaa dubbachuuf maaykiroofoonii hayyami.",
     "voice_not_supported": "Biraawzariin kun sagalee waraabuu hin danda'u. Iddoo isaa barreessi.",
     "voice_stopped": "Sagaleen barreessuun dhaabbateera. Irra deebi'ii jalqabuuf maaykiroofoonii tuqi.",
@@ -3089,5 +3089,6 @@
     "chat_speak_reply_on": "Deebiin kee akka ergaa sagaleettis WhatsApp irratti ergama",
     "chat_speak_reply_off": "Akka ergaa sagaleettis ergi (WhatsApp)",
     "ui_officer_chat_message_label": "Ergaa qonnaan bulaaf",
-    "voice_dictate": "Barreessuu mannaa dubbadhu"
+    "voice_dictate": "Barreessuu mannaa dubbadhu",
+    "voice_saved_for_retry": "Waraabbiin amma gara barreeffamaatti jijjiiramuu hin dandeenye. Bilbila kana irratti olkaa'ameera, yeroo unkaan kun banamu irra deebi'ee yaalama."
 }

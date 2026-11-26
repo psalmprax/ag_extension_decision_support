@@ -125,7 +125,7 @@ export const HarvestModal: React.FC<HarvestModalProps> = ({
 
             <div>
               <DictationLabel htmlFor="harvest-notes" className="block text-xs font-medium text-slate-600 dark:text-theme-text-secondary mb-1"
-                draftKey={`harvest-notes:${selectedCycle?.id ?? 'new'}`}
+                draftKey={selectedCycle ? `harvest-notes:${selectedCycle.id}` : undefined}
                 onTranscript={text => setHarvestForm(prev => ({ ...prev, notes: appendDictation(prev.notes, text) }))}>
                 {t('ui_harvest_modal_harvest_notes_remarks')}
               </DictationLabel>

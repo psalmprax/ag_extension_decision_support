@@ -4,10 +4,23 @@ import type { Locator, Page } from '@playwright/test';
  * Checks that every dropdown on a page is readable in the current theme: the closed
  * control, the options of a native <select> (the list the browser opens) and the items
  * of a custom dropdown once it is open. Text must reach WCAG AA contrast against the
- * background it is actually drawn on (4.5:1, or 3:1 for large text and placeholders).
+ * background it is actually drawn on (4.5:1, or 3:1 for large text). Text drawn on a
+ * picture or gradient cannot be measured this way; it is listed as not measured (see
+ * NOT_MEASURED) instead of being checked against a colour it is not really on.
  */
 
 export type Theme = 'light' | 'dark';
+
+/** Lines that start with this are text the check could not measure: reported, not failed. */
+export const NOT_MEASURED = '[not measured]';
+
+/** Splits what dropdownProblems found into real problems and text it could not measure. */
+export function sortFindings(lines: string[]): { problems: string[]; notMeasured: string[] } {
+  return {
+    problems: lines.filter(line => !line.includes(NOT_MEASURED)),
+    notMeasured: lines.filter(line => line.includes(NOT_MEASURED)),
+  };
+}
 
 /** Switches the app's theme the way the toggle does (it is kept in local storage), and reloads. */
 export async function setTheme(page: Page, theme: Theme): Promise<void> {
@@ -63,13 +76,17 @@ function canvasColor(): RGBA {
   return dark ? { r: 18, g: 18, b: 18, a: 1 } : { r: 255, g: 255, b: 255, a: 1 };
 }
 
-/** The solid colour behind `el`, through see-through layers; null when a picture is behind it. */
+/**
+ * The solid colour behind `el`, through see-through layers; null when a picture or
+ * gradient is on the way (it is painted over the background colour, so that colour
+ * says nothing about what the text is drawn on).
+ */
 function backgroundOf(el: Element): RGBA | null {
   const layers: RGBA[] = [];
   for (let node: Element | null = el; node; node = node.parentElement) {
     const style = getComputedStyle(node);
     const color = parseColor(style.backgroundColor);
-    if (!color || (style.backgroundImage !== 'none' && color.a < 1)) return null;
+    if (!color || style.backgroundImage !== 'none') return null;
     if (color.a > 0) layers.push(color);
     if (color.a >= 1) break;
   }
@@ -96,7 +113,12 @@ function minimumFor(style: CSSStyleDeclaration): number {
 /** Adds a problem when text in colour `fgValue` on `bg` is below `min`:1. */
 function checkText(problems: string[], subject: string, text: string, fgValue: string, bg: RGBA | null, min: number): void {
   const fg = parseColor(fgValue);
-  if (!fg || !bg) return;
+  if (!fg) return;
+  if (!bg) {
+    // Kept in step with NOT_MEASURED below (this function runs in the page, apart from that constant).
+    problems.push(`[not measured] ${subject} "${text.slice(0, 40)}": drawn on a picture or gradient`);
+    return;
+  }
   const shown = over(fg, bg);
   const value = contrastRatio(shown, bg);
   if (value >= min) return;
@@ -116,7 +138,9 @@ function checkField(problems: string[], label: string, field: HTMLInputElement |
   const bg = backgroundOf(field);
   const subject = `${label} ${describeElement(field)}`;
   if (field.value) checkText(problems, `${subject} typed text`, field.value, getComputedStyle(field).color, bg, 4.5);
-  if (field.placeholder) checkText(problems, `${subject} placeholder`, field.placeholder, getComputedStyle(field, '::placeholder').color, bg, 3);
+  if (field.placeholder) {
+    checkText(problems, `${subject} placeholder`, field.placeholder, getComputedStyle(field, '::placeholder').color, bg, minimumFor(getComputedStyle(field)));
+  }
 }
 
 /** Every piece of visible text (and any text box) inside `root`, `root` included. */
@@ -222,8 +246,9 @@ async function checkCustomDropdown(page: Page, trigger: Locator, key: string): P
 }
 
 /**
- * Every dropdown problem on the current page. `seen` holds the triggers already opened
- * (the header's language switcher is on every page), so each is opened once per theme.
+ * Every dropdown problem on the current page, and any text it could not measure (see
+ * NOT_MEASURED). `seen` holds the triggers already opened, keyed by page, so a control
+ * is opened once per page in each theme.
  */
 export async function dropdownProblems(page: Page, seen: Set<string>): Promise<string[]> {
   const problems = await runInPage(page, 'measureSelects');
@@ -232,7 +257,8 @@ export async function dropdownProblems(page: Page, seen: Set<string>): Promise<s
   for (let i = 0; i < count; i++) {
     const trigger = triggers.nth(i);
     if (!(await trigger.isVisible()) || !(await trigger.isEnabled())) continue;
-    const key = `${(await trigger.getAttribute('aria-label')) ?? ''}|${(await trigger.innerText()).trim().slice(0, 30)}`;
+    // Per page: the same control can sit on a different background elsewhere.
+    const key = `${new URL(page.url()).pathname}|${(await trigger.getAttribute('aria-label')) ?? ''}|${(await trigger.innerText()).trim().slice(0, 30)}`;
     if (seen.has(key)) continue;
     seen.add(key);
     problems.push(...(await checkCustomDropdown(page, trigger, key)));
