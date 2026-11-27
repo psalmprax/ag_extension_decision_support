@@ -150,6 +150,9 @@ describe('demo session guard', () => {
         expect(await guard('post', '/api/auth/login')).toBe('allowed');
         expect(await guard('post', '/api/v1/auth/register')).toBe('allowed');
         expect(await guard('get', '/api/auth/register/challenge')).toBe('allowed');
+        expect(await guard('get', '/api/notifications')).toBe('allowed');
+        expect(await guard('get', '/api/v1/notifications/vapid-public-key')).toBe('allowed');
+        expect(await guard('post', '/api/notifications/send')).toBe('refused 403');
         expect(await guard('post', '/api/auth/resend-verification')).toBe('refused 403');
         expect(await guard('post', '/api/v1/farmers')).toBe('refused 403');
     });

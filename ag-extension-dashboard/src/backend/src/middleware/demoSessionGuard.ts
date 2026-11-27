@@ -29,7 +29,9 @@ export const DEMO_READS: ReadonlySet<string> = new Set([
   '/knowledge/quota',
   '/knowledge/stats',
   '/knowledge/search', // public knowledge base
+  '/notifications', // the demo user's own notifications
   '/notifications/unread-count',
+  '/notifications/vapid-public-key', // public: the push key the browser subscribes with
   '/outbreaks', // demo-linked diagnoses only
   '/worldmonitor/layers', // demo farmers only
 ]);
