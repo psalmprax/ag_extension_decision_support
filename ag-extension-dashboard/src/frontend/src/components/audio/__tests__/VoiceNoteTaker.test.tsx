@@ -3,6 +3,7 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { VoiceNoteTaker } from '../VoiceNoteTaker';
 import { useAppStore } from '@/store/useAppStore';
+import { setAppLanguage } from '@/lib/appLocale';
 
 interface RecorderOptions {
   onTranscriptChunk: (chunk: string) => void;
@@ -39,6 +40,28 @@ describe('VoiceNoteTaker', () => {
         opts.onTranscriptChunk('Nahitaji mbolea ya kupandia mahindi ekari mbili.');
       },
     }));
+  });
+
+  it('listens in the app language until a dictation language is chosen', () => {
+    useAppStore.setState({ preferredAudioLanguage: '' });
+    setAppLanguage('fr');
+    try {
+      render(<VoiceNoteTaker />);
+    } finally {
+      setAppLanguage('en');
+    }
+    expect(mockUseFieldVoiceRecorder).toHaveBeenLastCalledWith(expect.objectContaining({ language: 'fr' }));
+  });
+
+  it('falls back to English when dictation does not support the app language', () => {
+    useAppStore.setState({ preferredAudioLanguage: '' });
+    setAppLanguage('de');
+    try {
+      render(<VoiceNoteTaker />);
+    } finally {
+      setAppLanguage('en');
+    }
+    expect(mockUseFieldVoiceRecorder).toHaveBeenLastCalledWith(expect.objectContaining({ language: 'en' }));
   });
 
   it('renders microphone button and active language', () => {

@@ -213,7 +213,7 @@ export const useAppStore = create<AppState>()(
       themeName: getInitialThemeName(),
       darkMode: getInitialDarkMode(),
       activeTab: 'dashboard',
-      preferredAudioLanguage: 'sw',
+      preferredAudioLanguage: '', // none chosen: voices follow the app language
       farmers: [],
       visits: [],
       notifications: [],

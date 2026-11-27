@@ -348,7 +348,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
               </div>
 
               {/* Messages Scroll Area */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              <div className="flex-1 min-h-24 overflow-y-auto p-6 space-y-4">
                 {typingUser && (
                   <div className="flex justify-start">
                     <div className="px-3 py-1.5 rounded-full bg-slate-200/80 dark:bg-theme-bg-tertiary/80 border border-slate-300/60 dark:border-white/[0.06] text-xxs text-slate-600 dark:text-white/60">
@@ -374,7 +374,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
               {/* Voice Note Composer for Extension Officer / Hands-free */}
               {showVoiceComposer && (
-                <div className="p-3 bg-white dark:bg-theme-bg-secondary/95 border-t border-emerald-500/20 backdrop-blur-md">
+                <div className="p-3 max-h-[50%] min-h-0 overflow-y-auto bg-white dark:bg-theme-bg-secondary/95 border-t border-emerald-500/20 backdrop-blur-md">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xxs text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 font-medium">
                       <Mic className="w-3 h-3" />
