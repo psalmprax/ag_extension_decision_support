@@ -288,9 +288,7 @@ function App() {
   const handleGenerateReport = async () => {
     setIsGeneratingReport(true);
     try {
-      // 'activity_report' is a type /reporting/generate supports (visits and activity for the
-      // last 30 days); 'synthesis' was refused with 400 on every click.
-      const res = await generateReport('activity_report');
+      const res = await generateReport('activity_report'); // a type /reporting/generate makes
       if (!res?.data) {
         throw new Error('Report service returned no report data');
       }
