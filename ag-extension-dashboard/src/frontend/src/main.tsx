@@ -16,6 +16,7 @@ import { ThemeProvider } from './lib/ThemeProvider';
 import ErrorBoundary from '@ag-extension/shared';
 import { AppToaster } from './components/AppToaster';
 import { queryClient } from './lib/queryClient';
+import { startErrorReporting } from './lib/errorReporting';
 // Global console silencing for production logging compliance
 if (!import.meta.env.DEV) {
   const noop = () => {};
@@ -35,6 +36,8 @@ if ('serviceWorker' in navigator && typeof window !== 'undefined') {
 
 // Initialize theme before rendering
 initializeTheme();
+// Uncaught errors and failed requests reach /api/errors and, when configured, Sentry.
+startErrorReporting();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

@@ -108,6 +108,9 @@ import accountRoutes from './routes/account';
 import accountSmsPinRoutes from './routes/accountSmsPin';
 import workflowsRoutes from './routes/workflows';
 import { demoSessionGuard } from '@/middleware/demoSessionGuard';
+import { failureRecorder } from './middleware/failureRecorder';
+import clientErrorRoutes from './routes/clientErrors';
+import monitoringRoutes from './routes/monitoring';
 
 const app: Application = express();
 // Trust exactly the number of reverse-proxy hops in front of the app (default 1 = Traefik).
@@ -141,6 +144,8 @@ app.use(compression());
 const allowedOrigins = config.cors.origin.split(',').map(o => o.trim());
 app.use(cors({ origin: resolveCorsOrigin(allowedOrigins), credentials: true }));
 app.use(morgan('combined', { stream: { write: (message) => logger.info(message) } }));
+// Counts failed /api responses per route for the hourly errors-in-production check.
+app.use(failureRecorder);
 // Body parsing — deliberately SMALL by default. A large pre-auth JSON parser on
 // every route lets any anonymous request pin that much × concurrency of process
 // memory per request (DoS amplification) and widens the request-smuggling
@@ -575,6 +580,8 @@ app.use(limiter);
 type RouteMount = { path: string; router: express.Router };
 export const routeMounts: RouteMount[] = [
   { path: '/auth', router: authRoutes },
+  { path: '/errors', router: clientErrorRoutes }, // browser crash reports (public, write-only)
+  { path: '/monitoring', router: monitoringRoutes }, // failure summary (token) and browser Sentry config
   { path: '/knowledge', router: knowledgeRoutes },
   { path: '/knowledge/sources', router: knowledgeSourcesRoutes },
   { path: '/knowledge/sync', router: knowledgeSyncRoutes },

@@ -310,7 +310,8 @@ jobs:
             done
 
             # Ensure VAPID keys are configured in ag-extension-dashboard/.env
-            if ! grep -q "VAPID_PUBLIC_KEY" ag-extension-dashboard/.env 2>/dev/null; then
+            # A key with a value, not just the empty VAPID_PUBLIC_KEY= line .env.example ships with
+            if ! grep -q "^VAPID_PUBLIC_KEY=[^[:space:]]" ag-extension-dashboard/.env 2>/dev/null; then
               echo "🔑 Generating VAPID keys..."
               KEYS=""
               if python3 -c "import cryptography" 2>/dev/null; then
@@ -326,6 +327,7 @@ jobs:
               PUB_KEY=$(echo "$KEYS" | awk '{print $1}')
               PRIV_KEY=$(echo "$KEYS" | awk '{print $2}')
               if [ -n "$PUB_KEY" ] && [ -n "$PRIV_KEY" ]; then
+                sed -i '/^VAPID_PUBLIC_KEY=/d;/^VAPID_PRIVATE_KEY=/d;/^VAPID_EMAIL=/d' ag-extension-dashboard/.env
                 echo "" >> ag-extension-dashboard/.env
                 echo "# ── VAPID Keys for Push Notifications ──" >> ag-extension-dashboard/.env
                 echo "VAPID_PUBLIC_KEY=$PUB_KEY" >> ag-extension-dashboard/.env

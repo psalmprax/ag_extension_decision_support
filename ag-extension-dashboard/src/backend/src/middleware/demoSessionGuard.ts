@@ -28,6 +28,7 @@ export const DEMO_READS: ReadonlySet<string> = new Set([
   '/external/weather',
   '/knowledge/quota',
   '/knowledge/stats',
+  '/monitoring/browser-config', // public: where the browser reports errors
   '/knowledge/search', // public knowledge base
   '/notifications', // the demo user's own notifications
   '/notifications/unread-count',
@@ -38,6 +39,7 @@ export const DEMO_READS: ReadonlySet<string> = new Set([
 
 export const DEMO_WRITES: ReadonlySet<string> = new Set([
   '/auth/demo',
+  '/errors', // browser crash reports: public, write-only, about the page not the account
   '/auth/refresh',
   '/auth/logout',
   '/chatbot/public-demo', // the landing-page assistant, public anyway

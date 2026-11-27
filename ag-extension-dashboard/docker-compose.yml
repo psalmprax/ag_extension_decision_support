@@ -216,6 +216,9 @@ services:
       AGENT_ZERO_URL: ${AGENT_ZERO_URL:-http://ag-agent-zero:8000}
       CREW_AI_URL: ${CREW_AI_URL:-http://ag-crew-ai:8001}
       MCP_API_TOKEN: ${MCP_API_TOKEN:-}
+      # Error monitoring: the hourly error-watch workflow's read token, and Sentry (off when empty).
+      MONITORING_TOKEN: ${MONITORING_TOKEN:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
       TRUST_PROXY_HOPS: ${TRUST_PROXY_HOPS:-1}
       CLAMD_HOST: ${CLAMD_HOST:-clamav}
       # Uploads go through unscanned while the scanner is down (the backend warns at start-up).
