@@ -3,8 +3,7 @@
 FROM node:22-slim AS node-base
 # Upgrade base-image packages that have a Debian fix the image does not carry yet
 # (pcre2, perl; PAM for CVE-2025-6020, fixed in 1.5.2-6+deb12u3).
-RUN apt-get update && apt-get install -y --no-install-recommends libpcre2-8-0 perl-base \
-      libpam-modules libpam-modules-bin libpam-runtime libpam0g && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends libpcre2-8-0 perl-base libpam-modules libpam-modules-bin libpam-runtime libpam0g && rm -rf /var/lib/apt/lists/*
 ARG NPM_VERSION=11.19.1
 RUN npm install --global npm@${NPM_VERSION} --no-audit --no-fund \
     && npm install --global undici@6.29.1 --no-audit --no-fund \
