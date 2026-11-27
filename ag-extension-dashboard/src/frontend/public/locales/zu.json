@@ -3139,5 +3139,11 @@
     "ui_farmer_services_prices_live_source": "Izilinganiso zikazwelonke zonyaka ezivela ku-FAOSTAT, eziphinde zishicilelwe njalo ngonyaka",
     "ui_farmer_services_prices_live_change": "Ushintsho uma kuqhathaniswa nonyaka owedlule oshicilelwe",
     "ui_farmer_services_prices_demo_more": "Ukuguqulela emalini yendawo nezitayela zamanani aphakathi okuthengisa",
-    "ui_footer_part_of_gpfed": "I-GPExts iyingxenye ye-GPFED."
+    "ui_footer_part_of_gpfed": "I-GPExts iyingxenye ye-GPFED.",
+    "diag_translating": "Translating…",
+    "diag_translation_failed": "Could not translate this, so it is shown in English.",
+    "diag_showing_original": "Showing the original English.",
+    "diag_machine_translated": "Translated by machine. Check product names and doses against the original.",
+    "diag_show_translation": "Show translation",
+    "diag_show_original": "Show original"
 }

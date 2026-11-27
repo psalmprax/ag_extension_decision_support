@@ -35,6 +35,7 @@ import { safeStorage } from '@/lib/safeStorage';
 import { DiseaseModelStatus } from '@/components/edgeVision/DiseaseModelStatus';
 import { AlsoPossible } from '@/components/edgeVision/AlsoPossible';
 import { buildDiagnosticReportSummary, createPlotEntry, type ScanTargetMode } from '@/components/edgeVision/scanReport';
+import { CloudCropSummary } from './diagnosis/CloudCropSummary';
 
 interface CropPillScrubberProps {
   selectedCrop: string;
@@ -345,26 +346,7 @@ const VerifiedCloudCard: React.FC<{
         </span>
       </div>
 
-      {cropData && (
-        <div className="space-y-1.5 text-xs text-slate-300">
-          <div className="flex justify-between items-center">
-            <span className="font-medium text-white">
-              {cropData.diseases[0]?.disease || `Health status: ${cropData.overallHealth}`}
-            </span>
-            {cropData.diseases[0] && (
-              <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-mono text-[10px]">
-                {Math.round(cropData.diseases[0].confidence * 100)}{t('ui_edge_vision_scanner_modal_model_confidence')}
-              </span>
-            )}
-          </div>
-          {cropData.diseases[0]?.treatment && cropData.diseases[0].treatment.length > 0 && (
-            <p className="text-slate-300 text-[11px]">
-              <strong className="text-emerald-400">{t('ui_edge_vision_scanner_modal_guidance')}</strong>{' '}
-              {cropData.diseases[0].treatment.join('; ')}
-            </p>
-          )}
-        </div>
-      )}
+      {cropData && <CloudCropSummary overallHealth={cropData.overallHealth} diseases={cropData.diseases} />}
 
       {soilData && (
         <div className="space-y-1.5 text-xs text-slate-300">

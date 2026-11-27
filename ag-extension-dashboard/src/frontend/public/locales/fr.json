@@ -3139,5 +3139,11 @@
     "ui_farmer_services_prices_live_source": "Moyennes nationales annuelles de FAOSTAT, republiées chaque année",
     "ui_farmer_services_prices_live_change": "Variation par rapport à l'année publiée précédente",
     "ui_farmer_services_prices_demo_more": "Conversion en monnaie locale et tendances des prix médians de détail",
-    "ui_footer_part_of_gpfed": "GPExts fait partie de GPFED."
+    "ui_footer_part_of_gpfed": "GPExts fait partie de GPFED.",
+    "diag_translating": "Translating…",
+    "diag_translation_failed": "Could not translate this, so it is shown in English.",
+    "diag_showing_original": "Showing the original English.",
+    "diag_machine_translated": "Translated by machine. Check product names and doses against the original.",
+    "diag_show_translation": "Show translation",
+    "diag_show_original": "Show original"
 }

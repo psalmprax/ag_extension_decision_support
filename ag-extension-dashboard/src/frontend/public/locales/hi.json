@@ -3139,5 +3139,11 @@
     "ui_farmer_services_prices_live_source": "FAOSTAT से वार्षिक राष्ट्रीय औसत, हर साल दोबारा प्रकाशित",
     "ui_farmer_services_prices_live_change": "पिछले प्रकाशित वर्ष की तुलना में बदलाव",
     "ui_farmer_services_prices_demo_more": "स्थानीय मुद्रा में रूपांतरण और खुदरा माध्यिका कीमतों के रुझान",
-    "ui_footer_part_of_gpfed": "GPExts, GPFED का हिस्सा है।"
+    "ui_footer_part_of_gpfed": "GPExts, GPFED का हिस्सा है।",
+    "diag_translating": "Translating…",
+    "diag_translation_failed": "Could not translate this, so it is shown in English.",
+    "diag_showing_original": "Showing the original English.",
+    "diag_machine_translated": "Translated by machine. Check product names and doses against the original.",
+    "diag_show_translation": "Show translation",
+    "diag_show_original": "Show original"
 }

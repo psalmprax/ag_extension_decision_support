@@ -2,6 +2,8 @@ import React from 'react';
 import { X, Loader2, Leaf, ShieldAlert, ShieldCheck, CheckCircle2, Check } from 'lucide-react';
 import type { DiseaseInfo } from '../../api/diseaseService';
 import { useLanguage } from '@/lib/LanguageContext';
+import { useTranslatedTexts } from '@/hooks/useTranslatedTexts';
+import { TranslationNotice } from '@/components/diagnosis/TranslationNotice';
 
 interface Props {
   selectedDisease: string | null;
@@ -19,6 +21,13 @@ export function DiseaseInfoModal({
   radiusClass: _radiusClass,
 }: Props) {
   const { t } = useLanguage();
+  // The disease details are in English; they are shown in the app language, with the original a tap away.
+  const info = diseaseInfo ?? { description: '', symptoms: [], treatment: [], prevention: [] };
+  const translation = useTranslatedTexts(diseaseInfo ? [info.description, ...info.symptoms, ...info.treatment, ...info.prevention] : []);
+  const [shownDescription, ...lists] = translation.texts;
+  const shownSymptoms = lists.slice(0, info.symptoms.length);
+  const shownTreatment = lists.slice(info.symptoms.length, info.symptoms.length + info.treatment.length);
+  const shownPrevention = lists.slice(info.symptoms.length + info.treatment.length);
   if (!selectedDisease) return null;
 
   return (
@@ -54,12 +63,13 @@ export function DiseaseInfoModal({
             </div>
           ) : diseaseInfo ? (
             <div className="space-y-3.5">
+              <TranslationNotice translation={translation} />
               {/* Description Pod */}
               <div className="p-3.5 rounded-[4px] bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] space-y-1">
                 <h4 className="text-xs font-mono font-medium text-slate-600 dark:text-theme-text-muted">
                   {t('ui_disease_info_modal_agronomic_pathology_summary')}
                 </h4>
-                <p className="text-xs text-slate-700 dark:text-theme-text-secondary leading-relaxed">{diseaseInfo.description}</p>
+                <p className="text-xs text-slate-700 dark:text-theme-text-secondary leading-relaxed">{shownDescription}</p>
               </div>
 
               {/* Symptoms Pod */}
@@ -69,7 +79,7 @@ export function DiseaseInfoModal({
                   {t('ui_disease_info_modal_key_identifying_symptoms')}
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
-                  {diseaseInfo.symptoms.map((symptom, index) => (
+                  {shownSymptoms.map((symptom, index) => (
                     <div
                       key={index}
                       className="p-2 rounded-[3px] bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-theme-text-secondary flex items-start gap-1.5"
@@ -88,7 +98,7 @@ export function DiseaseInfoModal({
                   {t('ui_disease_info_modal_treatment_guidance')}
                 </h4>
                 <div className="space-y-1.5">
-                  {diseaseInfo.treatment.map((treatment, index) => (
+                  {shownTreatment.map((treatment, index) => (
                     <div
                       key={index}
                       className="p-2 rounded-[3px] bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-theme-text-secondary flex items-start gap-2"
@@ -106,7 +116,7 @@ export function DiseaseInfoModal({
                   {t('ui_disease_info_modal_prevention_guidance')}
                 </h4>
                 <div className="space-y-1.5">
-                  {diseaseInfo.prevention.map((prevent, index) => (
+                  {shownPrevention.map((prevent, index) => (
                     <div
                       key={index}
                       className="p-2 rounded-[3px] bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-theme-text-secondary flex items-start gap-2"

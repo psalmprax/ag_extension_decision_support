@@ -3139,5 +3139,11 @@
     "ui_farmer_services_prices_live_source": "来自 FAOSTAT 的年度全国平均值，每年重新发布",
     "ui_farmer_services_prices_live_change": "与上一公布年份相比的变化",
     "ui_farmer_services_prices_demo_more": "本币换算和零售中位价走势",
-    "ui_footer_part_of_gpfed": "GPExts 隶属于 GPFED。"
+    "ui_footer_part_of_gpfed": "GPExts 隶属于 GPFED。",
+    "diag_translating": "Translating…",
+    "diag_translation_failed": "Could not translate this, so it is shown in English.",
+    "diag_showing_original": "Showing the original English.",
+    "diag_machine_translated": "Translated by machine. Check product names and doses against the original.",
+    "diag_show_translation": "Show translation",
+    "diag_show_original": "Show original"
 }
