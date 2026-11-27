@@ -487,7 +487,7 @@ export async function runAskQuestion(
 
     // Fingerprint the sources now, before the answer is written from them (see saveSharedAnswer).
     // An answer whose language was not set is never handed to someone else: it may be in any language.
-    const sourcesRevision = options?.language && mayBeShared(queryCategories, attachments) ? await knowledgeSourcesRevision(contextResults) : null;
+    const sourcesRevision = options?.language?.trim() && mayBeShared(queryCategories, attachments) ? await knowledgeSourcesRevision(contextResults) : null;
 
     try {
         const reasoningResult = await callReasoningAgentic(contextText, cleanQueryText, attachments, reasonOptions, queryCategories);

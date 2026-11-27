@@ -3,7 +3,10 @@ name: Errors in production
 # Every hour, reads the production failure summary (failed API requests and browser errors,
 # counted per route, without personal data) and opens an issue labelled "errors" when
 # something is over the limits in scripts/error-watch.cjs. GitHub notifies watchers.
-# The issue is commented on while errors continue and closes after a clear hour.
+# Failures are counted per UTC hour, and this runs at :17, so each run reads two hours:
+# the one that just started and the one before it. That covers everything since the last
+# run (a failure at 10:40 is seen at 11:17), at the cost of reporting some failures twice.
+# The issue is commented on while errors continue and closes after a clear check.
 #
 # Needs the MONITORING_TOKEN repository secret (the same value the deploy writes to the
 # server's .env). Without it the check is skipped with a notice. It uses HTTPS only,
@@ -36,7 +39,7 @@ jobs:
           sparse-checkout: scripts
           persist-credentials: false
 
-      - name: Read the last hour's failures
+      - name: Read the failures since the last check
         id: read
         run: |
           if [ -z "$MONITORING_TOKEN" ]; then
@@ -45,7 +48,7 @@ jobs:
             exit 0
           fi
           code=$(curl -s -o summary.json -w '%{http_code}' --max-time 30 \
-            -H "x-monitoring-token: $MONITORING_TOKEN" "$SITE/api/v1/monitoring/failures?hours=1" || echo 000)
+            -H "x-monitoring-token: $MONITORING_TOKEN" "$SITE/api/v1/monitoring/failures?hours=2" || echo 000)
           if [ "$code" != 200 ]; then
             # 404: the server has no MONITORING_TOKEN yet (deploy after setting the secret).
             # 403: the secret and the server's .env disagree. Uptime covers the site being down.
@@ -70,6 +73,6 @@ jobs:
         if: steps.read.outputs.skip != 'true' && steps.read.outputs.alert == 'false'
         run: |
           for number in $(gh api "repos/$REPO/issues?state=open&labels=errors" --jq '.[].number'); do
-            gh api "repos/$REPO/issues/$number/comments" -f body="Nothing over the limits in the hour to $(date -u '+%Y-%m-%d %H:%M UTC')." >/dev/null
+            gh api "repos/$REPO/issues/$number/comments" -f body="Nothing over the limits in the two hours to $(date -u '+%Y-%m-%d %H:%M UTC')." >/dev/null
             gh api -X PATCH "repos/$REPO/issues/$number" -f state=closed >/dev/null
           done

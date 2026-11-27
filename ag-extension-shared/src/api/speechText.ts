@@ -8,8 +8,8 @@
  *     French and "lita 2.5 kwa kila hekta" in Swahili. The number is kept as written. Where
  *     the locale data has no spoken names for a language, the unit is left as written,
  *     so no unit is ever read in a language other than the answer's;
- *   - fertiliser grades ("NPK 23:10:5", "17-17-17") are read as three numbers, not as a time
- *     or a subtraction.
+ *   - fertiliser grades ("NPK 23:10:5", or "17-17-17" beside a word for fertiliser) are read
+ *     as three numbers, not as a time or a subtraction; a date such as 27-11-26 is left alone.
  */
 
 /** Unit symbols as written in advice, and the CLDR unit each one is. */
@@ -25,10 +25,16 @@ const PER: Record<string, string> = {
   ha: 'hectare', l: 'liter', L: 'liter', kg: 'kilogram', day: 'day', week: 'week',
 };
 
-const NUMBER = String.raw`\d+(?:[.,  ]\d+)*`;
+// "2.5", "1,250", "1 250", and ".5" / ",5" (a leading separator, not after a word or number).
+const NUMBER = String.raw`(?:\d+(?:[.,\u00a0 ]\d+)*|(?<![\p{L}\p{N}])[.,]\d+)`;
 const UNIT = '°C|%|mL|ml|kg|km|mm|cm|ha|g|l|L|m';
 const AMOUNT = new RegExp(String.raw`(${NUMBER})\s?(${UNIT})(?:\s?/\s?(ha|kg|day|week|l|L))?(?![\p{L}\p{N}])`, 'gu');
-const GRADE = /\b(NPK|N-P-K)\s+(\d{1,2})\s*[:\-–]\s*(\d{1,2})\s*[:\-–]\s*(\d{1,2})\b/g;
+const GRADE_NUMBERS = String.raw`(\d{1,2})\s*[:\-\u2013]\s*(\d{1,2})\s*[:\-\u2013]\s*(\d{1,2})`;
+/** Words for fertiliser, so an unprefixed "17-17-17" is read as a grade only beside one (never a date). */
+const FERTILISER = 'fertili[sz]ers?|engrais|adubos?|fertilizantes?|abonos?|mbolea';
+const GRADE = new RegExp(String.raw`\b(?:NPK|N-P-K)\s+${GRADE_NUMBERS}\b`, 'g');
+const GRADE_BEFORE_WORD = new RegExp(String.raw`(?<![\d:\-\u2013])\b${GRADE_NUMBERS}\b(?![:\-\u2013]\d)(?=\s+(?:\S+\s+)?(?:${FERTILISER})\b)`, 'giu');
+const WORD_BEFORE_GRADE = new RegExp(String.raw`\b(${FERTILISER})(\s+)${GRADE_NUMBERS}\b(?![:\-\u2013]\d)`, 'giu');
 const NUMERIC_PARTS = new Set(['integer', 'group', 'decimal', 'fraction', 'minusSign', 'plusSign']);
 
 /** The value of a numeral as written in any common style, close enough to choose singular or plural. */
@@ -92,7 +98,9 @@ export function withoutMarkup(raw: string): string {
 export function speechText(raw: string, language = 'en'): string {
   if (!raw) return '';
   return withoutMarkup(raw)
-    .replace(GRADE, (_match, _npk: string, n: string, p: string, k: string) => `NPK ${n}, ${p}, ${k}`)
+    .replace(GRADE, (_match, n: string, p: string, k: string) => `NPK ${n}, ${p}, ${k}`)
+    .replace(GRADE_BEFORE_WORD, (_match, n: string, p: string, k: string) => `${n}, ${p}, ${k}`)
+    .replace(WORD_BEFORE_GRADE, (_match, word: string, gap: string, n: string, p: string, k: string) => `${word}${gap}${n}, ${p}, ${k}`)
     .replace(AMOUNT, (match, numeral: string, symbol: string, per: string | undefined) =>
       spokenAmount(numeral, symbol, per, language) ?? match);
 }

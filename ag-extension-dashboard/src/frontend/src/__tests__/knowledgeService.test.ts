@@ -102,13 +102,16 @@ describe('knowledgeService', () => {
     it('asks for the answer in the language the person reads the app in', async () => {
       mockPost.mockResolvedValue({ data: { success: true, data: { answer: 'Réponse' } } });
       setAppLanguage('fr');
+      let answer;
       try {
-        await askAI('Comment lutter contre la chenille légionnaire ?');
+        answer = await askAI('Comment lutter contre la chenille légionnaire ?');
       } finally {
         setAppLanguage('en');
       }
 
       expect(mockPost).toHaveBeenCalledWith('/knowledge/ask', expect.objectContaining({ language: 'fr' }));
+      // The answer keeps the language it was asked in, so it is read aloud in French.
+      expect(answer.data.language).toBe('fr');
     });
   });
 

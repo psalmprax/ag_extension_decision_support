@@ -47,7 +47,7 @@ function report(summary) {
     ...rows,
     '',
     `Alerts at: any 5xx; the same 4xx on one route ${THRESHOLDS.clientError}+ times; the same browser error ${THRESHOLDS.browser}+ times. ` +
-      'Stack traces are in Sentry when SENTRY_DSN is set. This issue closes itself after an hour with nothing over these limits.',
+      'Stack traces are in Sentry when SENTRY_DSN is set. This issue closes itself after a check with nothing over these limits.',
   ].join('\n');
   return { alert: true, body };
 }

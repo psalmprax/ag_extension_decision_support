@@ -45,9 +45,9 @@ export function routePattern(path: string): string {
   );
 }
 
-/** Email addresses and long digit runs (phone numbers) are removed from anything kept. */
+/** Email addresses and long digit runs (phone numbers, also written with brackets) are removed from anything kept. */
 export function withoutPersonalData(value: string): string {
-  return value.replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '[email]').replace(/\+?\d[\d\s-]{7,}\d/g, '[number]');
+  return value.replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '[email]').replace(/\+?\(?\d[\d\s()-]{7,}\d/g, '[number]');
 }
 
 export function hourKey(date = new Date()): string {
@@ -75,25 +75,28 @@ function recordLocally(hour: string, key: string, sample?: string): void {
 export async function recordFailure(kind: FailureKind, method: string, route: string, status: number, sample?: string): Promise<void> {
   if (IGNORED_STATUSES.has(status)) return;
   const hour = hourKey();
-  const key = field(kind, method.toUpperCase(), routePattern(route), status);
+  const key = field(kind, method.toUpperCase(), withoutPersonalData(routePattern(route)), status);
   const detail = sample ? withoutPersonalData(sample.replace(/\s+/g, ' ').trim()).slice(0, SAMPLE_LENGTH) || undefined : undefined;
   const redis = getCache();
   if (!redis?.isOpen) {
     recordLocally(hour, key, detail);
     return;
   }
+  let counted = false;
   try {
     const counts = `failures:${hour}`;
     const samples = `failures:${hour}:samples`;
     await redis.hIncrBy(counts, key, 1);
+    counted = true;
     await redis.expire(counts, RETENTION_SECONDS);
     if (detail) {
       await redis.hSet(samples, key, detail);
       await redis.expire(samples, RETENTION_SECONDS);
     }
   } catch (error) {
-    logger.warn('[failureMonitor] Redis unavailable, counting locally:', error);
-    recordLocally(hour, key, detail);
+    // Count locally only if Redis did not count it, so one failure is never counted twice.
+    logger.warn(`[failureMonitor] Redis ${counted ? 'kept the count but not its expiry or sample' : 'unavailable, counting locally'}:`, error);
+    if (!counted) recordLocally(hour, key, detail);
   }
 }
 

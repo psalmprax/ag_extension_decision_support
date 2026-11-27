@@ -21,6 +21,20 @@ describe('text prepared for a voice', () => {
 
   it('reads a fertiliser grade as three numbers, not a time or a subtraction', () => {
     expect(speechText('Top-dress with NPK 23:10:5 or NPK 17-17-17.', 'en')).toBe('Top-dress with NPK 23, 10, 5 or NPK 17, 17, 17.');
+    expect(speechText('Apply 17-17-17 fertilizer at planting, or fertiliser 23:10:5.', 'en')).toBe(
+      'Apply 17, 17, 17 fertilizer at planting, or fertiliser 23, 10, 5.',
+    );
+    expect(speechText('Mettez de l’engrais 15-15-15.', 'fr')).toBe('Mettez de l’engrais 15, 15, 15.');
+  });
+
+  it('leaves a date alone, even near the word fertiliser', () => {
+    expect(speechText('Planted on 27-11-26.', 'en')).toBe('Planted on 27-11-26.');
+    expect(speechText('Fertilizer applied 27-11-26.', 'en')).toBe('Fertilizer applied 27-11-26.');
+  });
+
+  it('keeps an amount that starts with a decimal separator whole', () => {
+    expect(speechText('Weka .5 kg na 0.5 kg.', 'sw')).toBe('Weka kilogramu .5 na kilogramu 0.5.');
+    expect(speechText('Use .5 L/ha.', 'en')).toBe('Use .5 liters per hectare.');
   });
 
   it('removes markdown, links and source markers', () => {

@@ -45,6 +45,7 @@ interface ContextItem {
 
 interface Result {
   answer: string;
+  language?: string;
   contextUsed: ContextItem[];
   cached?: boolean;
   query?: string;
@@ -649,7 +650,7 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
     }
 
     const currentText = translations[activeLang] || result.answer;
-    const plainText = cleanTextForSpeech(currentText, activeLang);
+    const plainText = cleanTextForSpeech(currentText, activeLang === 'en' ? result.language ?? 'en' : activeLang); // 'en' holds the original answer
     const currentLangObj = MULTILINGUAL_LANGUAGES.find(l => l.code === activeLang) || MULTILINGUAL_LANGUAGES[0];
 
     stopAllAudioPlayback();

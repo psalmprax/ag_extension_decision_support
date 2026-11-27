@@ -40,6 +40,8 @@ export function pageOf(url: unknown): string {
   }
 }
 
+const scrubbed = (value: string | undefined) => (value ? withoutPersonalData(value) : undefined);
+
 /** Where a browser error came from; anything else is counted as a window error. */
 const SOURCES = new Set(['boundary', 'window', 'promise']);
 
@@ -62,7 +64,7 @@ router.post('/', limiter, (req: Request, res: Response) => {
     Sentry.captureMessage(`${name}: ${message}`, {
       level: 'error',
       tags: { source: `browser-${source}`, page },
-      extra: { componentStack: text(body.componentStack, 4000), stack: text(error.stack, 4000) },
+      extra: { componentStack: scrubbed(text(body.componentStack, 4000)), stack: scrubbed(text(error.stack, 4000)) },
     });
   }
   res.status(204).end();

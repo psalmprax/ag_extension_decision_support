@@ -130,6 +130,7 @@ describe('answers shared between users', () => {
 
     it('never shares an answer when the asker did not say which language they read', async () => {
         await runAskQuestion('user-1', QUESTION);
+        await runAskQuestion('user-1', QUESTION, undefined, { language: '   ' });
 
         expect(knowledgeSourcesRevision).not.toHaveBeenCalled();
         expect(saveSharedAnswer).not.toHaveBeenCalled();
