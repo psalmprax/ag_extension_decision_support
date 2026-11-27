@@ -32,8 +32,10 @@ async function widerThanScreen(page: Page): Promise<string[]> {
 async function textStuckUnderChatButton(page: Page): Promise<string[]> {
   const button = page.getByRole('button', { name: /agronomic assistant/i });
   if (!(await button.count())) return [];
-  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
-  await page.waitForTimeout(400);
+  // The site scrolls smoothly; jump straight to the end and wait until the page is there,
+  // or a slower browser is checked halfway down.
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+  await page.waitForFunction(() => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2);
   const box = await button.boundingBox();
   if (!box) return [];
   return page.evaluate(({ x, y, width, height }) => {
@@ -89,7 +91,17 @@ test('landing page fits a phone and the chat button covers no text', async ({ pa
   await page.locator('h1').first().waitFor();
   await expectFitsPhone(page, testInfo, 'landing');
 
-  expect(await textStuckUnderChatButton(page), 'text left under the floating chat button at the end of the page').toEqual([]);
+  const stuck = await textStuckUnderChatButton(page);
+  const where = stuck.length
+    ? await page.evaluate(() => ({
+        scrollY: Math.round(window.scrollY),
+        innerHeight: window.innerHeight,
+        scrollHeight: document.documentElement.scrollHeight,
+        footerPaddingBottom: getComputedStyle(document.querySelector('footer') ?? document.body).paddingBottom,
+        button: document.querySelector('button[aria-haspopup="dialog"]')?.getBoundingClientRect().toJSON(),
+      }))
+    : null;
+  expect(stuck, `text left under the floating chat button at the end of the page ${JSON.stringify(where)}`).toEqual([]);
 });
 
 for (const [role, email] of [['officer', SEEDED.officerNakuru], ['farmer', JOURNEY.farmer.email]] as const) {
