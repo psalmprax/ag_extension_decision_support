@@ -141,7 +141,7 @@ const notifySearchResult = (
     return;
   }
   if (res.data.cached) {
-    notify({ type: 'info', message: t('kb_saved_answer', 'Someone asked exactly this before, so here is the answer we gave then.') });
+    notify({ type: 'info', message: t('kb_saved_answer', 'Someone asked this or a very similar question before, so here is the answer we gave then.') });
   } else if (bypassCache) {
     notify({
       type: 'success',

@@ -23,4 +23,10 @@ describe('seed article embedding retries', () => {
         await expect(retryEmbeddingTimeouts('Any article', embed)).rejects.toThrow('Invalid API key');
         expect(embed).toHaveBeenCalledTimes(1);
     });
+
+    it('fails at once on a rejection that is not an error object', async () => {
+        const embed = jest.fn().mockRejectedValue(null);
+        await expect(retryEmbeddingTimeouts('Any article', embed)).rejects.toBeNull();
+        expect(embed).toHaveBeenCalledTimes(1);
+    });
 });

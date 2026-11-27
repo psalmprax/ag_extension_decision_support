@@ -40,7 +40,8 @@ export async function retryEmbeddingTimeouts(title: string, embed: () => Promise
             await embed();
             return;
         } catch (err) {
-            const timedOut = /timed out/i.test((err as Error)?.message ?? '');
+            const message = typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string' ? err.message : '';
+            const timedOut = /timed out/i.test(message);
             if (!timedOut || attempt >= SEED_EMBED_ATTEMPTS) throw err;
             logger.warn(`Vector seeding: embedding "${title}" timed out (attempt ${attempt} of ${SEED_EMBED_ATTEMPTS}), trying again`);
         }
