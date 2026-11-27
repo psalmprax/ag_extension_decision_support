@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Su'aalaha la xaliyey, iyo sida beeraleydu u qiimeeyeen caawimada",
     "pilot_subheading": "Adeeggu ma kordhiyaa wax-soo-saarka?",
     "ui_memory_knowledge_by_topic_subtitle": "Sida jawaabaha la kaydiyey ugu qaybsan yihiin qaybaha",
-    "ui_trust_and_safety_what_depends_on_setup": "Qaar ka mid ah astaamaha waxay u baahan yihiin xiriir shabakad ama waxay ku xiran yihiin waxa ururkaagu dejiyey: falanqaynta sawirrada, faahfaahinta cimilada, iyo fariimaha SMS, WhatsApp ama Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Qaar ka mid ah astaamaha waxay u baahan yihiin xiriir shabakad ama waxay ku xiran yihiin waxa ururkaagu dejiyey: falanqaynta sawirrada, faahfaahinta cimilada, iyo fariimaha SMS, WhatsApp ama Telegram.",
+    "ui_market_price_card_latest_published_year": "sannadkii ugu dambeeyay ee la daabacay",
+    "ui_market_price_card_change_vs_year": "{change}% marka la barbardhigo {year}",
+    "ui_market_price_card_per_90_kg_bag": "jawaan 90 kg kiiba",
+    "ui_farmer_services_prices_live_desc": "Qiimaha wax-soo-saarayaasha qaranka ee sannadlaha ah ee galleyda, digirta qallalan iyo masaggada, oo FAOSTAT daabacday.",
+    "ui_farmer_services_prices_demo_desc": "Muuqaal sida loo muujin karo qiimaha dalagga gobolka. Tirooyinka hoose waa xog tusaale ah, ma aha indha-indheyn suuq oo hadda.",
+    "ui_farmer_services_prices_live_crops": "Qiimaha wax-soo-saarayaasha galleyda, digirta qallalan iyo masaggada",
+    "ui_farmer_services_prices_demo_crops": "Qiimayaal tusaale ah oo galley, digir iyo masaggo",
+    "ui_farmer_services_prices_live_source": "Celceliska qaranka ee sannadlaha ah ee FAOSTAT, sannad walba dib loo daabaco",
+    "ui_farmer_services_prices_live_change": "Isbeddelka marka la barbardhigo sannadkii hore ee la daabacay",
+    "ui_farmer_services_prices_demo_more": "U beddelka lacagta deegaanka iyo isbeddelka qiimaha dhexe ee tafaariiqda"
 }

@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Întrebări rezolvate și cum au evaluat fermierii ajutorul",
     "pilot_subheading": "Crește serviciul recoltele?",
     "ui_memory_knowledge_by_topic_subtitle": "Cum se împart răspunsurile salvate pe categorii",
-    "ui_trust_and_safety_what_depends_on_setup": "Unele funcții au nevoie de conexiune la rețea sau depind de ce a configurat organizația dvs.: analiza fotografiilor, detalii meteo și mesaje prin SMS, WhatsApp sau Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Unele funcții au nevoie de conexiune la rețea sau depind de ce a configurat organizația dvs.: analiza fotografiilor, detalii meteo și mesaje prin SMS, WhatsApp sau Telegram.",
+    "ui_market_price_card_latest_published_year": "ultimul an publicat",
+    "ui_market_price_card_change_vs_year": "{change}% vs {year}",
+    "ui_market_price_card_per_90_kg_bag": "pe sac de 90 kg",
+    "ui_farmer_services_prices_live_desc": "Prețuri naționale anuale de producător pentru porumb, fasole uscată și sorg, publicate de FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Previzualizare a modului în care pot fi afișate prețurile regionale. Cifrele de mai jos sunt date de exemplu, nu observații actuale de piață.",
+    "ui_farmer_services_prices_live_crops": "Prețuri de producător pentru porumb, fasole uscată și sorg",
+    "ui_farmer_services_prices_demo_crops": "Prețuri de exemplu pentru porumb, fasole și sorg",
+    "ui_farmer_services_prices_live_source": "Medii naționale anuale de la FAOSTAT, republicate în fiecare an",
+    "ui_farmer_services_prices_live_change": "Schimbare față de anul publicat anterior",
+    "ui_farmer_services_prices_demo_more": "Conversie în moneda locală și tendințe ale prețului median cu amănuntul"
 }

@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Questions resolved, and how farmers rated the help",
     "pilot_subheading": "Does the service raise harvests?",
     "ui_memory_knowledge_by_topic_subtitle": "How stored answers spread across categories",
-    "ui_trust_and_safety_what_depends_on_setup": "Some features need a network connection or depend on what your organisation has set up: photo analysis, weather detail, and SMS, WhatsApp or Telegram messages."
+    "ui_trust_and_safety_what_depends_on_setup": "Some features need a network connection or depend on what your organisation has set up: photo analysis, weather detail, and SMS, WhatsApp or Telegram messages.",
+    "ui_market_price_card_latest_published_year": "latest published year",
+    "ui_market_price_card_change_vs_year": "{change}% vs {year}",
+    "ui_market_price_card_per_90_kg_bag": "per 90 kg bag",
+    "ui_farmer_services_prices_live_desc": "Annual national producer prices for maize, dry beans and sorghum, published by FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Preview how regional commodity prices could be shown. The figures below are illustrative demo data, not current market observations.",
+    "ui_farmer_services_prices_live_crops": "Producer prices for maize, dry beans & sorghum",
+    "ui_farmer_services_prices_demo_crops": "Example prices for maize, beans & sorghum",
+    "ui_farmer_services_prices_live_source": "Annual national averages from FAOSTAT, republished yearly",
+    "ui_farmer_services_prices_live_change": "Year-on-year change against the previous published year",
+    "ui_farmer_services_prices_demo_more": "Local currency conversions & retail median trend graphs"
 }

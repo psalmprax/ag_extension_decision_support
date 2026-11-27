@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Ερωτήσεις που λύθηκαν και πώς βαθμολόγησαν οι αγρότες τη βοήθεια",
     "pilot_subheading": "Αυξάνει η υπηρεσία τη σοδειά;",
     "ui_memory_knowledge_by_topic_subtitle": "Πώς κατανέμονται οι αποθηκευμένες απαντήσεις σε κατηγορίες",
-    "ui_trust_and_safety_what_depends_on_setup": "Ορισμένες λειτουργίες χρειάζονται σύνδεση ή εξαρτώνται από όσα έχει ρυθμίσει ο οργανισμός σας: ανάλυση φωτογραφιών, λεπτομέρειες καιρού και μηνύματα μέσω SMS, WhatsApp ή Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Ορισμένες λειτουργίες χρειάζονται σύνδεση ή εξαρτώνται από όσα έχει ρυθμίσει ο οργανισμός σας: ανάλυση φωτογραφιών, λεπτομέρειες καιρού και μηνύματα μέσω SMS, WhatsApp ή Telegram.",
+    "ui_market_price_card_latest_published_year": "τελευταίο δημοσιευμένο έτος",
+    "ui_market_price_card_change_vs_year": "{change}% έναντι {year}",
+    "ui_market_price_card_per_90_kg_bag": "ανά σάκο 90 κιλών",
+    "ui_farmer_services_prices_live_desc": "Ετήσιες εθνικές τιμές παραγωγού για καλαμπόκι, ξερά φασόλια και σόργο, από το FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Προεπισκόπηση του πώς μπορούν να εμφανίζονται οι περιφερειακές τιμές. Τα παρακάτω νούμερα είναι παραδείγματα, όχι τρέχουσες παρατηρήσεις αγοράς.",
+    "ui_farmer_services_prices_live_crops": "Τιμές παραγωγού για καλαμπόκι, ξερά φασόλια και σόργο",
+    "ui_farmer_services_prices_demo_crops": "Ενδεικτικές τιμές για καλαμπόκι, φασόλια και σόργο",
+    "ui_farmer_services_prices_live_source": "Ετήσιοι εθνικοί μέσοι όροι από το FAOSTAT, που αναδημοσιεύονται κάθε χρόνο",
+    "ui_farmer_services_prices_live_change": "Μεταβολή έναντι του προηγούμενου δημοσιευμένου έτους",
+    "ui_farmer_services_prices_demo_more": "Μετατροπή σε τοπικό νόμισμα και τάσεις διάμεσων τιμών λιανικής"
 }

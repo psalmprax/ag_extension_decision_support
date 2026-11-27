@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Câu hỏi đã giải quyết và đánh giá của nông dân về sự hỗ trợ",
     "pilot_subheading": "Dịch vụ có làm tăng năng suất không?",
     "ui_memory_knowledge_by_topic_subtitle": "Các câu trả lời đã lưu phân bố theo danh mục ra sao",
-    "ui_trust_and_safety_what_depends_on_setup": "Một số tính năng cần kết nối mạng hoặc tùy vào thiết lập của tổ chức bạn: phân tích ảnh, chi tiết thời tiết và tin nhắn SMS, WhatsApp hoặc Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Một số tính năng cần kết nối mạng hoặc tùy vào thiết lập của tổ chức bạn: phân tích ảnh, chi tiết thời tiết và tin nhắn SMS, WhatsApp hoặc Telegram.",
+    "ui_market_price_card_latest_published_year": "năm công bố gần nhất",
+    "ui_market_price_card_change_vs_year": "{change}% so với {year}",
+    "ui_market_price_card_per_90_kg_bag": "mỗi bao 90 kg",
+    "ui_farmer_services_prices_live_desc": "Giá sản xuất toàn quốc hằng năm của ngô, đậu khô và cao lương, do FAOSTAT công bố.",
+    "ui_farmer_services_prices_demo_desc": "Bản xem trước cách hiển thị giá nông sản theo vùng. Các con số bên dưới là dữ liệu mẫu, không phải quan sát thị trường hiện tại.",
+    "ui_farmer_services_prices_live_crops": "Giá sản xuất của ngô, đậu khô và cao lương",
+    "ui_farmer_services_prices_demo_crops": "Giá mẫu cho ngô, đậu và cao lương",
+    "ui_farmer_services_prices_live_source": "Mức trung bình toàn quốc hằng năm từ FAOSTAT, công bố lại mỗi năm",
+    "ui_farmer_services_prices_live_change": "Thay đổi so với năm công bố trước",
+    "ui_farmer_services_prices_demo_more": "Quy đổi sang tiền địa phương và xu hướng giá bán lẻ trung vị"
 }

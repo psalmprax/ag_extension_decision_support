@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Решени въпроси и как фермерите оцениха помощта",
     "pilot_subheading": "Увеличава ли услугата реколтата?",
     "ui_memory_knowledge_by_topic_subtitle": "Как запазените отговори се разпределят по категории",
-    "ui_trust_and_safety_what_depends_on_setup": "Някои функции изискват връзка с мрежата или зависят от това, което вашата организация е настроила: анализ на снимки, подробности за времето и съобщения по SMS, WhatsApp или Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Някои функции изискват връзка с мрежата или зависят от това, което вашата организация е настроила: анализ на снимки, подробности за времето и съобщения по SMS, WhatsApp или Telegram.",
+    "ui_market_price_card_latest_published_year": "последна публикувана година",
+    "ui_market_price_card_change_vs_year": "{change}% спрямо {year}",
+    "ui_market_price_card_per_90_kg_bag": "за чувал от 90 кг",
+    "ui_farmer_services_prices_live_desc": "Годишни национални цени на производител за царевица, сух боб и сорго, публикувани от FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Преглед как може да се показват регионалните цени. Числата по-долу са примерни данни, а не текущи пазарни наблюдения.",
+    "ui_farmer_services_prices_live_crops": "Цени на производител за царевица, сух боб и сорго",
+    "ui_farmer_services_prices_demo_crops": "Примерни цени за царевица, боб и сорго",
+    "ui_farmer_services_prices_live_source": "Годишни национални средни стойности от FAOSTAT, публикувани всяка година",
+    "ui_farmer_services_prices_live_change": "Промяна спрямо предходната публикувана година",
+    "ui_farmer_services_prices_demo_more": "Превръщане в местна валута и тенденции на медианните цени на дребно"
 }

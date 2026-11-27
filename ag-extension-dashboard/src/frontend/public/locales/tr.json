@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Çözülen sorular ve çiftçilerin yardımı nasıl değerlendirdiği",
     "pilot_subheading": "Hizmet hasadı artırıyor mu?",
     "ui_memory_knowledge_by_topic_subtitle": "Kayıtlı yanıtların kategorilere dağılımı",
-    "ui_trust_and_safety_what_depends_on_setup": "Bazı özellikler ağ bağlantısı gerektirir ya da kuruluşunuzun ayarlarına bağlıdır: fotoğraf analizi, hava durumu ayrıntısı ve SMS, WhatsApp veya Telegram mesajları."
+    "ui_trust_and_safety_what_depends_on_setup": "Bazı özellikler ağ bağlantısı gerektirir ya da kuruluşunuzun ayarlarına bağlıdır: fotoğraf analizi, hava durumu ayrıntısı ve SMS, WhatsApp veya Telegram mesajları.",
+    "ui_market_price_card_latest_published_year": "son yayımlanan yıl",
+    "ui_market_price_card_change_vs_year": "{year} yılına göre %{change}",
+    "ui_market_price_card_per_90_kg_bag": "90 kg'lık çuval başına",
+    "ui_farmer_services_prices_live_desc": "FAOSTAT'ın yayımladığı mısır, kuru fasulye ve sorgum için yıllık ulusal üretici fiyatları.",
+    "ui_farmer_services_prices_demo_desc": "Bölgesel ürün fiyatlarının nasıl gösterilebileceğine dair bir önizleme. Aşağıdaki rakamlar örnek verilerdir, güncel piyasa gözlemleri değildir.",
+    "ui_farmer_services_prices_live_crops": "Mısır, kuru fasulye ve sorgum üretici fiyatları",
+    "ui_farmer_services_prices_demo_crops": "Mısır, fasulye ve sorgum için örnek fiyatlar",
+    "ui_farmer_services_prices_live_source": "FAOSTAT'tan yıllık ulusal ortalamalar, her yıl yeniden yayımlanır",
+    "ui_farmer_services_prices_live_change": "Bir önceki yayımlanan yıla göre değişim",
+    "ui_farmer_services_prices_demo_more": "Yerel para birimine çeviri ve perakende medyan fiyat eğilimleri"
 }

@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Preguntas resueltas y cómo valoraron la ayuda los agricultores",
     "pilot_subheading": "¿Aumenta el servicio las cosechas?",
     "ui_memory_knowledge_by_topic_subtitle": "Cómo se reparten las respuestas guardadas por categoría",
-    "ui_trust_and_safety_what_depends_on_setup": "Algunas funciones necesitan conexión o dependen de lo que su organización haya configurado: análisis de fotos, detalle del clima y mensajes por SMS, WhatsApp o Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Algunas funciones necesitan conexión o dependen de lo que su organización haya configurado: análisis de fotos, detalle del clima y mensajes por SMS, WhatsApp o Telegram.",
+    "ui_market_price_card_latest_published_year": "último año publicado",
+    "ui_market_price_card_change_vs_year": "{change} % vs {year}",
+    "ui_market_price_card_per_90_kg_bag": "por saco de 90 kg",
+    "ui_farmer_services_prices_live_desc": "Precios anuales nacionales al productor de maíz, frijol seco y sorgo, publicados por FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Vista previa de cómo podrían mostrarse los precios regionales. Las cifras de abajo son datos de ejemplo, no observaciones actuales del mercado.",
+    "ui_farmer_services_prices_live_crops": "Precios al productor de maíz, frijol seco y sorgo",
+    "ui_farmer_services_prices_demo_crops": "Precios de ejemplo de maíz, frijol y sorgo",
+    "ui_farmer_services_prices_live_source": "Promedios nacionales anuales de FAOSTAT, republicados cada año",
+    "ui_farmer_services_prices_live_change": "Variación frente al año publicado anterior",
+    "ui_farmer_services_prices_demo_more": "Conversión a moneda local y tendencias del precio mediano al por menor"
 }

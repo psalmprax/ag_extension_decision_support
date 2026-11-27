@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Ajụjụ edoziri, na otu ndị ọrụ ugbo si nyochaa enyemaka ahụ",
     "pilot_subheading": "Ọrụ a ọ na-abawanye owuwe ihe ubi?",
     "ui_memory_knowledge_by_topic_subtitle": "Otu azịza echekwara si kesaa n'ụdị dị iche iche",
-    "ui_trust_and_safety_what_depends_on_setup": "Ụfọdụ atụmatụ chọrọ njikọ netwọk ma ọ bụ dabere n'ihe nzukọ gị hiwere: nyocha foto, nkọwa ihu igwe, na ozi SMS, WhatsApp ma ọ bụ Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Ụfọdụ atụmatụ chọrọ njikọ netwọk ma ọ bụ dabere n'ihe nzukọ gị hiwere: nyocha foto, nkọwa ihu igwe, na ozi SMS, WhatsApp ma ọ bụ Telegram.",
+    "ui_market_price_card_latest_published_year": "afọ e bipụtara ikpeazụ",
+    "ui_market_price_card_change_vs_year": "{change}% ma e jiri ya tụnyere {year}",
+    "ui_market_price_card_per_90_kg_bag": "maka akpa kg 90 ọ bụla",
+    "ui_farmer_services_prices_live_desc": "Ọnụahịa ndị na-emepụta n'obodo kwa afọ maka ọka, agwa kpọrọ nkụ na sọgọm, nke FAOSTAT bipụtara.",
+    "ui_farmer_services_prices_demo_desc": "Ihe nlele otu e nwere ike isi gosi ọnụahịa ihe ubi mpaghara. Ọnụọgụ ndị dị n'okpuru bụ data ihe atụ, ọ bụghị nlele ahịa ugbu a.",
+    "ui_farmer_services_prices_live_crops": "Ọnụahịa ndị na-emepụta maka ọka, agwa kpọrọ nkụ na sọgọm",
+    "ui_farmer_services_prices_demo_crops": "Ọnụahịa ihe atụ maka ọka, agwa na sọgọm",
+    "ui_farmer_services_prices_live_source": "Nkezi obodo kwa afọ site na FAOSTAT, a na-ebipụta ya kwa afọ",
+    "ui_farmer_services_prices_live_change": "Mgbanwe ma e jiri ya tụnyere afọ e bipụtara gara aga",
+    "ui_farmer_services_prices_demo_more": "Ntụgharị gaa na ego mpaghara na ụzọ ọnụahịa etiti ire ere"
 }

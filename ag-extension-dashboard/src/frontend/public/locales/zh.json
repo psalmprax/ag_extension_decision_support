@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "已解决的问题，以及农户对帮助的评价",
     "pilot_subheading": "这项服务能提高收成吗？",
     "ui_memory_knowledge_by_topic_subtitle": "已存答案在各类别中的分布",
-    "ui_trust_and_safety_what_depends_on_setup": "部分功能需要网络连接，或取决于您所在机构的设置：照片分析、详细天气，以及短信、WhatsApp 或 Telegram 消息。"
+    "ui_trust_and_safety_what_depends_on_setup": "部分功能需要网络连接，或取决于您所在机构的设置：照片分析、详细天气，以及短信、WhatsApp 或 Telegram 消息。",
+    "ui_market_price_card_latest_published_year": "最新公布年份",
+    "ui_market_price_card_change_vs_year": "较 {year} 年 {change}%",
+    "ui_market_price_card_per_90_kg_bag": "每 90 公斤袋",
+    "ui_farmer_services_prices_live_desc": "FAOSTAT 公布的玉米、干豆和高粱年度全国生产者价格。",
+    "ui_farmer_services_prices_demo_desc": "展示地区农产品价格的呈现方式。以下数字为示例数据，并非当前市场观察。",
+    "ui_farmer_services_prices_live_crops": "玉米、干豆和高粱的生产者价格",
+    "ui_farmer_services_prices_demo_crops": "玉米、豆类和高粱的示例价格",
+    "ui_farmer_services_prices_live_source": "来自 FAOSTAT 的年度全国平均值，每年重新发布",
+    "ui_farmer_services_prices_live_change": "与上一公布年份相比的变化",
+    "ui_farmer_services_prices_demo_more": "本币换算和零售中位价走势"
 }

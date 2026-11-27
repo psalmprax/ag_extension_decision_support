@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Perguntas resolvidas e como os agricultores avaliaram a ajuda",
     "pilot_subheading": "O serviço aumenta as colheitas?",
     "ui_memory_knowledge_by_topic_subtitle": "Como as respostas guardadas se distribuem por categoria",
-    "ui_trust_and_safety_what_depends_on_setup": "Algumas funções precisam de ligação à rede ou dependem do que a sua organização configurou: análise de fotos, detalhe meteorológico e mensagens por SMS, WhatsApp ou Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Algumas funções precisam de ligação à rede ou dependem do que a sua organização configurou: análise de fotos, detalhe meteorológico e mensagens por SMS, WhatsApp ou Telegram.",
+    "ui_market_price_card_latest_published_year": "último ano publicado",
+    "ui_market_price_card_change_vs_year": "{change}% vs {year}",
+    "ui_market_price_card_per_90_kg_bag": "por saco de 90 kg",
+    "ui_farmer_services_prices_live_desc": "Preços anuais nacionais ao produtor de milho, feijão seco e sorgo, publicados pela FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Pré-visualização de como os preços regionais podem ser mostrados. Os valores abaixo são dados de exemplo, não observações atuais do mercado.",
+    "ui_farmer_services_prices_live_crops": "Preços ao produtor de milho, feijão seco e sorgo",
+    "ui_farmer_services_prices_demo_crops": "Preços de exemplo de milho, feijão e sorgo",
+    "ui_farmer_services_prices_live_source": "Médias nacionais anuais da FAOSTAT, republicadas todos os anos",
+    "ui_farmer_services_prices_live_change": "Variação face ao ano publicado anterior",
+    "ui_farmer_services_prices_demo_more": "Conversão para moeda local e tendências do preço mediano a retalho"
 }

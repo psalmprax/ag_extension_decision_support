@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Mafunso othetsedwa, ndi momwe alimi anaonera thandizolo",
     "pilot_subheading": "Kodi ntchitoyi imakweza zokolola?",
     "ui_memory_knowledge_by_topic_subtitle": "Momwe mayankho osungidwa agawikira m'magulu",
-    "ui_trust_and_safety_what_depends_on_setup": "Zinthu zina zimafuna netiweki kapena zimadalira zomwe bungwe lanu lakhazikitsa: kusanthula zithunzi, tsatanetsatane wa nyengo, ndi mauthenga a SMS, WhatsApp kapena Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Zinthu zina zimafuna netiweki kapena zimadalira zomwe bungwe lanu lakhazikitsa: kusanthula zithunzi, tsatanetsatane wa nyengo, ndi mauthenga a SMS, WhatsApp kapena Telegram.",
+    "ui_market_price_card_latest_published_year": "chaka chomaliza kusindikizidwa",
+    "ui_market_price_card_change_vs_year": "{change}% poyerekeza ndi {year}",
+    "ui_market_price_card_per_90_kg_bag": "pa thumba la makilogalamu 90",
+    "ui_farmer_services_prices_live_desc": "Mitengo ya alimi ya dziko lonse pachaka ya chimanga, nyemba zouma ndi mapira, yosindikizidwa ndi FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Chitsanzo cha momwe mitengo ya mbewu ya m'chigawo ingasonyezedwere. Manambala ali m'munsiwa ndi chitsanzo, osati zomwe zawonedwa pamsika pano.",
+    "ui_farmer_services_prices_live_crops": "Mitengo ya alimi ya chimanga, nyemba zouma ndi mapira",
+    "ui_farmer_services_prices_demo_crops": "Mitengo ya chitsanzo ya chimanga, nyemba ndi mapira",
+    "ui_farmer_services_prices_live_source": "Avereji ya dziko lonse pachaka kuchokera ku FAOSTAT, yosindikizidwa chaka chilichonse",
+    "ui_farmer_services_prices_live_change": "Kusintha poyerekeza ndi chaka chosindikizidwa chapitacho",
+    "ui_farmer_services_prices_demo_more": "Kusintha kukhala ndalama za kwanuko ndi momwe mitengo yapakati ya malonda ikuyendera"
 }

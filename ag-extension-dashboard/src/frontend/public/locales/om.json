@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Gaaffilee furaman, fi akkaataa qonnaan bultoonni gargaarsicha madaalan",
     "pilot_subheading": "Tajaajilli kun oomisha ni dabalaa?",
     "ui_memory_knowledge_by_topic_subtitle": "Deebiiwwan kuufaman akkamitti ramaddiiwwanitti qoodaman",
-    "ui_trust_and_safety_what_depends_on_setup": "Tajaajilli tokko tokko walqunnamtii neetworkii barbaada ykn waan dhaabbanni keessan qopheesse irratti hundaa'a: xiinxala suuraa, bal'ina haala qilleensaa, fi ergaa SMS, WhatsApp ykn Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Tajaajilli tokko tokko walqunnamtii neetworkii barbaada ykn waan dhaabbanni keessan qopheesse irratti hundaa'a: xiinxala suuraa, bal'ina haala qilleensaa, fi ergaa SMS, WhatsApp ykn Telegram.",
+    "ui_market_price_card_latest_published_year": "bara dhumaa maxxanfame",
+    "ui_market_price_card_change_vs_year": "{change}% {year} waliin yoo wal bira qabamu",
+    "ui_market_price_card_per_90_kg_bag": "kuntaala kg 90 tokkoon",
+    "ui_farmer_services_prices_live_desc": "Gatii oomishtootaa sadarkaa biyyaa waggaa waggaan boqqolloo, baaqelaa gogaa fi mishingaa, FAOSTATn maxxanfame.",
+    "ui_farmer_services_prices_demo_desc": "Agarsiisa akkamitti gatiin midhaanii naannoo agarsiifamuu danda'u. Lakkoofsonni armaan gadii fakkeenya, hordoffii gabaa ammaa miti.",
+    "ui_farmer_services_prices_live_crops": "Gatii oomishtootaa boqqolloo, baaqelaa gogaa fi mishingaa",
+    "ui_farmer_services_prices_demo_crops": "Gatii fakkeenyaa boqqolloo, baaqelaa fi mishingaa",
+    "ui_farmer_services_prices_live_source": "Giddugaleessa biyyaa waggaa FAOSTAT irraa, waggaa waggaan irra deebi'ee maxxanfamu",
+    "ui_farmer_services_prices_live_change": "Jijjiirama bara maxxanfame darbe waliin",
+    "ui_farmer_services_prices_demo_more": "Gara maallaqa naannootti jijjiiruu fi adeemsa gatii giddugaleessaa gurgurtaa xiqqaa"
 }

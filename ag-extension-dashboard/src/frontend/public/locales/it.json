@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Domande risolte e come gli agricoltori hanno valutato l'aiuto",
     "pilot_subheading": "Il servizio aumenta i raccolti?",
     "ui_memory_knowledge_by_topic_subtitle": "Come le risposte salvate si distribuiscono per categoria",
-    "ui_trust_and_safety_what_depends_on_setup": "Alcune funzioni richiedono una connessione o dipendono da ciò che la tua organizzazione ha attivato: analisi delle foto, dettaglio meteo e messaggi via SMS, WhatsApp o Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Alcune funzioni richiedono una connessione o dipendono da ciò che la tua organizzazione ha attivato: analisi delle foto, dettaglio meteo e messaggi via SMS, WhatsApp o Telegram.",
+    "ui_market_price_card_latest_published_year": "ultimo anno pubblicato",
+    "ui_market_price_card_change_vs_year": "{change}% vs {year}",
+    "ui_market_price_card_per_90_kg_bag": "per sacco da 90 kg",
+    "ui_farmer_services_prices_live_desc": "Prezzi annuali nazionali alla produzione di mais, fagioli secchi e sorgo, pubblicati da FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Anteprima di come potrebbero apparire i prezzi regionali. Le cifre qui sotto sono dati di esempio, non osservazioni attuali del mercato.",
+    "ui_farmer_services_prices_live_crops": "Prezzi alla produzione di mais, fagioli secchi e sorgo",
+    "ui_farmer_services_prices_demo_crops": "Prezzi di esempio per mais, fagioli e sorgo",
+    "ui_farmer_services_prices_live_source": "Medie nazionali annuali di FAOSTAT, ripubblicate ogni anno",
+    "ui_farmer_services_prices_live_change": "Variazione rispetto all'anno pubblicato precedente",
+    "ui_farmer_services_prices_demo_more": "Conversione in valuta locale e andamento dei prezzi mediani al dettaglio"
 }

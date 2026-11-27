@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Gelöste Fragen und wie Landwirte die Hilfe bewertet haben",
     "pilot_subheading": "Steigert der Dienst die Ernten?",
     "ui_memory_knowledge_by_topic_subtitle": "Wie sich gespeicherte Antworten auf Kategorien verteilen",
-    "ui_trust_and_safety_what_depends_on_setup": "Manche Funktionen brauchen eine Netzverbindung oder hängen davon ab, was Ihre Organisation eingerichtet hat: Fotoanalyse, Wetterdetails sowie Nachrichten per SMS, WhatsApp oder Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Manche Funktionen brauchen eine Netzverbindung oder hängen davon ab, was Ihre Organisation eingerichtet hat: Fotoanalyse, Wetterdetails sowie Nachrichten per SMS, WhatsApp oder Telegram.",
+    "ui_market_price_card_latest_published_year": "zuletzt veröffentlichtes Jahr",
+    "ui_market_price_card_change_vs_year": "{change} % ggü. {year}",
+    "ui_market_price_card_per_90_kg_bag": "pro 90-kg-Sack",
+    "ui_farmer_services_prices_live_desc": "Jährliche nationale Erzeugerpreise für Mais, Trockenbohnen und Sorghum, veröffentlicht von FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Vorschau, wie regionale Erzeugnispreise angezeigt werden könnten. Die Zahlen unten sind Beispieldaten, keine aktuellen Marktbeobachtungen.",
+    "ui_farmer_services_prices_live_crops": "Erzeugerpreise für Mais, Trockenbohnen und Sorghum",
+    "ui_farmer_services_prices_demo_crops": "Beispielpreise für Mais, Bohnen und Sorghum",
+    "ui_farmer_services_prices_live_source": "Jährliche nationale Durchschnittswerte von FAOSTAT, jährlich neu veröffentlicht",
+    "ui_farmer_services_prices_live_change": "Veränderung gegenüber dem zuvor veröffentlichten Jahr",
+    "ui_farmer_services_prices_demo_more": "Umrechnung in Landeswährung und Trends der Einzelhandels-Medianpreise"
 }

@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "የተፈቱ ጥያቄዎችና ገበሬዎች እርዳታውን እንዴት እንደገመገሙ",
     "pilot_subheading": "አገልግሎቱ ምርትን ይጨምራል?",
     "ui_memory_knowledge_by_topic_subtitle": "የተቀመጡ መልሶች በምድቦች እንዴት እንደተከፋፈሉ",
-    "ui_trust_and_safety_what_depends_on_setup": "አንዳንድ ባህሪያት የኔትወርክ ግንኙነት ይፈልጋሉ ወይም ድርጅትዎ ባዘጋጀው ላይ ይወሰናሉ፦ የፎቶ ትንተና፣ የአየር ሁኔታ ዝርዝር፣ እና የኤስኤምኤስ፣ ዋትስአፕ ወይም ቴሌግራም መልእክቶች።"
+    "ui_trust_and_safety_what_depends_on_setup": "አንዳንድ ባህሪያት የኔትወርክ ግንኙነት ይፈልጋሉ ወይም ድርጅትዎ ባዘጋጀው ላይ ይወሰናሉ፦ የፎቶ ትንተና፣ የአየር ሁኔታ ዝርዝር፣ እና የኤስኤምኤስ፣ ዋትስአፕ ወይም ቴሌግራም መልእክቶች።",
+    "ui_market_price_card_latest_published_year": "በቅርቡ የታተመው ዓመት",
+    "ui_market_price_card_change_vs_year": "ከ{year} ጋር ሲነጻጸር {change}%",
+    "ui_market_price_card_per_90_kg_bag": "በ90 ኪ.ግ ከረጢት",
+    "ui_farmer_services_prices_live_desc": "በFAOSTAT የታተሙ የበቆሎ፣ የደረቅ ባቄላና የማሽላ ዓመታዊ ብሔራዊ የአምራች ዋጋዎች።",
+    "ui_farmer_services_prices_demo_desc": "የክልል የሰብል ዋጋዎች እንዴት ሊታዩ እንደሚችሉ ቅድመ እይታ። ከታች ያሉት ቁጥሮች የምሳሌ መረጃ ናቸው እንጂ የአሁኑ የገበያ ምልከታ አይደሉም።",
+    "ui_farmer_services_prices_live_crops": "የበቆሎ፣ የደረቅ ባቄላና የማሽላ የአምራች ዋጋዎች",
+    "ui_farmer_services_prices_demo_crops": "የበቆሎ፣ የባቄላና የማሽላ የምሳሌ ዋጋዎች",
+    "ui_farmer_services_prices_live_source": "ከFAOSTAT የተገኙ ዓመታዊ ብሔራዊ አማካዮች፣ በየዓመቱ የሚታተሙ",
+    "ui_farmer_services_prices_live_change": "ካለፈው የታተመ ዓመት ጋር ሲነጻጸር ያለው ለውጥ",
+    "ui_farmer_services_prices_demo_more": "ወደ አካባቢው ገንዘብ መቀየርና የችርቻሮ መካከለኛ ዋጋ አዝማሚያዎች"
 }

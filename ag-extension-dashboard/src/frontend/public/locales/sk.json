@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Vyriešené otázky a ako poľnohospodári hodnotili pomoc",
     "pilot_subheading": "Zvyšuje služba úrodu?",
     "ui_memory_knowledge_by_topic_subtitle": "Ako sa uložené odpovede delia do kategórií",
-    "ui_trust_and_safety_what_depends_on_setup": "Niektoré funkcie potrebujú pripojenie k sieti alebo závisia od toho, čo vaša organizácia nastavila: analýza fotiek, podrobnosti o počasí a správy cez SMS, WhatsApp alebo Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Niektoré funkcie potrebujú pripojenie k sieti alebo závisia od toho, čo vaša organizácia nastavila: analýza fotiek, podrobnosti o počasí a správy cez SMS, WhatsApp alebo Telegram.",
+    "ui_market_price_card_latest_published_year": "posledný zverejnený rok",
+    "ui_market_price_card_change_vs_year": "{change} % vs {year}",
+    "ui_market_price_card_per_90_kg_bag": "za 90 kg vrece",
+    "ui_farmer_services_prices_live_desc": "Ročné celoštátne ceny výrobcov kukurice, suchej fazule a ciroku, zverejnené FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Ukážka, ako by sa mohli zobrazovať regionálne ceny plodín. Čísla nižšie sú ukážkové údaje, nie aktuálne trhové pozorovania.",
+    "ui_farmer_services_prices_live_crops": "Ceny výrobcov kukurice, suchej fazule a ciroku",
+    "ui_farmer_services_prices_demo_crops": "Ukážkové ceny kukurice, fazule a ciroku",
+    "ui_farmer_services_prices_live_source": "Ročné celoštátne priemery z FAOSTAT, zverejňované každý rok",
+    "ui_farmer_services_prices_live_change": "Zmena oproti predchádzajúcemu zverejnenému roku",
+    "ui_farmer_services_prices_demo_more": "Prepočet na miestnu menu a vývoj mediánových maloobchodných cien"
 }

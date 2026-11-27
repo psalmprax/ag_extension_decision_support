@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Opgeloste vragen en hoe boeren de hulp beoordeelden",
     "pilot_subheading": "Verhoogt de dienst de oogst?",
     "ui_memory_knowledge_by_topic_subtitle": "Hoe opgeslagen antwoorden over categorieën verdeeld zijn",
-    "ui_trust_and_safety_what_depends_on_setup": "Sommige functies hebben een netwerkverbinding nodig of hangen af van wat uw organisatie heeft ingesteld: foto-analyse, weerdetails en berichten via sms, WhatsApp of Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Sommige functies hebben een netwerkverbinding nodig of hangen af van wat uw organisatie heeft ingesteld: foto-analyse, weerdetails en berichten via sms, WhatsApp of Telegram.",
+    "ui_market_price_card_latest_published_year": "laatst gepubliceerde jaar",
+    "ui_market_price_card_change_vs_year": "{change}% t.o.v. {year}",
+    "ui_market_price_card_per_90_kg_bag": "per zak van 90 kg",
+    "ui_farmer_services_prices_live_desc": "Jaarlijkse nationale producentenprijzen voor maïs, droge bonen en sorghum, gepubliceerd door FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Voorbeeld van hoe regionale productprijzen getoond kunnen worden. De cijfers hieronder zijn voorbeeldgegevens, geen actuele marktwaarnemingen.",
+    "ui_farmer_services_prices_live_crops": "Producentenprijzen voor maïs, droge bonen en sorghum",
+    "ui_farmer_services_prices_demo_crops": "Voorbeeldprijzen voor maïs, bonen en sorghum",
+    "ui_farmer_services_prices_live_source": "Jaarlijkse nationale gemiddelden van FAOSTAT, elk jaar opnieuw gepubliceerd",
+    "ui_farmer_services_prices_live_change": "Verandering ten opzichte van het vorige gepubliceerde jaar",
+    "ui_farmer_services_prices_demo_more": "Omrekening naar lokale valuta en trends in mediane winkelprijzen"
 }

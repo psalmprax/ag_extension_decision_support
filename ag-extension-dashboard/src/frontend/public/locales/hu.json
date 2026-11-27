@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Megoldott kérdések, és hogyan értékelték a gazdák a segítséget",
     "pilot_subheading": "Növeli a szolgáltatás a termést?",
     "ui_memory_knowledge_by_topic_subtitle": "Hogyan oszlanak meg a tárolt válaszok a kategóriák között",
-    "ui_trust_and_safety_what_depends_on_setup": "Néhány funkcióhoz hálózati kapcsolat kell, vagy attól függ, mit állított be a szervezete: fotóelemzés, részletes időjárás, valamint SMS-, WhatsApp- vagy Telegram-üzenetek."
+    "ui_trust_and_safety_what_depends_on_setup": "Néhány funkcióhoz hálózati kapcsolat kell, vagy attól függ, mit állított be a szervezete: fotóelemzés, részletes időjárás, valamint SMS-, WhatsApp- vagy Telegram-üzenetek.",
+    "ui_market_price_card_latest_published_year": "legutóbb közzétett év",
+    "ui_market_price_card_change_vs_year": "{change}% vs {year}",
+    "ui_market_price_card_per_90_kg_bag": "90 kg-os zsákonként",
+    "ui_farmer_services_prices_live_desc": "A kukorica, a szárazbab és a cirok éves országos termelői ára, a FAOSTAT közzététele alapján.",
+    "ui_farmer_services_prices_demo_desc": "Előnézet arról, hogyan jelenhetnek meg a regionális terményárak. Az alábbi számok mintaadatok, nem aktuális piaci megfigyelések.",
+    "ui_farmer_services_prices_live_crops": "A kukorica, a szárazbab és a cirok termelői ára",
+    "ui_farmer_services_prices_demo_crops": "Mintaárak kukoricára, babra és cirokra",
+    "ui_farmer_services_prices_live_source": "Éves országos átlagok a FAOSTAT-tól, évente újra közzétéve",
+    "ui_farmer_services_prices_live_change": "Változás az előző közzétett évhez képest",
+    "ui_farmer_services_prices_demo_more": "Átváltás helyi pénznemre és a kiskereskedelmi mediánárak alakulása"
 }

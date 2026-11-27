@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "ھەل قىلىنغان سوئاللار ۋە دېھقانلارنىڭ ياردەمگە بەرگەن باھاسى",
     "pilot_subheading": "مۇلازىمەت ھوسۇلنى ئاشۇرامدۇ؟",
     "ui_memory_knowledge_by_topic_subtitle": "ساقلانغان جاۋابلارنىڭ تۈرلەرگە تەقسىملىنىشى",
-    "ui_trust_and_safety_what_depends_on_setup": "بەزى ئىقتىدارلار تور ئۇلىنىشىغا موھتاج ياكى تەشكىلاتىڭىزنىڭ تەڭشىكىگە باغلىق: رەسىم تەھلىلى، ھاۋارايى تەپسىلاتى، ۋە SMS، WhatsApp ياكى Telegram ئۇچۇرلىرى."
+    "ui_trust_and_safety_what_depends_on_setup": "بەزى ئىقتىدارلار تور ئۇلىنىشىغا موھتاج ياكى تەشكىلاتىڭىزنىڭ تەڭشىكىگە باغلىق: رەسىم تەھلىلى، ھاۋارايى تەپسىلاتى، ۋە SMS، WhatsApp ياكى Telegram ئۇچۇرلىرى.",
+    "ui_market_price_card_latest_published_year": "ئەڭ يېقىنقى ئېلان قىلىنغان يىل",
+    "ui_market_price_card_change_vs_year": "{year} يىلغا قارىغاندا {change}%",
+    "ui_market_price_card_per_90_kg_bag": "ھەر 90 كىلوگراملىق خالتا",
+    "ui_farmer_services_prices_live_desc": "FAOSTAT ئېلان قىلغان كۆممىقوناق، قۇرۇق پۇرچاق ۋە قوناقنىڭ يىللىق دۆلەتلىك ئىشلەپچىقارغۇچى باھاسى.",
+    "ui_farmer_services_prices_demo_desc": "رايون مەھسۇلات باھاسىنىڭ قانداق كۆرسىتىلىدىغانلىقىنىڭ ئۈلگىسى. تۆۋەندىكى سانلار مىسال سانلىق مەلۇمات، ھازىرقى بازار كۆزىتىشى ئەمەس.",
+    "ui_farmer_services_prices_live_crops": "كۆممىقوناق، قۇرۇق پۇرچاق ۋە قوناقنىڭ ئىشلەپچىقارغۇچى باھاسى",
+    "ui_farmer_services_prices_demo_crops": "كۆممىقوناق، پۇرچاق ۋە قوناقنىڭ مىسال باھاسى",
+    "ui_farmer_services_prices_live_source": "FAOSTAT تىن يىللىق دۆلەتلىك ئوتتۇرىچە، ھەر يىلى قايتا ئېلان قىلىنىدۇ",
+    "ui_farmer_services_prices_live_change": "ئالدىنقى ئېلان قىلىنغان يىلغا قارىغاندا ئۆزگىرىش",
+    "ui_farmer_services_prices_demo_more": "يەرلىك پۇلغا ئايلاندۇرۇش ۋە پارچە سېتىش ئوتتۇرا باھا يۈزلىنىشى"
 }

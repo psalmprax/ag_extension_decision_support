@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Rozwiązane pytania i ocena pomocy przez rolników",
     "pilot_subheading": "Czy usługa zwiększa plony?",
     "ui_memory_knowledge_by_topic_subtitle": "Jak zapisane odpowiedzi rozkładają się na kategorie",
-    "ui_trust_and_safety_what_depends_on_setup": "Niektóre funkcje wymagają połączenia z siecią lub zależą od ustawień Twojej organizacji: analiza zdjęć, szczegóły pogody oraz wiadomości SMS, WhatsApp lub Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Niektóre funkcje wymagają połączenia z siecią lub zależą od ustawień Twojej organizacji: analiza zdjęć, szczegóły pogody oraz wiadomości SMS, WhatsApp lub Telegram.",
+    "ui_market_price_card_latest_published_year": "ostatni opublikowany rok",
+    "ui_market_price_card_change_vs_year": "{change}% vs {year}",
+    "ui_market_price_card_per_90_kg_bag": "za worek 90 kg",
+    "ui_farmer_services_prices_live_desc": "Roczne krajowe ceny producenta kukurydzy, suchej fasoli i sorga, publikowane przez FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Podgląd, jak mogą wyglądać regionalne ceny płodów rolnych. Poniższe liczby to dane przykładowe, a nie bieżące obserwacje rynkowe.",
+    "ui_farmer_services_prices_live_crops": "Ceny producenta kukurydzy, suchej fasoli i sorga",
+    "ui_farmer_services_prices_demo_crops": "Przykładowe ceny kukurydzy, fasoli i sorga",
+    "ui_farmer_services_prices_live_source": "Roczne średnie krajowe z FAOSTAT, publikowane co roku",
+    "ui_farmer_services_prices_live_change": "Zmiana względem poprzedniego opublikowanego roku",
+    "ui_farmer_services_prices_demo_more": "Przeliczenie na walutę lokalną i trendy mediany cen detalicznych"
 }

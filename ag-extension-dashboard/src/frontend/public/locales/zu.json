@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Imibuzo exazululiwe, nokuthi abalimi balinganise kanjani usizo",
     "pilot_subheading": "Ingabe insizakalo inyusa isivuno?",
     "ui_memory_knowledge_by_topic_subtitle": "Ukuthi izimpendulo ezigciniwe zihlukaniswe kanjani ngezigaba",
-    "ui_trust_and_safety_what_depends_on_setup": "Ezinye izici zidinga ukuxhumana nenethiwekhi noma zincike kulokho inhlangano yakho ekumisile: ukuhlaziywa kwezithombe, imininingwane yesimo sezulu, nemilayezo ye-SMS, WhatsApp noma Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Ezinye izici zidinga ukuxhumana nenethiwekhi noma zincike kulokho inhlangano yakho ekumisile: ukuhlaziywa kwezithombe, imininingwane yesimo sezulu, nemilayezo ye-SMS, WhatsApp noma Telegram.",
+    "ui_market_price_card_latest_published_year": "unyaka oshicilelwe kamuva",
+    "ui_market_price_card_change_vs_year": "{change}% uma kuqhathaniswa no-{year}",
+    "ui_market_price_card_per_90_kg_bag": "ngesaka lika-90 kg",
+    "ui_farmer_services_prices_live_desc": "Amanani abakhiqizi kazwelonke minyaka yonke ommbila, ubhontshisi owomile namabele, ashicilelwe yi-FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Ukubuka kuqala ukuthi amanani ezitshalo zesifunda angaboniswa kanjani. Izinombolo ezingezansi ziyisibonelo, hhayi okubonwe emakethe njengamanje.",
+    "ui_farmer_services_prices_live_crops": "Amanani abakhiqizi ommbila, ubhontshisi owomile namabele",
+    "ui_farmer_services_prices_demo_crops": "Amanani esibonelo ommbila, ubhontshisi namabele",
+    "ui_farmer_services_prices_live_source": "Izilinganiso zikazwelonke zonyaka ezivela ku-FAOSTAT, eziphinde zishicilelwe njalo ngonyaka",
+    "ui_farmer_services_prices_live_change": "Ushintsho uma kuqhathaniswa nonyaka owedlule oshicilelwe",
+    "ui_farmer_services_prices_demo_more": "Ukuguqulela emalini yendawo nezitayela zamanani aphakathi okuthengisa"
 }

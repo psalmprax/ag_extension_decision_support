@@ -1,10 +1,11 @@
 import type { LandingPricesSnapshot } from './useLandingPrices';
 import { useLanguage } from '@/lib/LanguageContext';
 
-const CROP_LABELS: Record<string, string> = {
-  '0112': 'Maize',
-  '01591': 'Dry Beans',
-  '0115': 'Sorghum',
+/** FAOSTAT crop codes to the translated crop names. */
+const CROP_LABEL_KEYS: Record<string, string> = {
+  '0112': 'crop_maize',
+  '01591': 'ui_market_price_card_dry_beans',
+  '0115': 'ui_market_price_card_sorghum',
 };
 
 export function MarketPriceCard({ snapshot }: { snapshot: LandingPricesSnapshot | null }) {
@@ -45,7 +46,7 @@ export function MarketPriceCard({ snapshot }: { snapshot: LandingPricesSnapshot 
       className="p-3.5 rounded-xl bg-black/40 border border-white/10 space-y-2.5"
     >
       <div className="text-xs font-medium text-amber-300 flex items-center justify-between">
-        <span>{t('ui_market_price_card_producer_price')} {snapshot.period ?? 'latest published year'}</span>
+        <span>{t('ui_market_price_card_producer_price')} {snapshot.period ?? t('ui_market_price_card_latest_published_year')}</span>
         <span className="text-[10px] font-mono text-white/50">USD</span>
       </div>
       <div className="grid grid-cols-3 gap-2 text-center">
@@ -55,7 +56,7 @@ export function MarketPriceCard({ snapshot }: { snapshot: LandingPricesSnapshot 
           return (
             <div key={price.cropCode} className="p-2 rounded-lg bg-white/[0.04] border border-white/5">
               <div className="text-[11px] text-white/60">
-                {CROP_LABELS[price.cropCode] ?? price.crop}
+                {CROP_LABEL_KEYS[price.cropCode] ? t(CROP_LABEL_KEYS[price.cropCode]) : price.crop}
               </div>
               <div className="text-xs sm:text-sm font-medium text-white mt-0.5 tabular-nums">
                 ${price.usdPerBag90kg.toFixed(2)}
@@ -66,8 +67,8 @@ export function MarketPriceCard({ snapshot }: { snapshot: LandingPricesSnapshot 
                 }`}
               >
                 {showTrend
-                  ? `${trendUp ? '+' : ''}${price.yoyPct}% vs ${Number(snapshot.period) - 1}`
-                  : 'per 90 kg bag'}
+                  ? t('ui_market_price_card_change_vs_year', { change: `${trendUp ? '+' : ''}${price.yoyPct}`, year: Number(snapshot.period) - 1 })
+                  : t('ui_market_price_card_per_90_kg_bag')}
               </div>
             </div>
           );

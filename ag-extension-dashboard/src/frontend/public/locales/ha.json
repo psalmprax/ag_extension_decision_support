@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Tambayoyin da aka warware, da yadda manoma suka kimanta taimakon",
     "pilot_subheading": "Shin sabis ɗin yana ƙara amfanin gona?",
     "ui_memory_knowledge_by_topic_subtitle": "Yadda amsoshin da aka adana suka rarrabu a rukunoni",
-    "ui_trust_and_safety_what_depends_on_setup": "Wasu fasaloli suna buƙatar haɗin intanet ko sun dogara da abin da ƙungiyarka ta saita: nazarin hotuna, cikakken bayanin yanayi, da saƙonnin SMS, WhatsApp ko Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Wasu fasaloli suna buƙatar haɗin intanet ko sun dogara da abin da ƙungiyarka ta saita: nazarin hotuna, cikakken bayanin yanayi, da saƙonnin SMS, WhatsApp ko Telegram.",
+    "ui_market_price_card_latest_published_year": "shekarar da aka wallafa ta ƙarshe",
+    "ui_market_price_card_change_vs_year": "{change}% idan aka kwatanta da {year}",
+    "ui_market_price_card_per_90_kg_bag": "kowane buhu na kilo 90",
+    "ui_farmer_services_prices_live_desc": "Farashin masu samarwa na ƙasa a shekara na masara, wake busasshe da dawa, wanda FAOSTAT ta wallafa.",
+    "ui_farmer_services_prices_demo_desc": "Samfurin yadda za a iya nuna farashin amfanin gona na yanki. Lambobin da ke ƙasa misali ne, ba lura da kasuwa na yanzu ba.",
+    "ui_farmer_services_prices_live_crops": "Farashin masu samar da masara, wake busasshe da dawa",
+    "ui_farmer_services_prices_demo_crops": "Farashin misali na masara, wake da dawa",
+    "ui_farmer_services_prices_live_source": "Matsakaicin ƙasa na shekara daga FAOSTAT, ana sake wallafawa kowace shekara",
+    "ui_farmer_services_prices_live_change": "Canji idan aka kwatanta da shekarar da aka wallafa a baya",
+    "ui_farmer_services_prices_demo_more": "Sauya zuwa kuɗin gida da yanayin farashin tsakiya na sayar da kaya"
 }

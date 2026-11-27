@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Ibibazo byakemuwe, n'uko abahinzi basuzumye ubufasha",
     "pilot_subheading": "Ese serivisi yongera umusaruro?",
     "ui_memory_knowledge_by_topic_subtitle": "Uko ibisubizo byabitswe bigabanyije mu byiciro",
-    "ui_trust_and_safety_what_depends_on_setup": "Ibintu bimwe bikenera interineti cyangwa bishingira ku byo umuryango wawe washyizeho: isesengura ry'amafoto, amakuru arambuye y'ikirere, n'ubutumwa bwa SMS, WhatsApp cyangwa Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Ibintu bimwe bikenera interineti cyangwa bishingira ku byo umuryango wawe washyizeho: isesengura ry'amafoto, amakuru arambuye y'ikirere, n'ubutumwa bwa SMS, WhatsApp cyangwa Telegram.",
+    "ui_market_price_card_latest_published_year": "umwaka uheruka gutangazwa",
+    "ui_market_price_card_change_vs_year": "{change}% ugereranyije na {year}",
+    "ui_market_price_card_per_90_kg_bag": "ku mufuka w'ibiro 90",
+    "ui_farmer_services_prices_live_desc": "Ibiciro by'abakora ku rwego rw'igihugu buri mwaka ku bigori, ibishyimbo byumye n'amasaka, byatangajwe na FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Igaragaza uko ibiciro by'ibihingwa byo mu karere bishobora kwerekanwa. Imibare iri hasi ni ingero, si ibyagaragaye ku isoko ubu.",
+    "ui_farmer_services_prices_live_crops": "Ibiciro by'abakora ku bigori, ibishyimbo byumye n'amasaka",
+    "ui_farmer_services_prices_demo_crops": "Ibiciro by'urugero ku bigori, ibishyimbo n'amasaka",
+    "ui_farmer_services_prices_live_source": "Impuzandengo z'igihugu za buri mwaka ziva kuri FAOSTAT, zongera gutangazwa buri mwaka",
+    "ui_farmer_services_prices_live_change": "Impinduka ugereranyije n'umwaka watangajwe mbere",
+    "ui_farmer_services_prices_demo_more": "Guhindura mu mafaranga y'aho uri n'imigendekere y'ibiciro byo hagati byo gucuruza"
 }

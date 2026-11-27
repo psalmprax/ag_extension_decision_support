@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Løste spørgsmål, og hvordan landmænd vurderede hjælpen",
     "pilot_subheading": "Øger tjenesten høstudbyttet?",
     "ui_memory_knowledge_by_topic_subtitle": "Hvordan gemte svar fordeler sig på kategorier",
-    "ui_trust_and_safety_what_depends_on_setup": "Nogle funktioner kræver netværksforbindelse eller afhænger af, hvad din organisation har sat op: fotoanalyse, vejrdetaljer og beskeder via sms, WhatsApp eller Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Nogle funktioner kræver netværksforbindelse eller afhænger af, hvad din organisation har sat op: fotoanalyse, vejrdetaljer og beskeder via sms, WhatsApp eller Telegram.",
+    "ui_market_price_card_latest_published_year": "seneste offentliggjorte år",
+    "ui_market_price_card_change_vs_year": "{change} % vs. {year}",
+    "ui_market_price_card_per_90_kg_bag": "pr. 90 kg sæk",
+    "ui_farmer_services_prices_live_desc": "Årlige nationale producentpriser for majs, tørrede bønner og sorghum, offentliggjort af FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Eksempel på, hvordan regionale råvarepriser kan vises. Tallene nedenfor er eksempeldata, ikke aktuelle markedsobservationer.",
+    "ui_farmer_services_prices_live_crops": "Producentpriser for majs, tørrede bønner og sorghum",
+    "ui_farmer_services_prices_demo_crops": "Eksempelpriser for majs, bønner og sorghum",
+    "ui_farmer_services_prices_live_source": "Årlige nationale gennemsnit fra FAOSTAT, genudgivet hvert år",
+    "ui_farmer_services_prices_live_change": "Ændring i forhold til det forrige offentliggjorte år",
+    "ui_farmer_services_prices_demo_more": "Omregning til lokal valuta og tendenser i medianpriser i detailhandlen"
 }

@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "সমাধান হওয়া প্রশ্ন, এবং কৃষকরা সাহায্যকে কেমন মূল্যায়ন করেছেন",
     "pilot_subheading": "পরিষেবাটি কি ফলন বাড়ায়?",
     "ui_memory_knowledge_by_topic_subtitle": "সংরক্ষিত উত্তরগুলো বিভাগে কীভাবে ভাগ হয়েছে",
-    "ui_trust_and_safety_what_depends_on_setup": "কিছু সুবিধার জন্য নেটওয়ার্ক সংযোগ লাগে বা আপনার প্রতিষ্ঠান কী চালু করেছে তার ওপর নির্ভর করে: ছবি বিশ্লেষণ, আবহাওয়ার বিস্তারিত, এবং এসএমএস, হোয়াটসঅ্যাপ বা টেলিগ্রাম বার্তা।"
+    "ui_trust_and_safety_what_depends_on_setup": "কিছু সুবিধার জন্য নেটওয়ার্ক সংযোগ লাগে বা আপনার প্রতিষ্ঠান কী চালু করেছে তার ওপর নির্ভর করে: ছবি বিশ্লেষণ, আবহাওয়ার বিস্তারিত, এবং এসএমএস, হোয়াটসঅ্যাপ বা টেলিগ্রাম বার্তা।",
+    "ui_market_price_card_latest_published_year": "সর্বশেষ প্রকাশিত বছর",
+    "ui_market_price_card_change_vs_year": "{year}-এর তুলনায় {change}%",
+    "ui_market_price_card_per_90_kg_bag": "প্রতি ৯০ কেজির বস্তা",
+    "ui_farmer_services_prices_live_desc": "ভুট্টা, শুকনো শিম ও জোয়ারের বার্ষিক জাতীয় উৎপাদক মূল্য, FAOSTAT প্রকাশিত।",
+    "ui_farmer_services_prices_demo_desc": "আঞ্চলিক ফসলের দাম কীভাবে দেখানো যেতে পারে তার একটি নমুনা। নিচের সংখ্যাগুলো উদাহরণ ডেটা, বর্তমান বাজার পর্যবেক্ষণ নয়।",
+    "ui_farmer_services_prices_live_crops": "ভুট্টা, শুকনো শিম ও জোয়ারের উৎপাদক মূল্য",
+    "ui_farmer_services_prices_demo_crops": "ভুট্টা, শিম ও জোয়ারের উদাহরণ দাম",
+    "ui_farmer_services_prices_live_source": "FAOSTAT-এর বার্ষিক জাতীয় গড়, প্রতি বছর পুনঃপ্রকাশিত",
+    "ui_farmer_services_prices_live_change": "আগের প্রকাশিত বছরের তুলনায় পরিবর্তন",
+    "ui_farmer_services_prices_demo_more": "স্থানীয় মুদ্রায় রূপান্তর ও খুচরা মধ্যমা দামের প্রবণতা"
 }

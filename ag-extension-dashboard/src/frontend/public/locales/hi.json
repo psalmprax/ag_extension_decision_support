@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "हल हुए सवाल, और किसानों ने मदद को कैसा आँका",
     "pilot_subheading": "क्या सेवा से उपज बढ़ती है?",
     "ui_memory_knowledge_by_topic_subtitle": "सहेजे गए उत्तर श्रेणियों में कैसे बँटे हैं",
-    "ui_trust_and_safety_what_depends_on_setup": "कुछ सुविधाओं को नेटवर्क कनेक्शन चाहिए या वे इस पर निर्भर हैं कि आपकी संस्था ने क्या सेट किया है: फ़ोटो विश्लेषण, मौसम का विवरण, और एसएमएस, व्हाट्सऐप या टेलीग्राम संदेश।"
+    "ui_trust_and_safety_what_depends_on_setup": "कुछ सुविधाओं को नेटवर्क कनेक्शन चाहिए या वे इस पर निर्भर हैं कि आपकी संस्था ने क्या सेट किया है: फ़ोटो विश्लेषण, मौसम का विवरण, और एसएमएस, व्हाट्सऐप या टेलीग्राम संदेश।",
+    "ui_market_price_card_latest_published_year": "नवीनतम प्रकाशित वर्ष",
+    "ui_market_price_card_change_vs_year": "{year} की तुलना में {change}%",
+    "ui_market_price_card_per_90_kg_bag": "प्रति 90 किलो बोरी",
+    "ui_farmer_services_prices_live_desc": "मक्का, सूखी फलियों और ज्वार की वार्षिक राष्ट्रीय उत्पादक कीमतें, FAOSTAT द्वारा प्रकाशित।",
+    "ui_farmer_services_prices_demo_desc": "क्षेत्रीय फ़सल कीमतें कैसे दिखाई जा सकती हैं, इसकी झलक। नीचे के आँकड़े उदाहरण डेटा हैं, वर्तमान बाज़ार अवलोकन नहीं।",
+    "ui_farmer_services_prices_live_crops": "मक्का, सूखी फलियों और ज्वार की उत्पादक कीमतें",
+    "ui_farmer_services_prices_demo_crops": "मक्का, फलियों और ज्वार की उदाहरण कीमतें",
+    "ui_farmer_services_prices_live_source": "FAOSTAT से वार्षिक राष्ट्रीय औसत, हर साल दोबारा प्रकाशित",
+    "ui_farmer_services_prices_live_change": "पिछले प्रकाशित वर्ष की तुलना में बदलाव",
+    "ui_farmer_services_prices_demo_more": "स्थानीय मुद्रा में रूपांतरण और खुदरा माध्यिका कीमतों के रुझान"
 }

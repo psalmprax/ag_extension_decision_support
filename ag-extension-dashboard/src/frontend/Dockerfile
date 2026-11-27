@@ -61,8 +61,14 @@ CMD ["npm", "run", "dev", "--", "--host"]
 # ============================================================
 FROM nginx:alpine AS production
 
-# Upgrade Alpine packages to patch upstream CVEs (e.g. pcre2, libexpat) and install tini
-RUN apk upgrade --no-cache && apk add --no-cache tini
+# Upgrade Alpine packages to patch upstream CVEs (e.g. pcre2, libexpat) and install tini.
+# Tried three times: a single I/O error fetching a mirror's package index ("tini (no such
+# package)") once failed a whole stage deploy. A real problem still fails the build.
+RUN for attempt in 1 2 3; do \
+      apk upgrade --no-cache && apk add --no-cache tini && exit 0; \
+      echo "apk attempt ${attempt} failed; retrying in 5s" >&2; sleep 5; \
+    done; \
+    echo "apk could not install tini after 3 attempts" >&2; exit 1
 
 # Remove default config
 RUN rm /etc/nginx/conf.d/default.conf

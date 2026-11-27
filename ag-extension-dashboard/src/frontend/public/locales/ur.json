@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "حل شدہ سوالات، اور کسانوں نے مدد کو کیسا درجہ دیا",
     "pilot_subheading": "کیا یہ سروس پیداوار بڑھاتی ہے؟",
     "ui_memory_knowledge_by_topic_subtitle": "محفوظ جوابات زمروں میں کیسے بٹے ہیں",
-    "ui_trust_and_safety_what_depends_on_setup": "کچھ سہولیات کو نیٹ ورک کنکشن درکار ہے یا وہ اس پر منحصر ہیں جو آپ کی تنظیم نے ترتیب دیا ہے: تصویر کا تجزیہ، موسم کی تفصیل، اور ایس ایم ایس، واٹس ایپ یا ٹیلیگرام پیغامات۔"
+    "ui_trust_and_safety_what_depends_on_setup": "کچھ سہولیات کو نیٹ ورک کنکشن درکار ہے یا وہ اس پر منحصر ہیں جو آپ کی تنظیم نے ترتیب دیا ہے: تصویر کا تجزیہ، موسم کی تفصیل، اور ایس ایم ایس، واٹس ایپ یا ٹیلیگرام پیغامات۔",
+    "ui_market_price_card_latest_published_year": "تازہ ترین شائع شدہ سال",
+    "ui_market_price_card_change_vs_year": "{year} کے مقابلے میں {change}%",
+    "ui_market_price_card_per_90_kg_bag": "فی 90 کلو بوری",
+    "ui_farmer_services_prices_live_desc": "مکئی، خشک پھلیوں اور جوار کی سالانہ قومی پیداواری قیمتیں، جو FAOSTAT شائع کرتا ہے۔",
+    "ui_farmer_services_prices_demo_desc": "علاقائی فصلوں کی قیمتیں کیسے دکھائی جا سکتی ہیں، اس کی جھلک۔ نیچے دیے گئے اعداد مثالی ڈیٹا ہیں، موجودہ منڈی کے مشاہدات نہیں۔",
+    "ui_farmer_services_prices_live_crops": "مکئی، خشک پھلیوں اور جوار کی پیداواری قیمتیں",
+    "ui_farmer_services_prices_demo_crops": "مکئی، پھلیوں اور جوار کی مثالی قیمتیں",
+    "ui_farmer_services_prices_live_source": "FAOSTAT کی سالانہ قومی اوسط، ہر سال دوبارہ شائع",
+    "ui_farmer_services_prices_live_change": "پچھلے شائع شدہ سال کے مقابلے میں تبدیلی",
+    "ui_farmer_services_prices_demo_more": "مقامی کرنسی میں تبدیلی اور پرچون اوسط قیمت کے رجحانات"
 }

@@ -179,9 +179,7 @@ export function FarmerServices() {
                   {t('ui_farmer_services_check_fair_market_prices')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  {livePrices
-                    ? 'Annual national producer prices for maize, dry beans and sorghum, published by FAOSTAT.'
-                    : 'Preview how regional commodity prices could be shown. The figures below are illustrative demo data, not current market observations.'}
+                  {t(livePrices ? 'ui_farmer_services_prices_live_desc' : 'ui_farmer_services_prices_demo_desc')}
                 </p>
               </div>
 
@@ -193,21 +191,21 @@ export function FarmerServices() {
                   <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>{livePrices ? 'Producer prices for maize, dry beans & sorghum' : 'Example prices for maize, beans & sorghum'}</span>
+                  <span>{t(livePrices ? 'ui_farmer_services_prices_live_crops' : 'ui_farmer_services_prices_demo_crops')}</span>
                 </div>
                 {livePrices && (
                   <div className="flex items-center gap-2.5">
                     <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
                       <Check className="w-3 h-3" />
                     </div>
-                    <span>Annual national averages from FAOSTAT, republished yearly</span>
+                    <span>{t('ui_farmer_services_prices_live_source')}</span>
                   </div>
                 )}
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>{livePrices ? 'Year-on-year change against the previous published year' : 'Local currency conversions & retail median trend graphs'}</span>
+                  <span>{t(livePrices ? 'ui_farmer_services_prices_live_change' : 'ui_farmer_services_prices_demo_more')}</span>
                 </div>
               </div>
             </div>

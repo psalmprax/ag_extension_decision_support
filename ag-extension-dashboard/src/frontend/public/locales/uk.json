@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Вирішені питання та як фермери оцінили допомогу",
     "pilot_subheading": "Чи підвищує сервіс урожай?",
     "ui_memory_knowledge_by_topic_subtitle": "Як збережені відповіді розподілені за категоріями",
-    "ui_trust_and_safety_what_depends_on_setup": "Деяким функціям потрібен зв'язок або налаштування вашої організації: аналіз фото, детальна погода та повідомлення через SMS, WhatsApp або Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Деяким функціям потрібен зв'язок або налаштування вашої організації: аналіз фото, детальна погода та повідомлення через SMS, WhatsApp або Telegram.",
+    "ui_market_price_card_latest_published_year": "останній опублікований рік",
+    "ui_market_price_card_change_vs_year": "{change}% до {year}",
+    "ui_market_price_card_per_90_kg_bag": "за мішок 90 кг",
+    "ui_farmer_services_prices_live_desc": "Річні національні ціни виробників на кукурудзу, суху квасолю та сорго, опубліковані FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Приклад того, як можуть показуватися регіональні ціни. Цифри нижче — приклад, а не поточні спостереження ринку.",
+    "ui_farmer_services_prices_live_crops": "Ціни виробників на кукурудзу, суху квасолю та сорго",
+    "ui_farmer_services_prices_demo_crops": "Приклад цін на кукурудзу, квасолю та сорго",
+    "ui_farmer_services_prices_live_source": "Річні середні по країні від FAOSTAT, публікуються щороку",
+    "ui_farmer_services_prices_live_change": "Зміна до попереднього опублікованого року",
+    "ui_farmer_services_prices_demo_more": "Перерахунок у місцеву валюту та динаміка медіанних роздрібних цін"
 }

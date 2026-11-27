@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Questions résolues et note donnée par les agriculteurs",
     "pilot_subheading": "Le service augmente-t-il les récoltes ?",
     "ui_memory_knowledge_by_topic_subtitle": "Répartition des réponses enregistrées par catégorie",
-    "ui_trust_and_safety_what_depends_on_setup": "Certaines fonctions demandent une connexion réseau ou dépendent de ce que votre organisation a mis en place : analyse des photos, détail météo et messages par SMS, WhatsApp ou Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Certaines fonctions demandent une connexion réseau ou dépendent de ce que votre organisation a mis en place : analyse des photos, détail météo et messages par SMS, WhatsApp ou Telegram.",
+    "ui_market_price_card_latest_published_year": "dernière année publiée",
+    "ui_market_price_card_change_vs_year": "{change} % vs {year}",
+    "ui_market_price_card_per_90_kg_bag": "par sac de 90 kg",
+    "ui_farmer_services_prices_live_desc": "Prix nationaux annuels à la production du maïs, des haricots secs et du sorgho, publiés par FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Aperçu de l'affichage des prix régionaux des produits. Les chiffres ci-dessous sont des données d'exemple, pas des observations actuelles du marché.",
+    "ui_farmer_services_prices_live_crops": "Prix à la production du maïs, des haricots secs et du sorgho",
+    "ui_farmer_services_prices_demo_crops": "Prix d'exemple pour le maïs, les haricots et le sorgho",
+    "ui_farmer_services_prices_live_source": "Moyennes nationales annuelles de FAOSTAT, republiées chaque année",
+    "ui_farmer_services_prices_live_change": "Variation par rapport à l'année publiée précédente",
+    "ui_farmer_services_prices_demo_more": "Conversion en monnaie locale et tendances des prix médians de détail"
 }

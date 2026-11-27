@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "الأسئلة التي حُلّت وكيف قيّم المزارعون المساعدة",
     "pilot_subheading": "هل تزيد الخدمة المحاصيل؟",
     "ui_memory_knowledge_by_topic_subtitle": "كيف تتوزع الإجابات المحفوظة على الفئات",
-    "ui_trust_and_safety_what_depends_on_setup": "بعض الميزات تحتاج إلى اتصال بالشبكة أو تعتمد على ما أعدّته مؤسستك: تحليل الصور وتفاصيل الطقس والرسائل عبر SMS أو واتساب أو تيليغرام."
+    "ui_trust_and_safety_what_depends_on_setup": "بعض الميزات تحتاج إلى اتصال بالشبكة أو تعتمد على ما أعدّته مؤسستك: تحليل الصور وتفاصيل الطقس والرسائل عبر SMS أو واتساب أو تيليغرام.",
+    "ui_market_price_card_latest_published_year": "آخر سنة منشورة",
+    "ui_market_price_card_change_vs_year": "{change}% مقابل {year}",
+    "ui_market_price_card_per_90_kg_bag": "لكل كيس 90 كغ",
+    "ui_farmer_services_prices_live_desc": "أسعار المنتجين الوطنية السنوية للذرة والفاصوليا الجافة والذرة الرفيعة، المنشورة من FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "معاينة لكيفية عرض أسعار المحاصيل الإقليمية. الأرقام أدناه بيانات توضيحية، وليست ملاحظات حالية للسوق.",
+    "ui_farmer_services_prices_live_crops": "أسعار المنتجين للذرة والفاصوليا الجافة والذرة الرفيعة",
+    "ui_farmer_services_prices_demo_crops": "أسعار مثال للذرة والفاصوليا والذرة الرفيعة",
+    "ui_farmer_services_prices_live_source": "متوسطات وطنية سنوية من FAOSTAT، تُعاد نشرها كل عام",
+    "ui_farmer_services_prices_live_change": "التغير مقارنة بالسنة المنشورة السابقة",
+    "ui_farmer_services_prices_demo_more": "التحويل إلى العملة المحلية واتجاهات متوسط أسعار التجزئة"
 }

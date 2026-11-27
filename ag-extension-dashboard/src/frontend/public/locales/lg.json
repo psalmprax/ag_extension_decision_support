@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Ebibuuzo ebigonjoddwa, n'engeri abalimi gye bapimye obuyambi",
     "pilot_subheading": "Empeereza eyongera ku makungula?",
     "ui_memory_knowledge_by_topic_subtitle": "Engeri eby'okuddamu ebiterekeddwa gye byawuddwamu mu biti",
-    "ui_trust_and_safety_what_depends_on_setup": "Ebimu ku bikozesebwa byetaaga yintaneeti oba bisinziira ku ekyo ekitongole kyo kye kyateekawo: okwekenneenya ebifaananyi, ebikwata ku budde mu bujjuvu, n'obubaka bwa SMS, WhatsApp oba Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Ebimu ku bikozesebwa byetaaga yintaneeti oba bisinziira ku ekyo ekitongole kyo kye kyateekawo: okwekenneenya ebifaananyi, ebikwata ku budde mu bujjuvu, n'obubaka bwa SMS, WhatsApp oba Telegram.",
+    "ui_market_price_card_latest_published_year": "omwaka ogwasembyeyo okufulumizibwa",
+    "ui_market_price_card_change_vs_year": "{change}% bw'ogeraageranya ne {year}",
+    "ui_market_price_card_per_90_kg_bag": "buli nsawo ya kilo 90",
+    "ui_farmer_services_prices_live_desc": "Emiwendo gy'abalimi egy'eggwanga buli mwaka ku kasooli, ebijanjaalo ebikalu n'omuwemba, egyafulumizibwa FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Okulaga engeri emiwendo gy'ebirime mu bitundu gye giyinza okulagibwamu. Ennamba wansi za kyakulabirako, si bye balabye mu katale kati.",
+    "ui_farmer_services_prices_live_crops": "Emiwendo gy'abalimi ku kasooli, ebijanjaalo ebikalu n'omuwemba",
+    "ui_farmer_services_prices_demo_crops": "Emiwendo egy'okulabirako ku kasooli, ebijanjaalo n'omuwemba",
+    "ui_farmer_services_prices_live_source": "Emiwendo egy'awakati egy'eggwanga buli mwaka okuva mu FAOSTAT, egifulumizibwa buli mwaka",
+    "ui_farmer_services_prices_live_change": "Enkyukakyuka bw'ogeraageranya n'omwaka ogwafulumizibwa emabega",
+    "ui_farmer_services_prices_demo_more": "Okukyusa mu ssente z'omu kitundu n'enkyukakyuka y'emiwendo egy'awakati egy'okutunda"
 }

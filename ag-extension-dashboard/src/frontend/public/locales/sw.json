@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Maswali yaliyotatuliwa, na jinsi wakulima walivyokadiria msaada",
     "pilot_subheading": "Je, huduma inaongeza mavuno?",
     "ui_memory_knowledge_by_topic_subtitle": "Jinsi majibu yaliyohifadhiwa yanavyogawanyika kwa makundi",
-    "ui_trust_and_safety_what_depends_on_setup": "Baadhi ya vipengele vinahitaji mtandao au hutegemea kile shirika lako limeweka: uchambuzi wa picha, undani wa hali ya hewa, na ujumbe wa SMS, WhatsApp au Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Baadhi ya vipengele vinahitaji mtandao au hutegemea kile shirika lako limeweka: uchambuzi wa picha, undani wa hali ya hewa, na ujumbe wa SMS, WhatsApp au Telegram.",
+    "ui_market_price_card_latest_published_year": "mwaka uliochapishwa hivi karibuni",
+    "ui_market_price_card_change_vs_year": "{change}% ikilinganishwa na {year}",
+    "ui_market_price_card_per_90_kg_bag": "kwa gunia la kilo 90",
+    "ui_farmer_services_prices_live_desc": "Bei za mzalishaji za kitaifa kila mwaka za mahindi, maharage makavu na mtama, zilizochapishwa na FAOSTAT.",
+    "ui_farmer_services_prices_demo_desc": "Onyesho la jinsi bei za mazao za kikanda zinavyoweza kuonyeshwa. Takwimu zilizo hapa chini ni mfano, si uchunguzi wa soko wa sasa.",
+    "ui_farmer_services_prices_live_crops": "Bei za mzalishaji za mahindi, maharage makavu na mtama",
+    "ui_farmer_services_prices_demo_crops": "Bei za mfano za mahindi, maharage na mtama",
+    "ui_farmer_services_prices_live_source": "Wastani wa kitaifa wa kila mwaka kutoka FAOSTAT, huchapishwa upya kila mwaka",
+    "ui_farmer_services_prices_live_change": "Mabadiliko ikilinganishwa na mwaka uliochapishwa awali",
+    "ui_farmer_services_prices_demo_more": "Ubadilishaji kwa sarafu ya ndani na mwenendo wa bei ya kati ya rejareja"
 }

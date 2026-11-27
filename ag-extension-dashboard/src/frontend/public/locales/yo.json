@@ -3128,5 +3128,15 @@
     "dash_support_subtitle": "Àwọn ìbéèrè tí a yanjú, àti bí àwọn àgbẹ̀ ṣe ṣe àyẹ̀wò ìrànlọ́wọ́ náà",
     "pilot_subheading": "Ṣé iṣẹ́ náà ń mú ìkórè pọ̀ sí i?",
     "ui_memory_knowledge_by_topic_subtitle": "Bí àwọn ìdáhùn tí a fi pamọ́ ṣe pín sí ẹ̀ka",
-    "ui_trust_and_safety_what_depends_on_setup": "Àwọn ẹ̀yà kan nílò ìsopọ̀ nẹ́tíwọ̀ọ̀kì tàbí dá lórí ohun tí àjọ rẹ ti ṣètò: àyẹ̀wò fọ́tò, kúlẹ̀kúlẹ̀ ojú ọjọ́, àti ìfiránṣẹ́ SMS, WhatsApp tàbí Telegram."
+    "ui_trust_and_safety_what_depends_on_setup": "Àwọn ẹ̀yà kan nílò ìsopọ̀ nẹ́tíwọ̀ọ̀kì tàbí dá lórí ohun tí àjọ rẹ ti ṣètò: àyẹ̀wò fọ́tò, kúlẹ̀kúlẹ̀ ojú ọjọ́, àti ìfiránṣẹ́ SMS, WhatsApp tàbí Telegram.",
+    "ui_market_price_card_latest_published_year": "ọdún tí a tẹ̀jáde kẹ́yìn",
+    "ui_market_price_card_change_vs_year": "{change}% ní ìfiwéra pẹ̀lú {year}",
+    "ui_market_price_card_per_90_kg_bag": "fún àpò 90 kg kọ̀ọ̀kan",
+    "ui_farmer_services_prices_live_desc": "Iye owó olùpèsè ti orílẹ̀-èdè lọ́dọọdún fún àgbàdo, ẹ̀wà gbígbẹ àti ọkà bàbà, tí FAOSTAT tẹ̀jáde.",
+    "ui_farmer_services_prices_demo_desc": "Àpẹẹrẹ bí a ṣe lè fi iye owó irè oko agbègbè hàn. Àwọn nọ́ńbà ìsàlẹ̀ jẹ́ dátà àpẹẹrẹ, kì í ṣe àkíyèsí ọjà lọ́wọ́lọ́wọ́.",
+    "ui_farmer_services_prices_live_crops": "Iye owó olùpèsè fún àgbàdo, ẹ̀wà gbígbẹ àti ọkà bàbà",
+    "ui_farmer_services_prices_demo_crops": "Iye owó àpẹẹrẹ fún àgbàdo, ẹ̀wà àti ọkà bàbà",
+    "ui_farmer_services_prices_live_source": "Ìpíndọ́gba orílẹ̀-èdè lọ́dọọdún láti FAOSTAT, tí a ń tún tẹ̀jáde lọ́dọọdún",
+    "ui_farmer_services_prices_live_change": "Ìyípadà ní ìfiwéra pẹ̀lú ọdún tí a tẹ̀jáde ṣáájú",
+    "ui_farmer_services_prices_demo_more": "Ìyípadà sí owó agbègbè àti ìtẹ̀sí iye owó àárín ọjà títà"
 }
