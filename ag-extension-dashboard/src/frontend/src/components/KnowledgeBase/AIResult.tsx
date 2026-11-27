@@ -649,7 +649,7 @@ export const AIResult: React.FC<AIResultProps> = ({ result }) => {
     }
 
     const currentText = translations[activeLang] || result.answer;
-    const plainText = cleanTextForSpeech(currentText);
+    const plainText = cleanTextForSpeech(currentText, activeLang);
     const currentLangObj = MULTILINGUAL_LANGUAGES.find(l => l.code === activeLang) || MULTILINGUAL_LANGUAGES[0];
 
     stopAllAudioPlayback();
