@@ -32,10 +32,7 @@ async function widerThanScreen(page: Page): Promise<string[]> {
 async function textStuckUnderChatButton(page: Page): Promise<string[]> {
   const button = page.getByRole('button', { name: /agronomic assistant/i });
   if (!(await button.count())) return [];
-  // The site scrolls smoothly; jump straight to the end and wait until the page is there,
-  // or a slower browser is checked halfway down.
-  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
-  await page.waitForFunction(() => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2);
+  await scrollToEnd(page);
   const box = await button.boundingBox();
   if (!box) return [];
   return page.evaluate(({ x, y, width, height }) => {
@@ -56,23 +53,26 @@ async function textStuckUnderChatButton(page: Page): Promise<string[]> {
   }, box);
 }
 
-/** Browsers refuse taller screenshots (Firefox: 32767 px), and the landing page is longer. */
-const MAX_SCREENSHOT_HEIGHT = 30000;
+async function scrollToEnd(page: Page): Promise<void> {
+  // The site scrolls smoothly; jump straight to the end and wait until the page is there,
+  // or a slower browser is checked halfway down.
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+  await page.waitForFunction(() => window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 2);
+}
 
-async function keepScreenshot(page: Page, testInfo: TestInfo, name: string): Promise<void> {
-  const path = testInfo.outputPath(`phone-${testInfo.project.name}-${name}.png`);
-  const { width, height } = await page.evaluate(() => ({
-    width: document.documentElement.clientWidth,
-    height: document.documentElement.scrollHeight,
-  }));
-  // One image pixel per CSS pixel, so a phone's 2x density does not double the height.
-  await page.screenshot({
-    path,
-    fullPage: true,
-    scale: 'css',
-    clip: { x: 0, y: 0, width, height: Math.min(height, MAX_SCREENSHOT_HEIGHT) },
-  });
-  await testInfo.attach(`${name} (${testInfo.project.name})`, { path, contentType: 'image/png' });
+/**
+ * Two one-screen captures, the top of the page and its end (where the floating chat button
+ * sits over the last content). One screen each stays far below the browsers' size limits
+ * (Firefox refuses anything over 32767 px), however long the page is.
+ */
+async function keepScreenshots(page: Page, testInfo: TestInfo, name: string): Promise<void> {
+  for (const end of ['top', 'bottom'] as const) {
+    if (end === 'top') await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }));
+    else await scrollToEnd(page);
+    const path = testInfo.outputPath(`phone-${testInfo.project.name}-${name}-${end}.png`);
+    await page.screenshot({ path });
+    await testInfo.attach(`${name}, ${end} (${testInfo.project.name})`, { path, contentType: 'image/png' });
+  }
 }
 
 async function expectFitsPhone(page: Page, testInfo: TestInfo, name: string): Promise<void> {
@@ -83,7 +83,7 @@ async function expectFitsPhone(page: Page, testInfo: TestInfo, name: string): Pr
     const size = await title.evaluate(node => parseFloat(getComputedStyle(node).fontSize));
     expect(size, `${name}: the page title stays readable on a phone`).toBeGreaterThanOrEqual(24);
   }
-  await keepScreenshot(page, testInfo, name);
+  await keepScreenshots(page, testInfo, name);
 }
 
 test('landing page fits a phone and the chat button covers no text', async ({ page }, testInfo) => {

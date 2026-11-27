@@ -1,3 +1,4 @@
+import fsPromises from 'fs/promises';
 import { objectStorage, resolveBackendType, ObjectNotFoundError } from '@/services/objectStorageService';
 import {
   saveUpload,
@@ -43,6 +44,18 @@ describe('Object Storage & Media Pipeline', () => {
       const [sql, params] = queryMock.mock.calls[0];
       expect(sql).toMatch(/SET status = 'missing' WHERE storage_key = \$1 AND status = 'active'/);
       expect(params).toEqual(['00000000-0000-4000-8000-00000000dead.png']);
+    });
+
+    it('an unreadable file (EACCES) is a real error, not a missing file', async () => {
+      const denied = Object.assign(new Error('permission denied'), { code: 'EACCES' });
+      const spy = jest.spyOn(fsPromises, 'readFile').mockRejectedValueOnce(denied);
+      try {
+        const read = readStoredUpload('00000000-0000-4000-8000-00000000beef.png');
+        await expect(read).rejects.toBe(denied);
+        await expect(read).rejects.not.toBeInstanceOf(ObjectNotFoundError);
+      } finally {
+        spy.mockRestore();
+      }
     });
 
     it('a database failure while marking does not throw into the request', async () => {
@@ -249,6 +262,8 @@ describe('Object Storage & Media Pipeline', () => {
       });
 
       expect(result.id).toBe('video-rec-1');
+      // Only stored bytes count: deleted uploads and files lost from storage do not.
+      expect(queryMock.mock.calls[0][1]).toEqual(['officer-1', ['deleted', 'missing']]);
       expect(result.storageKey).toMatch(/^[a-f0-9-]+\.mp4$/);
       expect(result.originalName).toBe('drone_inspection.mp4');
       expect(result.size).toBe(mp4Buffer.length);

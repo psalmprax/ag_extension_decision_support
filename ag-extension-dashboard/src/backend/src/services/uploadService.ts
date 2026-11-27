@@ -158,8 +158,9 @@ function safeOriginalName(name: string): string {
 
 async function checkStorageQuota(ownerUserId: string, incomingBytes: number): Promise<void> {
   const usage = await query<{ used: string | number | null }>(
-    'SELECT COALESCE(SUM(size_bytes), 0) AS used FROM upload_records WHERE owner_user_id = $1 AND status != $2',
-    [ownerUserId, 'deleted']
+    // Only bytes actually stored count: deleted uploads and files lost from storage ('missing') do not.
+    'SELECT COALESCE(SUM(size_bytes), 0) AS used FROM upload_records WHERE owner_user_id = $1 AND status <> ALL($2::text[])',
+    [ownerUserId, ['deleted', 'missing']]
   );
   const used = Number(usage.rows[0]?.used ?? 0);
   if (used + incomingBytes > USER_QUOTA_BYTES) {

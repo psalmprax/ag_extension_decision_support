@@ -125,7 +125,9 @@ COPY ${BACKEND_DIR}/ ./
 # Shared API contract for the dev image (predev hook vendors it into src/shared-api)
 COPY ag-extension-shared/src/api/ ./shared-src/api/
 
-RUN chown -R node:node /app
+# /app/uploads exists before the chown, so a backend_uploads volume mounted there starts
+# owned by the app user in development too.
+RUN mkdir -p /app/uploads && chown -R node:node /app
 USER node
 
 EXPOSE 3001

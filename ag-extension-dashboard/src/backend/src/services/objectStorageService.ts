@@ -126,6 +126,12 @@ export class ObjectNotFoundError extends Error {
 
 const S3_NOT_FOUND = new Set(['NoSuchKey', 'NotFound']);
 
+/** The local file does not exist (as opposed to existing but being unreadable). */
+function isAbsentOnDisk(err: unknown): boolean {
+  const code = typeof err === 'object' && err !== null && 'code' in err ? String(err.code) : '';
+  return code === 'ENOENT' || code === 'ENOTDIR';
+}
+
 /** A definite not-found from S3/R2 becomes ObjectNotFoundError; anything else stays a plain error. */
 function s3ReadError(key: string, err: unknown): Error {
   const name = typeof err === 'object' && err !== null && 'name' in err ? String(err.name) : '';
@@ -296,10 +302,12 @@ class ObjectStorageService {
 
     // Check local disk cache first
     const localPath = this.getLocalPath(cleanKey);
+    let localError: unknown;
     try {
       return await fs.readFile(localPath);
-    } catch {
-      // Not on local disk, fetch from Cloudflare R2 / S3
+    } catch (err) {
+      // Not on local disk (or unreadable): try Cloudflare R2 / S3 next, when configured.
+      localError = err;
     }
 
     if (this.s3Client && this.config.bucket) {
@@ -330,8 +338,10 @@ class ObjectStorageService {
       }
     }
 
-    // No bucket configured and not on local disk: the file is gone.
-    throw new ObjectNotFoundError(cleanKey);
+    // No bucket configured: only a definite absence means the file is gone. Anything else
+    // (permissions, a full or failing disk) is a real error, not a missing file.
+    if (isAbsentOnDisk(localError)) throw new ObjectNotFoundError(cleanKey, { cause: localError });
+    throw localError instanceof Error ? localError : new Error(`Could not read ${cleanKey}`, { cause: localError });
   }
 
   public async getObjectStream(key: string): Promise<{ stream: Readable; contentType?: string; contentLength?: number }> {

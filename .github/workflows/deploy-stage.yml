@@ -463,10 +463,14 @@ jobs:
             export DOCKER_BUILDER=stage-builder
             export JWT_SECRET="$(grep -E '^JWT_SECRET=' .env 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '"'\'' \r\n')"
 
+            # Uploads lived inside the backend container until it had a volume; copy them
+            # out before the recreate and back into the volume after (no-op once on a volume).
+            bash ../scripts/preserve-uploads.sh save
             docker compose \
               -f docker-compose.yml \
               -f docker-compose.staging.yml \
               up -d --build --force-recreate backend frontend ettametta-ollama redis-queue
+            bash ../scripts/preserve-uploads.sh restore
             echo
             echo "=== wait 30s for deps (db+redis) + build + boot ==="
             sleep 30
