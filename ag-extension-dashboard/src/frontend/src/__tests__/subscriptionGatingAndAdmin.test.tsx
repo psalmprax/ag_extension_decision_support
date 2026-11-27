@@ -27,6 +27,15 @@ vi.mock('@/demo', () => ({ useDemoMode: () => ({ isDemo: false }), DEMO_USERS: [
 vi.mock('@/pages/DiseaseDiagnosis', () => ({
   DiseaseDiagnosis: () => <div data-testid="disease-diagnosis-module">Disease Diagnosis Live Module</div>,
 }));
+vi.mock('@/pages/CropsFields', () => ({
+  CropsFields: () => <div data-testid="crops-fields-module">Crops and fields</div>,
+}));
+vi.mock('@/pages/ReportsPage', () => ({
+  ReportsPage: () => <div data-testid="reports-module">Reports</div>,
+}));
+vi.mock('@/components/BillingDashboard', () => ({
+  BillingDashboard: () => <div data-testid="billing-module">Billing</div>,
+}));
 vi.mock('@/pages/WorldMonitor', () => ({
   default: () => <div data-testid="worldmonitor-module">WorldMonitor Live Module</div>,
 }));
@@ -112,7 +121,7 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Available on Pro and Enterprise')).toBeInTheDocument();
+    expect(await screen.findByText('Not included in your account yet')).toBeInTheDocument();
     expect(screen.queryByTestId('disease-diagnosis-module')).not.toBeInTheDocument();
 
     rerender(
@@ -123,7 +132,7 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
       </MemoryRouter>
     );
 
-    expect(await screen.findByText('Available on Pro and Enterprise')).toBeInTheDocument();
+    expect(await screen.findByText('Not included in your account yet')).toBeInTheDocument();
     expect(screen.queryByTestId('worldmonitor-module')).not.toBeInTheDocument();
   });
 
@@ -529,5 +538,57 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
     expect(screen.getByText('Inactive')).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Edit access for/ })).not.toBeInTheDocument();
     expect(screen.queryByText('Edit access')).not.toBeInTheDocument();
+  });
+
+  describe('while billing is off', () => {
+    const freeOfficer = {
+      id: 'off-free',
+      email: 'free@example.org',
+      firstName: 'Free',
+      lastName: 'Officer',
+      role: 'extension_officer',
+      planName: 'Free',
+      isFree: true,
+    };
+    const renderTab = (tab: string) =>
+      render(
+        <MemoryRouter>
+          <Suspense fallback={null}>
+            <TabContent {...buildTabProps(tab)} />
+          </Suspense>
+        </MemoryRouter>
+      );
+
+    it('locks Crops & fields and Reports for Free accounts, with a way to ask for access', async () => {
+      useAppStore.setState({ user: freeOfficer });
+      const { unmount } = renderTab('fields');
+      expect(await screen.findByText('Not included in your account yet')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Ask us for access' }).getAttribute('href')).toMatch(/^mailto:info@gpfed\.com\?subject=/);
+      expect(screen.queryByTestId('crops-fields-module')).not.toBeInTheDocument();
+      expect(screen.queryByText('Available on Pro and Enterprise')).not.toBeInTheDocument();
+      unmount();
+
+      renderTab('reports');
+      expect(await screen.findByText('Not included in your account yet')).toBeInTheDocument();
+      expect(screen.queryByTestId('reports-module')).not.toBeInTheDocument();
+    });
+
+    it('opens a locked feature for an account an administrator granted it', async () => {
+      useAppStore.setState({ user: { ...freeOfficer, serviceAccess: ['fields'] } });
+      renderTab('fields');
+      expect(await screen.findByTestId('crops-fields-module')).toBeInTheDocument();
+    });
+
+    it('shows Billing only to administrators', async () => {
+      useAppStore.setState({ user: freeOfficer });
+      const { unmount } = renderTab('billing');
+      expect(await screen.findByText('Billing is not open yet')).toBeInTheDocument();
+      expect(screen.queryByTestId('billing-module')).not.toBeInTheDocument();
+      unmount();
+
+      useAppStore.setState({ user: { ...freeOfficer, id: 'off-admin', role: 'admin', planName: null } });
+      renderTab('billing');
+      expect(await screen.findByTestId('billing-module')).toBeInTheDocument();
+    });
   });
 });

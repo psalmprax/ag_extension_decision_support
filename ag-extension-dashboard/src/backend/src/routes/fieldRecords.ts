@@ -8,6 +8,7 @@ import { soilTestInputSchema } from '@/shared-api/fieldRecords';
 import { safeError } from '@/utils/safeResponse';
 import { logger } from '@/utils/logger';
 import { isUuid } from '@/utils/uuid';
+import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
 
 /**
  * Records kept for one field: soil test results and daily NASA POWER weather. Anyone who may
@@ -17,7 +18,7 @@ const router = Router();
 
 // Per route, not router.use: this router shares /fields with the main fields router, and
 // requests it does not handle should reach that one without being authorised twice.
-const fieldUsers = authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']);
+const fieldUsers = [authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']), requirePaidPlan('fields')];
 
 function rejectDemoChanges(req: Request, res: Response, next: NextFunction) {
     if (req.user?.isDemo) {

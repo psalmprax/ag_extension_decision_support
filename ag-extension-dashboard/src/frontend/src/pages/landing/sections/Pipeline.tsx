@@ -5,6 +5,7 @@ import { personas, pipelineStages, STAGE_STORIES, type AudiencePersona } from '.
 import { useLanguage } from '@/lib/LanguageContext';
 import { SectionHeader } from './SectionHeader';
 import { BUTTON_SECONDARY, CARD, CARD_TITLE, CONTAINER, ICON_TILE, SECTION, choiceClass } from './sectionStyles';
+import { PhotoBackdrop } from './PhotoBackdrop';
 
 const STEP_BUTTON =
   'w-11 h-11 inline-flex items-center justify-center rounded-md border border-white/[0.12] text-white/70 hover:bg-white/[0.06] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400';
@@ -24,6 +25,7 @@ export function Pipeline() {
 
   return (
     <section id="interactive-story" className={SECTION}>
+      <PhotoBackdrop src="/images/landing/hero-aerial.webp" width={1376} height={768} position="center" />
       <div className={CONTAINER}>
         <SectionHeader title={t('ui_agro_storytelling_section_from_satellite_orbit_to_soil_root_zo')} />
 

@@ -1,5 +1,9 @@
+import { ACCESS_CONTACT_EMAIL } from '@ag-extension/shared/api';
+
 /** A paid service behind the server's plan gate (backend services/paidServices.ts). */
-export type PaidService = 'chat' | 'field_visits' | 'analytics' | 'campaigns' | 'worldmonitor' | 'email_workflows';
+export type PaidService =
+  | 'chat' | 'field_visits' | 'analytics' | 'campaigns' | 'worldmonitor' | 'email_workflows'
+  | 'knowledge_ai' | 'fields' | 'reports';
 
 /** The fields of the signed-in user that decide plan access. */
 export interface PlanHolder {
@@ -32,4 +36,9 @@ export function lacksPaidAccess(user: PlanHolder | null | undefined, service?: P
 /** A Pro menu item stays locked on the Free plan unless the account was granted the item's service. */
 export function isMenuItemLocked(user: PlanHolder | null | undefined, item: { requiresPro?: boolean; service?: PaidService }): boolean {
   return Boolean(item.requiresPro) && lacksPaidAccess(user, item.service);
+}
+
+/** While billing is off, access is asked for by email and an administrator grants it. */
+export function accessRequestHref(featureName: string): string {
+  return `mailto:${ACCESS_CONTACT_EMAIL}?subject=${encodeURIComponent(`Access to ${featureName} on GPExts`)}`;
 }

@@ -1,10 +1,11 @@
 import React from 'react';
 import { Lock, Check } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
-import { lacksPaidAccess, type PaidService } from '@/lib/planAccess';
+import { accessRequestHref, lacksPaidAccess, type PaidService } from '@/lib/planAccess';
 import { useLanguage } from '@/lib/LanguageContext';
 import { planGateCopy, type PlanGateCategory } from '@/lib/planGateCopy';
 import { PRIMARY_BUTTON, SECONDARY_BUTTON } from '@/components/ui/controlStyles';
+import { ACCESS_CONTACT_EMAIL, BILLING_ENABLED } from '@ag-extension/shared/api';
 
 interface PlanUpgradeGuardProps {
   /** Translated name of the locked feature. */
@@ -17,6 +18,7 @@ interface PlanUpgradeGuardProps {
 // The server-side service behind each category (a system-administrator grant unlocks it).
 const SERVICE_FOR_CATEGORY: Partial<Record<NonNullable<PlanUpgradeGuardProps['category']>, PaidService>> = {
   chat: 'chat', visits: 'field_visits', analytics: 'analytics', worldmonitor: 'worldmonitor', workflows: 'email_workflows',
+  reports: 'reports', fields: 'fields', knowledge: 'knowledge_ai',
 };
 
 export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
@@ -43,7 +45,9 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
       <div className="max-w-xl w-full rounded-lg bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] p-6 sm:p-8">
         <p className="flex items-center gap-2 text-sm text-slate-500 dark:text-theme-text-muted">
           <Lock className="w-4 h-4" aria-hidden="true" />
-          {t('plan_gate_available_on', { defaultValue: 'Available on Pro and Enterprise' })}
+          {BILLING_ENABLED
+            ? t('plan_gate_available_on', { defaultValue: 'Available on Pro and Enterprise' })
+            : t('plan_gate_not_in_account', { defaultValue: 'Not included in your account yet' })}
         </p>
 
         <h2 className="mt-3 text-2xl font-medium text-slate-900 dark:text-white flex items-center gap-2">
@@ -61,14 +65,25 @@ export const PlanUpgradeGuard: React.FC<PlanUpgradeGuardProps> = ({
           ))}
         </ul>
 
-        <div className="mt-8 flex flex-col sm:flex-row gap-2">
-          <button onClick={() => setActiveTab('billing')} className={PRIMARY_BUTTON}>
-            {t('billing_matrix_upgrade_pro')}
-          </button>
-          <button onClick={() => setActiveTab('billing')} className={SECONDARY_BUTTON}>
-            {t('ui_plan_upgrade_guard_view_full_cost_access_matrix')}
-          </button>
-        </div>
+        {BILLING_ENABLED ? (
+          <div className="mt-8 flex flex-col sm:flex-row gap-2">
+            <button onClick={() => setActiveTab('billing')} className={PRIMARY_BUTTON}>
+              {t('billing_matrix_upgrade_pro')}
+            </button>
+            <button onClick={() => setActiveTab('billing')} className={SECONDARY_BUTTON}>
+              {t('ui_plan_upgrade_guard_view_full_cost_access_matrix')}
+            </button>
+          </div>
+        ) : (
+          <div className="mt-8 space-y-2">
+            <a href={accessRequestHref(featureName)} className={`${PRIMARY_BUTTON} inline-flex`}>
+              {t('plan_gate_ask_access', { defaultValue: 'Ask us for access' })}
+            </a>
+            <p className="text-sm text-slate-600 dark:text-theme-text-secondary">
+              {t('plan_gate_ask_access_note', { defaultValue: 'Email {email}. We switch it on for your account.', email: ACCESS_CONTACT_EMAIL })}
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

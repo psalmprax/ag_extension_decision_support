@@ -204,6 +204,13 @@ export function Footer() {
                     <p>
                       <strong className="text-white">{t('ui_footer_5_right_to_erasure_portability')}</strong> {t('ui_footer_administrators_can_export_full_tenan')}
                     </p>
+                    <p>
+                      <strong className="text-white">{t('privacy_demo_visits_title', { defaultValue: '6. Demo visits.' })}</strong>{' '}
+                      {t('privacy_demo_visits_body', {
+                        defaultValue:
+                          'When you open the demo, we record the time, your approximate country, region and city (worked out from your IP address on our own server, without sending it to anyone), your type of device, and your IP address with its last part removed (for example 203.0.113.x). We use this to see where interest in the demo comes from and to stop misuse, and delete it after 90 days. As with any sign-in, the demo session also keeps your IP address for security.',
+                      })}
+                    </p>
                   </div>
                 ) : (
                   <div className="space-y-3 sm:space-y-4 text-xs sm:text-sm text-slate-200 leading-relaxed font-normal break-words">

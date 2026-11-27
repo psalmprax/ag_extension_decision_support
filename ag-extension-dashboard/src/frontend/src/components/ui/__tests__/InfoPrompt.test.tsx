@@ -5,6 +5,9 @@ import { InfoPrompt, InfoPromptIcon, InlinePrompt } from '../InfoPrompt';
 import { resolveSubscriptionState } from '../subscriptionPromptState';
 import { useAppStore } from '@/store/useAppStore';
 
+// These tests cover the upgrade buttons, which only exist while billing is on.
+vi.mock('@ag-extension/shared/api', async importOriginal => ({ ...(await importOriginal<object>()), BILLING_ENABLED: true }));
+
 // Mock framer-motion for smooth test execution
 vi.mock('framer-motion', () => ({
   motion: {

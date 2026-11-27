@@ -6,6 +6,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useDemoMode } from '@/demo/useDemoMode';
 import type { DirectoryUser } from './users/types';
+import { DemoVisitsPanel } from './DemoVisitsPanel';
 
 type DemoUser = Pick<DirectoryUser, 'id' | 'firstName' | 'lastName' | 'email'>;
 
@@ -53,6 +54,7 @@ export function AdminDemoRecords() {
       >
         {t('users_demo_title')}
       </button>
+      <DemoVisitsPanel />
       {open && (
         <div id="admin-demo-records" className="space-y-4">
           <p className="text-sm text-slate-600 dark:text-theme-text-secondary">{t('users_demo_notice')}</p>

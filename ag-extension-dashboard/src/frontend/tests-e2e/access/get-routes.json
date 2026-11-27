@@ -68,6 +68,7 @@
   "/api/v1/countries",
   "/api/v1/data-rights/farmers/:farmerId/consents",
   "/api/v1/data-rights/farmers/:farmerId/export",
+  "/api/v1/demo-visits",
   "/api/v1/diagnosis-tests",
   "/api/v1/efficacy/followups",
   "/api/v1/efficacy/summary",

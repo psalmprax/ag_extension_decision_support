@@ -23,6 +23,18 @@ export const PAID_SERVICES = {
     label: 'WorldMonitor Spatial Intelligence',
     grantableTo: ['extension_officer', 'regional_manager'],
   },
+  knowledge_ai: {
+    label: 'Knowledge AI answers',
+    grantableTo: ['farmer', 'extension_officer', 'regional_manager'],
+  },
+  fields: {
+    label: 'Crops & fields',
+    grantableTo: ['farmer', 'extension_officer', 'regional_manager'],
+  },
+  reports: {
+    label: 'Reports',
+    grantableTo: ['extension_officer', 'regional_manager'],
+  },
   // Only admins reach the email workflows, and admins are never on the Free plan.
   email_workflows: {
     label: 'Automated Email Workflows',

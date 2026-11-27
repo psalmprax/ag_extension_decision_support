@@ -28,6 +28,8 @@ import {
   type AskResponse,
 } from '@/api/knowledgeService';
 import { useAppStore } from '@/store/useAppStore';
+import { lacksPaidAccess } from '@/lib/planAccess';
+import { KnowledgeAskLock } from './KnowledgeAskLock';
 import { KnowledgeStats } from './KnowledgeStats';
 import { SearchBar } from './SearchBar';
 import { AIResult } from './AIResult';
@@ -163,6 +165,7 @@ export const KnowledgeBase: React.FC = () => {
   const { t } = useLanguage();
   const { user, addNotification, setActiveTab } = useAppStore();
   const { isDemo } = useDemoMode();
+  const aiLocked = isDemo || lacksPaidAccess(user, 'knowledge_ai'); // browsing stays open; asking the AI is paid
   const [activeTabMode, setActiveTabMode] = useState<KnowledgeTabMode>('search');
   const [searchQuery, setSearchQuery] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -257,6 +260,7 @@ export const KnowledgeBase: React.FC = () => {
   }, [fetchQuotaData]);
 
   const performAISearch = async (queryText: string, bypassCache: boolean = false) => {
+    if (aiLocked) return;
     setIsAsking(true);
     setRetrievalStep(1);
 
@@ -365,8 +369,8 @@ export const KnowledgeBase: React.FC = () => {
       {/* ── TAB 1: Search & AI Discovery ── */}
       {activeTabMode === 'search' && (
         <div className="space-y-6">
-          {/* Quick Agronomic Research Scenarios — demo curated, live search for real users */}
-          {isDemo ? (
+          {/* Example questions for the demo, shown only where asking the AI is open */}
+          {isDemo && !aiLocked ? (
             <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
@@ -406,15 +410,11 @@ export const KnowledgeBase: React.FC = () => {
                 ))}
               </div>
             </div>
-          ) : (
-            <div className="backdrop-blur-xl bg-slate-50 dark:bg-theme-bg-secondary/40 border border-slate-200 dark:border-white/5 rounded-xl p-4 text-center">
-              <p className="text-xs text-slate-600 dark:text-white/60">{t('ui_index_demo_scenarios_are_available_in_the')}</p>
-            </div>
-          )}
+          ) : null}
 
           {/* Multi-Modal Research Search Bar */}
           <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 space-y-4">
-            <SearchBar
+            {aiLocked ? <KnowledgeAskLock /> : (<SearchBar
               searchQuery={searchQuery}
               setSearchQuery={q => {
                 setSearchQuery(q);
@@ -428,7 +428,7 @@ export const KnowledgeBase: React.FC = () => {
               showStats={false}
               setShowStats={() => setActiveTabMode('telemetry')}
               onSearch={() => handleSearch()}
-            />
+            />)}
 
             {/* Dynamic Agronomic Intake Clarification Card */}
             {isAgronomicQueryAmbiguous(searchQuery) && !intakeDismissed && !isAsking && (

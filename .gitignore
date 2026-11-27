@@ -98,3 +98,6 @@ uploads/
 
 # Deploy state on the servers (rollback image id, uploads carried across a recreate)
 ag-extension-dashboard/.deploy/
+
+# DB-IP Lite city database, downloaded on the server by scripts/fetch-geoip.sh
+ag-extension-dashboard/geoip/

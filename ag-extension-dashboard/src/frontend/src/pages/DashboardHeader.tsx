@@ -4,6 +4,7 @@ import { RefreshCw } from 'lucide-react';
 import { syncQueue } from '@/api/syncQueueService';
 import { dashboardGreeting } from './dashboardGreeting';
 import { PAGE_DESCRIPTION, PAGE_TITLE } from '@/components/ui/typography';
+import { PhotoHeaderBand } from '@/components/ui/PhotoHeaderBand';
 
 /** Dashboard title, greeting, and browser connectivity / queued-sync status. */
 export const DashboardHeader: React.FC<{
@@ -63,7 +64,8 @@ export const DashboardHeader: React.FC<{
   };
 
   return (
-    <div className="mb-6 sm:mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+    <PhotoHeaderBand src="/images/landing/maize-field-sunrise.webp" width={1319} height={860} position="center 65%" className="mb-6 sm:mb-8">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
         <h1 className={`mb-2 ${PAGE_TITLE}`}>
           {t('dashboard_operations_title', { defaultValue: 'Overview' })}
@@ -109,5 +111,6 @@ export const DashboardHeader: React.FC<{
         </div>
       </div>
     </div>
+    </PhotoHeaderBand>
   );
 };

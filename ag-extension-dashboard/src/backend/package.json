@@ -65,6 +65,7 @@
     "helmet": "^7.1.0",
     "jsonwebtoken": "^9.0.2",
     "libphonenumber-js": "^1.13.17",
+    "maxmind": "^4.3.29",
     "morgan": "^1.12.1",
     "multer": "^2.5.0",
     "nodemailer": "^10.2.1",

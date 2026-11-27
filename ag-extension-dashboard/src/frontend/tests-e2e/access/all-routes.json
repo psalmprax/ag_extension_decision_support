@@ -101,6 +101,7 @@
   "GET /api/v1/countries",
   "GET /api/v1/data-rights/farmers/:farmerId/consents",
   "GET /api/v1/data-rights/farmers/:farmerId/export",
+  "GET /api/v1/demo-visits",
   "GET /api/v1/diagnosis-tests",
   "GET /api/v1/diagnosis-tests/runs/:id/mistakes",
   "GET /api/v1/efficacy/followups",

@@ -1,6 +1,7 @@
 import React from 'react';
 import type { KnowledgeQuotaData } from '@/api/knowledgeService';
 import { useLanguage } from '@/lib/LanguageContext';
+import { BILLING_ENABLED } from '@ag-extension/shared/api';
 
 /** Questions left today. Nothing is shown on unlimited plans. */
 export const QuotaChip: React.FC<{ quota: KnowledgeQuotaData; onUpgrade: () => void }> = ({ quota, onUpgrade }) => {
@@ -14,7 +15,7 @@ export const QuotaChip: React.FC<{ quota: KnowledgeQuotaData; onUpgrade: () => v
         limit: quota.limit,
         defaultValue: '{remaining} of {limit} questions left today',
       })}
-      {quota.isFree && quota.remaining <= 1 && (
+      {BILLING_ENABLED && quota.isFree && quota.remaining <= 1 && (
         <button
           type="button"
           onClick={onUpgrade}

@@ -19,6 +19,7 @@ import type { Citation } from '@/services/ragV2Service';
 import { getKnowledgeEvidenceStatus } from '@/services/knowledgeService';
 import { safeError } from '@/utils/safeResponse';
 import { usageService } from '@/services/usageService';
+import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
 
 const router = Router();
 
@@ -333,7 +334,8 @@ async function resolveAnswerCitations(
 }
 
 // Ask AI a question (RAG-based)
-router.post('/ask', async (req: Request, res: Response) => {
+// AI answers are a paid service (browsing and search stay open); the demo is refused by demoSessionGuard.
+router.post('/ask', requirePaidPlan('knowledge_ai'), async (req: Request, res: Response) => {
     try {
         const { question, bypassCache, attachments, country, language } = req.body;
         const user = (req as Request & { user?: Record<string, unknown> }).user;

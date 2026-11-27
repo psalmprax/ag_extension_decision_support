@@ -3,6 +3,9 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { QuotaChip } from '../components/KnowledgeBase/QuotaChip';
 import type { KnowledgeQuotaData } from '@/api/knowledgeService';
 
+// These tests cover the upgrade buttons, which only exist while billing is on.
+vi.mock('@ag-extension/shared/api', async importOriginal => ({ ...(await importOriginal<object>()), BILLING_ENABLED: true }));
+
 describe('QuotaChip', () => {
   it('shows nothing when quota.limit is -1 (unlimited)', () => {
     const quota: KnowledgeQuotaData = {

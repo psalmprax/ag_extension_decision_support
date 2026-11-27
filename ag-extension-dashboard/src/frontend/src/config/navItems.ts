@@ -20,6 +20,7 @@ import {
   Layers,
 } from 'lucide-react';
 import type { PaidService } from '@/lib/planAccess';
+import { BILLING_ENABLED } from '@ag-extension/shared/api';
 
 export interface NavItem {
   id: string;
@@ -110,6 +111,8 @@ export const getNavItems = (): NavItem[] => [
     labelKey: 'nav_reports',
     icon: FileText,
     roles: ['extension_officer', 'admin', 'regional_manager'],
+    requiresPro: true,
+    service: 'reports',
   },
   {
     id: 'sms',
@@ -133,7 +136,8 @@ export const getNavItems = (): NavItem[] => [
     label: 'Billing',
     labelKey: 'nav_billing',
     icon: CreditCard,
-    roles: ['extension_officer', 'admin', 'farmer'],
+    // While billing is off only admins see it (plan grants and payment keys live there).
+    roles: BILLING_ENABLED ? ['extension_officer', 'admin', 'farmer'] : ['admin'],
   },
   {
     id: 'telemetry',
@@ -162,6 +166,8 @@ export const getNavItems = (): NavItem[] => [
     labelKey: 'nav_fields',
     icon: Leaf,
     roles: ['extension_officer', 'admin', 'farmer', 'regional_manager'],
+    requiresPro: true,
+    service: 'fields',
   },
   {
     id: 'disease_diagnosis',
