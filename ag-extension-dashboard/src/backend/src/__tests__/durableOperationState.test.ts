@@ -116,6 +116,8 @@ jest.mock('../services/usageService', () => ({
     },
 }));
 jest.mock('../workers/alertWorker', () => ({ runAlertChecks: jest.fn() }));
+// These tests are about how a payment is recorded, so billing is switched on for them.
+jest.mock('../shared-api/billingSwitch', () => ({ ...jest.requireActual('../shared-api/billingSwitch'), BILLING_ENABLED: true }));
 jest.mock('../services/knowledgeService', () => ({
     knowledgeService: {
         searchKnowledge: jest.fn(() => Promise.resolve([])),
