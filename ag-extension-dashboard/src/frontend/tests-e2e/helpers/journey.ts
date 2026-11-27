@@ -176,7 +176,7 @@ export function imageSizeOf(image: Buffer | string): { width: number; height: nu
 
 /**
  * While billing is switched off (ag-extension-shared/src/api/billingSwitch.ts): the menu has
- * no Billing item for this account, the billing address leads back out of Billing, and the
+ * no Billing item for this account, the billing address does not show Billing, and the
  * server refuses to start a subscription. Every menu section is opened first, so a hidden
  * item is truly absent.
  */
@@ -187,8 +187,12 @@ export async function expectBillingSwitchedOff(page: Page, request: APIRequestCo
   while ((await collapsed.count()) > 0) await collapsed.first().click();
   await expect(nav.getByRole('button', { name: /^Billing/ })).toHaveCount(0);
 
+  // The billing address opens the account's own first page instead (a farmer's dashboard has
+  // no address of its own, so the address bar may still read /billing).
   await page.goto('/billing');
-  await expect(page).not.toHaveURL(/\/billing$/);
+  const title = page.getByRole('heading', { level: 1 }).first();
+  await expect(title).toBeVisible();
+  await expect(title).not.toHaveText(/^Billing/);
 
   const api = await apiAs(request, email);
   const refused = await api.post('/api/v1/billing/subscribe', { planId: 'pro' });
