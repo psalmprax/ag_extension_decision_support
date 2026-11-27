@@ -36,7 +36,7 @@ if ('serviceWorker' in navigator && typeof window !== 'undefined') {
 
 // Initialize theme before rendering
 initializeTheme();
-// Uncaught errors and failed requests reach /api/errors and, when configured, Sentry.
+// Uncaught errors reach /api/errors; the server forwards them to Sentry when configured.
 startErrorReporting();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

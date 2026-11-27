@@ -9,8 +9,8 @@ import { logger } from '@/utils/logger';
  * POST /api/errors: crashes and uncaught errors reported by the browser (the error
  * boundary, window errors, unhandled promise rejections). Public and write-only: it
  * stores a count per page and error for the hourly errors-in-production check, logs a
- * shortened line, and forwards error-boundary crashes to Sentry when configured (the
- * browser's Sentry cannot see errors a boundary has caught). Answers 204 to anything.
+ * shortened line, and forwards each report to Sentry with its stack when SENTRY_DSN is
+ * set. Answers 204 to anything.
  */
 const router = Router();
 
@@ -55,10 +55,13 @@ router.post('/', limiter, (req: Request, res: Response) => {
   void recordFailure('browser', source, page, 0, `${name}: ${message}`);
   logger.warn('[client-error]', { source, page, name, message, component: text(body.componentName, 80) });
 
-  if (source === 'boundary') {
+  // The browser sends no Sentry code of its own (it would add about 0.5 MB): its errors reach
+  // Sentry from here, with their stacks. Does nothing when SENTRY_DSN is not set.
+  // A report without a message (malformed, or a probe) is counted but not sent on.
+  if (text(error.message, 300)) {
     Sentry.captureMessage(`${name}: ${message}`, {
       level: 'error',
-      tags: { source: 'browser-boundary', page },
+      tags: { source: `browser-${source}`, page },
       extra: { componentStack: text(body.componentStack, 4000), stack: text(error.stack, 4000) },
     });
   }

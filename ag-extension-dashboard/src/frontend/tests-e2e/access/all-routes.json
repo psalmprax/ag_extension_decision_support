@@ -153,7 +153,6 @@
   "GET /api/v1/language",
   "GET /api/v1/language/:code",
   "GET /api/v1/language/ai-supported",
-  "GET /api/v1/monitoring/browser-config",
   "GET /api/v1/monitoring/failures",
   "GET /api/v1/notifications",
   "GET /api/v1/notifications/unread-count",

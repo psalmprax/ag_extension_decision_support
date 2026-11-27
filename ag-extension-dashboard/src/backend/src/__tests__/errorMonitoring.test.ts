@@ -95,6 +95,7 @@ describe('production error monitoring', () => {
   it('answers 204 to a malformed report and records it as unknown', async () => {
     const res = await request(appWith()).post('/api/v1/errors').send('not json').set('Content-Type', 'text/plain');
     expect(res.status).toBe(204);
+    expect(Sentry.captureMessage).not.toHaveBeenCalled();
     expect(pageOf(undefined)).toBe('(unknown page)');
   });
 
@@ -111,10 +112,9 @@ describe('production error monitoring', () => {
     expect(tokenMatches(TOKEN, 'short')).toBe(false);
   });
 
-  it('gives the browser its Sentry DSN, or null when Sentry is off', async () => {
-    const res = await request(appWith()).get('/api/v1/monitoring/browser-config');
-    expect(res.status).toBe(200);
-    expect(res.body.sentryDsn).toBeNull();
+  it('forwards window errors and failed promises to Sentry too, with their source', async () => {
+    await request(appWith()).post('/api/v1/errors').send({ source: 'promise', error: { name: 'Error', message: 'timeout' }, url: 'https://www.gpexts.com/visits' });
+    expect(Sentry.captureMessage).toHaveBeenCalledWith('Error: timeout', expect.objectContaining({ tags: { source: 'browser-promise', page: '/visits' } }));
   });
 
   it('sends Sentry no cookies, headers, bodies, query strings or user', () => {

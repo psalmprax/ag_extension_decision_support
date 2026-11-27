@@ -1,14 +1,11 @@
 import { Router, type Request, type Response } from 'express';
 import { timingSafeEqual } from 'crypto';
 import { failureSummary } from '@/services/failureMonitor';
-import { config } from '@/config';
 
 /**
  * GET /monitoring/failures?hours=1   failed requests and browser errors per route, most
  *   frequent first, for the hourly error-watch workflow. Needs the x-monitoring-token
  *   header to equal MONITORING_TOKEN; answers 404 while no token is configured.
- * GET /monitoring/browser-config     public: the Sentry DSN the browser reports to (a
- *   browser DSN is public by design), or null when Sentry is off.
  */
 const router = Router();
 
@@ -28,11 +25,6 @@ router.get('/failures', async (req: Request, res: Response) => {
   const hours = Math.min(Math.max(Number(req.query.hours) || 1, 1), 48);
   res.set('Cache-Control', 'no-store');
   return res.json({ success: true, hours, generatedAt: new Date().toISOString(), failures: await failureSummary(hours) });
-});
-
-router.get('/browser-config', (_req: Request, res: Response) => {
-  res.set('Cache-Control', 'public, max-age=300');
-  res.json({ success: true, sentryDsn: process.env.SENTRY_DSN || null, environment: config.nodeEnv });
 });
 
 export default router;

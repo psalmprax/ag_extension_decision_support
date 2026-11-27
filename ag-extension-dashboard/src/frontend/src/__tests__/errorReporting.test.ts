@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ErrorEvent } from '@sentry/react';
-import { __resetErrorReportingForTests, reportBrowserError, withoutPrivateData } from '../lib/errorReporting';
+import { __resetErrorReportingForTests, reportBrowserError } from '../lib/errorReporting';
 
 describe('browser error reporting', () => {
   const fetchMock = vi.fn(() => Promise.resolve(new Response(null, { status: 204 })));
@@ -40,15 +39,4 @@ describe('browser error reporting', () => {
     expect(body.error).toEqual({ name: 'Error', message: 'timeout' });
   });
 
-  it('sends Sentry no user, headers or query strings', () => {
-    const event = withoutPrivateData({
-      type: undefined,
-      user: { email: 'amina@example.org' },
-      request: { url: 'https://www.gpexts.com/farmers?phone=0712345678', headers: { Cookie: 'x' } },
-      breadcrumbs: [{ data: { url: '/api/farmers?search=amina' } }],
-    } as ErrorEvent);
-    expect(event.user).toBeUndefined();
-    expect(event.request).toEqual({ url: 'https://www.gpexts.com/farmers', method: undefined });
-    expect(event.breadcrumbs?.[0].data?.url).toBe('/api/farmers');
-  });
 });

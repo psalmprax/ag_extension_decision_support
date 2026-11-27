@@ -28,7 +28,6 @@ export const DEMO_READS: ReadonlySet<string> = new Set([
   '/external/weather',
   '/knowledge/quota',
   '/knowledge/stats',
-  '/monitoring/browser-config', // public: where the browser reports errors
   '/knowledge/search', // public knowledge base
   '/notifications', // the demo user's own notifications
   '/notifications/unread-count',
