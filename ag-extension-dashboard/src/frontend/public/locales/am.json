@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "እጅግ በጣም አካባቢያዊ የ NASA ዝናብ እና አውሎ ነፋስ ማስጠንቀቂያዎች",
     "ui_features_image_assessment_requiring_expert_co": "የባለሙያ ማረጋገጫ የሚፈልግ የምስል ግምገማ",
     "ui_features_macro_yield_supply_intelligence": "የማክሮ ምርት እና አቅርቦት መረጃ",
-    "ui_features_may_receive_messages_through_configu": "በተዋቀሩ ቻናሎች መልዕክቶችን ሊቀበል ይችላል። ህክምና ከመጀመርዎ በፊት የአካባቢ ባለሙያን ያማክሩ።",
+    "ui_features_may_receive_messages_through_configu": "ምክር በኤስኤምኤስ፣ በድምፅ ወይም በውይይት ያገኛሉ። ከማንኛውም ሕክምና በፊት የአካባቢ ባለሙያ ያማክሩ።",
     "ui_features_offline_encrypted_indexeddb_storage": "ምልክት በሌለበት ጊዜ ጉብኝቶች፣ እርሻዎች እና የአፈር ምርመራዎች በስልክ ላይ ይቀመጣሉ",
-    "ui_features_records_field_observations_using_ava": "ያሉትን መሳሪያዎች በመጠቀም የመስክ ምልከታዎችን ይመዘግባል፤ የደመና ትንተና ግንኙነት እና የተዋቀረ አቅራቢ ይፈልጋል።",
+    "ui_features_records_field_observations_using_ava": "የማሳ ምልከታዎችንና ፎቶዎችን በስልክ ይመዘግባል፣ ኔትወርክ ባይኖርም፤ ኔትወርክ ሲመለስ ይመሳሰላሉ።",
     "ui_features_regional_cooperative_directors": "የክልል እና የህብረት ስራ ማህበር ዳይሬክተሮች",
     "ui_features_selected_offline_workflows": "የተመረጡ ከመስመር ውጭ የስራ ሂደቶች",
     "ui_features_swahili_luganda_english_voice_stt": "ስዋሂሊ፣ ሉጋንዳ፣ እንግሊዝኛ እና የድምጽ STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "ምክሩ መስራቱን ይመዝግቡ",
     "dash_support_subtitle": "የተፈቱ ጥያቄዎችና ገበሬዎች እርዳታውን እንዴት እንደገመገሙ",
     "pilot_subheading": "አገልግሎቱ ምርትን ይጨምራል?",
-    "ui_memory_knowledge_by_topic_subtitle": "የተቀመጡ መልሶች በምድቦች እንዴት እንደተከፋፈሉ"
+    "ui_memory_knowledge_by_topic_subtitle": "የተቀመጡ መልሶች በምድቦች እንዴት እንደተከፋፈሉ",
+    "ui_trust_and_safety_what_depends_on_setup": "አንዳንድ ባህሪያት የኔትወርክ ግንኙነት ይፈልጋሉ ወይም ድርጅትዎ ባዘጋጀው ላይ ይወሰናሉ፦ የፎቶ ትንተና፣ የአየር ሁኔታ ዝርዝር፣ እና የኤስኤምኤስ፣ ዋትስአፕ ወይም ቴሌግራም መልእክቶች።"
 }

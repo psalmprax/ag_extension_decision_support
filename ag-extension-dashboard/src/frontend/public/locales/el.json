@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Υπερτοπικές Προειδοποιήσεις Βροχής & Καταιγίδων από τη NASA POWER",
     "ui_features_image_assessment_requiring_expert_co": "Αξιολόγηση εικόνας που απαιτεί επιβεβαίωση από ειδικό",
     "ui_features_macro_yield_supply_intelligence": "Μακροοικονομική Ευφυΐα Απόδοσης & Εφοδιασμού",
-    "ui_features_may_receive_messages_through_configu": "Ενδέχεται να λαμβάνετε μηνύματα μέσω των ρυθμισμένων καναλιών. Συμβουλευτείτε έναν τοπικό ειδικό πριν από τη θεραπεία.",
+    "ui_features_may_receive_messages_through_configu": "Λαμβάνει συμβουλές με SMS, φωνή ή συνομιλία. Συμβουλευτείτε τοπικό ειδικό πριν από κάθε επέμβαση.",
     "ui_features_offline_encrypted_indexeddb_storage": "Επισκέψεις, αγροί και εδαφολογικές αναλύσεις αποθηκεύονται στο τηλέφωνο χωρίς σήμα",
-    "ui_features_records_field_observations_using_ava": "Καταγράφει παρατηρήσεις πεδίου χρησιμοποιώντας διαθέσιμα εργαλεία· η ανάλυση στο cloud απαιτεί σύνδεση και ρυθμισμένο πάροχο.",
+    "ui_features_records_field_observations_using_ava": "Καταγράφει παρατηρήσεις και φωτογραφίες αγρού στο τηλέφωνο, ακόμη και χωρίς σήμα· συγχρονίζονται όταν επανέλθει το σήμα.",
     "ui_features_regional_cooperative_directors": "Περιφερειακοί & Συνεταιριστικοί Διευθυντές",
     "ui_features_selected_offline_workflows": "Επιλεγμένες Ροές Εργασίας εκτός σύνδεσης",
     "ui_features_swahili_luganda_english_voice_stt": "Σουαχίλι, Λουγκάντα, Αγγλικά & Φωνητικό STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Καταγράψτε αν η συμβουλή λειτούργησε",
     "dash_support_subtitle": "Ερωτήσεις που λύθηκαν και πώς βαθμολόγησαν οι αγρότες τη βοήθεια",
     "pilot_subheading": "Αυξάνει η υπηρεσία τη σοδειά;",
-    "ui_memory_knowledge_by_topic_subtitle": "Πώς κατανέμονται οι αποθηκευμένες απαντήσεις σε κατηγορίες"
+    "ui_memory_knowledge_by_topic_subtitle": "Πώς κατανέμονται οι αποθηκευμένες απαντήσεις σε κατηγορίες",
+    "ui_trust_and_safety_what_depends_on_setup": "Ορισμένες λειτουργίες χρειάζονται σύνδεση ή εξαρτώνται από όσα έχει ρυθμίσει ο οργανισμός σας: ανάλυση φωτογραφιών, λεπτομέρειες καιρού και μηνύματα μέσω SMS, WhatsApp ή Telegram."
 }

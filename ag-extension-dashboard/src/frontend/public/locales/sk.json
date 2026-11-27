@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Hyperlokálne varovania NASA pred dažďom a búrkami",
     "ui_features_image_assessment_requiring_expert_co": "Analýza snímok vyžadujúca potvrdenie odborníkom",
     "ui_features_macro_yield_supply_intelligence": "Makro informácie o výnosoch a dodávkach",
-    "ui_features_may_receive_messages_through_configu": "Môže prijímať správy prostredníctvom nakonfigurovaných kanálov. Pred ošetrením sa poraďte s miestnym odborníkom.",
+    "ui_features_may_receive_messages_through_configu": "Dostáva rady cez SMS, hlasom alebo v chate. Pred každým ošetrením sa poraďte s miestnym odborníkom.",
     "ui_features_offline_encrypted_indexeddb_storage": "Návštevy, polia a pôdne testy uložené v telefóne bez signálu",
-    "ui_features_records_field_observations_using_ava": "Zaznamenáva terénne pozorovania pomocou dostupných nástrojov; cloudová analýza vyžaduje pripojenie a nakonfigurovaného poskytovateľa.",
+    "ui_features_records_field_observations_using_ava": "Ukladá pozorovania a fotky z poľa v telefóne aj bez signálu; synchronizujú sa, keď sa signál vráti.",
     "ui_features_regional_cooperative_directors": "Regionálni a družstevní riaditelia",
     "ui_features_selected_offline_workflows": "Vybrané offline pracovné postupy",
     "ui_features_swahili_luganda_english_voice_stt": "Svahilčina, lugandčina, angličtina a hlasové STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Zaznamenajte, či rada pomohla",
     "dash_support_subtitle": "Vyriešené otázky a ako poľnohospodári hodnotili pomoc",
     "pilot_subheading": "Zvyšuje služba úrodu?",
-    "ui_memory_knowledge_by_topic_subtitle": "Ako sa uložené odpovede delia do kategórií"
+    "ui_memory_knowledge_by_topic_subtitle": "Ako sa uložené odpovede delia do kategórií",
+    "ui_trust_and_safety_what_depends_on_setup": "Niektoré funkcie potrebujú pripojenie k sieti alebo závisia od toho, čo vaša organizácia nastavila: analýza fotiek, podrobnosti o počasí a správy cez SMS, WhatsApp alebo Telegram."
 }

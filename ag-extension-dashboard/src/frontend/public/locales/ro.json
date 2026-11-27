@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Avertizări hiperlocale NASA privind ploaia și furtunile",
     "ui_features_image_assessment_requiring_expert_co": "Evaluarea imaginii care necesită confirmarea expertului",
     "ui_features_macro_yield_supply_intelligence": "Informații macro privind randamentul și aprovizionarea",
-    "ui_features_may_receive_messages_through_configu": "Poate primi mesaje prin canalele configurate. Consultați un expert local înainte de tratament.",
+    "ui_features_may_receive_messages_through_configu": "Primește sfaturi prin SMS, voce sau chat. Consultați un expert local înainte de orice tratament.",
     "ui_features_offline_encrypted_indexeddb_storage": "Vizite, câmpuri și teste de sol salvate pe telefon fără semnal",
-    "ui_features_records_field_observations_using_ava": "Înregistrează observațiile din teren folosind instrumentele disponibile; analiza în cloud necesită conectivitate și un furnizor configurat.",
+    "ui_features_records_field_observations_using_ava": "Înregistrează pe telefon observații și fotografii de teren, chiar fără semnal; se sincronizează când revine semnalul.",
     "ui_features_regional_cooperative_directors": "Directori regionali și cooperativi",
     "ui_features_selected_offline_workflows": "Fluxuri de lucru offline selectate",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, Engleză și STT vocal",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Notați dacă sfatul a funcționat",
     "dash_support_subtitle": "Întrebări rezolvate și cum au evaluat fermierii ajutorul",
     "pilot_subheading": "Crește serviciul recoltele?",
-    "ui_memory_knowledge_by_topic_subtitle": "Cum se împart răspunsurile salvate pe categorii"
+    "ui_memory_knowledge_by_topic_subtitle": "Cum se împart răspunsurile salvate pe categorii",
+    "ui_trust_and_safety_what_depends_on_setup": "Unele funcții au nevoie de conexiune la rețea sau depind de ce a configurat organizația dvs.: analiza fotografiilor, detalii meteo și mesaje prin SMS, WhatsApp sau Telegram."
 }

@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Digniino heer sare ah oo maxalli ah oo ku saabsan roobka iyo duufaanta NASA",
     "ui_features_image_assessment_requiring_expert_co": "Qiimaynta sawirka oo u baahan xaqiijin khabiir",
     "ui_features_macro_yield_supply_intelligence": "Sirdoonka wax-sooosaarka iyo sahayda guud",
-    "ui_features_may_receive_messages_through_configu": "Waxaa laga yaabaa inay helaan fariimo iyagoo adeegsanaya kanaalada la habeeyay. La tasho khabiir maxalli ah ka hor inta aanad bilaabin daaweynta.",
+    "ui_features_may_receive_messages_through_configu": "Wuxuu talo ku helaa SMS, cod ama sheeko. La tasho khabiir deegaanka ka hor daaweyn kasta.",
     "ui_features_offline_encrypted_indexeddb_storage": "Booqashooyinka, beeraha iyo baaritaannada ciidda oo lagu kaydiyay taleefanka xitaa marka aanu jirin shabakad",
-    "ui_features_records_field_observations_using_ava": "Waxay diiwaangelisaa indho-indheynta beeraha iyadoo la adeegsanayo aaladaha la heli karo; falanqaynta daruuriga ah waxay u baahan tahay xiriir internet iyo bixiye la habeeyay.",
+    "ui_features_records_field_observations_using_ava": "Wuxuu taleefanka ku kaydiyaa indha-indheynta iyo sawirrada beerta, xitaa marka aan calaamad jirin; waa la isku waafajiyaa marka ay calaamaddu soo noqoto.",
     "ui_features_regional_cooperative_directors": "Agaasimayaasha gobolka iyo iskaashatooyinka",
     "ui_features_selected_offline_workflows": "Hababka shaqo ee offline-ka ah ee la xushay",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, Ingiriisi & codka STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Qor in talada ay shaqaysay iyo in kale",
     "dash_support_subtitle": "Su'aalaha la xaliyey, iyo sida beeraleydu u qiimeeyeen caawimada",
     "pilot_subheading": "Adeeggu ma kordhiyaa wax-soo-saarka?",
-    "ui_memory_knowledge_by_topic_subtitle": "Sida jawaabaha la kaydiyey ugu qaybsan yihiin qaybaha"
+    "ui_memory_knowledge_by_topic_subtitle": "Sida jawaabaha la kaydiyey ugu qaybsan yihiin qaybaha",
+    "ui_trust_and_safety_what_depends_on_setup": "Qaar ka mid ah astaamaha waxay u baahan yihiin xiriir shabakad ama waxay ku xiran yihiin waxa ururkaagu dejiyey: falanqaynta sawirrada, faahfaahinta cimilada, iyo fariimaha SMS, WhatsApp ama Telegram."
 }

@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "NASA okubudaabuda ku nkuba n'empewo mu bitundu eby'enjawulo",
     "ui_features_image_assessment_requiring_expert_co": "Okwekenneenya ebifaananyi okwetaaga okukakasibwa omukugu",
     "ui_features_macro_yield_supply_intelligence": "Okumanya okw'omulembe okw'ebirime n'ebisigalawo",
-    "ui_features_may_receive_messages_through_configu": "Oyinza okufuna obubaka okuyita mu ngeri eziteekeddwateekeddwa. Buuza omukugu w'omu kitundu nga tonnaba kukola kintu kyonna.",
+    "ui_features_may_receive_messages_through_configu": "Afuna amagezi ku SMS, eddoboozi oba mu kukubaganya ebirowoozo. Buuza omukugu ow'omu kitundu nga tonnaba kujjanjaba.",
     "ui_features_offline_encrypted_indexeddb_storage": "Okukyalira, ennimiro n'okukebera ettaka bikuumiddwa mu ssimu n'oluvannyuma lw'okubulwa akatambaala",
-    "ui_features_records_field_observations_using_ava": "Wandiika ebikwata ku nnimiro nga okozesa ebikozesebwa ebiriwo; okwekenneenya okw'omu kire (cloud) kwetaagisa yintaneti n'omugabi w'omukutu ateekeddwateekeddwa.",
+    "ui_features_records_field_observations_using_ava": "Ewandiika ebirabiddwa mu nnimiro n'ebifaananyi ku ssimu, ne bwe wabaawo nga tewali siginiini; bigattibwa siginiini bw'ekomawo.",
     "ui_features_regional_cooperative_directors": "Abakulira ebitundu n'ebibiina by'obwegassi",
     "ui_features_selected_offline_workflows": "Emirimu egirondeddwa egikolebwa nga tekuli yintaneti",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, Olungereza n'okukozesa eddoboozi (voice STT)",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Wandiika obanga amagezi gakoze",
     "dash_support_subtitle": "Ebibuuzo ebigonjoddwa, n'engeri abalimi gye bapimye obuyambi",
     "pilot_subheading": "Empeereza eyongera ku makungula?",
-    "ui_memory_knowledge_by_topic_subtitle": "Engeri eby'okuddamu ebiterekeddwa gye byawuddwamu mu biti"
+    "ui_memory_knowledge_by_topic_subtitle": "Engeri eby'okuddamu ebiterekeddwa gye byawuddwamu mu biti",
+    "ui_trust_and_safety_what_depends_on_setup": "Ebimu ku bikozesebwa byetaaga yintaneeti oba bisinziira ku ekyo ekitongole kyo kye kyateekawo: okwekenneenya ebifaananyi, ebikwata ku budde mu bujjuvu, n'obubaka bwa SMS, WhatsApp oba Telegram."
 }

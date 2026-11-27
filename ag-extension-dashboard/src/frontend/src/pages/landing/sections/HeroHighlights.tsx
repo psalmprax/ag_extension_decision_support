@@ -7,7 +7,7 @@ import { useLanguage } from '@/lib/LanguageContext';
 const HIGHLIGHTS = [
   { icon: Camera, title: 'ui_hero_crop_assessment', note: 'ui_hero_possible_causes_not_a_diagnosis' },
   { icon: CloudRain, title: 'ui_hero_rain_forecasts', note: 'ui_hero_check_local_conditions' },
-  { icon: Radio, title: 'ui_hero_field_tools', note: 'ui_hero_availability_varies_by_feature' },
+  { icon: Radio, title: 'ui_hero_field_tools', note: 'fieldtools_works_offline' },
   { icon: BookOpenCheck, title: 'ui_hero_text_in_local_dialect', note: 'ui_hero_swahili_luganda_hindi_20' },
 ] as const;
 

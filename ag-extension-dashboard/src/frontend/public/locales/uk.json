@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Гіперлокальні попередження NASA про дощ та шторм",
     "ui_features_image_assessment_requiring_expert_co": "Оцінка зображення, що потребує підтвердження експерта",
     "ui_features_macro_yield_supply_intelligence": "Макроаналітика врожайності та поставок",
-    "ui_features_may_receive_messages_through_configu": "Може отримувати повідомлення через налаштовані канали. Перед обробкою проконсультуйтеся з місцевим експертом.",
+    "ui_features_may_receive_messages_through_configu": "Отримує поради через SMS, голосом або в чаті. Перед будь-якою обробкою порадьтеся з місцевим фахівцем.",
     "ui_features_offline_encrypted_indexeddb_storage": "Візити, поля та результати аналізу ґрунту зберігаються на телефоні без сигналу",
-    "ui_features_records_field_observations_using_ava": "Записує польові спостереження за допомогою доступних інструментів; хмарний аналіз потребує підключення до мережі та налаштованого провайдера.",
+    "ui_features_records_field_observations_using_ava": "Записує польові спостереження та фото на телефоні навіть без зв'язку; вони синхронізуються, коли зв'язок повернеться.",
     "ui_features_regional_cooperative_directors": "Регіональні та кооперативні директори",
     "ui_features_selected_offline_workflows": "Вибрані офлайн-робочі процеси",
     "ui_features_swahili_luganda_english_voice_stt": "Суахілі, луганда, англійська та голосовий STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Позначте, чи допомогла порада",
     "dash_support_subtitle": "Вирішені питання та як фермери оцінили допомогу",
     "pilot_subheading": "Чи підвищує сервіс урожай?",
-    "ui_memory_knowledge_by_topic_subtitle": "Як збережені відповіді розподілені за категоріями"
+    "ui_memory_knowledge_by_topic_subtitle": "Як збережені відповіді розподілені за категоріями",
+    "ui_trust_and_safety_what_depends_on_setup": "Деяким функціям потрібен зв'язок або налаштування вашої організації: аналіз фото, детальна погода та повідомлення через SMS, WhatsApp або Telegram."
 }

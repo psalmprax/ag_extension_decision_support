@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Hiperlokalne ostrzeżenia NASA przed deszczem i burzami",
     "ui_features_image_assessment_requiring_expert_co": "Ocena obrazu wymagająca potwierdzenia eksperta",
     "ui_features_macro_yield_supply_intelligence": "Makroanaliza plonów i podaży",
-    "ui_features_may_receive_messages_through_configu": "Może otrzymywać wiadomości za pośrednictwem skonfigurowanych kanałów. Przed zastosowaniem zabiegu skonsultuj się z lokalnym ekspertem.",
+    "ui_features_may_receive_messages_through_configu": "Otrzymuje porady SMS-em, głosowo lub na czacie. Przed zabiegiem skonsultuj się z lokalnym ekspertem.",
     "ui_features_offline_encrypted_indexeddb_storage": "Wizyty, pola i badania gleby zapisywane w telefonie bez zasięgu",
-    "ui_features_records_field_observations_using_ava": "Rejestruje obserwacje polowe przy użyciu dostępnych narzędzi; analiza w chmurze wymaga łączności i skonfigurowanego dostawcy.",
+    "ui_features_records_field_observations_using_ava": "Zapisuje obserwacje i zdjęcia z pola w telefonie, także bez zasięgu; synchronizują się, gdy zasięg wróci.",
     "ui_features_regional_cooperative_directors": "Dyrektorzy regionalni i spółdzielczy",
     "ui_features_selected_offline_workflows": "Wybrane procesy robocze offline",
     "ui_features_swahili_luganda_english_voice_stt": "Suahili, luganda, angielski i głosowe STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Zapisz, czy porada pomogła",
     "dash_support_subtitle": "Rozwiązane pytania i ocena pomocy przez rolników",
     "pilot_subheading": "Czy usługa zwiększa plony?",
-    "ui_memory_knowledge_by_topic_subtitle": "Jak zapisane odpowiedzi rozkładają się na kategorie"
+    "ui_memory_knowledge_by_topic_subtitle": "Jak zapisane odpowiedzi rozkładają się na kategorie",
+    "ui_trust_and_safety_what_depends_on_setup": "Niektóre funkcje wymagają połączenia z siecią lub zależą od ustawień Twojej organizacji: analiza zdjęć, szczegóły pogody oraz wiadomości SMS, WhatsApp lub Telegram."
 }

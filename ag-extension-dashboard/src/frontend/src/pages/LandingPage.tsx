@@ -9,7 +9,6 @@ import { TrustAndSafety } from './landing/sections/TrustAndSafety';
 import { AgentOS } from './landing/sections/AgentOS';
 import { Pipeline } from './landing/sections/Pipeline';
 import { Ecosystem } from './landing/sections/Ecosystem';
-import { Community } from './landing/sections/Community';
 import { Mission } from './landing/sections/Mission';
 import { TalkingAssistant } from './landing/sections/TalkingAssistant';
 import { FAQ } from './landing/sections/FAQ';
@@ -50,7 +49,6 @@ export function LandingPage() {
         <AgentOS />
         <Pipeline />
         <Ecosystem />
-        <Community />
         <FAQ />
         <Mission />
         <CTA />

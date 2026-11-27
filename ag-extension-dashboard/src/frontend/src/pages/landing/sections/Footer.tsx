@@ -15,7 +15,6 @@ const FOOTER_SECTION_LINKS = [
   { href: '#agent-os', labelKey: 'ui_goal_mode_campaign_modal_agent_os', fallback: 'Agent OS' },
   { href: '#capabilities', labelKey: 'ui_footer_ecosystem_soil', fallback: 'Ecosystem & soil' },
   { href: '#architecture', labelKey: 'ui_footer_architecture', fallback: 'Architecture' },
-  { href: '#roi', labelKey: 'ui_footer_impact_roi', fallback: 'Impact & ROI' },
   { href: '#faq', labelKey: 'ui_navbar_faq', fallback: 'FAQ' },
 ] as const;
 

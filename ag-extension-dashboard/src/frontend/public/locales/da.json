@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Hyperlokale NASA regn- & stormvarsler",
     "ui_features_image_assessment_requiring_expert_co": "Billedvurdering der kræver ekspertbekræftelse",
     "ui_features_macro_yield_supply_intelligence": "Makro-udbytte & forsyningsintelligens",
-    "ui_features_may_receive_messages_through_configu": "Kan modtage beskeder via konfigurerede kanaler. Rådfør dig med en lokal ekspert før behandling.",
+    "ui_features_may_receive_messages_through_configu": "Får råd via sms, tale eller chat. Spørg en lokal fagperson før enhver behandling.",
     "ui_features_offline_encrypted_indexeddb_storage": "Besøg, marker og jordprøver gemt på telefonen uden signal",
-    "ui_features_records_field_observations_using_ava": "Registrerer markobservationer ved hjælp af tilgængelige værktøjer; sky-analyse kræver forbindelse og en konfigureret udbyder.",
+    "ui_features_records_field_observations_using_ava": "Gemmer markobservationer og fotos på en telefon, også uden signal; de synkroniseres, når signalet vender tilbage.",
     "ui_features_regional_cooperative_directors": "Regionale & kooperative direktører",
     "ui_features_selected_offline_workflows": "Valgte offline-arbejdsgange",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, engelsk & stemme-STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Registrér, om rådet virkede",
     "dash_support_subtitle": "Løste spørgsmål, og hvordan landmænd vurderede hjælpen",
     "pilot_subheading": "Øger tjenesten høstudbyttet?",
-    "ui_memory_knowledge_by_topic_subtitle": "Hvordan gemte svar fordeler sig på kategorier"
+    "ui_memory_knowledge_by_topic_subtitle": "Hvordan gemte svar fordeler sig på kategorier",
+    "ui_trust_and_safety_what_depends_on_setup": "Nogle funktioner kræver netværksforbindelse eller afhænger af, hvad din organisation har sat op: fotoanalyse, vejrdetaljer og beskeder via sms, WhatsApp eller Telegram."
 }

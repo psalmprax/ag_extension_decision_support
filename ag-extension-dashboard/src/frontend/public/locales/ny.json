@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Machenjezo a mvula ndi mphepo yamkuntho ya NASA m'dera lanu",
     "ui_features_image_assessment_requiring_expert_co": "Kuwunika kwa zithunzi komwe kumafuna kutsimikiziridwa ndi katswiri",
     "ui_features_macro_yield_supply_intelligence": "Zambiri zokhudza zokolola ndi katundu",
-    "ui_features_may_receive_messages_through_configu": "Mutha kulandira mauthenga kudzera munjira zomwe mwakhazikitsa. Funsani katswiri wa m'deralo musanachite chithandizo chilichonse.",
+    "ui_features_may_receive_messages_through_configu": "Amalandira malangizo kudzera pa SMS, mawu kapena macheza. Funsani katswiri wa kwanuko musanayambe chithandizo chilichonse.",
     "ui_features_offline_encrypted_indexeddb_storage": "Maulendo, minda ndi mayeso a nthaka zosungidwa pa foni popanda intaneti",
-    "ui_features_records_field_observations_using_ava": "Kulemba zinthu zomwe zawonedwa m'munda pogwiritsa ntchito zida zilipo; kusanthula kwa mitambo (cloud analysis) kumafuna intaneti ndi wopereka chithandizo wokhazikitsidwa.",
+    "ui_features_records_field_observations_using_ava": "Amalemba zomwe zawonedwa m'munda ndi zithunzi pa foni, ngakhale popanda netiweki; zimagwirizanitsidwa netiweki ikabwerera.",
     "ui_features_regional_cooperative_directors": "Otsogolera zigawo ndi ma cooperative",
     "ui_features_selected_offline_workflows": "Njira zogwirira ntchito popanda intaneti zomwe zasankhidwa",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, English ndi mawu a STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Lembani ngati malangizowo anathandiza",
     "dash_support_subtitle": "Mafunso othetsedwa, ndi momwe alimi anaonera thandizolo",
     "pilot_subheading": "Kodi ntchitoyi imakweza zokolola?",
-    "ui_memory_knowledge_by_topic_subtitle": "Momwe mayankho osungidwa agawikira m'magulu"
+    "ui_memory_knowledge_by_topic_subtitle": "Momwe mayankho osungidwa agawikira m'magulu",
+    "ui_trust_and_safety_what_depends_on_setup": "Zinthu zina zimafuna netiweki kapena zimadalira zomwe bungwe lanu lakhazikitsa: kusanthula zithunzi, tsatanetsatane wa nyengo, ndi mauthenga a SMS, WhatsApp kapena Telegram."
 }

@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Avvisi iperlocali di pioggia e tempesta NASA POWER",
     "ui_features_image_assessment_requiring_expert_co": "Valutazione dell'immagine che richiede la conferma di un esperto",
     "ui_features_macro_yield_supply_intelligence": "Intelligence macro su resa e approvvigionamento",
-    "ui_features_may_receive_messages_through_configu": "Potrebbe ricevere messaggi tramite i canali configurati. Consultare un esperto locale prima del trattamento.",
+    "ui_features_may_receive_messages_through_configu": "Riceve consigli via SMS, voce o chat. Consulta un esperto locale prima di qualsiasi trattamento.",
     "ui_features_offline_encrypted_indexeddb_storage": "Visite, campi e analisi del suolo salvati sul telefono in assenza di segnale",
-    "ui_features_records_field_observations_using_ava": "Registra le osservazioni sul campo utilizzando gli strumenti disponibili; l'analisi cloud richiede connettività e un provider configurato.",
+    "ui_features_records_field_observations_using_ava": "Registra osservazioni e foto di campo sul telefono, anche senza segnale; si sincronizzano quando il segnale torna.",
     "ui_features_regional_cooperative_directors": "Direttori regionali e di cooperativa",
     "ui_features_selected_offline_workflows": "Flussi di lavoro offline selezionati",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, Inglese e STT vocale",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Registra se il consiglio ha funzionato",
     "dash_support_subtitle": "Domande risolte e come gli agricoltori hanno valutato l'aiuto",
     "pilot_subheading": "Il servizio aumenta i raccolti?",
-    "ui_memory_knowledge_by_topic_subtitle": "Come le risposte salvate si distribuiscono per categoria"
+    "ui_memory_knowledge_by_topic_subtitle": "Come le risposte salvate si distribuiscono per categoria",
+    "ui_trust_and_safety_what_depends_on_setup": "Alcune funzioni richiedono una connessione o dipendono da ciò che la tua organizzazione ha attivato: analisi delle foto, dettaglio meteo e messaggi via SMS, WhatsApp o Telegram."
 }

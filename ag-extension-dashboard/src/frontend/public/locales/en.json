@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Hyperlocal NASA rain & storm warnings",
     "ui_features_image_assessment_requiring_expert_co": "Image assessment requiring expert confirmation",
     "ui_features_macro_yield_supply_intelligence": "Macro yield & supply intelligence",
-    "ui_features_may_receive_messages_through_configu": "May receive messages through configured channels. Consult a local expert before treatment.",
+    "ui_features_may_receive_messages_through_configu": "Gets advice by SMS, voice or chat. Consult a local expert before treatment.",
     "ui_features_offline_encrypted_indexeddb_storage": "Visits, fields and soil tests saved on the phone with no signal",
-    "ui_features_records_field_observations_using_ava": "Records field observations using available tools; cloud analysis requires connectivity and a configured provider.",
+    "ui_features_records_field_observations_using_ava": "Records field observations and photos on a phone, even without a signal; they sync when it returns.",
     "ui_features_regional_cooperative_directors": "Regional & cooperative directors",
     "ui_features_selected_offline_workflows": "Selected offline workflows",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, English & voice STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Record whether the advice worked",
     "dash_support_subtitle": "Questions resolved, and how farmers rated the help",
     "pilot_subheading": "Does the service raise harvests?",
-    "ui_memory_knowledge_by_topic_subtitle": "How stored answers spread across categories"
+    "ui_memory_knowledge_by_topic_subtitle": "How stored answers spread across categories",
+    "ui_trust_and_safety_what_depends_on_setup": "Some features need a network connection or depend on what your organisation has set up: photo analysis, weather detail, and SMS, WhatsApp or Telegram messages."
 }

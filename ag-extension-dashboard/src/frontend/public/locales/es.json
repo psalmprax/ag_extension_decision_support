@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Alertas hiperlocales de lluvia y tormentas de NASA POWER",
     "ui_features_image_assessment_requiring_expert_co": "Evaluación de imágenes que requiere confirmación de expertos",
     "ui_features_macro_yield_supply_intelligence": "Inteligencia macro de rendimiento y suministro",
-    "ui_features_may_receive_messages_through_configu": "Puede recibir mensajes a través de canales configurados. Consulte a un experto local antes del tratamiento.",
+    "ui_features_may_receive_messages_through_configu": "Recibe consejos por SMS, voz o chat. Consulte a un experto local antes de cualquier tratamiento.",
     "ui_features_offline_encrypted_indexeddb_storage": "Visitas, parcelas y análisis de suelo guardados en el teléfono sin señal",
-    "ui_features_records_field_observations_using_ava": "Registra observaciones de campo utilizando herramientas disponibles; el análisis en la nube requiere conectividad y un proveedor configurado.",
+    "ui_features_records_field_observations_using_ava": "Registra observaciones y fotos de campo en el teléfono, incluso sin señal; se sincronizan al volver la señal.",
     "ui_features_regional_cooperative_directors": "Directores regionales y cooperativos",
     "ui_features_selected_offline_workflows": "Flujos de trabajo sin conexión seleccionados",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, Inglés y STT por voz",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Registrar si el consejo funcionó",
     "dash_support_subtitle": "Preguntas resueltas y cómo valoraron la ayuda los agricultores",
     "pilot_subheading": "¿Aumenta el servicio las cosechas?",
-    "ui_memory_knowledge_by_topic_subtitle": "Cómo se reparten las respuestas guardadas por categoría"
+    "ui_memory_knowledge_by_topic_subtitle": "Cómo se reparten las respuestas guardadas por categoría",
+    "ui_trust_and_safety_what_depends_on_setup": "Algunas funciones necesitan conexión o dependen de lo que su organización haya configurado: análisis de fotos, detalle del clima y mensajes por SMS, WhatsApp o Telegram."
 }

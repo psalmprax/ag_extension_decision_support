@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Gargadin ruwan sama & guguwa na NASA na musamman ga kowane yanki",
     "ui_features_image_assessment_requiring_expert_co": "Tantance hoton da ke buƙatar tabbatarwar ƙwararru",
     "ui_features_macro_yield_supply_intelligence": "Bayanan samar da amfanin gona da wadata",
-    "ui_features_may_receive_messages_through_configu": "Ana iya karɓar saƙonni ta hanyar tashoshin da aka saita. Tuntuɓi ƙwararren masani na gida kafin a fara magani.",
+    "ui_features_may_receive_messages_through_configu": "Yana samun shawara ta SMS, murya ko hira. Ka tuntuɓi ƙwararre na yankinka kafin kowane magani.",
     "ui_features_offline_encrypted_indexeddb_storage": "Ziyarce-ziyarce, gonaki da gwajin ƙasa da aka adana a waya ba tare da sigina ba",
-    "ui_features_records_field_observations_using_ava": "Yana rikodin abubuwan da aka lura a gona ta amfani da kayan aikin da ke akwai; nazarin gajimare yana buƙatar haɗin intanet da mai ba da sabis da aka saita.",
+    "ui_features_records_field_observations_using_ava": "Yana adana abubuwan da aka lura da su da hotunan gona a waya, ko da babu sigina; ana daidaita su idan sigina ta dawo.",
     "ui_features_regional_cooperative_directors": "Daraktocin yanki da na haɗin gwiwa",
     "ui_features_selected_offline_workflows": "Ayyukan da aka zaɓa don amfani ba tare da intanet ba",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, Turanci & STT na murya",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Rubuta ko shawarar ta yi aiki",
     "dash_support_subtitle": "Tambayoyin da aka warware, da yadda manoma suka kimanta taimakon",
     "pilot_subheading": "Shin sabis ɗin yana ƙara amfanin gona?",
-    "ui_memory_knowledge_by_topic_subtitle": "Yadda amsoshin da aka adana suka rarrabu a rukunoni"
+    "ui_memory_knowledge_by_topic_subtitle": "Yadda amsoshin da aka adana suka rarrabu a rukunoni",
+    "ui_trust_and_safety_what_depends_on_setup": "Wasu fasaloli suna buƙatar haɗin intanet ko sun dogara da abin da ƙungiyarka ta saita: nazarin hotuna, cikakken bayanin yanayi, da saƙonnin SMS, WhatsApp ko Telegram."
 }

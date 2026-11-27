@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Àwọn ìkìlọ̀ nípa òjò àti ìjì NASA tó wà ní àgbègbè rẹ",
     "ui_features_image_assessment_requiring_expert_co": "Ìṣàyẹ̀wò àwòrán tí ó nílò ìfọwọ́sọ̀rọ̀ ògbógi",
     "ui_features_macro_yield_supply_intelligence": "Ìmọ̀ ẹ̀rọ nípa ìkórè àti ìpèsè àgbáyé",
-    "ui_features_may_receive_messages_through_configu": "Ó lè gba àwọn ìfìránṣẹ́ nípasẹ̀ àwọn ọ̀nà tí a ti ṣètò. Kan sí ògbógi ní agbègbè rẹ kí o tó bẹ̀rẹ̀ ìtọ́jú.",
+    "ui_features_may_receive_messages_through_configu": "Ó ń gba ìmọ̀ràn nípasẹ̀ SMS, ohùn tàbí ìfọ̀rọ̀wérọ̀. Bá amòye àdúgbò sọ̀rọ̀ kí o tó ṣe ìtọ́jú èyíkéyìí.",
     "ui_features_offline_encrypted_indexeddb_storage": "Àwọn ìbẹ̀wò, oko, àti àyẹ̀wò ilẹ̀ tí a fipamọ́ sínú fóònù láìní àmì ìbánisọ̀rọ̀",
-    "ui_features_records_field_observations_using_ava": "Ó ń gba àwọn àkíyèsí oko nípasẹ̀ àwọn irinṣẹ́ tí ó wà; ìtúpalẹ̀ nínú ẹ̀rọ àwọsánmà (cloud) nílò ìsopọ̀ ayélujára àti olùpèsè tí a ti ṣètò.",
+    "ui_features_records_field_observations_using_ava": "Ó ń ṣàkọsílẹ̀ àkíyèsí àti fọ́tò oko sórí fóònù, kódà láìsí àmì nẹ́tíwọ̀ọ̀kì; wọ́n á ṣe àtúnṣọ̀kan nígbà tí àmì bá padà.",
     "ui_features_regional_cooperative_directors": "Àwọn olùdarí agbègbè àti àwọn ẹgbẹ́ àjọṣe",
     "ui_features_selected_offline_workflows": "Àwọn iṣẹ́ tí a yàn láìní ìsopọ̀ ayélujára",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, Gẹ̀ẹ́sì àti ẹ̀rọ ìyípadà ohùn sí ọ̀rọ̀ (STT)",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Kọ sílẹ̀ bóyá ìmọ̀ràn náà ṣiṣẹ́",
     "dash_support_subtitle": "Àwọn ìbéèrè tí a yanjú, àti bí àwọn àgbẹ̀ ṣe ṣe àyẹ̀wò ìrànlọ́wọ́ náà",
     "pilot_subheading": "Ṣé iṣẹ́ náà ń mú ìkórè pọ̀ sí i?",
-    "ui_memory_knowledge_by_topic_subtitle": "Bí àwọn ìdáhùn tí a fi pamọ́ ṣe pín sí ẹ̀ka"
+    "ui_memory_knowledge_by_topic_subtitle": "Bí àwọn ìdáhùn tí a fi pamọ́ ṣe pín sí ẹ̀ka",
+    "ui_trust_and_safety_what_depends_on_setup": "Àwọn ẹ̀yà kan nílò ìsopọ̀ nẹ́tíwọ̀ọ̀kì tàbí dá lórí ohun tí àjọ rẹ ti ṣètò: àyẹ̀wò fọ́tò, kúlẹ̀kúlẹ̀ ojú ọjọ́, àti ìfiránṣẹ́ SMS, WhatsApp tàbí Telegram."
 }

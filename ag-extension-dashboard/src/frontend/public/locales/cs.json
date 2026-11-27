@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Hyperlokální varování NASA před deštěm a bouřkami",
     "ui_features_image_assessment_requiring_expert_co": "Analýza snímků vyžadující potvrzení odborníkem",
     "ui_features_macro_yield_supply_intelligence": "Makro analýza výnosů a zásob",
-    "ui_features_may_receive_messages_through_configu": "Může přijímat zprávy prostřednictvím nastavených kanálů. Před ošetřením se poraďte s místním odborníkem.",
+    "ui_features_may_receive_messages_through_configu": "Dostává rady přes SMS, hlasem nebo v chatu. Před každým ošetřením se poraďte s místním odborníkem.",
     "ui_features_offline_encrypted_indexeddb_storage": "Návštěvy, pole a půdní testy uložené v telefonu bez signálu",
-    "ui_features_records_field_observations_using_ava": "Zaznamenává pozorování z terénu pomocí dostupných nástrojů; cloudová analýza vyžaduje připojení a nakonfigurovaného poskytovatele.",
+    "ui_features_records_field_observations_using_ava": "Ukládá pozorování a fotky z pole v telefonu i bez signálu; synchronizují se, jakmile se signál vrátí.",
     "ui_features_regional_cooperative_directors": "Regionální a družstevní ředitelé",
     "ui_features_selected_offline_workflows": "Vybrané offline pracovní postupy",
     "ui_features_swahili_luganda_english_voice_stt": "Svahilština, lugandština, angličtina a hlasové STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Zaznamenejte, zda rada pomohla",
     "dash_support_subtitle": "Vyřešené dotazy a jak zemědělci pomoc hodnotili",
     "pilot_subheading": "Zvyšuje služba úrodu?",
-    "ui_memory_knowledge_by_topic_subtitle": "Jak se uložené odpovědi dělí do kategorií"
+    "ui_memory_knowledge_by_topic_subtitle": "Jak se uložené odpovědi dělí do kategorií",
+    "ui_trust_and_safety_what_depends_on_setup": "Některé funkce potřebují připojení k síti nebo závisí na tom, co vaše organizace nastavila: analýza fotek, podrobnosti o počasí a zprávy přes SMS, WhatsApp nebo Telegram."
 }

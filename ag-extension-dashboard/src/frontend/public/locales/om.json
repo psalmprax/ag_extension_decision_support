@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "NASA akeekkachiisa roobaa fi obomboleettii naannoo keetii",
     "ui_features_image_assessment_requiring_expert_co": "Qorannoo suuraa kan ogeessaan mirkanaa'uu qabu",
     "ui_features_macro_yield_supply_intelligence": "Odeeffannoo bu'aa fi dhiyeessii gurguddaa",
-    "ui_features_may_receive_messages_through_configu": "Ergaawwan karaa sirna qindaa'een fudhachuu dandeessa. Wal'aansa dura ogeessa naannoo mariisisi.",
+    "ui_features_may_receive_messages_through_configu": "Gorsa SMS, sagaleen ykn haasawaan argata. Yaala kamiyyuu dura ogeessa naannoo gaafadhu.",
     "ui_features_offline_encrypted_indexeddb_storage": "Daawwannaan, laftiifi qorannoon biyyee bilbila irratti kuufameera (yoo siginaalli hin jirre)",
-    "ui_features_records_field_observations_using_ava": "Meeshaalee jiran fayyadamuun hubannoo dirree galmeessa; xiinxalli duumessa (cloud) walqunnamtii fi dhiyeessaa qindaa'e barbaada.",
+    "ui_features_records_field_observations_using_ava": "Hubannoowwan maasii fi suuraawwan bilbila irratti galmeessa, mallattoo malee illee; mallattoon yeroo deebi'u wal-simsiifamu.",
     "ui_features_regional_cooperative_directors": "Daayireektaroota naannoo fi gamtaa",
     "ui_features_selected_offline_workflows": "Hojiiwwan offline filataman",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, Afaan Ingiliizii fi sagalee STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Gorsichi hojjechuu isaa galmeessi",
     "dash_support_subtitle": "Gaaffilee furaman, fi akkaataa qonnaan bultoonni gargaarsicha madaalan",
     "pilot_subheading": "Tajaajilli kun oomisha ni dabalaa?",
-    "ui_memory_knowledge_by_topic_subtitle": "Deebiiwwan kuufaman akkamitti ramaddiiwwanitti qoodaman"
+    "ui_memory_knowledge_by_topic_subtitle": "Deebiiwwan kuufaman akkamitti ramaddiiwwanitti qoodaman",
+    "ui_trust_and_safety_what_depends_on_setup": "Tajaajilli tokko tokko walqunnamtii neetworkii barbaada ykn waan dhaabbanni keessan qopheesse irratti hundaa'a: xiinxala suuraa, bal'ina haala qilleensaa, fi ergaa SMS, WhatsApp ykn Telegram."
 }

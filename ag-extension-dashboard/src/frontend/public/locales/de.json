@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Hyperlokale NASA Regen- & Sturmwarnungen",
     "ui_features_image_assessment_requiring_expert_co": "Bildanalyse erfordert Expertenbestätigung",
     "ui_features_macro_yield_supply_intelligence": "Makro-Ertrags- & Angebotsintelligenz",
-    "ui_features_may_receive_messages_through_configu": "Kann Nachrichten über konfigurierte Kanäle empfangen. Konsultieren Sie vor der Behandlung einen lokalen Experten.",
+    "ui_features_may_receive_messages_through_configu": "Erhält Rat per SMS, Sprache oder Chat. Vor jeder Behandlung eine Fachkraft vor Ort fragen.",
     "ui_features_offline_encrypted_indexeddb_storage": "Besuche, Felder und Bodenproben werden bei fehlendem Signal auf dem Telefon gespeichert",
-    "ui_features_records_field_observations_using_ava": "Erfasst Feldbeobachtungen mit verfügbaren Werkzeugen; Cloud-Analyse erfordert Konnektivität und einen konfigurierten Anbieter.",
+    "ui_features_records_field_observations_using_ava": "Erfasst Feldbeobachtungen und Fotos auf dem Telefon, auch ohne Empfang; sie werden synchronisiert, sobald wieder Empfang besteht.",
     "ui_features_regional_cooperative_directors": "Regional- & Genossenschaftsdirektoren",
     "ui_features_selected_offline_workflows": "Ausgewählte Offline-Workflows",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, Englisch & Sprach-STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Festhalten, ob der Rat geholfen hat",
     "dash_support_subtitle": "Gelöste Fragen und wie Landwirte die Hilfe bewertet haben",
     "pilot_subheading": "Steigert der Dienst die Ernten?",
-    "ui_memory_knowledge_by_topic_subtitle": "Wie sich gespeicherte Antworten auf Kategorien verteilen"
+    "ui_memory_knowledge_by_topic_subtitle": "Wie sich gespeicherte Antworten auf Kategorien verteilen",
+    "ui_trust_and_safety_what_depends_on_setup": "Manche Funktionen brauchen eine Netzverbindung oder hängen davon ab, was Ihre Organisation eingerichtet hat: Fotoanalyse, Wetterdetails sowie Nachrichten per SMS, WhatsApp oder Telegram."
 }

@@ -240,14 +240,9 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                       <span>{t('ui_hero_example_leaf_observation')}</span>
                       <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                     </div>
-                    <div className="text-[9px] text-emerald-400 font-medium">{t('ui_hero_illustration_not_a_diagnosis')}</div>
                   </div>
                 </div>
 
-                {/* Floating Location Tag in Plain Language */}
-                <div className="absolute bottom-2.5 start-3 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[9px] font-medium text-white/90 border border-white/10">
-                  {t('ui_hero_illustrative_sample_no_photo_was_upl')}
-                </div>
               </div>
 
               {/* Diagnosis & Actionable Treatment Card in Plain Language */}

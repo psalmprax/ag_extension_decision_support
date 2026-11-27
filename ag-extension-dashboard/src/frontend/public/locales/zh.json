@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "超本地化 NASA 雨水与风暴预警",
     "ui_features_image_assessment_requiring_expert_co": "需要专家确认的图像评估",
     "ui_features_macro_yield_supply_intelligence": "宏观产量与供应情报",
-    "ui_features_may_receive_messages_through_configu": "可通过配置的渠道接收消息。处理前请咨询当地专家。",
+    "ui_features_may_receive_messages_through_configu": "通过短信、语音或聊天获得建议。任何处理前请先咨询当地专家。",
     "ui_features_offline_encrypted_indexeddb_storage": "在无信号时，访问记录、地块信息和土壤测试数据将保存在手机本地",
-    "ui_features_records_field_observations_using_ava": "使用可用工具记录田间观察结果；云端分析需要网络连接及已配置的提供商。",
+    "ui_features_records_field_observations_using_ava": "在手机上记录田间观察和照片，没有信号也可以；信号恢复后自动同步。",
     "ui_features_regional_cooperative_directors": "区域与合作社主管",
     "ui_features_selected_offline_workflows": "选定的离线工作流程",
     "ui_features_swahili_luganda_english_voice_stt": "斯瓦希里语、卢干达语、英语和语音转文字 (STT)",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "记录建议是否有效",
     "dash_support_subtitle": "已解决的问题，以及农户对帮助的评价",
     "pilot_subheading": "这项服务能提高收成吗？",
-    "ui_memory_knowledge_by_topic_subtitle": "已存答案在各类别中的分布"
+    "ui_memory_knowledge_by_topic_subtitle": "已存答案在各类别中的分布",
+    "ui_trust_and_safety_what_depends_on_setup": "部分功能需要网络连接，或取决于您所在机构的设置：照片分析、详细天气，以及短信、WhatsApp 或 Telegram 消息。"
 }

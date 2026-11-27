@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "হাইপারলোকাল NASA বৃষ্টি এবং ঝড়ের সতর্কতা",
     "ui_features_image_assessment_requiring_expert_co": "বিশেষজ্ঞের নিশ্চিতকরণ প্রয়োজন এমন ইমেজ মূল্যায়ন",
     "ui_features_macro_yield_supply_intelligence": "ম্যাক্রো ফলন এবং সরবরাহ বুদ্ধিমত্তা",
-    "ui_features_may_receive_messages_through_configu": "কনফিগার করা চ্যানেলের মাধ্যমে বার্তা পেতে পারেন। চিকিৎসার আগে একজন স্থানীয় বিশেষজ্ঞের পরামর্শ নিন।",
+    "ui_features_may_receive_messages_through_configu": "এসএমএস, ভয়েস বা চ্যাটে পরামর্শ পান। যেকোনো চিকিৎসার আগে স্থানীয় বিশেষজ্ঞের পরামর্শ নিন।",
     "ui_features_offline_encrypted_indexeddb_storage": "নেটওয়ার্ক না থাকলেও ভিজিট, জমি এবং মাটির পরীক্ষার তথ্য ফোনে সংরক্ষিত থাকে",
-    "ui_features_records_field_observations_using_ava": "উপলব্ধ সরঞ্জাম ব্যবহার করে মাঠ পর্যায়ের পর্যবেক্ষণ রেকর্ড করে; ক্লাউড বিশ্লেষণের জন্য সংযোগ এবং একটি কনফিগার করা প্রদানকারী প্রয়োজন।",
+    "ui_features_records_field_observations_using_ava": "ফোনে মাঠের পর্যবেক্ষণ ও ছবি রাখে, সিগন্যাল না থাকলেও; সিগন্যাল ফিরলে সিঙ্ক হয়।",
     "ui_features_regional_cooperative_directors": "আঞ্চলিক এবং সমবায় পরিচালকগণ",
     "ui_features_selected_offline_workflows": "নির্বাচিত অফলাইন ওয়ার্কফ্লো",
     "ui_features_swahili_luganda_english_voice_stt": "সোয়াহিলি, লুগান্ডা, ইংরেজি এবং ভয়েস STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "পরামর্শ কাজ করেছে কি না লিখে রাখুন",
     "dash_support_subtitle": "সমাধান হওয়া প্রশ্ন, এবং কৃষকরা সাহায্যকে কেমন মূল্যায়ন করেছেন",
     "pilot_subheading": "পরিষেবাটি কি ফলন বাড়ায়?",
-    "ui_memory_knowledge_by_topic_subtitle": "সংরক্ষিত উত্তরগুলো বিভাগে কীভাবে ভাগ হয়েছে"
+    "ui_memory_knowledge_by_topic_subtitle": "সংরক্ষিত উত্তরগুলো বিভাগে কীভাবে ভাগ হয়েছে",
+    "ui_trust_and_safety_what_depends_on_setup": "কিছু সুবিধার জন্য নেটওয়ার্ক সংযোগ লাগে বা আপনার প্রতিষ্ঠান কী চালু করেছে তার ওপর নির্ভর করে: ছবি বিশ্লেষণ, আবহাওয়ার বিস্তারিত, এবং এসএমএস, হোয়াটসঅ্যাপ বা টেলিগ্রাম বার্তা।"
 }

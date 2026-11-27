@@ -96,12 +96,6 @@ export function FarmerServices() {
                   </div>
                   <span>{t('ui_farmer_services_consult_a_local_expert_before_treatm')}</span>
                 </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                    <Check className="w-3 h-3" />
-                  </div>
-                  <span>{t('ui_farmer_services_cloud_analysis_requires_connectivity')}</span>
-                </div>
               </div>
             </div>
 
@@ -147,19 +141,7 @@ export function FarmerServices() {
                   <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>{t('ui_farmer_services_weather_coverage_and_detail_depend_o')}</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                    <Check className="w-3 h-3" />
-                  </div>
                   <span>{t('ui_farmer_services_forecasts_can_change_and_should_not')}</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                    <Check className="w-3 h-3" />
-                  </div>
-                  <span>{t('ui_farmer_services_messaging_availability_depends_on_yo')}</span>
                 </div>
               </div>
             </div>
@@ -213,12 +195,14 @@ export function FarmerServices() {
                   </div>
                   <span>{livePrices ? 'Producer prices for maize, dry beans & sorghum' : 'Example prices for maize, beans & sorghum'}</span>
                 </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                    <Check className="w-3 h-3" />
+                {livePrices && (
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                      <Check className="w-3 h-3" />
+                    </div>
+                    <span>Annual national averages from FAOSTAT, republished yearly</span>
                   </div>
-                  <span>{livePrices ? 'Annual national averages from FAOSTAT, republished yearly' : 'No live market feed is connected to this preview'}</span>
-                </div>
+                )}
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
                     <Check className="w-3 h-3" />

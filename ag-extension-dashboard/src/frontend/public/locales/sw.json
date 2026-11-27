@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Onyo la Mvua na Dhoruba la NASA la Eneo mahususi",
     "ui_features_image_assessment_requiring_expert_co": "Tathmini ya picha inayohitaji uthibitisho wa mtaalamu",
     "ui_features_macro_yield_supply_intelligence": "Taarifa za Mavuno na Ugavi wa Jumla",
-    "ui_features_may_receive_messages_through_configu": "Unaweza kupokea ujumbe kupitia njia zilizosanidiwa. Wasiliana na mtaalamu wa eneo lako kabla ya matibabu.",
+    "ui_features_may_receive_messages_through_configu": "Hupata ushauri kwa SMS, sauti au gumzo. Shauriana na mtaalamu wa eneo lako kabla ya tiba yoyote.",
     "ui_features_offline_encrypted_indexeddb_storage": "Ziara, mashamba na vipimo vya udongo vimehifadhiwa kwenye simu bila mawasiliano",
-    "ui_features_records_field_observations_using_ava": "Hurekodi uchunguzi wa shambani kwa kutumia zana zilizopo; uchanganuzi wa wingu unahitaji muunganisho na mtoa huduma aliyesanidiwa.",
+    "ui_features_records_field_observations_using_ava": "Hurekodi uchunguzi na picha za shambani kwenye simu, hata bila mtandao; husawazishwa mtandao ukirudi.",
     "ui_features_regional_cooperative_directors": "Wakurugenzi wa Kanda na Vyama vya Ushirika",
     "ui_features_selected_offline_workflows": "Tiririko za Kazi za Nje ya Mtandao Zilizochaguliwa",
     "ui_features_swahili_luganda_english_voice_stt": "Kiswahili, Luganda, Kiingereza & STT ya Sauti",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Rekodi kama ushauri ulifanya kazi",
     "dash_support_subtitle": "Maswali yaliyotatuliwa, na jinsi wakulima walivyokadiria msaada",
     "pilot_subheading": "Je, huduma inaongeza mavuno?",
-    "ui_memory_knowledge_by_topic_subtitle": "Jinsi majibu yaliyohifadhiwa yanavyogawanyika kwa makundi"
+    "ui_memory_knowledge_by_topic_subtitle": "Jinsi majibu yaliyohifadhiwa yanavyogawanyika kwa makundi",
+    "ui_trust_and_safety_what_depends_on_setup": "Baadhi ya vipengele vinahitaji mtandao au hutegemea kile shirika lako limeweka: uchambuzi wa picha, undani wa hali ya hewa, na ujumbe wa SMS, WhatsApp au Telegram."
 }

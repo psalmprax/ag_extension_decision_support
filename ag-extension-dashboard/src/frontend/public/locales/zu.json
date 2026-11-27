@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Izixwayiso zemvula neziphepho ze-NASA ezisendaweni ethile",
     "ui_features_image_assessment_requiring_expert_co": "Ukuhlolwa kwesithombe okudinga ukuqinisekiswa kochwepheshe",
     "ui_features_macro_yield_supply_intelligence": "Ulwazi Lwesivuno Nokuhlinzekwa Okukhulu",
-    "ui_features_may_receive_messages_through_configu": "Ingathola imiyalezo ngeziteshi ezilungisiwe. Thintana nochwepheshe bendawo ngaphambi kokwelapha.",
+    "ui_features_may_receive_messages_through_configu": "Uthola iseluleko nge-SMS, ngezwi noma ngengxoxo. Buza uchwepheshe wendawo ngaphambi kokwelapha.",
     "ui_features_offline_encrypted_indexeddb_storage": "Ukuvakashela, amasimu kanye nokuhlolwa kwenhlabathi kulondolozwe ocingweni ngaphandle kwesiginali",
-    "ui_features_records_field_observations_using_ava": "Iqopha imibono yasensimini isebenzisa amathuluzi atholakalayo; ukuhlaziywa kwamafu kudinga ukuxhumana nomhlinzeki olungisiwe.",
+    "ui_features_records_field_observations_using_ava": "Irekhoda okubonwe ensimini nezithombe ocingweni, ngisho kungekho siginali; kuyavumelaniswa lapho isiginali ibuya.",
     "ui_features_regional_cooperative_directors": "Abaqondisi Besifunda & Bezi-Cooperative",
     "ui_features_selected_offline_workflows": "Imisebenzi Ekhethiwe Engaxhunyiwe ku-inthanethi",
     "ui_features_swahili_luganda_english_voice_stt": "IsiSwahili, isiLuganda, isiNgisi & i-Voice STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Bhala ukuthi iseluleko sisebenzile yini",
     "dash_support_subtitle": "Imibuzo exazululiwe, nokuthi abalimi balinganise kanjani usizo",
     "pilot_subheading": "Ingabe insizakalo inyusa isivuno?",
-    "ui_memory_knowledge_by_topic_subtitle": "Ukuthi izimpendulo ezigciniwe zihlukaniswe kanjani ngezigaba"
+    "ui_memory_knowledge_by_topic_subtitle": "Ukuthi izimpendulo ezigciniwe zihlukaniswe kanjani ngezigaba",
+    "ui_trust_and_safety_what_depends_on_setup": "Ezinye izici zidinga ukuxhumana nenethiwekhi noma zincike kulokho inhlangano yakho ekumisile: ukuhlaziywa kwezithombe, imininingwane yesimo sezulu, nemilayezo ye-SMS, WhatsApp noma Telegram."
 }

@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "हाइपरलोकल NASA वर्षा और तूफान की चेतावनी",
     "ui_features_image_assessment_requiring_expert_co": "छवि मूल्यांकन जिसके लिए विशेषज्ञ पुष्टि की आवश्यकता है",
     "ui_features_macro_yield_supply_intelligence": "मैक्रो उपज और आपूर्ति इंटेलिजेंस",
-    "ui_features_may_receive_messages_through_configu": "कॉन्फ़िगर किए गए चैनलों के माध्यम से संदेश प्राप्त हो सकते हैं। उपचार से पहले किसी स्थानीय विशेषज्ञ से परामर्श लें।",
+    "ui_features_may_receive_messages_through_configu": "एसएमएस, आवाज़ या चैट से सलाह मिलती है। किसी भी उपचार से पहले स्थानीय विशेषज्ञ से पूछें।",
     "ui_features_offline_encrypted_indexeddb_storage": "सिग्नल न होने पर भी विज़िट, खेत और मिट्टी के परीक्षण फोन पर सहेजे जाते हैं",
-    "ui_features_records_field_observations_using_ava": "उपलब्ध उपकरणों का उपयोग करके क्षेत्र के अवलोकनों को रिकॉर्ड करता है; क्लाउड विश्लेषण के लिए कनेक्टिविटी और एक कॉन्फ़िगर किए गए प्रदाता की आवश्यकता होती है।",
+    "ui_features_records_field_observations_using_ava": "फ़ोन पर खेत के अवलोकन और फ़ोटो दर्ज करता है, सिग्नल न हो तब भी; सिग्नल लौटने पर ये सिंक हो जाते हैं।",
     "ui_features_regional_cooperative_directors": "क्षेत्रीय और सहकारी निदेशक",
     "ui_features_selected_offline_workflows": "चुनिंदा ऑफ़लाइन वर्कफ़्लो",
     "ui_features_swahili_luganda_english_voice_stt": "स्वाहिली, लुगांडा, अंग्रेजी और वॉयस STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "दर्ज करें कि सलाह काम आई या नहीं",
     "dash_support_subtitle": "हल हुए सवाल, और किसानों ने मदद को कैसा आँका",
     "pilot_subheading": "क्या सेवा से उपज बढ़ती है?",
-    "ui_memory_knowledge_by_topic_subtitle": "सहेजे गए उत्तर श्रेणियों में कैसे बँटे हैं"
+    "ui_memory_knowledge_by_topic_subtitle": "सहेजे गए उत्तर श्रेणियों में कैसे बँटे हैं",
+    "ui_trust_and_safety_what_depends_on_setup": "कुछ सुविधाओं को नेटवर्क कनेक्शन चाहिए या वे इस पर निर्भर हैं कि आपकी संस्था ने क्या सेट किया है: फ़ोटो विश्लेषण, मौसम का विवरण, और एसएमएस, व्हाट्सऐप या टेलीग्राम संदेश।"
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import en from '../../public/locales/en.json';
-import { audiences, capabilities, operationalStandards, painPoints, SANDBOX_PRESETS, simulationSteps } from '@/pages/landing/sectionData';
+import { capabilities, operationalStandards, painPoints, SANDBOX_PRESETS, simulationSteps } from '@/pages/landing/sectionData';
 import { personas, pipelineStages, STAGE_STORIES } from '@/pages/landing/pipelineStories';
 import { faqItems, steps } from '@/pages/landing/data';
 import { englishT } from '@/test/englishT';
@@ -18,7 +18,7 @@ function keysIn(value: unknown): string[] {
  * The source check only sees t('…') calls, so these keys are checked here.
  */
 describe('landing content keys', () => {
-  const keys = keysIn([painPoints, audiences, capabilities, operationalStandards, SANDBOX_PRESETS, personas, pipelineStages, STAGE_STORIES, steps, faqItems]);
+  const keys = keysIn([painPoints, capabilities, operationalStandards, SANDBOX_PRESETS, personas, pipelineStages, STAGE_STORIES, steps, faqItems]);
 
   it('exist in the English locale', () => {
     expect(keys.length).toBeGreaterThan(150);

@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Hiperyerel NASA Yağmur ve Fırtına Uyarıları",
     "ui_features_image_assessment_requiring_expert_co": "Uzman onayı gerektiren görüntü değerlendirmesi",
     "ui_features_macro_yield_supply_intelligence": "Makro Verim ve Arz İstihbaratı",
-    "ui_features_may_receive_messages_through_configu": "Yapılandırılmış kanallar aracılığıyla mesaj alabilir. Uygulama öncesinde yerel bir uzmana danışın.",
+    "ui_features_may_receive_messages_through_configu": "SMS, sesli veya sohbet yoluyla tavsiye alır. Her uygulamadan önce yerel bir uzmana danışın.",
     "ui_features_offline_encrypted_indexeddb_storage": "Ziyaretler, tarlalar ve toprak testleri sinyal olmadığında telefona kaydedilir",
-    "ui_features_records_field_observations_using_ava": "Mevcut araçları kullanarak saha gözlemlerini kaydeder; bulut analizi bağlantı ve yapılandırılmış bir sağlayıcı gerektirir.",
+    "ui_features_records_field_observations_using_ava": "Saha gözlemlerini ve fotoğraflarını telefonda kaydeder, sinyal olmasa bile; sinyal gelince eşitlenir.",
     "ui_features_regional_cooperative_directors": "Bölgesel ve Kooperatif Direktörleri",
     "ui_features_selected_offline_workflows": "Seçili Çevrimdışı İş Akışları",
     "ui_features_swahili_luganda_english_voice_stt": "Svahili, Luganda, İngilizce ve Sesli STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Tavsiyenin işe yarayıp yaramadığını kaydedin",
     "dash_support_subtitle": "Çözülen sorular ve çiftçilerin yardımı nasıl değerlendirdiği",
     "pilot_subheading": "Hizmet hasadı artırıyor mu?",
-    "ui_memory_knowledge_by_topic_subtitle": "Kayıtlı yanıtların kategorilere dağılımı"
+    "ui_memory_knowledge_by_topic_subtitle": "Kayıtlı yanıtların kategorilere dağılımı",
+    "ui_trust_and_safety_what_depends_on_setup": "Bazı özellikler ağ bağlantısı gerektirir ya da kuruluşunuzun ayarlarına bağlıdır: fotoğraf analizi, hava durumu ayrıntısı ve SMS, WhatsApp veya Telegram mesajları."
 }

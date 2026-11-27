@@ -44,6 +44,9 @@ export function TrustAndSafety() {
           >
             {t('ui_trust_and_safety_agricultural_technology_should_ackno')}
           </motion.p>
+          <motion.p variants={fadeUp} className="mt-4 text-sm text-white/60 leading-relaxed">
+            {t('ui_trust_and_safety_what_depends_on_setup')}
+          </motion.p>
         </motion.div>
 
         {/* 3 Trust Pillars */}

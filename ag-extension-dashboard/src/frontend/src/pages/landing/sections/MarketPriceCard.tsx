@@ -17,7 +17,6 @@ export function MarketPriceCard({ snapshot }: { snapshot: LandingPricesSnapshot 
       >
         <div className="text-xs font-medium text-amber-300 flex items-center justify-between">
           <span>{t('ui_market_price_card_illustrative_demo_data')}</span>
-          <span className="text-[10px] font-mono text-white/50">{t('ui_market_price_card_not_live_prices')}</span>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center">
           <div className="p-2 rounded-lg bg-white/[0.04] border border-white/5">

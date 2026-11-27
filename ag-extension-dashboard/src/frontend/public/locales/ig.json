@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Ịdọ aka ná ntị mmiri ozuzo & oké ifufe nke NASA maka mpaghara gị",
     "ui_features_image_assessment_requiring_expert_co": "Nyocha onyonyo nke chọrọ nkwenye ọkachamara",
     "ui_features_macro_yield_supply_intelligence": "Amamihe gbasara mkpụrụ na ọkọnọ n'ogo dị elu",
-    "ui_features_may_receive_messages_through_configu": "Nwere ike ịnata ozi site na ọwa ndị ahaziri. Gwa ọkachamara nọ n'ógbè gị tupu ịmalite ọgwụgwọ.",
+    "ui_features_may_receive_messages_through_configu": "Na-enweta ndụmọdụ site na SMS, olu ma ọ bụ nkata. Gwa ọkachamara mpaghara gị okwu tupu ọgwụgwọ ọ bụla.",
     "ui_features_offline_encrypted_indexeddb_storage": "Nleta, ubi na nyocha ala echekwara na ekwentị mgbe enweghị akara ngosi",
-    "ui_features_records_field_observations_using_ava": "Na-edekọ ihe a hụrụ n'ubi site n'iji ngwaọrụ ndị dị; nyocha igwe ojii chọrọ njikọ ịntanetị na onye na-eweta ọrụ ahaziri.",
+    "ui_features_records_field_observations_using_ava": "Na-edekọ ihe a hụrụ n'ubi na foto na ekwentị, ọbụlagodi na-enweghị netwọk; ha na-emekọ ọnụ mgbe netwọk laghachiri.",
     "ui_features_regional_cooperative_directors": "Ndị isi mpaghara na ndị isi otu nkwado",
     "ui_features_selected_offline_workflows": "Usoro ọrụ ndị ahọpụtara na-anọghị n'ịntanetị",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, Bekee & olu STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Dee ma ndụmọdụ ahụ rụrụ ọrụ",
     "dash_support_subtitle": "Ajụjụ edoziri, na otu ndị ọrụ ugbo si nyochaa enyemaka ahụ",
     "pilot_subheading": "Ọrụ a ọ na-abawanye owuwe ihe ubi?",
-    "ui_memory_knowledge_by_topic_subtitle": "Otu azịza echekwara si kesaa n'ụdị dị iche iche"
+    "ui_memory_knowledge_by_topic_subtitle": "Otu azịza echekwara si kesaa n'ụdị dị iche iche",
+    "ui_trust_and_safety_what_depends_on_setup": "Ụfọdụ atụmatụ chọrọ njikọ netwọk ma ọ bụ dabere n'ihe nzukọ gị hiwere: nyocha foto, nkọwa ihu igwe, na ozi SMS, WhatsApp ma ọ bụ Telegram."
 }

@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "ہائپر لوکل NASA بارش اور طوفان کی وارننگز",
     "ui_features_image_assessment_requiring_expert_co": "تصویری تشخیص جس کے لیے ماہر کی تصدیق درکار ہے",
     "ui_features_macro_yield_supply_intelligence": "میکرو پیداوار اور سپلائی انٹیلی جنس",
-    "ui_features_may_receive_messages_through_configu": "تشکیل شدہ چینلز کے ذریعے پیغامات موصول ہو سکتے ہیں۔ علاج سے پہلے مقامی ماہر سے مشورہ کریں۔",
+    "ui_features_may_receive_messages_through_configu": "ایس ایم ایس، آواز یا چیٹ کے ذریعے مشورہ ملتا ہے۔ کسی بھی علاج سے پہلے مقامی ماہر سے مشورہ کریں۔",
     "ui_features_offline_encrypted_indexeddb_storage": "سگنل نہ ہونے پر دورے، کھیت اور مٹی کے ٹیسٹ فون پر محفوظ کیے گئے",
-    "ui_features_records_field_observations_using_ava": "دستیاب ٹولز کا استعمال کرتے ہوئے فیلڈ مشاہدات ریکارڈ کرتا ہے؛ کلاؤڈ تجزیہ کے لیے کنیکٹیویٹی اور ایک کنفیگرڈ فراہم کنندہ کی ضرورت ہوتی ہے۔",
+    "ui_features_records_field_observations_using_ava": "کھیت کے مشاہدات اور تصاویر فون پر محفوظ کرتا ہے، سگنل کے بغیر بھی؛ سگنل آنے پر یہ ہم آہنگ ہو جاتی ہیں۔",
     "ui_features_regional_cooperative_directors": "علاقائی اور کوآپریٹو ڈائریکٹرز",
     "ui_features_selected_offline_workflows": "منتخب آف لائن ورک فلو",
     "ui_features_swahili_luganda_english_voice_stt": "سواحلی، لوگانڈا، انگریزی اور وائس STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "درج کریں کہ مشورہ کارگر ہوا یا نہیں",
     "dash_support_subtitle": "حل شدہ سوالات، اور کسانوں نے مدد کو کیسا درجہ دیا",
     "pilot_subheading": "کیا یہ سروس پیداوار بڑھاتی ہے؟",
-    "ui_memory_knowledge_by_topic_subtitle": "محفوظ جوابات زمروں میں کیسے بٹے ہیں"
+    "ui_memory_knowledge_by_topic_subtitle": "محفوظ جوابات زمروں میں کیسے بٹے ہیں",
+    "ui_trust_and_safety_what_depends_on_setup": "کچھ سہولیات کو نیٹ ورک کنکشن درکار ہے یا وہ اس پر منحصر ہیں جو آپ کی تنظیم نے ترتیب دیا ہے: تصویر کا تجزیہ، موسم کی تفصیل، اور ایس ایم ایس، واٹس ایپ یا ٹیلیگرام پیغامات۔"
 }

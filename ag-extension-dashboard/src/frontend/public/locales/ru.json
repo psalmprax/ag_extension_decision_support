@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Гиперлокальные предупреждения NASA о дождях и штормах",
     "ui_features_image_assessment_requiring_expert_co": "Анализ изображений, требующий подтверждения экспертом",
     "ui_features_macro_yield_supply_intelligence": "Макроаналитика урожайности и поставок",
-    "ui_features_may_receive_messages_through_configu": "Может получать сообщения через настроенные каналы. Перед обработкой проконсультируйтесь с местным экспертом.",
+    "ui_features_may_receive_messages_through_configu": "Получает советы по SMS, голосом или в чате. Перед любой обработкой посоветуйтесь с местным специалистом.",
     "ui_features_offline_encrypted_indexeddb_storage": "Визиты, поля и анализы почвы сохраняются на телефоне при отсутствии сигнала",
-    "ui_features_records_field_observations_using_ava": "Записывает полевые наблюдения с использованием доступных инструментов; облачный анализ требует подключения и настроенного провайдера.",
+    "ui_features_records_field_observations_using_ava": "Записывает полевые наблюдения и фото на телефоне даже без связи; они синхронизируются, когда связь вернётся.",
     "ui_features_regional_cooperative_directors": "Региональные и кооперативные директора",
     "ui_features_selected_offline_workflows": "Выбранные автономные рабочие процессы",
     "ui_features_swahili_luganda_english_voice_stt": "Суахили, луганда, английский и голосовой STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Отметьте, помог ли совет",
     "dash_support_subtitle": "Решённые вопросы и как фермеры оценили помощь",
     "pilot_subheading": "Повышает ли сервис урожай?",
-    "ui_memory_knowledge_by_topic_subtitle": "Как сохранённые ответы распределены по категориям"
+    "ui_memory_knowledge_by_topic_subtitle": "Как сохранённые ответы распределены по категориям",
+    "ui_trust_and_safety_what_depends_on_setup": "Некоторым функциям нужна связь или настройки вашей организации: анализ фото, подробная погода и сообщения по SMS, WhatsApp или Telegram."
 }

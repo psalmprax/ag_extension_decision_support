@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Hiperlokális NASA eső- és viharjelzések",
     "ui_features_image_assessment_requiring_expert_co": "Szakértői megerősítést igénylő képelemzés",
     "ui_features_macro_yield_supply_intelligence": "Makroszintű hozam- és ellátási intelligencia",
-    "ui_features_may_receive_messages_through_configu": "Üzeneteket fogadhat a konfigurált csatornákon keresztül. Kezelés előtt konzultáljon egy helyi szakértővel.",
+    "ui_features_may_receive_messages_through_configu": "Tanácsot kap SMS-ben, hangon vagy csevegésben. Kezelés előtt kérdezzen helyi szakembert.",
     "ui_features_offline_encrypted_indexeddb_storage": "Látogatások, parcellák és talajvizsgálatok mentése a telefonon térerő hiányában is",
-    "ui_features_records_field_observations_using_ava": "Terepi megfigyelések rögzítése elérhető eszközökkel; a felhőalapú elemzéshez kapcsolat és konfigurált szolgáltató szükséges.",
+    "ui_features_records_field_observations_using_ava": "Telefonon rögzíti a terepi megfigyeléseket és fotókat, térerő nélkül is; ezek szinkronizálódnak, amikor visszatér a térerő.",
     "ui_features_regional_cooperative_directors": "Regionális és szövetkezeti igazgatók",
     "ui_features_selected_offline_workflows": "Kiválasztott offline munkafolyamatok",
     "ui_features_swahili_luganda_english_voice_stt": "Szuahéli, luganda, angol és hangalapú STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Rögzítse, hogy bevált-e a tanács",
     "dash_support_subtitle": "Megoldott kérdések, és hogyan értékelték a gazdák a segítséget",
     "pilot_subheading": "Növeli a szolgáltatás a termést?",
-    "ui_memory_knowledge_by_topic_subtitle": "Hogyan oszlanak meg a tárolt válaszok a kategóriák között"
+    "ui_memory_knowledge_by_topic_subtitle": "Hogyan oszlanak meg a tárolt válaszok a kategóriák között",
+    "ui_trust_and_safety_what_depends_on_setup": "Néhány funkcióhoz hálózati kapcsolat kell, vagy attól függ, mit állított be a szervezete: fotóelemzés, részletes időjárás, valamint SMS-, WhatsApp- vagy Telegram-üzenetek."
 }

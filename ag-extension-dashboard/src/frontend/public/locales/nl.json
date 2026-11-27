@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Hyperlokale NASA regen- & stormwaarschuwingen",
     "ui_features_image_assessment_requiring_expert_co": "Beeldbeoordeling vereist bevestiging door expert",
     "ui_features_macro_yield_supply_intelligence": "Macro-opbrengst & aanbodintelligentie",
-    "ui_features_may_receive_messages_through_configu": "Kan berichten ontvangen via geconfigureerde kanalen. Raadpleeg een lokale expert vóór behandeling.",
+    "ui_features_may_receive_messages_through_configu": "Krijgt advies via sms, spraak of chat. Raadpleeg een lokale deskundige vóór elke behandeling.",
     "ui_features_offline_encrypted_indexeddb_storage": "Bezoeken, velden en bodemtests opgeslagen op de telefoon zonder signaal",
-    "ui_features_records_field_observations_using_ava": "Registreert veldobservaties met beschikbare tools; cloudanalyse vereist connectiviteit en een geconfigureerde provider.",
+    "ui_features_records_field_observations_using_ava": "Legt veldwaarnemingen en foto's vast op een telefoon, ook zonder bereik; ze synchroniseren zodra er weer bereik is.",
     "ui_features_regional_cooperative_directors": "Regionale & Coöperatieve Directeuren",
     "ui_features_selected_offline_workflows": "Geselecteerde offline workflows",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, Engels & Spraak-naar-tekst (STT)",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Vastleggen of het advies werkte",
     "dash_support_subtitle": "Opgeloste vragen en hoe boeren de hulp beoordeelden",
     "pilot_subheading": "Verhoogt de dienst de oogst?",
-    "ui_memory_knowledge_by_topic_subtitle": "Hoe opgeslagen antwoorden over categorieën verdeeld zijn"
+    "ui_memory_knowledge_by_topic_subtitle": "Hoe opgeslagen antwoorden over categorieën verdeeld zijn",
+    "ui_trust_and_safety_what_depends_on_setup": "Sommige functies hebben een netwerkverbinding nodig of hangen af van wat uw organisatie heeft ingesteld: foto-analyse, weerdetails en berichten via sms, WhatsApp of Telegram."
 }

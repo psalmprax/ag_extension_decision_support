@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Хиперлокални предупреждения за дъжд и бури от NASA POWER",
     "ui_features_image_assessment_requiring_expert_co": "Оценка на изображения, изискваща потвърждение от експерт",
     "ui_features_macro_yield_supply_intelligence": "Макро разузнаване за добив и доставки",
-    "ui_features_may_receive_messages_through_configu": "Може да получавате съобщения чрез конфигурирани канали. Консултирайте се с местен експерт преди третиране.",
+    "ui_features_may_receive_messages_through_configu": "Получава съвети по SMS, глас или чат. Консултирайте се с местен експерт преди всяко третиране.",
     "ui_features_offline_encrypted_indexeddb_storage": "Посещения, полета и почвени тестове, запазени на телефона без сигнал",
-    "ui_features_records_field_observations_using_ava": "Записва полеви наблюдения чрез налични инструменти; облачният анализ изисква свързаност и конфигуриран доставчик.",
+    "ui_features_records_field_observations_using_ava": "Записва полеви наблюдения и снимки на телефона дори без сигнал; те се синхронизират, когато сигналът се върне.",
     "ui_features_regional_cooperative_directors": "Регионални и кооперативни директори",
     "ui_features_selected_offline_workflows": "Избрани офлайн работни процеси",
     "ui_features_swahili_luganda_english_voice_stt": "Суахили, луганда, английски и гласово STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Отбележете дали съветът е помогнал",
     "dash_support_subtitle": "Решени въпроси и как фермерите оцениха помощта",
     "pilot_subheading": "Увеличава ли услугата реколтата?",
-    "ui_memory_knowledge_by_topic_subtitle": "Как запазените отговори се разпределят по категории"
+    "ui_memory_knowledge_by_topic_subtitle": "Как запазените отговори се разпределят по категории",
+    "ui_trust_and_safety_what_depends_on_setup": "Някои функции изискват връзка с мрежата или зависят от това, което вашата организация е настроила: анализ на снимки, подробности за времето и съобщения по SMS, WhatsApp или Telegram."
 }

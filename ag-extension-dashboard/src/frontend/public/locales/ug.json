@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "يەرلىك NASA يامغۇر ۋە بوران-چاپقۇن ئاگاھلاندۇرۇشى",
     "ui_features_image_assessment_requiring_expert_co": "مۇتەخەسسىسلەرنىڭ جەزملەشتۈرۈشىنى تەلەپ قىلىدىغان رەسىم باھالاش",
     "ui_features_macro_yield_supply_intelligence": "ماكرو ھوسۇل ۋە تەمىنلەش ئاخباراتى",
-    "ui_features_may_receive_messages_through_configu": "سەپلەنگەن قاناللار ئارقىلىق ئۇچۇرلارنى قوبۇل قىلىشى مۇمكىن. داۋالاشتىن بۇرۇن يەرلىك مۇتەخەسسىس بىلەن مەسلىھەتلىشىڭ.",
+    "ui_features_may_receive_messages_through_configu": "SMS، ئاۋاز ياكى پاراڭ ئارقىلىق مەسلىھەت ئالىدۇ. ھەر قانداق داۋالاشتىن بۇرۇن يەرلىك مۇتەخەسسىستىن سوراڭ.",
     "ui_features_offline_encrypted_indexeddb_storage": "تور بولمىغان ئەھۋالدا زىيارەت خاتىرىسى، ئېتىز ۋە تۇپراق سىناقلىرى تېلېفونغا ساقلىنىدۇ",
-    "ui_features_records_field_observations_using_ava": "بار بولغان قوراللارنى ئىشلىتىپ ئېتىز كۆزىتىش خاتىرىلىرىنى ساقلايدۇ؛ بۇلۇت ئانالىزى تور ئۇلىنىشى ۋە سەپلەنگەن تەمىنلىگۈچىنى تەلەپ قىلىدۇ.",
+    "ui_features_records_field_observations_using_ava": "ئېتىز كۆزىتىشلىرى ۋە رەسىملەرنى تېلېفونغا خاتىرىلەيدۇ، سىگنال بولمىسىمۇ؛ سىگنال قايتقاندا ماسلىشىدۇ.",
     "ui_features_regional_cooperative_directors": "رايونلۇق ۋە ھەمكارلىق كوپېراتىپى مۇدىرلىرى",
     "ui_features_selected_offline_workflows": "تاللانغان تورسىز خىزمەت ئېقىمى",
     "ui_features_swahili_luganda_english_voice_stt": "سۋاھىلى، لۇگاندا، ئىنگلىز تىلى ۋە ئاۋازلىق STT",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "مەسلىھەتنىڭ ئۈنۈم بەرگەن-بەرمىگەنلىكىنى خاتىرىلەڭ",
     "dash_support_subtitle": "ھەل قىلىنغان سوئاللار ۋە دېھقانلارنىڭ ياردەمگە بەرگەن باھاسى",
     "pilot_subheading": "مۇلازىمەت ھوسۇلنى ئاشۇرامدۇ؟",
-    "ui_memory_knowledge_by_topic_subtitle": "ساقلانغان جاۋابلارنىڭ تۈرلەرگە تەقسىملىنىشى"
+    "ui_memory_knowledge_by_topic_subtitle": "ساقلانغان جاۋابلارنىڭ تۈرلەرگە تەقسىملىنىشى",
+    "ui_trust_and_safety_what_depends_on_setup": "بەزى ئىقتىدارلار تور ئۇلىنىشىغا موھتاج ياكى تەشكىلاتىڭىزنىڭ تەڭشىكىگە باغلىق: رەسىم تەھلىلى، ھاۋارايى تەپسىلاتى، ۋە SMS، WhatsApp ياكى Telegram ئۇچۇرلىرى."
 }

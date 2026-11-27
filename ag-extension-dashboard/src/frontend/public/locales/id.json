@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Peringatan hujan & badai hiperlokal NASA",
     "ui_features_image_assessment_requiring_expert_co": "Penilaian gambar yang memerlukan konfirmasi pakar",
     "ui_features_macro_yield_supply_intelligence": "Intelijen hasil panen & pasokan makro",
-    "ui_features_may_receive_messages_through_configu": "Dapat menerima pesan melalui saluran yang dikonfigurasi. Konsultasikan dengan pakar lokal sebelum melakukan perawatan.",
+    "ui_features_may_receive_messages_through_configu": "Mendapat saran lewat SMS, suara, atau obrolan. Tanyakan ahli setempat sebelum perlakuan apa pun.",
     "ui_features_offline_encrypted_indexeddb_storage": "Kunjungan, lahan, dan uji tanah disimpan di ponsel saat tidak ada sinyal",
-    "ui_features_records_field_observations_using_ava": "Mencatat observasi lapangan menggunakan alat yang tersedia; analisis cloud memerlukan konektivitas dan penyedia yang dikonfigurasi.",
+    "ui_features_records_field_observations_using_ava": "Mencatat pengamatan dan foto lapangan di ponsel, bahkan tanpa sinyal; data tersinkron saat sinyal kembali.",
     "ui_features_regional_cooperative_directors": "Direktur regional & koperasi",
     "ui_features_selected_offline_workflows": "Alur kerja luring yang dipilih",
     "ui_features_swahili_luganda_english_voice_stt": "Swahili, Luganda, Inggris & STT suara",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Catat apakah saran itu berhasil",
     "dash_support_subtitle": "Pertanyaan yang terjawab, dan penilaian petani atas bantuannya",
     "pilot_subheading": "Apakah layanan ini meningkatkan panen?",
-    "ui_memory_knowledge_by_topic_subtitle": "Sebaran jawaban tersimpan per kategori"
+    "ui_memory_knowledge_by_topic_subtitle": "Sebaran jawaban tersimpan per kategori",
+    "ui_trust_and_safety_what_depends_on_setup": "Beberapa fitur memerlukan koneksi jaringan atau bergantung pada pengaturan organisasi Anda: analisis foto, detail cuaca, dan pesan SMS, WhatsApp, atau Telegram."
 }

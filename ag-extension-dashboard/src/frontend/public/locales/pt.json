@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "Alertas hiperlocais de chuva e tempestades da NASA POWER",
     "ui_features_image_assessment_requiring_expert_co": "Avaliação de imagem que requer confirmação de especialista",
     "ui_features_macro_yield_supply_intelligence": "Inteligência macro de produtividade e oferta",
-    "ui_features_may_receive_messages_through_configu": "Pode receber mensagens através de canais configurados. Consulte um especialista local antes do tratamento.",
+    "ui_features_may_receive_messages_through_configu": "Recebe conselhos por SMS, voz ou chat. Consulte um especialista local antes de qualquer tratamento.",
     "ui_features_offline_encrypted_indexeddb_storage": "Visitas, talhões e testes de solo salvos no telemóvel sem sinal",
-    "ui_features_records_field_observations_using_ava": "Registra observações de campo usando ferramentas disponíveis; a análise em nuvem requer conectividade e um provedor configurado.",
+    "ui_features_records_field_observations_using_ava": "Regista observações e fotos de campo no telefone, mesmo sem rede; sincronizam quando a rede volta.",
     "ui_features_regional_cooperative_directors": "Diretores regionais e de cooperativas",
     "ui_features_selected_offline_workflows": "Fluxos de trabalho offline selecionados",
     "ui_features_swahili_luganda_english_voice_stt": "Suaíli, Luganda, Inglês e STT de voz",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "Registar se o conselho funcionou",
     "dash_support_subtitle": "Perguntas resolvidas e como os agricultores avaliaram a ajuda",
     "pilot_subheading": "O serviço aumenta as colheitas?",
-    "ui_memory_knowledge_by_topic_subtitle": "Como as respostas guardadas se distribuem por categoria"
+    "ui_memory_knowledge_by_topic_subtitle": "Como as respostas guardadas se distribuem por categoria",
+    "ui_trust_and_safety_what_depends_on_setup": "Algumas funções precisam de ligação à rede ou dependem do que a sua organização configurou: análise de fotos, detalhe meteorológico e mensagens por SMS, WhatsApp ou Telegram."
 }

@@ -1210,9 +1210,9 @@
     "ui_features_hyperlocal_nasa_rain_storm_warnings": "تحذيرات محلية دقيقة من NASA بشأن الأمطار والعواصف",
     "ui_features_image_assessment_requiring_expert_co": "تقييم الصور يتطلب تأكيداً من خبير",
     "ui_features_macro_yield_supply_intelligence": "ذكاء الإنتاجية والإمدادات الكلي",
-    "ui_features_may_receive_messages_through_configu": "قد تتلقى رسائل عبر القنوات المحددة. استشر خبيراً محلياً قبل البدء بالمعالجة.",
+    "ui_features_may_receive_messages_through_configu": "يتلقى النصائح عبر الرسائل القصيرة أو الصوت أو الدردشة. استشر خبيرًا محليًا قبل أي معالجة.",
     "ui_features_offline_encrypted_indexeddb_storage": "يتم حفظ الزيارات والحقول واختبارات التربة على الهاتف عند عدم وجود إشارة",
-    "ui_features_records_field_observations_using_ava": "تسجيل الملاحظات الميدانية باستخدام الأدوات المتاحة؛ يتطلب التحليل السحابي اتصالاً بالإنترنت ومزود خدمة مهيأ.",
+    "ui_features_records_field_observations_using_ava": "يسجّل الملاحظات والصور الميدانية على الهاتف حتى دون إشارة، وتُزامَن عند عودة الإشارة.",
     "ui_features_regional_cooperative_directors": "مديرو المناطق والتعاونيات",
     "ui_features_selected_offline_workflows": "سير عمل مختارة دون اتصال بالإنترنت",
     "ui_features_swahili_luganda_english_voice_stt": "اللغات السواحيلية، واللوغاندية، والإنجليزية، وتقنية تحويل الصوت إلى نص (STT)",
@@ -3127,5 +3127,6 @@
     "ui_efficacy_card_subtitle": "سجّل ما إذا كانت النصيحة قد نجحت",
     "dash_support_subtitle": "الأسئلة التي حُلّت وكيف قيّم المزارعون المساعدة",
     "pilot_subheading": "هل تزيد الخدمة المحاصيل؟",
-    "ui_memory_knowledge_by_topic_subtitle": "كيف تتوزع الإجابات المحفوظة على الفئات"
+    "ui_memory_knowledge_by_topic_subtitle": "كيف تتوزع الإجابات المحفوظة على الفئات",
+    "ui_trust_and_safety_what_depends_on_setup": "بعض الميزات تحتاج إلى اتصال بالشبكة أو تعتمد على ما أعدّته مؤسستك: تحليل الصور وتفاصيل الطقس والرسائل عبر SMS أو واتساب أو تيليغرام."
 }
