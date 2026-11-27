@@ -9,6 +9,7 @@ import { stagger, fadeUp } from '../variants';
 import { MarketPriceCard } from './MarketPriceCard';
 import { useLandingPrices } from './useLandingPrices';
 import { useLanguage } from '@/lib/LanguageContext';
+import { CARD_TITLE, SECTION_TITLE } from './sectionStyles';
 
 export function FarmerServices() {
   const { t } = useLanguage();
@@ -45,7 +46,7 @@ export function FarmerServices() {
           variants={stagger}
           className="text-center max-w-3xl mx-auto mb-14 sm:mb-20"
         >
-          <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-medium leading-tight text-white mb-4">
+          <motion.h2 variants={fadeUp} className={`${SECTION_TITLE} mb-4`}>
             {t('ui_farmer_services_everything_you_need_to')}
           </motion.h2>
           <motion.p
@@ -71,13 +72,10 @@ export function FarmerServices() {
                 <div className="w-11 h-11 rounded-lg bg-white/[0.05] border border-white/[0.1] flex items-center justify-center text-emerald-300 ">
                   <Camera className="w-7 h-7" />
                 </div>
-                <span className="text-xs text-[#9db2a6]">
-                  {t('ui_farmer_services_crop_assessment')}
-                </span>
               </div>
 
               <div>
-                <h3 className="text-xl sm:text-2xl font-medium text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                <h3 className={`${CARD_TITLE} mb-2 group-hover:text-emerald-300 transition-colors`}>
                   {t('ui_farmer_services_diagnose_my_crop')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
@@ -97,12 +95,6 @@ export function FarmerServices() {
                     <Check className="w-3 h-3" />
                   </div>
                   <span>{t('ui_farmer_services_consult_a_local_expert_before_treatm')}</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                    <Check className="w-3 h-3" />
-                  </div>
-                  <span>{t('ui_farmer_services_cloud_analysis_requires_connectivity')}</span>
                 </div>
               </div>
             </div>
@@ -133,13 +125,10 @@ export function FarmerServices() {
                 <div className="w-11 h-11 rounded-lg bg-white/[0.05] border border-white/[0.1] flex items-center justify-center text-emerald-300 ">
                   <CloudRain className="w-7 h-7" />
                 </div>
-                <span className="text-xs text-[#9db2a6]">
-                  {t('ui_farmer_services_weather_information')}
-                </span>
               </div>
 
               <div>
-                <h3 className="text-xl sm:text-2xl font-medium text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                <h3 className={`${CARD_TITLE} mb-2 group-hover:text-emerald-300 transition-colors`}>
                   {t('ui_farmer_services_check_the_weather')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
@@ -152,19 +141,7 @@ export function FarmerServices() {
                   <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>{t('ui_farmer_services_weather_coverage_and_detail_depend_o')}</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                    <Check className="w-3 h-3" />
-                  </div>
                   <span>{t('ui_farmer_services_forecasts_can_change_and_should_not')}</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
-                    <Check className="w-3 h-3" />
-                  </div>
-                  <span>{t('ui_farmer_services_messaging_availability_depends_on_yo')}</span>
                 </div>
               </div>
             </div>
@@ -195,19 +172,14 @@ export function FarmerServices() {
                 <div className="w-11 h-11 rounded-lg bg-white/[0.05] border border-white/[0.1] flex items-center justify-center text-emerald-300 ">
                   <TrendingUp className="w-7 h-7" />
                 </div>
-                <span className="text-xs text-[#9db2a6]">
-                  {t('ui_farmer_services_regional_commodity_tracking')}
-                </span>
               </div>
 
               <div>
-                <h3 className="text-xl sm:text-2xl font-medium text-white mb-2 group-hover:text-amber-300 transition-colors">
+                <h3 className={`${CARD_TITLE} mb-2 group-hover:text-amber-300 transition-colors`}>
                   {t('ui_farmer_services_check_fair_market_prices')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">
-                  {livePrices
-                    ? 'Annual national producer prices for maize, dry beans and sorghum, published by FAOSTAT.'
-                    : 'Preview how regional commodity prices could be shown. The figures below are illustrative demo data, not current market observations.'}
+                  {t(livePrices ? 'ui_farmer_services_prices_live_desc' : 'ui_farmer_services_prices_demo_desc')}
                 </p>
               </div>
 
@@ -219,19 +191,21 @@ export function FarmerServices() {
                   <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>{livePrices ? 'Producer prices for maize, dry beans & sorghum' : 'Example prices for maize, beans & sorghum'}</span>
+                  <span>{t(livePrices ? 'ui_farmer_services_prices_live_crops' : 'ui_farmer_services_prices_demo_crops')}</span>
                 </div>
+                {livePrices && (
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                      <Check className="w-3 h-3" />
+                    </div>
+                    <span>{t('ui_farmer_services_prices_live_source')}</span>
+                  </div>
+                )}
                 <div className="flex items-center gap-2.5">
                   <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
-                  <span>{livePrices ? 'Annual national averages from FAOSTAT, republished yearly' : 'No live market feed is connected to this preview'}</span>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  <div className="w-4 h-4 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
-                    <Check className="w-3 h-3" />
-                  </div>
-                  <span>{livePrices ? 'Year-on-year change against the previous published year' : 'Local currency conversions & retail median trend graphs'}</span>
+                  <span>{t(livePrices ? 'ui_farmer_services_prices_live_change' : 'ui_farmer_services_prices_demo_more')}</span>
                 </div>
               </div>
             </div>
@@ -262,13 +236,10 @@ export function FarmerServices() {
                 <div className="w-11 h-11 rounded-lg bg-white/[0.05] border border-white/[0.1] flex items-center justify-center text-emerald-300 ">
                   <BookOpenCheck className="w-7 h-7" />
                 </div>
-                <span className="text-xs text-[#9db2a6]">
-                  {t('ui_farmer_services_text_voice')}
-                </span>
               </div>
 
               <div>
-                <h3 className="text-xl sm:text-2xl font-medium text-white mb-2 group-hover:text-emerald-300 transition-colors">
+                <h3 className={`${CARD_TITLE} mb-2 group-hover:text-emerald-300 transition-colors`}>
                   {t('ui_farmer_services_read_advice_in_your_dialect')}
                 </h3>
                 <p className="text-sm text-white/70 leading-relaxed">

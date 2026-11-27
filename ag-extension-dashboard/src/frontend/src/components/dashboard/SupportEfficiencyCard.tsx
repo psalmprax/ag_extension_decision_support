@@ -4,6 +4,7 @@ import type { PerformanceData } from '@/api/analyticsService';
 import { useAppStore } from '@/store/useAppStore';
 import { lacksPaidAccess } from '@/lib/planAccess';
 import { ScoreMeter } from '@/components/charts/ScoreMeter';
+import { CardHeading } from '@/components/ui/CardHeading';
 
 export const SupportEfficiencyCard: React.FC<{
   performanceData?: PerformanceData;
@@ -32,9 +33,7 @@ export const SupportEfficiencyCard: React.FC<{
 
   return (
     <div className={`${cardClass} p-4 sm:p-6 lg:p-8`}>
-      <h3 className="text-base sm:text-lg font-headline font-medium text-gray-900 dark:text-white mb-4 sm:mb-6">
-        {t('analytics_support_efficiency')}
-      </h3>
+      <CardHeading title={t('analytics_support_efficiency')} subtitle={t('dash_support_subtitle')} className="mb-4 sm:mb-6" />
       {freePlan ? (
         <p className="text-sm text-slate-600 dark:text-white/60">{t('dash_support_efficiency_pro_only')}</p>
       ) : performanceData ? (

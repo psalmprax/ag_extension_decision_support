@@ -44,6 +44,26 @@ export const DEMO_WRITES: ReadonlySet<string> = new Set([
   '/knowledge/ask', // knowledge-base answers, with the demo's daily quota
 ]);
 
+/**
+ * The ways out of the demo: signing in, signing up, recovering a password. They are
+ * public (anyone signed out may call them) and act on no account of the session's own,
+ * so allowing them shows or changes nothing of the demo's,
+ * and refusing them meant a visitor still holding a demo session could not sign in
+ * to their own account without signing out of the demo first.
+ */
+export const LEAVING_THE_DEMO: ReadonlySet<string> = new Set([
+  '/auth/login',
+  '/auth/mfa/verify', // the second step of signing in
+  '/auth/phone/request',
+  '/auth/phone/verify',
+  '/auth/register',
+  '/auth/register/challenge',
+  '/auth/forgot-password',
+  '/auth/reset-password',
+  '/auth/verify-email',
+  // Not /auth/resend-verification: it acts on the signed-in account (the demo's own).
+]);
+
 const READ_METHODS = new Set(['GET', 'HEAD']);
 
 /**
@@ -61,7 +81,7 @@ export function apiEndpoint(path: string): string | null {
 export function demoSessionGuard(req: Request, res: Response, next: NextFunction): void {
   if (!viewerIsDemo(req.user) || req.method === 'OPTIONS') return next();
   const endpoint = apiEndpoint(req.path);
-  if (endpoint === null) return next();
+  if (endpoint === null || LEAVING_THE_DEMO.has(endpoint)) return next();
 
   const allowed = READ_METHODS.has(req.method) ? DEMO_READS : DEMO_WRITES;
   if (allowed.has(endpoint)) return next();

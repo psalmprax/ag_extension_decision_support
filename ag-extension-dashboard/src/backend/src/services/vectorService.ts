@@ -26,6 +26,28 @@ export type VectorFilters = { category?: string; crop?: string };
  * Keyword search and RRF fusion live in `services/vector/*`; this class
  * keeps the historical static API used by routes and workers.
  */
+/** How many times a seed article is tried when the embedding provider is only slow. */
+export const SEED_EMBED_ATTEMPTS = 3;
+
+/**
+ * Runs `embed`, trying again when the embedding provider timed out: one slow call to an
+ * outside service should not leave a seed article without an embedding. Other errors
+ * (a wrong key, wrong dimensions) fail at once, as retrying cannot help.
+ */
+export async function retryEmbeddingTimeouts(title: string, embed: () => Promise<unknown>): Promise<void> {
+    for (let attempt = 1; ; attempt++) {
+        try {
+            await embed();
+            return;
+        } catch (err) {
+            const message = typeof err === 'object' && err !== null && 'message' in err && typeof err.message === 'string' ? err.message : '';
+            const timedOut = /timed out/i.test(message);
+            if (!timedOut || attempt >= SEED_EMBED_ATTEMPTS) throw err;
+            logger.warn(`Vector seeding: embedding "${title}" timed out (attempt ${attempt} of ${SEED_EMBED_ATTEMPTS}), trying again`);
+        }
+    }
+}
+
 export class VectorService {
     /**
      * Upsert a document into the vector store (PostgreSQL)
@@ -224,7 +246,7 @@ export class VectorService {
     private static async embedPendingArticles(articles: Array<{ id: string; title: string; content: string; category: string; tags?: string[]; crop: string; regions?: string[]; source?: string; sourceUrl?: string | null }>): Promise<void> {        let failures = 0;
         for (const article of articles) {
             try {
-                await this.upsertDocument(
+                await retryEmbeddingTimeouts(article.title, () => this.upsertDocument(
                     article.id,
                     article.content,
                     {
@@ -237,7 +259,7 @@ export class VectorService {
                         sourceUrl: article.sourceUrl || null,
                         contentType: 'text'
                     }
-                );
+                ));
             } catch (err) {
                 failures++;
                 // A dimension mismatch will fail every article identically — stop early.

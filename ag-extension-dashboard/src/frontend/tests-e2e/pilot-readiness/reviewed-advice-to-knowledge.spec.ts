@@ -32,7 +32,7 @@ test('approved advice waits for a second person before it answers questions', as
   await item.getByLabel('Reason for your decision').fill('Matches the national fall armyworm scouting guide.');
   await item.getByRole('button', { name: 'Approve' }).click();
 
-  await expect(item.getByText('Approved. Add this advice to the knowledge base?')).toBeVisible();
+  await expect(item.getByRole('heading', { name: 'Add to knowledge base' })).toBeVisible();
   await expect(item.getByRole('textbox', { name: 'Advice', exact: true })).toHaveValue(ADVICE);
   await item.getByRole('textbox', { name: 'Title', exact: true }).fill(TITLE);
   await item.getByRole('textbox', { name: 'Crops', exact: true }).fill('maize');

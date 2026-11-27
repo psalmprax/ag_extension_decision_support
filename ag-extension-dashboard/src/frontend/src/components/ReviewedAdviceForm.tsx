@@ -67,7 +67,7 @@ export function ReviewedAdviceForm({ item, addNotification, onDone }: ReviewedAd
 
   return (
     <form onSubmit={event => void submit(event)} aria-labelledby={id('heading')} className="mt-3 border-t border-amber-200/80 pt-3 dark:border-amber-800/60">
-      <h3 id={id('heading')} className="text-sm font-medium text-slate-900 dark:text-theme-text-primary">{t('ui_reviewed_advice_heading')}</h3>
+      <h3 id={id('heading')} className="text-base font-medium text-slate-900 dark:text-theme-text-primary">{t('ui_reviewed_advice_heading')}</h3>
       <p className="mt-1 text-xs text-slate-600 dark:text-theme-text-secondary">{t('ui_reviewed_advice_explainer')}</p>
 
       <label htmlFor={id('title')} className={LABEL_CLASS}>{t('ui_reviewed_advice_title')}</label>

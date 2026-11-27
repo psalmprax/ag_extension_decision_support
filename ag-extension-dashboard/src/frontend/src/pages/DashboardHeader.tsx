@@ -3,13 +3,13 @@ import toast from 'react-hot-toast';
 import { RefreshCw } from 'lucide-react';
 import { syncQueue } from '@/api/syncQueueService';
 import { dashboardGreeting } from './dashboardGreeting';
+import { PAGE_DESCRIPTION, PAGE_TITLE } from '@/components/ui/typography';
 
 /** Dashboard title, greeting, and browser connectivity / queued-sync status. */
 export const DashboardHeader: React.FC<{
   userName?: string;
   t: (key: string, options?: { defaultValue?: string } & Record<string, unknown>) => string;
-  headingClass: string;
-}> = ({ userName, t, headingClass }) => {
+}> = ({ userName, t }) => {
   const [isSyncing, setIsSyncing] = React.useState(false);
   const [isOnline, setIsOnline] = React.useState(
     () => typeof navigator === 'undefined' || navigator.onLine
@@ -65,10 +65,10 @@ export const DashboardHeader: React.FC<{
   return (
     <div className="mb-6 sm:mb-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
       <div>
-        <h1 className={`text-2xl sm:text-3xl mb-1 ${headingClass}`}>
+        <h1 className={`mb-2 ${PAGE_TITLE}`}>
           {t('dashboard_operations_title', { defaultValue: 'Overview' })}
         </h1>
-        <p className="text-slate-600 dark:text-theme-text-muted text-sm sm:text-base">
+        <p className={PAGE_DESCRIPTION}>
           {dashboardGreeting(t, userName)}
         </p>
       </div>

@@ -111,7 +111,7 @@ describe('public demos', () => {
 
   it('does not present the landing-page examples as verified treatment or live forecasts', () => {
     render(<MemoryRouter><Hero heroY={motionValue(0)} heroOpacity={motionValue(1)} /><FarmerServices /><TrustAndSafety /></MemoryRouter>);
-    expect(screen.getByText('Illustration, not a diagnosis')).toBeInTheDocument();
+    expect(screen.getByText('Illustrative preview')).toBeInTheDocument();
     expect(screen.getByText(/This illustration is not a forecast/)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Consult' }));
     expect(screen.getByText(/locally authorized options before treatment/)).toBeInTheDocument();

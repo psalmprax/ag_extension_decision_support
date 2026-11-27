@@ -73,7 +73,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-white/[0.12] bg-white dark:bg-white/[0.08] text-gray-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
               {formData.farmerSearch && !formData.farmerId && (
-                <div className="absolute z-10 w-full mt-1 bg-white dark:bg-white/[0.08] border border-gray-200 dark:border-white/[0.12] rounded-xl shadow-lg max-h-48 overflow-y-auto">
+                <div className="absolute z-10 w-full mt-1 popover-surface rounded-xl max-h-48 overflow-y-auto">
                   {matches
                     .slice(0, 10)
                     .map(farmer => (
@@ -92,7 +92,7 @@ export const VisitModal: React.FC<VisitModalProps> = ({ isOpen, onClose, onSucce
                       </button>
                     ))}
                   {matches.length === 0 && (
-                    <div className="px-4 py-2 text-sm text-gray-500">{t('chat_no_farmers')}</div>
+                    <div className="px-4 py-2 text-sm text-gray-600 dark:text-theme-text-muted">{t('chat_no_farmers')}</div>
                   )}
                 </div>
               )}

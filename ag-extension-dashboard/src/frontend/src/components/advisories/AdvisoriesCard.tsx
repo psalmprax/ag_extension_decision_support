@@ -3,6 +3,7 @@ import { Radio, AlertTriangle, Info, AlertOctagon } from 'lucide-react';
 import { advisoryService } from '@/api/efficacyService';
 import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useLanguage } from '@/lib/LanguageContext';
+import { CardHeading } from '@/components/ui/CardHeading';
 
 const SEVERITY_ICON = {
     info: { Icon: Info, cls: 'text-slate-500' },
@@ -28,12 +29,11 @@ export function AdvisoriesCard() {
 
     return (
         <div className={`${cardClass} p-4 sm:p-5`}>
-            <div className="flex items-center gap-2 mb-3">
-                <Radio className="w-4 h-4 text-primary-500" />
-                <h3 className="text-sm font-medium  ">
-                    {t('advisories_title', { defaultValue: 'Proactive Advisories' })}
-                </h3>
-            </div>
+            <CardHeading
+                icon={<Radio className="w-[18px] h-[18px] text-primary-500" aria-hidden="true" />}
+                title={t('advisories_title', { defaultValue: 'Advisories' })}
+                subtitle={t('advisories_subtitle', { defaultValue: 'Planting, weather and pest alerts sent to farmers' })}
+            />
 
             {isLoading ? (
                 <div className="h-20 animate-pulse bg-gray-100 dark:bg-theme-bg-tertiary rounded-xl" data-testid="advisories-skeleton" />

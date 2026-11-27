@@ -615,6 +615,10 @@ export const designTokens = {
     // CSP blocks Google Fonts, so the old Inter link never loaded in production.
     sans: ['"Atkinson Hyperlegible Next Variable"', '"Atkinson Hyperlegible Next"', 'system-ui', 'sans-serif'],
     headline: ['"Atkinson Hyperlegible Next Variable"', '"Atkinson Hyperlegible Next"', 'system-ui', 'sans-serif'],
+    // Literata, a serif, for the public landing page's headings only (option B in
+    // docs/HEADINGS_AND_TYPE_PROPOSAL.md). Self-hosted; it covers Latin, Greek and
+    // Cyrillic, so headings in other scripts fall back to Atkinson letter by letter.
+    title: ['"Literata Variable"', '"Atkinson Hyperlegible Next Variable"', '"Atkinson Hyperlegible Next"', 'Georgia', 'serif'],
     // GRP-03 "Data & Numerical Typeface": tabular figures for hectares, counts
     // and percentages (see the .font-mono override in index.css).
     mono: ['"Atkinson Hyperlegible Mono"', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Consolas', 'monospace'],

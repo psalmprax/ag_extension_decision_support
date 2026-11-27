@@ -12,6 +12,7 @@ import { globalTelemetryNodes } from '../data';
 import { useReducedMotion } from '@/hooks/useReducedMotion';
 import { useLanguage } from '@/lib/LanguageContext';
 import { HeroHighlights } from './HeroHighlights';
+import { HERO_TITLE } from './sectionStyles';
 
 export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroOpacity: MotionValue<number> }) {
   const { t } = useLanguage();
@@ -78,11 +79,10 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
         <motion.div initial="hidden" animate="visible" variants={stagger} className="space-y-6 sm:space-y-8 text-center sm:text-start mx-auto sm:mx-0 min-w-0 max-w-full">
 
           {/* Main Headline */}
-          <motion.h1
-            variants={fadeUp}
-            className="text-4xl sm:text-5xl lg:text-6xl font-medium leading-[1.05] text-white"
-          >
-            {t('ui_hero_heal_your_crops')} {t('ui_hero_protect_your_harvest')} {t('ui_hero_grow_with_confidence')}
+          <motion.h1 variants={fadeUp} className={HERO_TITLE}>
+            <span className="block">{t('ui_hero_heal_your_crops')}</span>
+            <span className="block">{t('ui_hero_protect_your_harvest')}</span>
+            <span className="block">{t('ui_hero_grow_with_confidence')}</span>
           </motion.h1>
 
           {/* Subtitle */}
@@ -240,14 +240,9 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
                       <span>{t('ui_hero_example_leaf_observation')}</span>
                       <CheckCircle2 className="w-3 h-3 text-emerald-400" />
                     </div>
-                    <div className="text-[9px] text-emerald-400 font-medium">{t('ui_hero_illustration_not_a_diagnosis')}</div>
                   </div>
                 </div>
 
-                {/* Floating Location Tag in Plain Language */}
-                <div className="absolute bottom-2.5 start-3 px-2 py-0.5 rounded-md bg-black/75 backdrop-blur-md text-[9px] font-medium text-white/90 border border-white/10">
-                  {t('ui_hero_illustrative_sample_no_photo_was_upl')}
-                </div>
               </div>
 
               {/* Diagnosis & Actionable Treatment Card in Plain Language */}

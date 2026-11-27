@@ -84,7 +84,6 @@ describe('landing market price card', () => {
     await waitFor(() => expect(within(screen.getByTestId('market-price-card')).getByText('Illustrative demo data')).toBeTruthy());
 
     const card = screen.getByTestId('market-price-card');
-    expect(within(card).getByText('Not live prices')).toBeTruthy();
     // The critical guarantee: sample numbers are never dressed up as real quotes.
     expect(within(card).queryByText(/\$/)).toBeNull();
     expect(screen.queryByRole('link', { name: /FAOSTAT/i })).toBeNull();

@@ -56,7 +56,7 @@ describe('PlantDiseaseService — Crop Isolation & Symptom Diagnostics', () => {
     expect(mlnd).toBeDefined();
     expect(mlnd?.disease).toBe('Maize Lethal Necrosis');
     expect(mlnd?.susceptibleCrops).toContain('maize');
-    expect(mlnd?.description).toContain('biosecurity quarantine');
+    expect(mlnd?.description).toContain('control it by law, so report suspected cases');
 
     const rust = plantDiseaseService.getDiseaseInfo('Coffee Leaf Rust');
     expect(rust).toBeDefined();
@@ -78,12 +78,12 @@ describe('PlantDiseaseService — Crop Isolation & Symptom Diagnostics', () => {
     const powdery = results.find(result => result.disease === 'Powdery Mildew');
     expect(powdery?.provenance.evidenceStatus).toBe('no_verified_source');
     expect(powdery?.reviewStatus).toBe('needs_expert_review');
-    expect(powdery?.treatment.join(' ')).toContain('withheld');
-    expect(powdery?.prevention.join(' ')).toContain('Monitor affected and nearby plants');
+    expect(powdery?.treatment.join(' ')).toContain('We do not suggest a treatment until a local expert has confirmed');
+    expect(powdery?.prevention.join(' ')).toContain('Monitor the affected plants and the ones around them');
     expect(powdery?.prevention.join(' ')).not.toContain('spray');
     const info = plantDiseaseService.getDiseaseInfo('Powdery Mildew');
     expect(info?.treatment.join(' ')).not.toContain('2ml/L');
-    expect(info?.prevention.join(' ')).toContain('Monitor affected and nearby plants');
+    expect(info?.prevention.join(' ')).toContain('Monitor the affected plants and the ones around them');
   });
 
   it('does not present model treatment or high model confidence as verified', async () => {
@@ -100,11 +100,11 @@ describe('PlantDiseaseService — Crop Isolation & Symptom Diagnostics', () => {
       expect(result.reviewStatus).toBe('needs_expert_review');
       expect(result.provenance.evidenceStatus).toBe('no_verified_source');
       expect(result.diseases[0].reviewStatus).toBe('needs_expert_review');
-      expect(result.diseases[0].treatment.join(' ')).toContain('withheld');
+      expect(result.diseases[0].treatment.join(' ')).toContain('We do not suggest a treatment until a local expert has confirmed');
       expect(result.recommendations.join(' ')).not.toContain('2 ml/L');
       expect(result.recommendations.join(' ')).toContain('Record the crop, growth stage');
       expect(result.diseases[0].prevention.join(' ')).not.toContain('Spray');
-      expect(result.diseases[0].safetyNotice).toContain('qualified agronomist');
+      expect(result.diseases[0].safetyNotice).toContain('Ask your extension officer or an agronomist to confirm it');
     } finally {
       spy.mockRestore();
     }
@@ -153,13 +153,13 @@ describe('PlantDiseaseService — Crop Isolation & Symptom Diagnostics', () => {
     try {
       const result = await plantDiseaseService.analyzeImage('image');
       expect(result.nutrientDeficiencies).toHaveLength(1);
-      expect(result.nutrientDeficiencies[0]).toContain('withheld');
+      expect(result.nutrientDeficiencies[0]).toContain('We do not suggest a treatment until a local expert has confirmed');
       expect(result.nutrientDeficiencies.join(' ')).not.toContain('100 kg/ha');
-      expect(result.diseases[0].description).toContain('withheld');
+      expect(result.diseases[0].description).toContain('We do not suggest a treatment until a local expert has confirmed');
       expect(result.diseases[0].description).not.toContain('100 kg/ha');
       expect(result.diseases[0].symptoms).toContain('Orange spots on leaves');
       expect(result.diseases[0].symptoms.join(' ')).not.toContain('3 ml/L');
-      expect(result.diseases[0].symptoms.join(' ')).toContain('withheld');
+      expect(result.diseases[0].symptoms.join(' ')).toContain('We do not suggest a treatment until a local expert has confirmed');
     } finally {
       spy.mockRestore();
     }

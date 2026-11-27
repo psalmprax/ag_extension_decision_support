@@ -5,6 +5,8 @@ import { QueryClientProvider } from '@tanstack/react-query';
 import { MotionConfig } from 'framer-motion';
 import App from './App';
 import '@fontsource-variable/atkinson-hyperlegible-next';
+// Downloaded only where text uses it: the landing page headings.
+import '@fontsource-variable/literata/wght.css';
 import '@fontsource/atkinson-hyperlegible-mono/400.css';
 import '@fontsource/atkinson-hyperlegible-mono/500.css';
 import './index.css';

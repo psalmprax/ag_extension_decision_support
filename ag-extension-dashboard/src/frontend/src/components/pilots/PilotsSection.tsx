@@ -6,6 +6,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { PilotForm } from './PilotForm';
 import { PilotResults } from './PilotResults';
 import { askHarvest, closePilot, downloadPilotCsv, fetchPilot, fetchPilots, serverMessage, startPilot, type Pilot, type PilotDetail } from './pilotsApi';
+import { CARD_SUBTITLE, CARD_TITLE } from '@/components/ui/typography';
 
 const CARD = 'bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 space-y-4';
 const BUTTON = 'h-9 px-3 inline-flex items-center gap-2 rounded-md border border-slate-900/[0.12] dark:border-white/[0.12] text-sm text-slate-800 dark:text-white hover:bg-slate-900/[0.04] dark:hover:bg-white/[0.06] disabled:opacity-50';
@@ -51,11 +52,12 @@ export function PilotsSection() {
     <section className={CARD} aria-labelledby="pilots-heading">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 id="pilots-heading" className="text-base font-medium text-slate-900 dark:text-white flex items-center gap-2">
-            <Wheat className="w-4 h-4 text-slate-500" aria-hidden="true" />
-            {t('pilot_heading', { defaultValue: 'Pilots: does the service raise harvests?' })}
+          <h2 id="pilots-heading" className={`flex items-center gap-2 ${CARD_TITLE}`}>
+            <Wheat className="w-[18px] h-[18px] text-slate-500" aria-hidden="true" />
+            {t('pilot_heading', { defaultValue: 'Pilots' })}
           </h2>
-          <p className="text-sm text-slate-600 dark:text-white/70 max-w-3xl">
+          <p className={`mt-1 ${CARD_SUBTITLE}`}>{t('pilot_subheading', { defaultValue: 'Does the service raise harvests?' })}</p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-white/70 max-w-3xl">
             {t('pilot_intro', { defaultValue: 'Farmers in a region are split at random into a service group and a comparison group. Both are asked for last season’s and this season’s harvest by SMS, and service-group farmers are asked whether they followed their officer’s advice.' })}
           </p>
         </div>

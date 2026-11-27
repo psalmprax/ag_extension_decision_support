@@ -1,6 +1,7 @@
 import React from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/cn';
+import { STAT_FIGURE } from './typography';
 
 interface StatTileProps {
   label: string;
@@ -27,7 +28,7 @@ export const StatTile: React.FC<StatTileProps> = ({ label, icon: Icon, value, no
     {value === null ? (
       <p className="mt-3 text-sm text-slate-500 dark:text-theme-text-muted">{emptyText}</p>
     ) : (
-      <p className="mt-3 text-3xl leading-none font-medium tabular-nums text-slate-900 dark:text-white">{value}</p>
+      <p className={`mt-3 ${STAT_FIGURE}`}>{value}</p>
     )}
     {note && <p className="mt-2 text-xs text-slate-500 dark:text-theme-text-muted">{note}</p>}
   </div>

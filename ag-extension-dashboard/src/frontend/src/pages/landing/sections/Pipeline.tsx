@@ -4,7 +4,7 @@ import { ArrowRight, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-reac
 import { personas, pipelineStages, STAGE_STORIES, type AudiencePersona } from '../pipelineStories';
 import { useLanguage } from '@/lib/LanguageContext';
 import { SectionHeader } from './SectionHeader';
-import { BUTTON_SECONDARY, CARD, CONTAINER, ICON_TILE, SECTION, choiceClass } from './sectionStyles';
+import { BUTTON_SECONDARY, CARD, CARD_TITLE, CONTAINER, ICON_TILE, SECTION, choiceClass } from './sectionStyles';
 
 const STEP_BUTTON =
   'w-11 h-11 inline-flex items-center justify-center rounded-md border border-white/[0.12] text-white/70 hover:bg-white/[0.06] hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400';
@@ -78,7 +78,7 @@ export function Pipeline() {
                   {t('ui_agro_storytelling_section_step_04', { num: story.num })}
                 </span>
               </div>
-              <h3 className="text-xl sm:text-2xl font-medium text-white mb-4 leading-snug">{t(story.title)}</h3>
+              <h3 className={`${CARD_TITLE} mb-4`}>{t(story.title)}</h3>
               <ul className="space-y-3">
                 {story.bullets.map(bullet => (
                   <li key={bullet} className="flex items-start gap-3 text-sm text-white/80">

@@ -1,4 +1,4 @@
-import { Brain, Building2, CloudSun, GraduationCap, Heart, Layers, Wifi } from 'lucide-react';
+import { Brain, CloudSun, Layers, Wifi } from 'lucide-react';
 
 // The "why farmers choose", community, ecosystem and simulator sections. Every visible string is
 // a translation key (English in public/locales/en.json); ids stay stable whatever the language.
@@ -8,12 +8,6 @@ export const painPoints = ['waiting', 'sprays', 'rain', 'jargon'].map(id => ({
   problem: `landing_pain_${id}_problem`,
   solution: `landing_pain_${id}_solution`,
 }));
-
-export const audiences = [
-  { id: 'farmers', icon: Heart },
-  { id: 'officers', icon: GraduationCap },
-  { id: 'organisations', icon: Building2 },
-].map(item => ({ ...item, title: `landing_audience_${item.id}_title`, desc: `landing_audience_${item.id}_desc` }));
 
 export const capabilities = [
   { id: 'weather', icon: CloudSun },

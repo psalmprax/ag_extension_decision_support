@@ -21,7 +21,10 @@ describe('symptom evidence labeling', () => {
       t={key => key} addNotification={vi.fn()} onViewDiseaseInfo={vi.fn()} getSeverityColor={() => ''} />);
     fireEvent.click(screen.getByRole('button', { name: /Dark dead spots/ }));
     fireEvent.click(screen.getByRole('button', { name: /Check symptoms/i }));
-    expect(await screen.findByText('Unverified; needs expert review')).toBeInTheDocument();
-    expect(screen.queryByText('Verified Evidence')).not.toBeInTheDocument();
+    expect(await screen.findByText('Not checked by an expert yet')).toBeInTheDocument();
+    expect(screen.getByText('Might be Rust')).toBeInTheDocument();
+    // A symptom check's "severity" is how well the signs matched, not how serious the disease is.
+    expect(screen.queryByText(/How serious/)).not.toBeInTheDocument();
+    expect(screen.queryByText('From a checked source')).not.toBeInTheDocument();
   });
 });

@@ -4,6 +4,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
 import { faqItems } from '../data';
 import { useLanguage } from '@/lib/LanguageContext';
+import { SECTION_TITLE } from './sectionStyles';
 
 export function FAQ() {
   const { t } = useLanguage();
@@ -23,7 +24,7 @@ export function FAQ() {
               variants={stagger}
               className="text-center mb-16"
             >
-              <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-medium leading-tight text-white mb-4">
+              <motion.h2 variants={fadeUp} className={`${SECTION_TITLE} mb-4`}>
                 {t('ui_faq_everything_you_need_to_know_about')}
               </motion.h2>
               <motion.p

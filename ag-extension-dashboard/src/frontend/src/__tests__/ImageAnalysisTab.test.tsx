@@ -92,7 +92,7 @@ describe('ImageAnalysisTab Provenance Display', () => {
       />
     );
 
-    expect(screen.getByText('Analysis unavailable. No diagnosis was generated.')).toBeInTheDocument();
+    expect(screen.getByText('We could not check this photo, so there is no result. Try again, or ask your officer.')).toBeInTheDocument();
     expect(screen.queryByText('0.0%')).not.toBeInTheDocument();
   });
 
@@ -114,11 +114,11 @@ describe('ImageAnalysisTab Provenance Display', () => {
       />
     );
 
-    expect(screen.getByText('AI-observed health status: stressed')).toBeInTheDocument();
-    expect(screen.getByText('85.0%')).toBeInTheDocument();
-    expect(screen.getByText('Model-reported confidence')).toBeInTheDocument();
-    expect(screen.getByText(/Model confidence is not diagnostic accuracy/)).toBeInTheDocument();
-    expect(screen.getByText('Possible nutrient issues (unconfirmed)')).toBeInTheDocument();
+    expect(screen.getByText('Plant health: stressed')).toBeInTheDocument();
+    // How sure the check is, in words first: a bare percentage reads like a lab result.
+    expect(screen.getByText('How sure: fairly sure (85%)')).toBeInTheDocument();
+    expect(screen.getByText(/not a confirmed diagnosis\. Ask your officer or a local expert to confirm before you treat/)).toBeInTheDocument();
+    expect(screen.getByText('Possible nutrient shortage (not confirmed)')).toBeInTheDocument();
     expect(screen.getByText('Possible nitrogen deficiency')).toBeInTheDocument();
     expect(screen.getByText('Check soil moisture and drainage before changing irrigation.')).toBeInTheDocument();
   });
@@ -142,10 +142,10 @@ describe('ImageAnalysisTab Provenance Display', () => {
       />
     );
 
-    expect(screen.getByText('Possible Match: Rust')).toBeInTheDocument();
+    expect(screen.getByText('Might be Rust')).toBeInTheDocument();
     expect(screen.getByText('Orange pustules may be consistent with rust.')).toBeInTheDocument();
-    expect(screen.getByText('Reported symptoms: Orange spots on leaf undersides')).toBeInTheDocument();
-    expect(screen.queryByText('Possible nutrient issues (unconfirmed)')).not.toBeInTheDocument();
+    expect(screen.getByText('Signs: Orange spots on leaf undersides')).toBeInTheDocument();
+    expect(screen.queryByText('Possible nutrient shortage (not confirmed)')).not.toBeInTheDocument();
   });
 
   it('keeps disease results visible when the symptom list is malformed', () => {
@@ -167,8 +167,8 @@ describe('ImageAnalysisTab Provenance Display', () => {
       />
     );
 
-    expect(screen.getByText('Possible Match: Rust')).toBeInTheDocument();
+    expect(screen.getByText('Might be Rust')).toBeInTheDocument();
     expect(screen.getByText('Orange pustules may be consistent with rust.')).toBeInTheDocument();
-    expect(screen.queryByText(/Reported symptoms:/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Signs:/)).not.toBeInTheDocument();
   });
 });

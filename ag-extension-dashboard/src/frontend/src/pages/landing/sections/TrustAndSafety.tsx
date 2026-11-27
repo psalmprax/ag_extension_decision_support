@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { stagger, fadeUp } from '../variants';
 import { useLanguage } from '@/lib/LanguageContext';
+import { CARD_TITLE, SECTION_TITLE } from './sectionStyles';
 
 export function TrustAndSafety() {
   const { t } = useLanguage();
@@ -34,7 +35,7 @@ export function TrustAndSafety() {
           variants={stagger}
           className="text-center max-w-3xl mx-auto mb-14 sm:mb-20"
         >
-          <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-medium leading-tight text-white mb-4">
+          <motion.h2 variants={fadeUp} className={`${SECTION_TITLE} mb-4`}>
             {t('ui_trust_and_safety_honest_safe_advice_you_can')}
           </motion.h2>
           <motion.p
@@ -42,6 +43,9 @@ export function TrustAndSafety() {
             className="text-sm sm:text-base lg:text-lg text-white/70 leading-relaxed font-normal"
           >
             {t('ui_trust_and_safety_agricultural_technology_should_ackno')}
+          </motion.p>
+          <motion.p variants={fadeUp} className="mt-4 text-sm text-white/60 leading-relaxed">
+            {t('ui_trust_and_safety_what_depends_on_setup')}
           </motion.p>
         </motion.div>
 
@@ -59,7 +63,7 @@ export function TrustAndSafety() {
               <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                 <ShieldCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-medium text-white">{t('ui_trust_and_safety_clear_ai_limits_human_escalation')}</h3>
+              <h3 className={CARD_TITLE}>{t('ui_trust_and_safety_clear_ai_limits_human_escalation')}</h3>
               <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
                 {t('ui_trust_and_safety_ai_assessments_can_be_wrong_or_uncer')}
               </p>
@@ -82,7 +86,7 @@ export function TrustAndSafety() {
               <div className="w-12 h-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
                 <BookOpenCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-medium text-white">{t('ui_trust_and_safety_check_the_evidence')}</h3>
+              <h3 className={CARD_TITLE}>{t('ui_trust_and_safety_check_the_evidence')}</h3>
               <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
                 {t('ui_trust_and_safety_retrieved_information_is_not_proof_o')}
               </p>
@@ -105,7 +109,7 @@ export function TrustAndSafety() {
               <div className="w-12 h-12 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
                 <Leaf className="w-6 h-6" />
               </div>
-              <h3 className="text-lg font-medium text-white">{t('ui_trust_and_safety_protect_people_and_pollinators')}</h3>
+              <h3 className={CARD_TITLE}>{t('ui_trust_and_safety_protect_people_and_pollinators')}</h3>
               <p className="text-xs sm:text-sm text-white/70 leading-relaxed">
                 {t('ui_trust_and_safety_natural_or_biological_products_are_n')}
               </p>

@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { stagger, fadeUp } from '../variants';
 import { useLanguage } from '@/lib/LanguageContext';
+import { PhotoBackdrop } from './PhotoBackdrop';
+import { SECTION_TITLE } from './sectionStyles';
 
 export function CTA() {
   const { t } = useLanguage();
@@ -10,19 +12,7 @@ export function CTA() {
 
   return (
         <section className="relative py-16 sm:py-28 overflow-hidden">
-          {/* Warm Sunlit Harvest Backdrop */}
-          <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-            <img
-              src="/images/landing/maize-field-sunrise.webp"
-              alt=""
-              role="presentation"
-              aria-hidden="true"
-              width={1319}
-              height={860}
-              className="w-full h-full object-cover object-center opacity-20 filter saturate-125 contrast-105 pointer-events-none"
-            />
-            <div className="absolute inset-0 bg-[#0d1a14]/80" />
-          </div>
+          <PhotoBackdrop src="/images/landing/hero-aerial.webp" width={1376} height={768} />
 
           <motion.div
             initial="hidden"
@@ -31,7 +21,7 @@ export function CTA() {
             variants={stagger}
             className="max-w-2xl mx-auto px-4 sm:px-6 text-center relative z-10"
           >
-            <motion.h2 variants={fadeUp} className="text-3xl sm:text-4xl font-medium leading-tight text-white mb-4">
+            <motion.h2 variants={fadeUp} className={`${SECTION_TITLE} mb-4`}>
               {t('ui_cta_ready_to_protect_your_crops')}
             </motion.h2>
             <motion.p variants={fadeUp} className="text-sm sm:text-lg text-white/80 mb-6 sm:mb-8 px-2 font-normal">

@@ -156,6 +156,15 @@
     @apply bg-white dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08];
   }
 
+  /*
+   * Menus, pickers and suggestion lists that float over the page. Always solid: a
+   * see-through surface (like glass-panel's, meant for cards) lets the page's buttons
+   * and text show through and print over the menu's own items.
+   */
+  .popover-surface {
+    @apply bg-white dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] shadow-xl;
+  }
+
   .neon-glow {
     @apply shadow-none;
   }

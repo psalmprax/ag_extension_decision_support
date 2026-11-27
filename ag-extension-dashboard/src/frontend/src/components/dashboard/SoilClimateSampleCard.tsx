@@ -1,6 +1,7 @@
 import React from 'react';
 import { Droplets, Sprout, Thermometer } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
+import { CardHeading } from '@/components/ui/CardHeading';
 
 /**
  * Fixed illustrative soil and climate readings. There is no live soil telemetry feed yet,
@@ -11,12 +12,11 @@ export const SoilClimateSampleCard: React.FC<{ cardClass: string }> = ({ cardCla
   return (
     <div className={`${cardClass} p-4 sm:p-6 space-y-4`}>
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Sprout className="w-4 h-4 text-emerald-500" />
-          <h3 className="text-xs sm:text-sm font-headline font-medium text-gray-900 dark:text-white  ">
-            {t('ui_soil_climate_sample_card_soil_telemetry_climate_radar')}
-          </h3>
-        </div>
+        <CardHeading
+          className="mb-0"
+          icon={<Sprout className="w-[18px] h-[18px] text-emerald-500" aria-hidden="true" />}
+          title={t('ui_soil_climate_sample_card_soil_telemetry_climate_radar')}
+        />
         <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-mono font-medium">
           {t('ui_soil_climate_sample_card_illustrative_sample_not_live_telemet')}
         </span>

@@ -10,12 +10,9 @@ import {
   Volume2,
   VolumeX,
   Network,
-  BarChart2,
-  FileText,
   ShieldCheck,
   AlertTriangle,
   Bookmark,
-  Layers,
   Globe,
   RefreshCw,
   Columns,
@@ -30,6 +27,7 @@ import type { VisualsData } from './types';
 import { MULTILINGUAL_LANGUAGES } from './languages';
 import { synthesizeSpeech } from '@/api/aiService';
 import { cleanTextForSpeech, stopAllAudioPlayback } from '@/components/audio/audioHelpers';
+import { AIResultNav, type ViewMode } from './AIResultNav';
 import { useLanguage } from '@/lib/LanguageContext';
 import { copyWithToast } from '@/lib/copyText';
 
@@ -61,7 +59,6 @@ interface AIResultProps {
   result: Result;
 }
 
-type ViewMode = 'synthesis' | 'graph' | 'visuals' | 'evidence';
 
 function buildQueryNode(query?: string): GraphNode {
   const queryLabel = query || 'Agronomic Inquiry';
@@ -222,7 +219,7 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
             }`}
           >
             <Columns className="w-3.5 h-3.5" />
-            <span>{dualView ? 'Single View' : 'Split dual view'}</span>
+            <span>{dualView ? t('kb_view_one', 'One language') : t('kb_view_side_by_side', 'Side by side')}</span>
           </button>
         )}
       </div>
@@ -242,12 +239,12 @@ const SynthesisView: React.FC<SynthesisViewProps> = ({
               <p className="text-xs font-medium  ">{t('ui_airesult_evidence_status_notice')}</p>
               <p className="mt-1 text-xs text-amber-900 dark:text-amber-100/90">
                 {result.evidenceStatus === 'verified_sources'
-                  ? 'Sources were retrieved, but relevance is not proof of accuracy or local treatment authorization. Check the source, country, crop and current product label before acting.'
+                  ? t('kb_evidence_verified', 'This answer is based on the sources below. Still check that they fit your country and crop, and read the product label before you act.')
                   : result.evidenceStatus === 'context_only'
-                  ? 'Synthesized using retrieved knowledge chunks without definitive rule citations. Recommended for verification.'
+                  ? t('kb_evidence_context', 'This answer draws on our library, but no single source covers it exactly. Check it with your officer before you act.')
                   : result.evidenceStatus === 'unverified'
-                    ? 'Not verified against live grounded backend sources. Cross-reference this content before acting on it.'
-                    : 'Retrieved context is sparse. Treat as an estimate and cross-reference with localized field testing.'}
+                    ? t('kb_evidence_unverified', 'We could not check this answer against our sources. Check it with your officer before you act.')
+                    : t('kb_evidence_sparse', 'We found little on this. Treat the answer as a rough guide and check it locally.')}
               </p>
             </div>
           </div>
@@ -376,7 +373,9 @@ const KnowledgeGraphView: React.FC<{
   </motion.div>
 );
 
-const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
+const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => {
+  const { t } = useLanguage();
+  return (
   <motion.div
     key="evidence-view"
     initial={{ opacity: 0, y: 10 }}
@@ -418,8 +417,9 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
                   {cite.excerpt}
                 </p>
                 <div className="pt-2 border-t border-slate-200 dark:border-white/5 flex items-center justify-between text-xxs text-slate-500 dark:text-theme-text-muted font-mono">
-                  <span>Relevance Score</span>
-                  <span className="text-amber-600 dark:text-amber-400 font-medium">{Math.round(cite.score * 100)}% match</span>
+                  <span className="text-amber-800 dark:text-amber-300 font-medium">
+                    {t('kb_match', { defaultValue: '{percent}% match to your question', percent: Math.round(cite.score * 100) })}
+                  </span>
                 </div>
               </div>
             ))}
@@ -474,7 +474,8 @@ const EvidenceSourcesView: React.FC<{ result: Result }> = ({ result }) => (
       )}
     </div>
   </motion.div>
-);
+  );
+};
 
 const AIResultHeader: React.FC<{
   result: Result;
@@ -556,74 +557,6 @@ const AIResultHeader: React.FC<{
       >
         <Bookmark className="w-4 h-4" />
         <span className="hidden sm:inline">{savedBookmark ? 'Saved' : 'Save'}</span>
-      </button>
-    </div>
-  </div>
-);
-
-const AIResultNav: React.FC<{
-  viewMode: ViewMode;
-  setViewMode: (v: ViewMode) => void;
-  graphNodeCount: number;
-  hasVisuals: boolean;
-  sourceCount: number;
-}> = ({ viewMode, setViewMode, graphNodeCount, hasVisuals, sourceCount }) => (
-  <div className="flex items-center justify-between gap-2 pt-4 overflow-x-auto custom-scrollbar">
-    <div className="flex items-center gap-1.5 p-1 bg-slate-100 dark:bg-theme-bg-primary/60 rounded-xl border border-slate-200 dark:border-white/10">
-      <button
-        onClick={() => setViewMode('synthesis')}
-        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
-          viewMode === 'synthesis'
-            ? 'bg-emerald-500 text-slate-950 shadow-md'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-theme-text-muted dark:hover:text-white dark:hover:bg-white/5'
-        }`}
-      >
-        <FileText className="w-3.5 h-3.5" />
-        <span>Advisory Synthesis</span>
-      </button>
-
-      <button
-        onClick={() => setViewMode('graph')}
-        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
-          viewMode === 'graph'
-            ? 'bg-emerald-500 text-slate-950 shadow-md'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-theme-text-muted dark:hover:text-white dark:hover:bg-white/5'
-        }`}
-      >
-        <Network className="w-3.5 h-3.5" />
-        <span>Knowledge Graph</span>
-        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-200 dark:bg-theme-bg-secondary/60 text-slate-700 dark:text-theme-text-secondary">
-          {graphNodeCount}
-        </span>
-      </button>
-
-      {hasVisuals && (
-        <button
-          onClick={() => setViewMode('visuals')}
-          className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
-            viewMode === 'visuals'
-              ? 'bg-emerald-500 text-slate-950 shadow-md'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-theme-text-muted dark:hover:text-white dark:hover:bg-white/5'
-          }`}
-        >
-          <BarChart2 className="w-3.5 h-3.5" />
-          <span>Visuals & KPIs</span>
-        </button>
-      )}
-
-      <button
-        onClick={() => setViewMode('evidence')}
-        className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-medium transition-all ${
-          viewMode === 'evidence'
-            ? 'bg-emerald-500 text-slate-950 shadow-md'
-            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60 dark:text-theme-text-muted dark:hover:text-white dark:hover:bg-white/5'
-        }`}
-      >
-        <Layers className="w-3.5 h-3.5" />
-        <span>Sources</span>
-        <span className="text-xxs px-1.5 py-0.2 rounded-md bg-slate-200 dark:bg-theme-bg-secondary/60 text-slate-700 dark:text-theme-text-secondary">
-          {sourceCount}
-        </span>
       </button>
     </div>
   </div>

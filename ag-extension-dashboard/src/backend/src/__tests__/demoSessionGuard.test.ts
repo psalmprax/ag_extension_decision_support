@@ -51,11 +51,12 @@ jest.mock('../middleware/usageMiddleware', () => ({
 
 import fs from 'fs';
 import path from 'path';
+import express, { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import jwt from 'jsonwebtoken';
 import { config } from '../config';
 import app from '../app';
-import { apiEndpoint, DEMO_READS, DEMO_WRITES } from '../middleware/demoSessionGuard';
+import { apiEndpoint, demoSessionGuard, DEMO_READS, DEMO_WRITES, LEAVING_THE_DEMO } from '../middleware/demoSessionGuard';
 
 const sign = (claims: Record<string, unknown>) =>
     jwt.sign(claims, config.jwt.secret as string, { expiresIn: '1h' });
@@ -88,7 +89,7 @@ describe('demo session guard', () => {
     it('refuses the demo every mounted route group it does not use', async () => {
         const leaked: string[] = [];
         for (const mount of mountedPaths) {
-            if (DEMO_READS.has(mount)) continue;
+            if (DEMO_READS.has(mount) || LEAVING_THE_DEMO.has(mount)) continue;
             const res = await request(app).get(`/api/v1${mount}`).set('Authorization', `Bearer ${DEMO}`);
             if (!isGuardRefusal(res)) leaked.push(`GET ${mount} -> ${res.status}`);
         }
@@ -120,6 +121,44 @@ describe('demo session guard', () => {
             const res = await request(app).post(`/api${endpoint}`).set('Authorization', `Bearer ${DEMO}`).send({ message: 'hi' });
             expect(isGuardRefusal(res)).toBe(false);
         }
+    });
+
+    it('lets someone still in the demo sign in, sign up or reset a password', async () => {
+        for (const endpoint of ['/auth/login', '/auth/register', '/auth/forgot-password', '/auth/phone/request']) {
+            const res = await request(app).post(`/api${endpoint}`).set('Authorization', `Bearer ${DEMO}`).send({});
+            expect({ endpoint, refusedAsDemo: isGuardRefusal(res) }).toEqual({ endpoint, refusedAsDemo: false });
+        }
+        const challenge = await request(app).get('/api/v1/auth/register/challenge').set('Authorization', `Bearer ${DEMO}`);
+        expect(isGuardRefusal(challenge)).toBe(false);
+    });
+
+    it('decides on its own (no database) which ways out of the demo are open', async () => {
+        // A small Express app with only the guard: real request and response objects, no database.
+        const guardOnly = express();
+        guardOnly.use((req: Request, _res: Response, next: NextFunction) => {
+            req.user = { userId: 'demo-1', email: 'demo@agridemo.com', role: 'extension_officer', isDemo: true };
+            next();
+        });
+        guardOnly.use(demoSessionGuard);
+        guardOnly.use((_req: Request, res: Response) => {
+            res.json({ reached: true });
+        });
+        const guard = async (method: 'get' | 'post', path: string) => {
+            const res = await request(guardOnly)[method](path);
+            return res.body?.reached === true ? 'allowed' : `refused ${res.status}`;
+        };
+        expect(await guard('post', '/api/auth/login')).toBe('allowed');
+        expect(await guard('post', '/api/v1/auth/register')).toBe('allowed');
+        expect(await guard('get', '/api/auth/register/challenge')).toBe('allowed');
+        expect(await guard('post', '/api/auth/resend-verification')).toBe('refused 403');
+        expect(await guard('post', '/api/v1/farmers')).toBe('refused 403');
+    });
+
+    it('still refuses the demo resending a verification email for its own account', async () => {
+        // A fresh demo session: an earlier test logs DEMO out, and a revoked session never reaches the guard.
+        const demo = sign({ userId: 'demo-2', email: 'demo2@agridemo.com', role: 'extension_officer', isDemo: true });
+        const res = await request(app).post('/api/auth/resend-verification').set('Authorization', `Bearer ${demo}`).send({});
+        expect(isGuardRefusal(res)).toBe(true);
     });
 
     it('does not touch real accounts', async () => {

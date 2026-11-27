@@ -97,18 +97,19 @@ export const LanguageProvider = ({ children }: { children: ReactNode }) => {
     params?: Record<string, unknown>
   ): string => {
     const defaultVal = typeof options === 'string' ? options : options?.defaultValue;
-    if (!isLoaded) return defaultVal || key;
+    const interpolationParams = typeof options === 'object' && options !== null ? options : params;
+    const fill = (text: string) => (interpolationParams ? interpolate(text, interpolationParams) : text);
+    if (!isLoaded) return fill(defaultVal || key);
 
     const raw = resolveTranslation(key, language, translationsCache);
     if (!raw) {
       if (import.meta.env.DEV) {
         console.warn(`[i18n] Missing translation: key="${key}" lang="${language}"`);
       }
-      return defaultVal || key;
+      return fill(defaultVal || key);
     }
 
-    const interpolationParams = typeof options === 'object' && options !== null ? options : params;
-    return interpolationParams ? interpolate(raw, interpolationParams) : raw;
+    return fill(raw);
   };
 
   // Set during render, not in an effect, so the screen rendered for a new language

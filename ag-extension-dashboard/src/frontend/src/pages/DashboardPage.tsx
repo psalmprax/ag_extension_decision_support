@@ -40,6 +40,7 @@ import { DashboardToolbar } from '@/components/dashboard/DashboardToolbar';
 import { useZoneFarmers } from '@/hooks/useDashboardZone';
 import { SoilClimateSampleCard } from '@/components/dashboard/SoilClimateSampleCard';
 import { formatLabel } from '@/lib/formatLabel';
+import { CardHeading } from '@/components/ui/CardHeading';
 
 const REGION_MAP_MAX_RETRIES = 3;
 const REGION_MAP_RETRY_BASE_DELAY_MS = 800;
@@ -157,12 +158,11 @@ const ActivePulseCard: React.FC<{ cardClass: string; isLoading: boolean }> = ({ 
 
   return (
     <div className={`${cardClass} p-4 sm:p-6`}>
-      <div className="flex items-center gap-3 mb-4 sm:mb-6">
-        <div className={`w-2 h-2 rounded-full ${health?.status === 'healthy' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-        <h3 className="text-xs sm:text-sm font-headline font-medium text-gray-900 dark:text-white">
-          {t('dashboard_active_pulse', { defaultValue: 'System Health' })}
-        </h3>
-      </div>
+      <CardHeading
+        className="mb-4 sm:mb-6"
+        icon={<span className={`w-2 h-2 rounded-full ${health?.status === 'healthy' ? 'bg-emerald-400' : 'bg-amber-400'}`} aria-hidden="true" />}
+        title={t('dashboard_active_pulse', { defaultValue: 'System health' })}
+      />
       <div className="space-y-3 sm:space-y-4">
         {isError ? (
           <div className="flex items-center justify-center py-6">
@@ -327,11 +327,8 @@ const DashboardMapSection: React.FC<{
 
   return (
     <div className={`lg:col-span-2 ${cardClass} group p-4 sm:p-6`}>
-      <div className="flex justify-between items-center mb-4 sm:mb-6">
-        <h3 className="text-base sm:text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
-          <MapPin className="w-[18px] h-[18px] text-slate-500" aria-hidden="true" />
-          <span>{t('stat_regional_distribution')}</span>
-        </h3>
+      <div className="flex justify-between items-start mb-4 sm:mb-6">
+        <CardHeading className="mb-0" icon={<MapPin className="w-[18px] h-[18px] text-slate-500" aria-hidden="true" />} title={t('stat_regional_distribution')} />
         <div className="flex gap-2">
           <span className="text-sm text-slate-500 dark:text-theme-text-muted">
             {isDemo
@@ -402,10 +399,7 @@ const MapSectionSkeleton: React.FC<{
 }> = ({ cardClass, radiusClass, t }) => (
   <div className={`lg:col-span-2 ${cardClass} group`}>
     <div className="flex justify-between items-center mb-6">
-      <h3 className="text-lg font-medium text-slate-900 dark:text-white flex items-center gap-2">
-        <MapPin className="w-[18px] h-[18px] text-slate-500" aria-hidden="true" />
-        {t('stat_regional_distribution')}
-      </h3>
+      <CardHeading className="mb-0" icon={<MapPin className="w-[18px] h-[18px] text-slate-500" aria-hidden="true" />} title={t('stat_regional_distribution')} />
     </div>
     <div
       className={`relative h-[400px] bg-slate-100 dark:bg-white/[0.03] ${radiusClass} overflow-hidden flex items-center justify-center`}
@@ -516,7 +510,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
   return (
     <div className="animate-in fade-in duration-500">
       <OutbreakBanner />
-      <DashboardHeader userName={effectiveUser?.firstName} t={t} headingClass={headingClass} />
+      <DashboardHeader userName={effectiveUser?.firstName} t={t} />
       <DashboardToolbar farmers={effectiveFarmers} />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
