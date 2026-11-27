@@ -6,6 +6,7 @@ import { logger } from '../utils/logger';
 import { whisperTranscriptionService } from './whisperTranscriptionService';
 import { SPEECH_PROVIDERS, speechClient } from './speechProviders';
 import { speechLanguageFor } from './speechLanguages';
+import { speechText, withoutMarkup } from '@/shared-api/speechText';
 
 export interface VoiceTranscriptionResult {
   transcription: string;
@@ -209,7 +210,9 @@ export async function synthesizeVoiceAdvisory(params: {
   language?: string;
   voice?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
 }): Promise<VoiceSynthesisResult> {
-  const { text, language = 'sw', voice = 'alloy' } = params;
+  const { language = 'sw', voice = 'alloy' } = params;
+  // Units are said in words only when the caller says which language the text is in.
+  const text = params.language ? speechText(params.text, params.language) : withoutMarkup(params.text);
   if (!text.trim() || text.length > 4096) {
     throw new Error('Speech synthesis requires non-empty text of at most 4096 characters');
   }

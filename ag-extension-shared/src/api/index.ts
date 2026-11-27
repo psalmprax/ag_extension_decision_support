@@ -20,3 +20,4 @@ export * from './outbreaks';
 export * from './commercialKnowledge';
 export * from './autonomousCampaigns';
 export * from './countries';
+export * from './speechText';

@@ -97,7 +97,7 @@ describe('answers shared between users', () => {
     });
 
     it('skips the shared cache when a new answer is asked for, but keeps the new answer', async () => {
-        await runAskQuestion('user-1', QUESTION, undefined, { bypassCache: true });
+        await runAskQuestion('user-1', QUESTION, undefined, { bypassCache: true, language: 'en' });
 
         expect(findSharedAnswer).not.toHaveBeenCalled();
         expect(callReasoningAgentic).toHaveBeenCalledTimes(1);
@@ -107,7 +107,7 @@ describe('answers shared between users', () => {
     it('does not share an answer written from tool output such as a weather forecast', async () => {
         jest.mocked(callReasoningAgentic).mockResolvedValueOnce({ answer: ANSWER, reasoning: '', toolsUsed: ['get_weather_forecast'] });
 
-        const result = await runAskQuestion('user-1', QUESTION);
+        const result = await runAskQuestion('user-1', QUESTION, undefined, { language: 'en' });
 
         expect(saveSharedAnswer).not.toHaveBeenCalled();
         expect(result.toolsUsed).toBeUndefined();
@@ -116,13 +116,21 @@ describe('answers shared between users', () => {
     it('does not share the answer when its sources could not be fingerprinted when retrieved', async () => {
         jest.mocked(knowledgeSourcesRevision).mockResolvedValueOnce(null);
 
-        await runAskQuestion('user-1', QUESTION);
+        await runAskQuestion('user-1', QUESTION, undefined, { language: 'en' });
 
         expect(saveSharedAnswer).not.toHaveBeenCalled();
     });
 
     it('does not fingerprint sources for questions that are never shared', async () => {
         await runAskQuestion('user-1', QUESTION, [{ type: 'image', data: 'photo' }]);
+
+        expect(knowledgeSourcesRevision).not.toHaveBeenCalled();
+        expect(saveSharedAnswer).not.toHaveBeenCalled();
+    });
+
+    it('never shares an answer when the asker did not say which language they read', async () => {
+        await runAskQuestion('user-1', QUESTION);
+        await runAskQuestion('user-1', QUESTION, undefined, { language: '   ' });
 
         expect(knowledgeSourcesRevision).not.toHaveBeenCalled();
         expect(saveSharedAnswer).not.toHaveBeenCalled();

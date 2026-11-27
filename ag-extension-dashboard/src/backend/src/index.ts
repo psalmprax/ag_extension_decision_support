@@ -24,6 +24,7 @@ import { emailWorkflowService } from './services/emailWorkflowService';
 import { agentTelemetry } from './services/agentTelemetry';
 import { selfHealingService } from './services/selfHealing';
 import * as Sentry from '@sentry/node';
+import { withoutRequestData } from './utils/sentryScrub';
 import app from './app';
 import { runIfLeader } from './services/leaderElection';
 import { validateStartupConfiguration, logStartupWarnings, shouldProceedAtStartup } from './utils/startupValidation';
@@ -33,7 +34,10 @@ if (process.env.SENTRY_DSN) {
     Sentry.init({
         dsn: process.env.SENTRY_DSN,
         environment: config.nodeEnv,
-        tracesSampleRate: 1.0,
+        // Errors only by default: tracing every request would use up a free plan in a day.
+        tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE) || 0,
+        sendDefaultPii: false,
+        beforeSend: withoutRequestData,
     });
     logger.info('Sentry error tracking initialized');
 }

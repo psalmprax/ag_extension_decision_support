@@ -1,0 +1,78 @@
+name: Errors in production
+
+# Every hour, reads the production failure summary (failed API requests and browser errors,
+# counted per route, without personal data) and opens an issue labelled "errors" when
+# something is over the limits in scripts/error-watch.cjs. GitHub notifies watchers.
+# Failures are counted per UTC hour, and this runs at :17, so each run reads two hours:
+# the one that just started and the one before it. That covers everything since the last
+# run (a failure at 10:40 is seen at 11:17), at the cost of reporting some failures twice.
+# The issue is commented on while errors continue and closes after a clear check.
+#
+# Needs the MONITORING_TOKEN repository secret (the same value the deploy writes to the
+# server's .env). Without it the check is skipped with a notice. It uses HTTPS only,
+# never production SSH.
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: error-watch
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      SITE: https://www.gpexts.com
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+      MONITORING_TOKEN: ${{ secrets.MONITORING_TOKEN }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          sparse-checkout: scripts
+          persist-credentials: false
+
+      - name: Read the failures since the last check
+        id: read
+        run: |
+          if [ -z "$MONITORING_TOKEN" ]; then
+            echo "::notice::MONITORING_TOKEN is not set, so production errors are not checked."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          code=$(curl -s -o summary.json -w '%{http_code}' --max-time 30 \
+            -H "x-monitoring-token: $MONITORING_TOKEN" "$SITE/api/v1/monitoring/failures?hours=2" || echo 000)
+          if [ "$code" != 200 ]; then
+            # 404: the server has no MONITORING_TOKEN yet (deploy after setting the secret).
+            # 403: the secret and the server's .env disagree. Uptime covers the site being down.
+            echo "::warning::The failure summary answered HTTP $code, so errors were not checked."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          node scripts/error-watch.cjs "$GITHUB_OUTPUT" body.md < summary.json
+
+      - name: Open or update the errors issue
+        if: steps.read.outputs.skip != 'true' && steps.read.outputs.alert == 'true'
+        run: |
+          open=$(gh api "repos/$REPO/issues?state=open&labels=errors" --jq '.[0].number // empty')
+          if [ -z "$open" ]; then
+            gh api "repos/$REPO/labels" -f name=errors -f color=d93f0b >/dev/null 2>&1 || true
+            gh api "repos/$REPO/issues" -f title="Errors in production" -F body=@body.md -f 'labels[]=errors' --jq .html_url
+          else
+            gh api "repos/$REPO/issues/$open/comments" -F body=@body.md >/dev/null
+          fi
+
+      - name: Close the errors issue after a clear hour
+        if: steps.read.outputs.skip != 'true' && steps.read.outputs.alert == 'false'
+        run: |
+          for number in $(gh api "repos/$REPO/issues?state=open&labels=errors" --jq '.[].number'); do
+            gh api "repos/$REPO/issues/$number/comments" -f body="Nothing over the limits in the two hours to $(date -u '+%Y-%m-%d %H:%M UTC')." >/dev/null
+            gh api -X PATCH "repos/$REPO/issues/$number" -f state=closed >/dev/null
+          done

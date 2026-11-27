@@ -157,31 +157,8 @@ jobs:
               echo ".env created from .env.example"
             fi
 
-            # Ensure VAPID keys are configured in .env
-            if ! grep -q "VAPID_PUBLIC_KEY" .env 2>/dev/null; then
-              echo "Generating VAPID keys..."
-              KEYS=""
-              if python3 -c "import cryptography" 2>/dev/null; then
-                KEYS=$(python3 -c "from cryptography.hazmat.primitives.asymmetric import ec; from cryptography.hazmat.primitives import serialization; import base64; k=ec.generate_private_key(ec.SECP256R1()); print(base64.urlsafe_b64encode(k.public_key().public_bytes(serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint)).decode().rstrip('='), base64.urlsafe_b64encode(k.private_numbers().private_value.to_bytes(32, 'big')).decode().rstrip('='))" 2>/dev/null)
-              fi
-              if [ -z "$KEYS" ] && command -v node >/dev/null 2>&1; then
-                KEYS=$(npx -y web-push generate-vapid-keys 2>/dev/null | grep -E '(Public|Private) Key:' | awk '{print $NF}' | tr '\n' ' ')
-              fi
-              if [ -z "$KEYS" ] || [ "$KEYS" = " " ]; then
-                echo "FATAL: Unable to generate VAPID keys; refusing deployment with synthetic credentials." >&2
-                exit 1
-              fi
-              PUB_KEY=$(echo "$KEYS" | awk '{print $1}')
-              PRIV_KEY=$(echo "$KEYS" | awk '{print $2}')
-              if [ -n "$PUB_KEY" ] && [ -n "$PRIV_KEY" ]; then
-                echo "" >> .env
-                echo "# VAPID Keys for Push Notifications" >> .env
-                echo "VAPID_PUBLIC_KEY=$PUB_KEY" >> .env
-                echo "VAPID_PRIVATE_KEY=$PRIV_KEY" >> .env
-                echo "VAPID_EMAIL=mailto:admin@gpexts.com" >> .env
-                echo "Added VAPID keys to .env"
-              fi
-            fi
+            # Push-notification keys: generated once, kept afterwards (see the script).
+            bash ../scripts/ensure-vapid-keys.sh .env || exit 1
 
             # Ensure JWT_SECRET is configured in .env
             # No timestamp fallback: a predictable secret is worse than a failed
@@ -618,6 +595,10 @@ jobs:
           OLLAMA_HOST: ${{ secrets.OLLAMA_HOST || vars.OLLAMA_HOST || 'http://ettametta-ollama:11434' }}
           OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL || vars.OLLAMA_MODEL || 'llama3.2:3b' }}
           MCP_API_TOKEN: ${{ secrets.MCP_API_TOKEN || vars.MCP_API_TOKEN }}
+          # Error monitoring (optional): the token the hourly error-watch workflow reads failures with,
+          # and the Sentry project's DSN (switches Sentry on in the backend and the browser).
+          MONITORING_TOKEN: ${{ secrets.MONITORING_TOKEN }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN || vars.SENTRY_DSN }}
           # Optional cross-encoder reranker for knowledge retrieval (empty = LLM reranker).
           RAG_RERANK_URL: ${{ secrets.RAG_RERANK_URL || vars.RAG_RERANK_URL }}
           RAG_RERANK_MODEL: ${{ secrets.RAG_RERANK_MODEL || vars.RAG_RERANK_MODEL }}
@@ -630,7 +611,7 @@ jobs:
           host: ${{ secrets.PROD_SERVER_IP }}
           username: ${{ vars.PROD_DEPLOY_SSH_USER || 'root' }}
           key: ${{ secrets.SSH_PRIVATE_KEY_PRODUCTION }}
-          envs: GITHUB_TOKEN,JWT_SECRET,OPENAI_API_KEY,GROQ_API_KEY,ANTHROPIC_API_KEY,AZURE_OPENAI_API_KEY,GOOGLE_VERTEX_PROJECT_ID,AIHUBMIX_API_KEY,AIHUBMIX_ACCESS_KEY,OPENROUTER_API_KEY,HUGGINGFACE_API_KEY,NVIDIA_API_KEY,FREEBUFF_AUTH_TOKEN,WEATHER_API_KEY,WEATHER_API_URL,TAVILY_API_KEY,ACME_EMAIL,DEMO_ENABLED,DEMO_PASSWORD,AI_PRIMARY_PROVIDER,AI_PRIMARY_MODEL,AI_VISION_MODEL,AIHUBMIX_WEB_SEARCH,AI_FALLBACK_PROVIDER,AI_FALLBACK_MODEL,AI_EMBEDDINGS_PROVIDER,AI_EMBEDDINGS_MODEL,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_DEPLOYMENT_NAME,OLLAMA_HOST,OLLAMA_MODEL,MCP_API_TOKEN,RAG_RERANK_URL,RAG_RERANK_MODEL,RAG_RERANK_API_KEY,CORS_ORIGIN
+          envs: GITHUB_TOKEN,JWT_SECRET,OPENAI_API_KEY,GROQ_API_KEY,ANTHROPIC_API_KEY,AZURE_OPENAI_API_KEY,GOOGLE_VERTEX_PROJECT_ID,AIHUBMIX_API_KEY,AIHUBMIX_ACCESS_KEY,OPENROUTER_API_KEY,HUGGINGFACE_API_KEY,NVIDIA_API_KEY,FREEBUFF_AUTH_TOKEN,WEATHER_API_KEY,WEATHER_API_URL,TAVILY_API_KEY,ACME_EMAIL,DEMO_ENABLED,DEMO_PASSWORD,AI_PRIMARY_PROVIDER,AI_PRIMARY_MODEL,AI_VISION_MODEL,AIHUBMIX_WEB_SEARCH,AI_FALLBACK_PROVIDER,AI_FALLBACK_MODEL,AI_EMBEDDINGS_PROVIDER,AI_EMBEDDINGS_MODEL,AZURE_OPENAI_ENDPOINT,AZURE_OPENAI_DEPLOYMENT_NAME,OLLAMA_HOST,OLLAMA_MODEL,MCP_API_TOKEN,MONITORING_TOKEN,SENTRY_DSN,RAG_RERANK_URL,RAG_RERANK_MODEL,RAG_RERANK_API_KEY,CORS_ORIGIN
           command_timeout: 3m
           script: |
             set -e
@@ -662,7 +643,7 @@ jobs:
               echo ".env created from .env.example"
             fi
 
-            for var in JWT_SECRET OPENAI_API_KEY GROQ_API_KEY ANTHROPIC_API_KEY AZURE_OPENAI_API_KEY GOOGLE_VERTEX_PROJECT_ID AIHUBMIX_API_KEY AIHUBMIX_ACCESS_KEY OPENROUTER_API_KEY HUGGINGFACE_API_KEY NVIDIA_API_KEY FREEBUFF_AUTH_TOKEN WEATHER_API_KEY WEATHER_API_URL TAVILY_API_KEY ACME_EMAIL DEMO_ENABLED DEMO_PASSWORD AI_PRIMARY_PROVIDER AI_PRIMARY_MODEL AI_VISION_MODEL AIHUBMIX_WEB_SEARCH AI_FALLBACK_PROVIDER AI_FALLBACK_MODEL AI_EMBEDDINGS_PROVIDER AI_EMBEDDINGS_MODEL AZURE_OPENAI_ENDPOINT AZURE_OPENAI_DEPLOYMENT_NAME OLLAMA_HOST OLLAMA_MODEL MCP_API_TOKEN RAG_RERANK_URL RAG_RERANK_MODEL RAG_RERANK_API_KEY CORS_ORIGIN; do
+            for var in JWT_SECRET OPENAI_API_KEY GROQ_API_KEY ANTHROPIC_API_KEY AZURE_OPENAI_API_KEY GOOGLE_VERTEX_PROJECT_ID AIHUBMIX_API_KEY AIHUBMIX_ACCESS_KEY OPENROUTER_API_KEY HUGGINGFACE_API_KEY NVIDIA_API_KEY FREEBUFF_AUTH_TOKEN WEATHER_API_KEY WEATHER_API_URL TAVILY_API_KEY ACME_EMAIL DEMO_ENABLED DEMO_PASSWORD AI_PRIMARY_PROVIDER AI_PRIMARY_MODEL AI_VISION_MODEL AIHUBMIX_WEB_SEARCH AI_FALLBACK_PROVIDER AI_FALLBACK_MODEL AI_EMBEDDINGS_PROVIDER AI_EMBEDDINGS_MODEL AZURE_OPENAI_ENDPOINT AZURE_OPENAI_DEPLOYMENT_NAME OLLAMA_HOST OLLAMA_MODEL MCP_API_TOKEN MONITORING_TOKEN SENTRY_DSN RAG_RERANK_URL RAG_RERANK_MODEL RAG_RERANK_API_KEY CORS_ORIGIN; do
               val="${!var}"
               if [ "$var" = AI_PRIMARY_MODEL ] && [ "$AI_PRIMARY_PROVIDER" = aihubmix ] && [ "$val" = gemini-2.5-flash ]; then
                 echo "::warning::Retired AI_PRIMARY_MODEL override replaced with verified gemini-3.1-flash-lite"
@@ -678,7 +659,7 @@ jobs:
                 case "$var" in
                   # Optional settings: an unset secret switches the feature off,
                   # so a removed secret must not leave the old value behind.
-                  RAG_RERANK_URL|RAG_RERANK_MODEL|RAG_RERANK_API_KEY)
+                  RAG_RERANK_URL|RAG_RERANK_MODEL|RAG_RERANK_API_KEY|MONITORING_TOKEN|SENTRY_DSN)
                     if grep -q "^$var=" .env 2>/dev/null; then
                       sed -i "/^$var=/d" .env
                       echo "Cleared $var in .env (no GitHub secret/variable set)"
@@ -687,31 +668,8 @@ jobs:
               fi
             done
 
-            # Ensure VAPID keys are configured in .env
-            if ! grep -q "VAPID_PUBLIC_KEY" .env 2>/dev/null; then
-              echo "Generating VAPID keys..."
-              KEYS=""
-              if python3 -c "import cryptography" 2>/dev/null; then
-                KEYS=$(python3 -c "from cryptography.hazmat.primitives.asymmetric import ec; from cryptography.hazmat.primitives import serialization; import base64; k=ec.generate_private_key(ec.SECP256R1()); print(base64.urlsafe_b64encode(k.public_key().public_bytes(serialization.Encoding.X962, serialization.PublicFormat.UncompressedPoint)).decode().rstrip('='), base64.urlsafe_b64encode(k.private_numbers().private_value.to_bytes(32, 'big')).decode().rstrip('='))" 2>/dev/null)
-              fi
-              if [ -z "$KEYS" ] && command -v node >/dev/null 2>&1; then
-                KEYS=$(npx -y web-push generate-vapid-keys 2>/dev/null | grep -E '(Public|Private) Key:' | awk '{print $NF}' | tr '\n' ' ')
-              fi
-              if [ -z "$KEYS" ] || [ "$KEYS" = " " ]; then
-                echo "FATAL: Unable to generate VAPID keys; refusing deployment with synthetic credentials." >&2
-                exit 1
-              fi
-              PUB_KEY=$(echo "$KEYS" | awk '{print $1}')
-              PRIV_KEY=$(echo "$KEYS" | awk '{print $2}')
-              if [ -n "$PUB_KEY" ] && [ -n "$PRIV_KEY" ]; then
-                echo "" >> .env
-                echo "# VAPID Keys for Push Notifications" >> .env
-                echo "VAPID_PUBLIC_KEY=$PUB_KEY" >> .env
-                echo "VAPID_PRIVATE_KEY=$PRIV_KEY" >> .env
-                echo "VAPID_EMAIL=mailto:admin@gpexts.com" >> .env
-                echo "Added VAPID keys to .env"
-              fi
-            fi
+            # Push-notification keys: generated once, kept afterwards (see the script).
+            bash ../scripts/ensure-vapid-keys.sh .env || exit 1
 
             # Ensure JWT_SECRET is configured in .env
             # No timestamp fallback: a predictable secret is worse than a failed

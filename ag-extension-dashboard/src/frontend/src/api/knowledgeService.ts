@@ -1,5 +1,6 @@
 import apiClient from './client';
 import { saveBlob } from '@/lib/saveBlob';
+import { appLanguage } from '@/lib/appLocale';
 
 export interface KnowledgeArticle {
   id: string;
@@ -59,6 +60,8 @@ export interface AskResponse {
   error?: string;
   data: {
     answer: string;
+    /** The language the answer was asked for (set by askAI, not by the server). */
+    language?: string;
     answerMode?: 'generated' | 'extractive' | 'unavailable';
     contextUsed: ContextItem[];
     cached?: boolean;
@@ -132,14 +135,17 @@ export const askAI = async (
   attachments?: Attachment[],
   options?: { bypassCache?: boolean; country?: string; language?: string }
 ): Promise<AskResponse> => {
+  // Answers come back in the language the person reads the app in, never one the model picks.
+  const language = options?.language ?? appLanguage();
   const response = await apiClient.post<AskResponse>('/knowledge/ask', {
     question,
     attachments,
     bypassCache: options?.bypassCache,
     country: options?.country,
-    language: options?.language,
+    language,
   });
-  return response.data;
+  // The answer remembers the language it was asked for, e.g. so it is read aloud in that language.
+  return response.data?.data ? { ...response.data, data: { ...response.data.data, language } } : response.data;
 };
 
 export const downloadKnowledgePack = async (region?: string, limit = 200): Promise<void> => {

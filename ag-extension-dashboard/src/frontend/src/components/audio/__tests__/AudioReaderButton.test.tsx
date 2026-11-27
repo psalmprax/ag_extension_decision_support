@@ -57,7 +57,11 @@ describe('AudioReaderButton', () => {
   it('cleans markdown markup and formatting for natural speech readout', () => {
     const rawMarkdown = '### Shamba Alert!\nUse **NPK 17-17-17** fertilizer. See [guidelines](https://example.com) & `irrigate` early.';
     const cleaned = cleanTextForSpeech(rawMarkdown);
-    expect(cleaned).toBe('Shamba Alert! Use NPK 17-17-17 fertilizer. See guidelines & irrigate early.');
+    expect(cleaned).toBe('Shamba Alert! Use NPK 17, 17, 17 fertilizer. See guidelines & irrigate early.');
+  });
+
+  it('says rates in words in the language of the text, and drops source markers', () => {
+    expect(cleanTextForSpeech('Weka 50 kg/ha [2].', 'sw')).toBe('Weka kilogramu 50 kwa kila hekta.');
   });
 
   it('renders button with accessible title indicating language', () => {

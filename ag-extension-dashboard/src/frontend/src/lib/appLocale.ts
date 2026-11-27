@@ -11,6 +11,11 @@ export function setAppLanguage(next: string): void {
   language = next || 'en';
 }
 
+/** The language code the person chose in the app ('en', 'fr', 'ha', ...). */
+export function appLanguage(): string {
+  return language;
+}
+
 function supported(tag: string): boolean {
   try {
     return Intl.DateTimeFormat.supportedLocalesOf([tag]).length > 0;

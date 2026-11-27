@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { logger } from '@/utils/logger';
 import { randomId } from '@/utils/randomId';
+import * as Sentry from '@sentry/node';
 
 export interface ErrorDetails {
     [key: string]: unknown;
@@ -121,6 +122,8 @@ export function errorHandler(
     // answer 403 and keep the message so the misconfiguration is visible.
     const isCorsRejection = err.message === 'Not allowed by CORS';
     const statusCode = isCorsRejection ? 403 : (err.statusCode || 500);
+    // A handled 500 never reaches Sentry's own hooks; report it (a no-op without SENTRY_DSN).
+    if (statusCode >= 500) Sentry.captureException(err);
     const errorType = err.code || ErrorTypes.INTERNAL_ERROR;
 
     // 5xx internals (Prisma/PG driver messages, stack hints) are logged above

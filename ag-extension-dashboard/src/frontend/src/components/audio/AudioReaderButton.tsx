@@ -122,7 +122,8 @@ export const AudioReaderButton: React.FC<AudioReaderButtonProps> = ({
       return;
     }
 
-    const cleanText = cleanTextForSpeech(text);
+    // Units are said in the text's language: the one asked for, else the app's (never a guess).
+    const cleanText = cleanTextForSpeech(text, propLanguage || preferredStoreLang || undefined);
     if (!cleanText) {
       toast.error('No text available to read.');
       return;

@@ -109,6 +109,7 @@
   "/api/v1/knowledge/sync/status",
   "/api/v1/language",
   "/api/v1/language/ai-supported",
+  "/api/v1/monitoring/failures",
   "/api/v1/notifications",
   "/api/v1/notifications/unread-count",
   "/api/v1/notifications/vapid-public-key",

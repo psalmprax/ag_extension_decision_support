@@ -1,6 +1,8 @@
 /**
  * Audio helpers for text-to-speech normalization and single-channel audio management.
  */
+import { speechText } from '@ag-extension/shared/api';
+import { appLanguage } from '@/lib/appLocale';
 
 let activeAudioElement: HTMLAudioElement | null = null;
 let activeStopCallback: (() => void) | null = null;
@@ -43,25 +45,9 @@ export function stopAllAudioPlayback(): void {
 }
 
 /**
- * Strips markdown formatting, links, and code markup so text sounds natural when read aloud.
+ * The text as it should be spoken in `language`: markup and source markers removed, and
+ * rates such as "2.5 L/ha" said in words in that language (see speechText in the shared package).
  */
-export function cleanTextForSpeech(raw: string): string {
-  if (!raw) return '';
-  return raw
-    // Strip code blocks and inline code
-    .replace(/```[\s\S]*?```/g, '')
-    .replace(/`([^`]+)`/g, '$1')
-    // Convert markdown links [text](url) to just text
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    // Remove bold/italics
-    .replace(/[*_~]{1,3}(.*?)[*_~]{1,3}/g, '$1')
-    // Strip markdown headings #, ##, etc.
-    .replace(/^#+\s+/gm, '')
-    // Strip blockquotes
-    .replace(/^>\s+/gm, '')
-    // Strip bullet points
-    .replace(/^[-*+]\s+/gm, '')
-    // Replace multiple newlines or spaces with single space
-    .replace(/\s+/g, ' ')
-    .trim();
+export function cleanTextForSpeech(raw: string, language: string = appLanguage()): string {
+  return speechText(raw, language);
 }
