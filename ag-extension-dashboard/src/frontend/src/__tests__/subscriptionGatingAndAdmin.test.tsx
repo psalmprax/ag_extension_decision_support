@@ -33,9 +33,6 @@ vi.mock('@/pages/CropsFields', () => ({
 vi.mock('@/pages/ReportsPage', () => ({
   ReportsPage: () => <div data-testid="reports-module">Reports</div>,
 }));
-vi.mock('@/components/BillingDashboard', () => ({
-  BillingDashboard: () => <div data-testid="billing-module">Billing</div>,
-}));
 vi.mock('@/pages/WorldMonitor', () => ({
   default: () => <div data-testid="worldmonitor-module">WorldMonitor Live Module</div>,
 }));
@@ -577,18 +574,6 @@ describe('Subscription gating across Pro tabs & admin tier management', () => {
       useAppStore.setState({ user: { ...freeOfficer, serviceAccess: ['fields'] } });
       renderTab('fields');
       expect(await screen.findByTestId('crops-fields-module')).toBeInTheDocument();
-    });
-
-    it('shows Billing only to administrators', async () => {
-      useAppStore.setState({ user: freeOfficer });
-      const { unmount } = renderTab('billing');
-      expect(await screen.findByText('Billing is not open yet')).toBeInTheDocument();
-      expect(screen.queryByTestId('billing-module')).not.toBeInTheDocument();
-      unmount();
-
-      useAppStore.setState({ user: { ...freeOfficer, id: 'off-admin', role: 'admin', planName: null } });
-      renderTab('billing');
-      expect(await screen.findByTestId('billing-module')).toBeInTheDocument();
     });
   });
 });

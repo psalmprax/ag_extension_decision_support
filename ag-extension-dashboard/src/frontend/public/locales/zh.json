@@ -3150,8 +3150,6 @@
     "plan_gate_name_reports": "Reports",
     "plan_gate_ask_access": "Ask us for access",
     "demo_visits_ip": "IP (shortened)",
-    "billing_off_body": "There is nothing to pay at the moment. To use a feature that is not in your account yet, email {email} and we switch it on.",
-    "billing_off_title": "Billing is not open yet",
     "demo_visits_place": "Place",
     "plan_gate_ask_access_note": "Email {email}. We switch it on for your account.",
     "kb_ai_locked_title": "Asking the AI is not included in this account",

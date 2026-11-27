@@ -4,8 +4,6 @@ import { Report } from '@/api/reportService';
 import { PlanUpgradeGuard } from '@/components/PlanUpgradeGuard';
 import type { PerformanceData } from '@/api/analyticsService';
 import { DashboardLoadError } from '@/components/DashboardLoadError';
-import { BILLING_ENABLED } from '@ag-extension/shared/api';
-import { BillingOffNotice } from '@/components/billing/BillingOffNotice';
 import { threadProps, type ThreadHistory } from './chat/threadProps';
 import { useLanguage } from '@/lib/LanguageContext';
 const DashboardPage = React.lazy(() =>
@@ -210,8 +208,8 @@ export function TabContent(props: TabContentProps) {
           <AnalyticsPage performanceData={props.performanceData} />
         </PlanUpgradeGuard>
       );
-    case 'billing': // while billing is off only admins reach it (plan grants, payment keys)
-      return BILLING_ENABLED || (user as { role?: string } | undefined)?.role === 'admin' ? <BillingDashboard /> : <BillingOffNotice />;
+    case 'billing': // while billing is off only admins have it in their menu (plan grants, payment keys)
+      return <BillingDashboard />;
     case 'knowledge':
       return <KnowledgeBase />;
     case 'aiassistant':
