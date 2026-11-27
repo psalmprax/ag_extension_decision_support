@@ -54,9 +54,22 @@ async function textStuckUnderChatButton(page: Page): Promise<string[]> {
   }, box);
 }
 
+/** Browsers refuse taller screenshots (Firefox: 32767 px), and the landing page is longer. */
+const MAX_SCREENSHOT_HEIGHT = 30000;
+
 async function keepScreenshot(page: Page, testInfo: TestInfo, name: string): Promise<void> {
   const path = testInfo.outputPath(`phone-${testInfo.project.name}-${name}.png`);
-  await page.screenshot({ path, fullPage: true });
+  const { width, height } = await page.evaluate(() => ({
+    width: document.documentElement.clientWidth,
+    height: document.documentElement.scrollHeight,
+  }));
+  // One image pixel per CSS pixel, so a phone's 2x density does not double the height.
+  await page.screenshot({
+    path,
+    fullPage: true,
+    scale: 'css',
+    clip: { x: 0, y: 0, width, height: Math.min(height, MAX_SCREENSHOT_HEIGHT) },
+  });
   await testInfo.attach(`${name} (${testInfo.project.name})`, { path, contentType: 'image/png' });
 }
 
