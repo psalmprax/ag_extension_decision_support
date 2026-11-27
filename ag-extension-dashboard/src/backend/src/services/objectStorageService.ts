@@ -116,6 +116,22 @@ export function resolveBackendType(
   return 'aws-s3';
 }
 
+/** The object is definitely not in storage (not a network or permission failure). */
+export class ObjectNotFoundError extends Error {
+  constructor(key: string, options?: { cause?: unknown }) {
+    super(`Object not found: ${key}`, options);
+    this.name = 'ObjectNotFoundError';
+  }
+}
+
+const S3_NOT_FOUND = new Set(['NoSuchKey', 'NotFound']);
+
+/** A definite not-found from S3/R2 becomes ObjectNotFoundError; anything else stays a plain error. */
+function s3ReadError(key: string, err: unknown): Error {
+  const name = typeof err === 'object' && err !== null && 'name' in err ? String(err.name) : '';
+  return S3_NOT_FOUND.has(name) ? new ObjectNotFoundError(key, { cause: err }) : new Error(`Object not found: ${key}`, { cause: err });
+}
+
 class ObjectStorageService {
   private static instance: ObjectStorageService | null = null;
   private s3Client: S3Client | null = null;
@@ -310,11 +326,12 @@ class ObjectStorageService {
         return buffer;
       } catch (err) {
         logger.error(`[ObjectStorage] Failed to get object ${cleanKey} from S3/R2:`, err);
-        throw new Error(`Object not found: ${cleanKey}`, { cause: err });
+        throw s3ReadError(cleanKey, err);
       }
     }
 
-    throw new Error(`Object not found: ${cleanKey}`);
+    // No bucket configured and not on local disk: the file is gone.
+    throw new ObjectNotFoundError(cleanKey);
   }
 
   public async getObjectStream(key: string): Promise<{ stream: Readable; contentType?: string; contentLength?: number }> {

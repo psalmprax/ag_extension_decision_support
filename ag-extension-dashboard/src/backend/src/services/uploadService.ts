@@ -248,6 +248,22 @@ export async function readStoredUpload(storageKey: string): Promise<Buffer> {
   return objectStorage.getObject(cleanKey);
 }
 
+/**
+ * Marks an active upload whose file is no longer in storage as 'missing'. Attachments list
+ * only active uploads, so screens stop showing (and requesting) a file that cannot load.
+ */
+export async function markUploadMissing(storageKey: string): Promise<void> {
+  try {
+    const result = await query(
+      `UPDATE upload_records SET status = 'missing' WHERE storage_key = $1 AND status = 'active'`,
+      [path.basename(storageKey)]
+    );
+    if (result.rowCount) logger.warn(`Upload ${path.basename(storageKey)} is missing from storage; marked missing`);
+  } catch (error) {
+    logger.error('Failed to mark upload missing:', error);
+  }
+}
+
 export async function purgeStoredUpload(storageKey: string): Promise<void> {
   const cleanKey = path.basename(storageKey);
   await objectStorage.deleteObject(cleanKey);

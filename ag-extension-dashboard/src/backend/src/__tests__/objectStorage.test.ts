@@ -1,8 +1,9 @@
-import { objectStorage, resolveBackendType } from '@/services/objectStorageService';
+import { objectStorage, resolveBackendType, ObjectNotFoundError } from '@/services/objectStorageService';
 import {
   saveUpload,
   readStoredUpload,
   purgeStoredUpload,
+  markUploadMissing,
   signatureMatches,
   normalizeMimeType,
   createDirectUploadPresign,
@@ -29,6 +30,25 @@ function mockQueryResult<T>(rows: T[], rowCount = rows.length) {
 describe('Object Storage & Media Pipeline', () => {
   beforeEach(() => {
     queryMock.mockReset();
+  });
+
+  describe('Files missing from storage', () => {
+    it('reading a file that is gone (no bucket, not on disk) is a definite not-found', async () => {
+      await expect(readStoredUpload('00000000-0000-4000-8000-00000000dead.png')).rejects.toBeInstanceOf(ObjectNotFoundError);
+    });
+
+    it('marks only an active record as missing, so screens stop listing it', async () => {
+      queryMock.mockResolvedValueOnce(mockQueryResult([], 1));
+      await markUploadMissing('../nested/00000000-0000-4000-8000-00000000dead.png');
+      const [sql, params] = queryMock.mock.calls[0];
+      expect(sql).toMatch(/SET status = 'missing' WHERE storage_key = \$1 AND status = 'active'/);
+      expect(params).toEqual(['00000000-0000-4000-8000-00000000dead.png']);
+    });
+
+    it('a database failure while marking does not throw into the request', async () => {
+      queryMock.mockRejectedValueOnce(new Error('db down'));
+      await expect(markUploadMissing('x.png')).resolves.toBeUndefined();
+    });
   });
 
   describe('Unified Object Storage Service', () => {

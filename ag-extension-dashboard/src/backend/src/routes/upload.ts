@@ -13,6 +13,7 @@ import { getFarmerForPrincipal } from '@/services/dataGovernanceService';
 import {
   saveUpload,
   readStoredUpload,
+  markUploadMissing,
   MAX_UPLOAD_BYTES,
   UPLOAD_TYPES,
   signatureMatches,
@@ -21,7 +22,7 @@ import {
   confirmDirectUpload,
   type SupportedMimeType,
 } from '@/services/uploadService';
-import { objectStorage } from '@/services/objectStorageService';
+import { objectStorage, ObjectNotFoundError } from '@/services/objectStorageService';
 
 const router = Router();
 
@@ -243,6 +244,12 @@ router.get('/file/:storageKey', async (req: Request, res: Response) => {
     const buffer = await readStoredUpload(storageKey);
     return sendFileBuffer(res, buffer, record.mime_type, req.headers.range);
   } catch (error) {
+    if (error instanceof ObjectNotFoundError) {
+      // The record says active but the file is gone (before uploads had a volume, every
+      // deploy deleted them). Mark it missing so screens stop listing and requesting it.
+      await markUploadMissing(req.params.storageKey);
+      return res.status(404).json({ success: false, error: 'File not found' });
+    }
     logger.error('Read upload error:', error);
     return safeError(res, 404, 'File not found');
   }
