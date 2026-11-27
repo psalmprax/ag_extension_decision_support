@@ -173,3 +173,24 @@ export function imageSizeOf(image: Buffer | string): { width: number; height: nu
   }
   throw new Error('image size not found');
 }
+
+/**
+ * While billing is switched off (ag-extension-shared/src/api/billingSwitch.ts): the menu has
+ * no Billing item for this account, the billing address says so, and the server refuses to
+ * start a subscription. Expand every menu section first, so a hidden item is truly absent.
+ */
+export async function expectBillingSwitchedOff(page: Page, request: APIRequestContext, email: string): Promise<void> {
+  const nav = page.getByRole('navigation').first();
+  await nav.getByRole('button').first().waitFor({ timeout: 30_000 });
+  const collapsed = nav.locator('button[aria-expanded="false"]');
+  while ((await collapsed.count()) > 0) await collapsed.first().click();
+  await expect(nav.getByRole('button', { name: /^Billing/ })).toHaveCount(0);
+
+  await page.goto('/billing');
+  await expect(page.getByText('Billing is not open yet')).toBeVisible();
+
+  const api = await apiAs(request, email);
+  const refused = await api.post('/api/v1/billing/subscribe', { planId: 'pro' });
+  expect(refused.status()).toBe(403);
+  expect(await refused.json()).toMatchObject({ code: 'BILLING_DISABLED' });
+}
