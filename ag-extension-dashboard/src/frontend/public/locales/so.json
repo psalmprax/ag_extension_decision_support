@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Qiimayaal tusaale ah oo galley, digir iyo masaggo",
     "ui_farmer_services_prices_live_source": "Celceliska qaranka ee sannadlaha ah ee FAOSTAT, sannad walba dib loo daabaco",
     "ui_farmer_services_prices_live_change": "Isbeddelka marka la barbardhigo sannadkii hore ee la daabacay",
-    "ui_farmer_services_prices_demo_more": "U beddelka lacagta deegaanka iyo isbeddelka qiimaha dhexe ee tafaariiqda"
+    "ui_farmer_services_prices_demo_more": "U beddelka lacagta deegaanka iyo isbeddelka qiimaha dhexe ee tafaariiqda",
+    "ui_footer_part_of_gpfed": "GPExts waa qayb ka mid ah GPFED."
 }

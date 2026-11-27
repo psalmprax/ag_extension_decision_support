@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Farashin misali na masara, wake da dawa",
     "ui_farmer_services_prices_live_source": "Matsakaicin ƙasa na shekara daga FAOSTAT, ana sake wallafawa kowace shekara",
     "ui_farmer_services_prices_live_change": "Canji idan aka kwatanta da shekarar da aka wallafa a baya",
-    "ui_farmer_services_prices_demo_more": "Sauya zuwa kuɗin gida da yanayin farashin tsakiya na sayar da kaya"
+    "ui_farmer_services_prices_demo_more": "Sauya zuwa kuɗin gida da yanayin farashin tsakiya na sayar da kaya",
+    "ui_footer_part_of_gpfed": "GPExts wani ɓangare ne na GPFED."
 }

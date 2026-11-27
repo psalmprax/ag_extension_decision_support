@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Contoh harga jagung, kacang, dan sorgum",
     "ui_farmer_services_prices_live_source": "Rata-rata nasional tahunan dari FAOSTAT, diterbitkan ulang setiap tahun",
     "ui_farmer_services_prices_live_change": "Perubahan dibanding tahun terbit sebelumnya",
-    "ui_farmer_services_prices_demo_more": "Konversi mata uang lokal dan tren harga eceran median"
+    "ui_farmer_services_prices_demo_more": "Konversi mata uang lokal dan tren harga eceran median",
+    "ui_footer_part_of_gpfed": "GPExts adalah bagian dari GPFED."
 }

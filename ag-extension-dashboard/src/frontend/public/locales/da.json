@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Eksempelpriser for majs, bønner og sorghum",
     "ui_farmer_services_prices_live_source": "Årlige nationale gennemsnit fra FAOSTAT, genudgivet hvert år",
     "ui_farmer_services_prices_live_change": "Ændring i forhold til det forrige offentliggjorte år",
-    "ui_farmer_services_prices_demo_more": "Omregning til lokal valuta og tendenser i medianpriser i detailhandlen"
+    "ui_farmer_services_prices_demo_more": "Omregning til lokal valuta og tendenser i medianpriser i detailhandlen",
+    "ui_footer_part_of_gpfed": "GPExts er en del af GPFED."
 }

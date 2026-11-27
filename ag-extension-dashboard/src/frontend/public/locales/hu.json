@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Mintaárak kukoricára, babra és cirokra",
     "ui_farmer_services_prices_live_source": "Éves országos átlagok a FAOSTAT-tól, évente újra közzétéve",
     "ui_farmer_services_prices_live_change": "Változás az előző közzétett évhez képest",
-    "ui_farmer_services_prices_demo_more": "Átváltás helyi pénznemre és a kiskereskedelmi mediánárak alakulása"
+    "ui_farmer_services_prices_demo_more": "Átváltás helyi pénznemre és a kiskereskedelmi mediánárak alakulása",
+    "ui_footer_part_of_gpfed": "A GPExts a GPFED része."
 }

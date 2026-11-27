@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Gatii fakkeenyaa boqqolloo, baaqelaa fi mishingaa",
     "ui_farmer_services_prices_live_source": "Giddugaleessa biyyaa waggaa FAOSTAT irraa, waggaa waggaan irra deebi'ee maxxanfamu",
     "ui_farmer_services_prices_live_change": "Jijjiirama bara maxxanfame darbe waliin",
-    "ui_farmer_services_prices_demo_more": "Gara maallaqa naannootti jijjiiruu fi adeemsa gatii giddugaleessaa gurgurtaa xiqqaa"
+    "ui_farmer_services_prices_demo_more": "Gara maallaqa naannootti jijjiiruu fi adeemsa gatii giddugaleessaa gurgurtaa xiqqaa",
+    "ui_footer_part_of_gpfed": "GPExts kutaa GPFED ti."
 }

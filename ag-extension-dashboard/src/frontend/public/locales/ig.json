@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Ọnụahịa ihe atụ maka ọka, agwa na sọgọm",
     "ui_farmer_services_prices_live_source": "Nkezi obodo kwa afọ site na FAOSTAT, a na-ebipụta ya kwa afọ",
     "ui_farmer_services_prices_live_change": "Mgbanwe ma e jiri ya tụnyere afọ e bipụtara gara aga",
-    "ui_farmer_services_prices_demo_more": "Ntụgharị gaa na ego mpaghara na ụzọ ọnụahịa etiti ire ere"
+    "ui_farmer_services_prices_demo_more": "Ntụgharị gaa na ego mpaghara na ụzọ ọnụahịa etiti ire ere",
+    "ui_footer_part_of_gpfed": "GPExts bụ akụkụ nke GPFED."
 }

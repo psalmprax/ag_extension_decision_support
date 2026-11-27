@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Example prices for maize, beans & sorghum",
     "ui_farmer_services_prices_live_source": "Annual national averages from FAOSTAT, republished yearly",
     "ui_farmer_services_prices_live_change": "Year-on-year change against the previous published year",
-    "ui_farmer_services_prices_demo_more": "Local currency conversions & retail median trend graphs"
+    "ui_farmer_services_prices_demo_more": "Local currency conversions & retail median trend graphs",
+    "ui_footer_part_of_gpfed": "GPExts is part of GPFED."
 }

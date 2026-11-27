@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Prețuri de exemplu pentru porumb, fasole și sorg",
     "ui_farmer_services_prices_live_source": "Medii naționale anuale de la FAOSTAT, republicate în fiecare an",
     "ui_farmer_services_prices_live_change": "Schimbare față de anul publicat anterior",
-    "ui_farmer_services_prices_demo_more": "Conversie în moneda locală și tendințe ale prețului median cu amănuntul"
+    "ui_farmer_services_prices_demo_more": "Conversie în moneda locală și tendințe ale prețului median cu amănuntul",
+    "ui_footer_part_of_gpfed": "GPExts face parte din GPFED."
 }

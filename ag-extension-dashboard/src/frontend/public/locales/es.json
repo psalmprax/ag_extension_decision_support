@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Precios de ejemplo de maíz, frijol y sorgo",
     "ui_farmer_services_prices_live_source": "Promedios nacionales anuales de FAOSTAT, republicados cada año",
     "ui_farmer_services_prices_live_change": "Variación frente al año publicado anterior",
-    "ui_farmer_services_prices_demo_more": "Conversión a moneda local y tendencias del precio mediano al por menor"
+    "ui_farmer_services_prices_demo_more": "Conversión a moneda local y tendencias del precio mediano al por menor",
+    "ui_footer_part_of_gpfed": "GPExts forma parte de GPFED."
 }

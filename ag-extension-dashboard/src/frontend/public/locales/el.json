@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Ενδεικτικές τιμές για καλαμπόκι, φασόλια και σόργο",
     "ui_farmer_services_prices_live_source": "Ετήσιοι εθνικοί μέσοι όροι από το FAOSTAT, που αναδημοσιεύονται κάθε χρόνο",
     "ui_farmer_services_prices_live_change": "Μεταβολή έναντι του προηγούμενου δημοσιευμένου έτους",
-    "ui_farmer_services_prices_demo_more": "Μετατροπή σε τοπικό νόμισμα και τάσεις διάμεσων τιμών λιανικής"
+    "ui_farmer_services_prices_demo_more": "Μετατροπή σε τοπικό νόμισμα και τάσεις διάμεσων τιμών λιανικής",
+    "ui_footer_part_of_gpfed": "Η GPExts ανήκει στην GPFED."
 }

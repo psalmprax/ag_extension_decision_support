@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Giá mẫu cho ngô, đậu và cao lương",
     "ui_farmer_services_prices_live_source": "Mức trung bình toàn quốc hằng năm từ FAOSTAT, công bố lại mỗi năm",
     "ui_farmer_services_prices_live_change": "Thay đổi so với năm công bố trước",
-    "ui_farmer_services_prices_demo_more": "Quy đổi sang tiền địa phương và xu hướng giá bán lẻ trung vị"
+    "ui_farmer_services_prices_demo_more": "Quy đổi sang tiền địa phương và xu hướng giá bán lẻ trung vị",
+    "ui_footer_part_of_gpfed": "GPExts là một phần của GPFED."
 }

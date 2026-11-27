@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "ভুট্টা, শিম ও জোয়ারের উদাহরণ দাম",
     "ui_farmer_services_prices_live_source": "FAOSTAT-এর বার্ষিক জাতীয় গড়, প্রতি বছর পুনঃপ্রকাশিত",
     "ui_farmer_services_prices_live_change": "আগের প্রকাশিত বছরের তুলনায় পরিবর্তন",
-    "ui_farmer_services_prices_demo_more": "স্থানীয় মুদ্রায় রূপান্তর ও খুচরা মধ্যমা দামের প্রবণতা"
+    "ui_farmer_services_prices_demo_more": "স্থানীয় মুদ্রায় রূপান্তর ও খুচরা মধ্যমা দামের প্রবণতা",
+    "ui_footer_part_of_gpfed": "GPExts হলো GPFED-এর অংশ।"
 }

@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Bei za mfano za mahindi, maharage na mtama",
     "ui_farmer_services_prices_live_source": "Wastani wa kitaifa wa kila mwaka kutoka FAOSTAT, huchapishwa upya kila mwaka",
     "ui_farmer_services_prices_live_change": "Mabadiliko ikilinganishwa na mwaka uliochapishwa awali",
-    "ui_farmer_services_prices_demo_more": "Ubadilishaji kwa sarafu ya ndani na mwenendo wa bei ya kati ya rejareja"
+    "ui_farmer_services_prices_demo_more": "Ubadilishaji kwa sarafu ya ndani na mwenendo wa bei ya kati ya rejareja",
+    "ui_footer_part_of_gpfed": "GPExts ni sehemu ya GPFED."
 }

@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Mısır, fasulye ve sorgum için örnek fiyatlar",
     "ui_farmer_services_prices_live_source": "FAOSTAT'tan yıllık ulusal ortalamalar, her yıl yeniden yayımlanır",
     "ui_farmer_services_prices_live_change": "Bir önceki yayımlanan yıla göre değişim",
-    "ui_farmer_services_prices_demo_more": "Yerel para birimine çeviri ve perakende medyan fiyat eğilimleri"
+    "ui_farmer_services_prices_demo_more": "Yerel para birimine çeviri ve perakende medyan fiyat eğilimleri",
+    "ui_footer_part_of_gpfed": "GPExts, GPFED'in bir parçasıdır."
 }

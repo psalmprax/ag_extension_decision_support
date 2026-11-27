@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Prezzi di esempio per mais, fagioli e sorgo",
     "ui_farmer_services_prices_live_source": "Medie nazionali annuali di FAOSTAT, ripubblicate ogni anno",
     "ui_farmer_services_prices_live_change": "Variazione rispetto all'anno pubblicato precedente",
-    "ui_farmer_services_prices_demo_more": "Conversione in valuta locale e andamento dei prezzi mediani al dettaglio"
+    "ui_farmer_services_prices_demo_more": "Conversione in valuta locale e andamento dei prezzi mediani al dettaglio",
+    "ui_footer_part_of_gpfed": "GPExts fa parte di GPFED."
 }

@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "मक्का, फलियों और ज्वार की उदाहरण कीमतें",
     "ui_farmer_services_prices_live_source": "FAOSTAT से वार्षिक राष्ट्रीय औसत, हर साल दोबारा प्रकाशित",
     "ui_farmer_services_prices_live_change": "पिछले प्रकाशित वर्ष की तुलना में बदलाव",
-    "ui_farmer_services_prices_demo_more": "स्थानीय मुद्रा में रूपांतरण और खुदरा माध्यिका कीमतों के रुझान"
+    "ui_farmer_services_prices_demo_more": "स्थानीय मुद्रा में रूपांतरण और खुदरा माध्यिका कीमतों के रुझान",
+    "ui_footer_part_of_gpfed": "GPExts, GPFED का हिस्सा है।"
 }

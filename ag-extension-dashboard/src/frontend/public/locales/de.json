@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Beispielpreise für Mais, Bohnen und Sorghum",
     "ui_farmer_services_prices_live_source": "Jährliche nationale Durchschnittswerte von FAOSTAT, jährlich neu veröffentlicht",
     "ui_farmer_services_prices_live_change": "Veränderung gegenüber dem zuvor veröffentlichten Jahr",
-    "ui_farmer_services_prices_demo_more": "Umrechnung in Landeswährung und Trends der Einzelhandels-Medianpreise"
+    "ui_farmer_services_prices_demo_more": "Umrechnung in Landeswährung und Trends der Einzelhandels-Medianpreise",
+    "ui_footer_part_of_gpfed": "GPExts gehört zu GPFED."
 }

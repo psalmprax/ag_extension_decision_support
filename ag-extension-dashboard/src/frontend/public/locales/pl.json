@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Przykładowe ceny kukurydzy, fasoli i sorga",
     "ui_farmer_services_prices_live_source": "Roczne średnie krajowe z FAOSTAT, publikowane co roku",
     "ui_farmer_services_prices_live_change": "Zmiana względem poprzedniego opublikowanego roku",
-    "ui_farmer_services_prices_demo_more": "Przeliczenie na walutę lokalną i trendy mediany cen detalicznych"
+    "ui_farmer_services_prices_demo_more": "Przeliczenie na walutę lokalną i trendy mediany cen detalicznych",
+    "ui_footer_part_of_gpfed": "GPExts należy do GPFED."
 }

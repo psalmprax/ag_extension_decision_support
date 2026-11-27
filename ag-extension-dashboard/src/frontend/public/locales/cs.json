@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Ukázkové ceny kukuřice, fazolí a čiroku",
     "ui_farmer_services_prices_live_source": "Roční celostátní průměry z FAOSTAT, zveřejňované každý rok",
     "ui_farmer_services_prices_live_change": "Změna oproti předchozímu zveřejněnému roku",
-    "ui_farmer_services_prices_demo_more": "Přepočet na místní měnu a vývoj mediánových maloobchodních cen"
+    "ui_farmer_services_prices_demo_more": "Přepočet na místní měnu a vývoj mediánových maloobchodních cen",
+    "ui_footer_part_of_gpfed": "GPExts je součástí GPFED."
 }

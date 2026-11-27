@@ -130,7 +130,7 @@ export function Footer() {
           </div>
           <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 pt-6 sm:pt-8 border-t border-white/10 flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4 text-center sm:text-start">
             <span className="text-xs sm:text-sm text-slate-300 font-normal">
-              {t('ui_footer_copy')} {new Date().getFullYear()} {t('ui_footer_gpexts_all_rights_reserved')}
+              {t('ui_footer_copy')} {new Date().getFullYear()} {t('ui_footer_gpexts_all_rights_reserved')} {t('ui_footer_part_of_gpfed')}
             </span>
             <div className="flex flex-wrap justify-center sm:justify-end gap-4 sm:gap-5 text-xs sm:text-sm">
               <button

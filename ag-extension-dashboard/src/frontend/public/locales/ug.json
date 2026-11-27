@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "كۆممىقوناق، پۇرچاق ۋە قوناقنىڭ مىسال باھاسى",
     "ui_farmer_services_prices_live_source": "FAOSTAT تىن يىللىق دۆلەتلىك ئوتتۇرىچە، ھەر يىلى قايتا ئېلان قىلىنىدۇ",
     "ui_farmer_services_prices_live_change": "ئالدىنقى ئېلان قىلىنغان يىلغا قارىغاندا ئۆزگىرىش",
-    "ui_farmer_services_prices_demo_more": "يەرلىك پۇلغا ئايلاندۇرۇش ۋە پارچە سېتىش ئوتتۇرا باھا يۈزلىنىشى"
+    "ui_farmer_services_prices_demo_more": "يەرلىك پۇلغا ئايلاندۇرۇش ۋە پارچە سېتىش ئوتتۇرا باھا يۈزلىنىشى",
+    "ui_footer_part_of_gpfed": "GPExts بولسا GPFED نىڭ بىر قىسمى."
 }

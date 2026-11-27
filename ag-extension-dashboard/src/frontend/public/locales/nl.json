@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Voorbeeldprijzen voor maïs, bonen en sorghum",
     "ui_farmer_services_prices_live_source": "Jaarlijkse nationale gemiddelden van FAOSTAT, elk jaar opnieuw gepubliceerd",
     "ui_farmer_services_prices_live_change": "Verandering ten opzichte van het vorige gepubliceerde jaar",
-    "ui_farmer_services_prices_demo_more": "Omrekening naar lokale valuta en trends in mediane winkelprijzen"
+    "ui_farmer_services_prices_demo_more": "Omrekening naar lokale valuta en trends in mediane winkelprijzen",
+    "ui_footer_part_of_gpfed": "GPExts maakt deel uit van GPFED."
 }

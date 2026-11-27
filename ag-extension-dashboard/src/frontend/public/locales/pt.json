@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Preços de exemplo de milho, feijão e sorgo",
     "ui_farmer_services_prices_live_source": "Médias nacionais anuais da FAOSTAT, republicadas todos os anos",
     "ui_farmer_services_prices_live_change": "Variação face ao ano publicado anterior",
-    "ui_farmer_services_prices_demo_more": "Conversão para moeda local e tendências do preço mediano a retalho"
+    "ui_farmer_services_prices_demo_more": "Conversão para moeda local e tendências do preço mediano a retalho",
+    "ui_footer_part_of_gpfed": "A GPExts faz parte da GPFED."
 }

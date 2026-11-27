@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "أسعار مثال للذرة والفاصوليا والذرة الرفيعة",
     "ui_farmer_services_prices_live_source": "متوسطات وطنية سنوية من FAOSTAT، تُعاد نشرها كل عام",
     "ui_farmer_services_prices_live_change": "التغير مقارنة بالسنة المنشورة السابقة",
-    "ui_farmer_services_prices_demo_more": "التحويل إلى العملة المحلية واتجاهات متوسط أسعار التجزئة"
+    "ui_farmer_services_prices_demo_more": "التحويل إلى العملة المحلية واتجاهات متوسط أسعار التجزئة",
+    "ui_footer_part_of_gpfed": "GPExts جزء من GPFED."
 }

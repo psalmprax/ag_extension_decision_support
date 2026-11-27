@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Mitengo ya chitsanzo ya chimanga, nyemba ndi mapira",
     "ui_farmer_services_prices_live_source": "Avereji ya dziko lonse pachaka kuchokera ku FAOSTAT, yosindikizidwa chaka chilichonse",
     "ui_farmer_services_prices_live_change": "Kusintha poyerekeza ndi chaka chosindikizidwa chapitacho",
-    "ui_farmer_services_prices_demo_more": "Kusintha kukhala ndalama za kwanuko ndi momwe mitengo yapakati ya malonda ikuyendera"
+    "ui_farmer_services_prices_demo_more": "Kusintha kukhala ndalama za kwanuko ndi momwe mitengo yapakati ya malonda ikuyendera",
+    "ui_footer_part_of_gpfed": "GPExts ndi gawo la GPFED."
 }

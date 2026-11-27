@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Ibiciro by'urugero ku bigori, ibishyimbo n'amasaka",
     "ui_farmer_services_prices_live_source": "Impuzandengo z'igihugu za buri mwaka ziva kuri FAOSTAT, zongera gutangazwa buri mwaka",
     "ui_farmer_services_prices_live_change": "Impinduka ugereranyije n'umwaka watangajwe mbere",
-    "ui_farmer_services_prices_demo_more": "Guhindura mu mafaranga y'aho uri n'imigendekere y'ibiciro byo hagati byo gucuruza"
+    "ui_farmer_services_prices_demo_more": "Guhindura mu mafaranga y'aho uri n'imigendekere y'ibiciro byo hagati byo gucuruza",
+    "ui_footer_part_of_gpfed": "GPExts ni igice cya GPFED."
 }

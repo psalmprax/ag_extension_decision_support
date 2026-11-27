@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Приклад цін на кукурудзу, квасолю та сорго",
     "ui_farmer_services_prices_live_source": "Річні середні по країні від FAOSTAT, публікуються щороку",
     "ui_farmer_services_prices_live_change": "Зміна до попереднього опублікованого року",
-    "ui_farmer_services_prices_demo_more": "Перерахунок у місцеву валюту та динаміка медіанних роздрібних цін"
+    "ui_farmer_services_prices_demo_more": "Перерахунок у місцеву валюту та динаміка медіанних роздрібних цін",
+    "ui_footer_part_of_gpfed": "GPExts входить до GPFED."
 }

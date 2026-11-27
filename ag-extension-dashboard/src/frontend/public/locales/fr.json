@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Prix d'exemple pour le maïs, les haricots et le sorgho",
     "ui_farmer_services_prices_live_source": "Moyennes nationales annuelles de FAOSTAT, republiées chaque année",
     "ui_farmer_services_prices_live_change": "Variation par rapport à l'année publiée précédente",
-    "ui_farmer_services_prices_demo_more": "Conversion en monnaie locale et tendances des prix médians de détail"
+    "ui_farmer_services_prices_demo_more": "Conversion en monnaie locale et tendances des prix médians de détail",
+    "ui_footer_part_of_gpfed": "GPExts fait partie de GPFED."
 }

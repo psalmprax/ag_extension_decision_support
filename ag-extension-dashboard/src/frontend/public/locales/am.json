@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "የበቆሎ፣ የባቄላና የማሽላ የምሳሌ ዋጋዎች",
     "ui_farmer_services_prices_live_source": "ከFAOSTAT የተገኙ ዓመታዊ ብሔራዊ አማካዮች፣ በየዓመቱ የሚታተሙ",
     "ui_farmer_services_prices_live_change": "ካለፈው የታተመ ዓመት ጋር ሲነጻጸር ያለው ለውጥ",
-    "ui_farmer_services_prices_demo_more": "ወደ አካባቢው ገንዘብ መቀየርና የችርቻሮ መካከለኛ ዋጋ አዝማሚያዎች"
+    "ui_farmer_services_prices_demo_more": "ወደ አካባቢው ገንዘብ መቀየርና የችርቻሮ መካከለኛ ዋጋ አዝማሚያዎች",
+    "ui_footer_part_of_gpfed": "GPExts የGPFED አካል ነው።"
 }

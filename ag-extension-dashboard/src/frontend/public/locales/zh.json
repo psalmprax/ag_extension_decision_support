@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "玉米、豆类和高粱的示例价格",
     "ui_farmer_services_prices_live_source": "来自 FAOSTAT 的年度全国平均值，每年重新发布",
     "ui_farmer_services_prices_live_change": "与上一公布年份相比的变化",
-    "ui_farmer_services_prices_demo_more": "本币换算和零售中位价走势"
+    "ui_farmer_services_prices_demo_more": "本币换算和零售中位价走势",
+    "ui_footer_part_of_gpfed": "GPExts 隶属于 GPFED。"
 }

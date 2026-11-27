@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Emiwendo egy'okulabirako ku kasooli, ebijanjaalo n'omuwemba",
     "ui_farmer_services_prices_live_source": "Emiwendo egy'awakati egy'eggwanga buli mwaka okuva mu FAOSTAT, egifulumizibwa buli mwaka",
     "ui_farmer_services_prices_live_change": "Enkyukakyuka bw'ogeraageranya n'omwaka ogwafulumizibwa emabega",
-    "ui_farmer_services_prices_demo_more": "Okukyusa mu ssente z'omu kitundu n'enkyukakyuka y'emiwendo egy'awakati egy'okutunda"
+    "ui_farmer_services_prices_demo_more": "Okukyusa mu ssente z'omu kitundu n'enkyukakyuka y'emiwendo egy'awakati egy'okutunda",
+    "ui_footer_part_of_gpfed": "GPExts kitundu ku GPFED."
 }

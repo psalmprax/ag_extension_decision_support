@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Примерни цени за царевица, боб и сорго",
     "ui_farmer_services_prices_live_source": "Годишни национални средни стойности от FAOSTAT, публикувани всяка година",
     "ui_farmer_services_prices_live_change": "Промяна спрямо предходната публикувана година",
-    "ui_farmer_services_prices_demo_more": "Превръщане в местна валута и тенденции на медианните цени на дребно"
+    "ui_farmer_services_prices_demo_more": "Превръщане в местна валута и тенденции на медианните цени на дребно",
+    "ui_footer_part_of_gpfed": "GPExts е част от GPFED."
 }

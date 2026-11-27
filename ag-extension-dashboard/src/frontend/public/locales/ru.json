@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Примерные цены на кукурузу, фасоль и сорго",
     "ui_farmer_services_prices_live_source": "Годовые средние по стране от FAOSTAT, публикуются ежегодно",
     "ui_farmer_services_prices_live_change": "Изменение к предыдущему опубликованному году",
-    "ui_farmer_services_prices_demo_more": "Пересчёт в местную валюту и динамика медианных розничных цен"
+    "ui_farmer_services_prices_demo_more": "Пересчёт в местную валюту и динамика медианных розничных цен",
+    "ui_footer_part_of_gpfed": "GPExts входит в GPFED."
 }

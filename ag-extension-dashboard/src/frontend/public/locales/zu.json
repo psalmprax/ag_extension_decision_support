@@ -3138,5 +3138,6 @@
     "ui_farmer_services_prices_demo_crops": "Amanani esibonelo ommbila, ubhontshisi namabele",
     "ui_farmer_services_prices_live_source": "Izilinganiso zikazwelonke zonyaka ezivela ku-FAOSTAT, eziphinde zishicilelwe njalo ngonyaka",
     "ui_farmer_services_prices_live_change": "Ushintsho uma kuqhathaniswa nonyaka owedlule oshicilelwe",
-    "ui_farmer_services_prices_demo_more": "Ukuguqulela emalini yendawo nezitayela zamanani aphakathi okuthengisa"
+    "ui_farmer_services_prices_demo_more": "Ukuguqulela emalini yendawo nezitayela zamanani aphakathi okuthengisa",
+    "ui_footer_part_of_gpfed": "I-GPExts iyingxenye ye-GPFED."
 }
