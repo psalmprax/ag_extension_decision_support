@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { subscribeUserToPush } from '@/api/pushNotificationService';
+import { isDemoSession } from '@/demo/demoSession';
 import { registerServiceWorker } from '@/lib/swRegistration';
 import { EncryptedStorageService } from '@/services/encryptedStorageService';
 
@@ -36,9 +37,9 @@ export const useAppBootstrap = (storeUser: unknown, setActiveTab: (tab: string) 
     });
   }, [storeUser]);
 
-  // Push Notification Subscription
+  // Push Notification Subscription (not in the demo, which may not subscribe: the server answers 403)
   useEffect(() => {
-    if (storeUser) {
+    if (storeUser && !isDemoSession(storeUser as { email?: string | null; isDemo?: boolean }, false)) {
       subscribeUserToPush().catch(err => {
         console.warn('Push subscription failed:', err);
       });

@@ -36,8 +36,8 @@ import { AgronomicIntakeCard, isAgronomicQueryAmbiguous } from '../AgronomicInta
 import { useDemoMode } from '@/demo';
 
 import { RagKnowledgeGraphCanvas, GraphNode } from '../canvas-ui/RagKnowledgeGraphCanvas';
-import { SoilNutrientHeatmapCanvas, SoilProbeResult } from '../canvas-ui/SoilNutrientHeatmapCanvas';
-import { DiseaseSaliencyCanvas, LesionDetectionZone } from '../canvas-ui/DiseaseSaliencyCanvas';
+import { SoilNutrientHeatmapCanvas } from '../canvas-ui/SoilNutrientHeatmapCanvas';
+import { DiseaseSaliencyCanvas } from '../canvas-ui/DiseaseSaliencyCanvas';
 import { AgroEcosystemCanvasScrubber } from '../canvas-ui/AgroEcosystemCanvasScrubber';
 
 interface ContextItem {
@@ -694,9 +694,6 @@ export const KnowledgeBase: React.FC = () => {
                   {isDemo ? (
                     <div className="w-full h-[460px] min-h-[460px] relative">
                       <SoilNutrientHeatmapCanvas
-                        onProbeSelect={(probe: SoilProbeResult) => {
-                          toast(`Soil ${probe.label}: ${probe.value.toFixed(1)} ${probe.unit} (${probe.status})`);
-                        }}
                         className="w-full h-full rounded-xl border border-slate-200 dark:border-white/10"
                       />
                     </div>
@@ -718,9 +715,6 @@ export const KnowledgeBase: React.FC = () => {
                   </div>
                   <div className="w-full h-[460px] min-h-[460px] relative">
                     <DiseaseSaliencyCanvas
-                      onSelectZone={(zone: LesionDetectionZone) => {
-                        toast(`Detected: ${zone.label} (${(zone.confidence * 100).toFixed(0)}% Confidence)`);
-                      }}
                       className="w-full h-full rounded-xl border border-slate-200 dark:border-white/10"
                     />
                   </div>

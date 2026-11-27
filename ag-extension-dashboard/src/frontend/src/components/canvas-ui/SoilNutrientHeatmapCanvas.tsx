@@ -139,6 +139,7 @@ const LAYER_CONFIG: Record<
   SoilLayerType,
   {
     label: string;
+    tab: string; // short name on the layer tab
     unit: string;
     min: number;
     max: number;
@@ -150,13 +151,13 @@ const LAYER_CONFIG: Record<
   }
 > = {
   ph: {
-    label: 'Soil pH Reaction',
+    label: 'Soil pH', tab: 'pH',
     unit: 'pH',
     min: 4.0,
     max: 8.5,
     optimalRange: [6.0, 7.2],
     icon: Activity,
-    description: 'Procedural preview — not live SoilGrids data; connect a real soil test to populate',
+    description: 'Sample preview, not live SoilGrids data. Add a lab soil test to show your own field.',
     samplePoints: [
       { x: 0.15, y: 0.2, val: 5.1 },
       { x: 0.35, y: 0.7, val: 6.4 },
@@ -192,13 +193,13 @@ const LAYER_CONFIG: Record<
     },
   },
   nitrogen: {
-    label: 'Nitrogen (N) Content',
+    label: 'Nitrogen (N) content', tab: 'Nitrogen',
     unit: 'mg/kg',
     min: 10,
     max: 90,
     optimalRange: [40, 70],
     icon: Flame,
-    description: 'Available soil inorganic nitrogen reservoir for vegetative growth',
+    description: 'Available soil inorganic nitrogen for vegetative growth.',
     samplePoints: [
       { x: 0.2, y: 0.25, val: 24 },
       { x: 0.4, y: 0.65, val: 62 },
@@ -216,13 +217,13 @@ const LAYER_CONFIG: Record<
     },
   },
   phosphorus: {
-    label: 'Phosphorus (P - Bray)',
+    label: 'Phosphorus (P, Bray)', tab: 'Phosphorus',
     unit: 'ppm',
     min: 5,
     max: 50,
     optimalRange: [15, 30],
     icon: Gauge,
-    description: 'Bray-extractable root-development phosphorus',
+    description: 'Bray-extractable phosphorus, for root development.',
     samplePoints: [
       { x: 0.18, y: 0.22, val: 11 },
       { x: 0.45, y: 0.55, val: 22 },
@@ -239,13 +240,13 @@ const LAYER_CONFIG: Record<
     },
   },
   potassium: {
-    label: 'Potassium (K)',
+    label: 'Potassium (K)', tab: 'Potassium',
     unit: 'cmol/kg',
     min: 0.1,
     max: 1.2,
     optimalRange: [0.35, 0.8],
     icon: Layers,
-    description: 'Exchangeable potassium ensuring drought resilience and cell turgor',
+    description: 'Exchangeable potassium, for drought resilience and cell turgor.',
     samplePoints: [
       { x: 0.25, y: 0.3, val: 0.22 },
       { x: 0.5, y: 0.6, val: 0.54 },
@@ -262,13 +263,13 @@ const LAYER_CONFIG: Record<
     },
   },
   moisture: {
-    label: 'Volumetric soil moisture',
+    label: 'Volumetric soil moisture', tab: 'Moisture',
     unit: '% VWC',
     min: 5,
     max: 45,
     optimalRange: [22, 35],
     icon: Droplets,
-    description: 'Preview estimate — not live NASA POWER assimilation',
+    description: 'Preview estimate, not live NASA POWER data.',
     samplePoints: [
       { x: 0.2, y: 0.2, val: 14 },
       { x: 0.42, y: 0.5, val: 28 },
@@ -286,13 +287,13 @@ const LAYER_CONFIG: Record<
     },
   },
   carbon: {
-    label: 'Soil Organic Carbon (SOC)',
+    label: 'Soil organic carbon (SOC)', tab: 'Organic carbon',
     unit: 'g/kg',
     min: 5,
     max: 40,
     optimalRange: [20, 35],
     icon: Gauge,
-    description: 'Topsoil organic carbon index representing microbial fertility tier',
+    description: 'Topsoil organic carbon, an index of microbial fertility.',
     samplePoints: [
       { x: 0.22, y: 0.25, val: 12 },
       { x: 0.45, y: 0.58, val: 26 },
@@ -388,15 +389,12 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
           recommendation: 'Soil parameter in healthy target range for standard crop cycle.',
         };
       }
-      if (value < optMin) {
-        return {
-          status: 'critical' as const,
-          recommendation: `Deficit detected (${value.toFixed(1)} ${config.unit}). Recommend soil amendment or targeted micro-dosing.`,
-        };
-      }
+      // Outside the target range is something to check, not an emergency: these maps are
+      // interpolated (and in the demo, sample data), so a lab test decides what to do.
+      const range = `${optMin}–${optMax} ${config.unit}`;
       return {
         status: 'warning' as const,
-        recommendation: `Elevated levels detected (${value.toFixed(1)} ${config.unit}). Avoid over-fertilization to prevent leaching.`,
+        recommendation: `${value < optMin ? 'Below' : 'Above'} the ${range} target range. Confirm with a lab soil test before acting.`,
       };
     },
     [config]
@@ -484,7 +482,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
                 className={tabButtonClass(isSelected)}
               >
                 <Icon className="w-3.5 h-3.5" />
-                <span>{cfg.label.split(' ')[0]}</span>
+                <span>{cfg.tab}</span>
               </button>
             );
           })}
