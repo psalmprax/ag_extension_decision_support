@@ -142,8 +142,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-cert
 # Files are copied in already owned by the app user. A `chown -R /app` afterwards
 # rewrote every file of node_modules into a second layer: about 4.5 minutes on the
 # stage host, enough to push the deploy past its SSH time limit, and a bigger image.
-# /app itself stays writable for what the app creates at runtime (local uploads).
-RUN chown node:node /app
+# /app itself stays writable for what the app creates at runtime. /app/uploads exists
+# in the image, owned by the app user, so a new named volume mounted there (compose:
+# backend_uploads) starts with the same owner and the app can write to it.
+RUN mkdir -p /app/uploads && chown node:node /app /app/uploads
 
 # Copy production node_modules
 COPY --chown=node:node --from=deps /app/node_modules ./node_modules

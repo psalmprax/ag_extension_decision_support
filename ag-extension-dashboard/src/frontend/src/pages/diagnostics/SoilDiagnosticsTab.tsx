@@ -152,11 +152,10 @@ export function SoilDiagnosticsTab({
     if (!soilAnalysis) return;
     setIsExporting(true);
     try {
-      // Generate a soil diagnostic report first, then download its PDF
-      const { generateReport } = await import('../../api/reportService');
-      const gen = await generateReport('soil_diagnostic', `Soil Diagnostic - ${cropType || 'General'}`, undefined);
-      const reportId = (gen as { data?: { id?: string } })?.data?.id || (gen as { id?: string })?.id;
-      if (!reportId) throw new Error('Report generation did not return an id');
+      // The analysis already saved a soil diagnostic report; download that one. (Asking
+      // /reporting/generate for a 'soil_diagnostic' report was always refused with 400.)
+      const reportId = soilAnalysis.reportId;
+      if (!reportId) throw new Error('This soil analysis was not saved as a report');
       const blob = await downloadReportPdf(reportId);
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
