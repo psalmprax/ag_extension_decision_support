@@ -1,5 +1,6 @@
 import apiClient from './client';
 import { saveBlob } from '@/lib/saveBlob';
+import { appLanguage } from '@/lib/appLocale';
 
 export interface KnowledgeArticle {
   id: string;
@@ -137,7 +138,8 @@ export const askAI = async (
     attachments,
     bypassCache: options?.bypassCache,
     country: options?.country,
-    language: options?.language,
+    // Answers come back in the language the person reads the app in, never one the model picks.
+    language: options?.language ?? appLanguage(),
   });
   return response.data;
 };

@@ -1,4 +1,5 @@
 import {
+    answerLanguage,
     buildAdvisoryDirective,
     buildAdvisoryEvidence,
     hasExplicitAdvisoryGeography,
@@ -160,6 +161,13 @@ describe('Agricultural advisory quality policy', () => {
         expect(result.boundaryCheck.safe).toBe(true);
         expect(result.text).toContain(advice);
         expect(result.text).not.toContain('cannot verify a treatment rate');
+    });
+
+    it('names the answer language, so the model cannot drift into the language of a source', () => {
+        expect(buildAdvisoryDirective({ language: 'en' })).toContain('Respond in English (en), even when the sources are in another language.');
+        expect(buildAdvisoryDirective({ language: 'ha' })).toContain('Respond in Hausa (ha)');
+        expect(answerLanguage()).toBe('the language of the user question');
+        expect(answerLanguage('not a language!')).toBe('not a language!');
     });
 
     it('instructs synthesis to distinguish action thresholds from treatment rates', () => {

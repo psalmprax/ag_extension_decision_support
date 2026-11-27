@@ -26,7 +26,7 @@ import type { SearchResult } from '@/services/vectorService';
  */
 
 /** Bump to drop every cached answer (per-user and shared) when the answer policy changes. */
-export const ADVISORY_CACHE_VERSION = 'advisory-v6';
+export const ADVISORY_CACHE_VERSION = 'advisory-v7';
 
 export const KNOWLEDGE_BASE_DAYS = 30;
 export const WEB_SOURCE_DAYS = 7;
