@@ -97,9 +97,9 @@ jobs:
           # The reset removed the test population; put it back for the journeys.
           npm run seed:realworld
 
-      - name: Install Playwright browser (chromium)
+      - name: Install Playwright browsers (chromium, firefox for the phone checks)
         working-directory: ag-extension-dashboard/src/frontend
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install --with-deps chromium firefox
 
       - name: Run the officer–farmer journeys
         working-directory: ag-extension-dashboard/src/frontend
@@ -113,6 +113,14 @@ jobs:
           grep -h -E -A14 '\[ERROR\]: Failed to (load|get|fetch|list)' logs/error.log 2>/dev/null \
             | grep -E '\[ERROR\]|^ *code:|^ *message:|^ *at ' | cut -c1-300 | head -60 || true
           grep -h -i -E 'rate limit exceeded|Failed to persist' logs/combined.log 2>/dev/null | cut -c1-200 | sort | uniq -c | head -20 || true
+
+      - name: Upload the phone screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: phone-screenshots
+          path: ag-extension-dashboard/src/frontend/test-results/**/phone-*.png
+          if-no-files-found: warn
 
       - name: Upload the Playwright report
         if: failure()

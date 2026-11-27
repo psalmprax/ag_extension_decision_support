@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { isAxiosError } from 'axios';
 import {
   fetchVisitsByFarmer,
   fetchSynthesis,
@@ -16,14 +17,33 @@ interface LoadedSatelliteData {
   satelliteData: SatelliteIndex[];
 }
 
-async function loadSynthesis(farmerId: string, visits: Array<{ visit_type: string; notes?: string }>): Promise<string> {
+/** The synthesis endpoint refuses notes shorter than this (400). */
+const MIN_SYNTHESIS_NOTES = 10;
+const SYNTHESIS_UNAVAILABLE = 'Visit synthesis is unavailable.';
+
+/**
+ * A summary of the farmer's last visits. Only the summary depends on this call: when the
+ * backend withholds it (422, the agronomic safety review blocked it) or fails, the panel
+ * still shows the farmer, priority and satellite data.
+ */
+export async function loadSynthesis(farmerId: string, visits: Array<{ visit_type: string; notes?: string }>): Promise<string> {
   if (visits.length === 0) return 'No recent visit data available.';
   const notes = visits
     .slice(0, 3)
-    .map(visit => `${visit.visit_type}: ${visit.notes || ''}`)
+    .filter(visit => visit.notes?.trim())
+    .map(visit => `${visit.visit_type}: ${visit.notes?.trim()}`)
     .join('\n');
-  const response = await fetchSynthesis(farmerId, notes);
-  return response.success ? response.data.summary : 'Visit synthesis is unavailable.';
+  if (notes.length < MIN_SYNTHESIS_NOTES) return 'No visit notes to summarise yet.';
+  try {
+    const response = await fetchSynthesis(farmerId, notes);
+    return response.success ? response.data.summary : SYNTHESIS_UNAVAILABLE;
+  } catch (error) {
+    if (isAxiosError(error) && error.response?.status === 422) {
+      return 'The visit summary was withheld: it did not pass the agronomic safety review.';
+    }
+    console.warn('Visit synthesis unavailable:', error);
+    return SYNTHESIS_UNAVAILABLE;
+  }
 }
 
 async function loadSatelliteData(farmerId: string): Promise<LoadedSatelliteData> {

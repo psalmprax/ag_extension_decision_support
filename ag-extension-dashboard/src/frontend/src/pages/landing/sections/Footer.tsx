@@ -31,7 +31,7 @@ export function Footer() {
 
   return (
     <>
-        <footer id="contact" className="border-t border-white/[0.08] pt-12 sm:pt-16 pb-8 relative z-10">
+        <footer id="contact" className="border-t border-white/[0.08] pt-12 sm:pt-16 pb-[calc(6rem+env(safe-area-inset-bottom))] relative z-10">
           <div className="max-w-6xl w-full mx-auto px-4 sm:px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1.5fr_1fr_1fr_1fr] gap-8 sm:gap-10 pb-8 sm:pb-10">
             <div>
               <button

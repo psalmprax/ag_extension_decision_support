@@ -239,6 +239,12 @@ services:
       DEMO_PASSWORD: ${DEMO_PASSWORD:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:7503}
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      # Uploaded files, when no S3/R2 bucket is configured. Without a volume they lived in
+      # the container, and every deploy (--force-recreate) deleted them while their
+      # database records stayed: photos then answered 404.
+      - backend_uploads:/app/uploads
     depends_on:
       app-db:
         condition: service_healthy
@@ -386,6 +392,7 @@ services:
       - ag-network
 
 volumes:
+  backend_uploads:
   postgres_data:
   redis_data:
   redis_queue_data:

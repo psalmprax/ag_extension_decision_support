@@ -158,8 +158,9 @@ function safeOriginalName(name: string): string {
 
 async function checkStorageQuota(ownerUserId: string, incomingBytes: number): Promise<void> {
   const usage = await query<{ used: string | number | null }>(
-    'SELECT COALESCE(SUM(size_bytes), 0) AS used FROM upload_records WHERE owner_user_id = $1 AND status != $2',
-    [ownerUserId, 'deleted']
+    // Only bytes actually stored count: deleted uploads and files lost from storage ('missing') do not.
+    'SELECT COALESCE(SUM(size_bytes), 0) AS used FROM upload_records WHERE owner_user_id = $1 AND status <> ALL($2::text[])',
+    [ownerUserId, ['deleted', 'missing']]
   );
   const used = Number(usage.rows[0]?.used ?? 0);
   if (used + incomingBytes > USER_QUOTA_BYTES) {
@@ -246,6 +247,22 @@ export async function readStoredUpload(storageKey: string): Promise<Buffer> {
   }
 
   return objectStorage.getObject(cleanKey);
+}
+
+/**
+ * Marks an active upload whose file is no longer in storage as 'missing'. Attachments list
+ * only active uploads, so screens stop showing (and requesting) a file that cannot load.
+ */
+export async function markUploadMissing(storageKey: string): Promise<void> {
+  try {
+    const result = await query(
+      `UPDATE upload_records SET status = 'missing' WHERE storage_key = $1 AND status = 'active'`,
+      [path.basename(storageKey)]
+    );
+    if (result.rowCount) logger.warn(`Upload ${path.basename(storageKey)} is missing from storage; marked missing`);
+  } catch (error) {
+    logger.error('Failed to mark upload missing:', error);
+  }
 }
 
 export async function purgeStoredUpload(storageKey: string): Promise<void> {

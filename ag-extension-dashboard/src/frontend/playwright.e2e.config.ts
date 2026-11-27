@@ -43,11 +43,36 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
+      testIgnore: /tests-e2e\/phone\//,
       use: {
         ...devices['Desktop Chrome'],
         launchOptions: process.env.PLAYWRIGHT_EXECUTABLE_PATH
           ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH }
           : undefined,
+      },
+    },
+    /* The phone checks (tests-e2e/phone) in the two browsers farmers and officers use. */
+    {
+      name: 'mobile-chrome',
+      testMatch: /tests-e2e\/phone\/.*\.spec\.ts/,
+      use: {
+        ...devices['Pixel 7'],
+        launchOptions: process.env.PLAYWRIGHT_EXECUTABLE_PATH
+          ? { executablePath: process.env.PLAYWRIGHT_EXECUTABLE_PATH }
+          : undefined,
+      },
+    },
+    {
+      name: 'mobile-firefox',
+      testMatch: /tests-e2e\/phone\/.*\.spec\.ts/,
+      // Firefox has no mobile emulation mode in Playwright: a phone-sized, touch, high-density
+      // window with the Android Firefox user agent is the closest match.
+      use: {
+        browserName: 'firefox',
+        viewport: { width: 412, height: 915 },
+        deviceScaleFactor: 2,
+        hasTouch: true,
+        userAgent: 'Mozilla/5.0 (Android 14; Mobile; rv:128.0) Gecko/128.0 Firefox/128.0',
       },
     },
   ],

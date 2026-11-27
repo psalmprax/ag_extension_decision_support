@@ -95,3 +95,6 @@ uploads/
 .clinerules/
 .claude/settings.local.json
 .mcp.json
+
+# Deploy state on the servers (rollback image id, uploads carried across a recreate)
+ag-extension-dashboard/.deploy/

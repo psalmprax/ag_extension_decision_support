@@ -288,7 +288,7 @@ function App() {
   const handleGenerateReport = async () => {
     setIsGeneratingReport(true);
     try {
-      const res = await generateReport('synthesis', 'AI Synthesis Report');
+      const res = await generateReport('activity_report'); // a type /reporting/generate makes
       if (!res?.data) {
         throw new Error('Report service returned no report data');
       }
