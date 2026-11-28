@@ -90,8 +90,9 @@ export const PlotTelemetryDrawer: React.FC<{
   const HazardIcon = hazardsFound ? AlertTriangle : CheckCircle2;
 
   return (
-    <div className="hidden xl:flex w-72 flex-col bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 space-y-4 overflow-y-auto">
-      <h2 className="text-base font-medium text-slate-900 dark:text-white flex items-center gap-2">
+    // Scrolls when the column is short, so it takes keyboard focus and carries its heading as a name.
+    <section tabIndex={0} aria-labelledby="plot-telemetry-title" className="hidden xl:flex w-72 flex-col bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 space-y-4 overflow-y-auto focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+      <h2 id="plot-telemetry-title" className="text-base font-medium text-slate-900 dark:text-white flex items-center gap-2">
         <Sprout className="w-4 h-4 text-emerald-700 dark:text-emerald-400" aria-hidden="true" />
         <span>{t('ui_plot_telemetry_drawer_plot_telemetry')}</span>
       </h2>
@@ -129,6 +130,6 @@ export const PlotTelemetryDrawer: React.FC<{
           </div>
         )}
       </div>
-    </div>
+    </section>
   );
 };

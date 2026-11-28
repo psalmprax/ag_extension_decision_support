@@ -46,7 +46,7 @@ test('a farmer asks in Swahili and is answered in Swahili', async ({ browser }) 
   const { context, page } = await signedIn(browser, alice.email);
   await switchToSwahili(page);
   await openMenu(page, /^Afisa wangu/);
-  await expect(page.getByRole('heading', { name: 'Afisa wangu wa ugani' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Afisa wangu', exact: true })).toBeVisible();
   await expectNoRawKeys(page, 'the farmer\'s conversation page');
 
   const sent = page.waitForRequest(request => new URL(request.url()).pathname.endsWith('/chatbot/messages') && request.method() === 'POST');
