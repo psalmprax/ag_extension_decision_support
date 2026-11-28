@@ -4,6 +4,7 @@ import { useDemoMode } from '@/demo';
 import { normalizeProbePoint } from '@/lib/canvasProbe';
 import { useLanguage } from '@/lib/LanguageContext';
 import { TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
+import { soilAdvisory } from './soilAdvisory';
 
 export type SoilLayerType = 'ph' | 'nitrogen' | 'phosphorus' | 'potassium' | 'moisture' | 'carbon';
 
@@ -381,22 +382,7 @@ export const SoilNutrientHeatmapCanvas: React.FC<SoilNutrientHeatmapCanvasProps>
   );
 
   const getAdvisory = useCallback(
-    (value: number) => {
-      const [optMin, optMax] = config.optimalRange;
-      if (value >= optMin && value <= optMax) {
-        return {
-          status: 'optimal' as const,
-          recommendation: 'Soil parameter in healthy target range for standard crop cycle.',
-        };
-      }
-      // Outside the target range is something to check, not an emergency: these maps are
-      // interpolated (and in the demo, sample data), so a lab test decides what to do.
-      const range = `${optMin}–${optMax} ${config.unit}`;
-      return {
-        status: 'warning' as const,
-        recommendation: `${value < optMin ? 'Below' : 'Above'} the ${range} target range. Confirm with a lab soil test before acting.`,
-      };
-    },
+    (value: number) => soilAdvisory(value, config.optimalRange, config.unit),
     [config]
   );
 

@@ -3,7 +3,13 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { VoiceNoteTaker } from '../VoiceNoteTaker';
 import { useAppStore } from '@/store/useAppStore';
-import { setAppLanguage } from '@/lib/appLocale';
+import { englishT } from '@/test/englishT';
+
+// The app language, as the language context reports it.
+let appLang = 'en';
+vi.mock('@/lib/LanguageContext', () => ({
+  useLanguage: () => ({ language: appLang, setLanguage: () => undefined, t: englishT, isRTL: false }),
+}));
 
 interface RecorderOptions {
   onTranscriptChunk: (chunk: string) => void;
@@ -29,6 +35,7 @@ describe('VoiceNoteTaker', () => {
       preferredAudioLanguage: 'sw',
     });
 
+    appLang = 'en';
     mockToggleRecording.mockClear();
     mockUseFieldVoiceRecorder = vi.fn().mockImplementation((opts: RecorderOptions) => ({
       isRecording: false,
@@ -44,23 +51,44 @@ describe('VoiceNoteTaker', () => {
 
   it('listens in the app language until a dictation language is chosen', () => {
     useAppStore.setState({ preferredAudioLanguage: '' });
-    setAppLanguage('fr');
-    try {
-      render(<VoiceNoteTaker />);
-    } finally {
-      setAppLanguage('en');
-    }
+    appLang = 'fr';
+    render(<VoiceNoteTaker />);
     expect(mockUseFieldVoiceRecorder).toHaveBeenLastCalledWith(expect.objectContaining({ language: 'fr' }));
   });
 
   it('falls back to English when dictation does not support the app language', () => {
     useAppStore.setState({ preferredAudioLanguage: '' });
-    setAppLanguage('de');
-    try {
-      render(<VoiceNoteTaker />);
-    } finally {
-      setAppLanguage('en');
-    }
+    appLang = 'de';
+    render(<VoiceNoteTaker />);
+    expect(mockUseFieldVoiceRecorder).toHaveBeenLastCalledWith(expect.objectContaining({ language: 'en' }));
+  });
+
+  it('follows a change of app language while idle, unless a language was chosen or a recording is running', () => {
+    useAppStore.setState({ preferredAudioLanguage: '' });
+    const { rerender, unmount } = render(<VoiceNoteTaker />);
+    appLang = 'sw';
+    rerender(<VoiceNoteTaker />);
+    expect(mockUseFieldVoiceRecorder).toHaveBeenLastCalledWith(expect.objectContaining({ language: 'sw' }));
+    unmount();
+
+    // A language chosen for dictation stays.
+    useAppStore.setState({ preferredAudioLanguage: 'ha' });
+    appLang = 'en';
+    const chosen = render(<VoiceNoteTaker />);
+    appLang = 'fr';
+    chosen.rerender(<VoiceNoteTaker />);
+    expect(mockUseFieldVoiceRecorder).toHaveBeenLastCalledWith(expect.objectContaining({ language: 'ha' }));
+    chosen.unmount();
+
+    // A recording keeps the language it started in.
+    useAppStore.setState({ preferredAudioLanguage: '' });
+    appLang = 'en';
+    vi.mocked(mockUseFieldVoiceRecorder).mockImplementation(() => ({
+      isRecording: true, isTranscribing: false, recordingDuration: 3, interimText: '', toggleRecording: mockToggleRecording,
+    }));
+    const recording = render(<VoiceNoteTaker />);
+    appLang = 'fr';
+    recording.rerender(<VoiceNoteTaker />);
     expect(mockUseFieldVoiceRecorder).toHaveBeenLastCalledWith(expect.objectContaining({ language: 'en' }));
   });
 

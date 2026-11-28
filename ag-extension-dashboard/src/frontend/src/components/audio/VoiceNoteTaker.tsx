@@ -7,7 +7,6 @@ import { voiceMessages } from '@/hooks/voiceMessages';
 import { useAppStore } from '@/store/useAppStore';
 import { AudioReaderButton } from './AudioReaderButton';
 import { useLanguage } from '@/lib/LanguageContext';
-import { appLanguage } from '@/lib/appLocale';
 
 export interface VoiceNoteTakerProps {
   /** Callback fired when transcription is ready or saved */
@@ -56,12 +55,12 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
   compact = false,
   className = '',
 }) => {
-  const { t } = useLanguage();
+  const { t, language: appLanguageCode } = useLanguage();
   const storeLanguage = useAppStore(s => s.preferredAudioLanguage);
   const setStoreLanguage = useAppStore(s => s.setPreferredAudioLanguage);
 
   // Until a language is picked here, dictation listens in the app's language (Kiswahili made English notes garbled).
-  const [currentLang, setCurrentLang] = useState(() => initialLanguage || storeLanguage || dictationLanguage(appLanguage()));
+  const [currentLang, setCurrentLang] = useState(() => initialLanguage || storeLanguage || dictationLanguage(appLanguageCode));
   const [transcript, setTranscript] = useState('');
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const languageMenuRef = useRef<HTMLDivElement>(null);
@@ -79,6 +78,14 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
       setTranscript(prev => (prev ? `${prev} ${chunk}` : chunk));
     },
   });
+
+  // Follows the app language when it changes, unless a language was chosen (here or by the
+  // caller), and never while a recording is running or being transcribed.
+  const chosenLanguage = initialLanguage || storeLanguage;
+  useEffect(() => {
+    if (chosenLanguage || isRecording || isTranscribing) return;
+    setCurrentLang(dictationLanguage(appLanguageCode));
+  }, [appLanguageCode, chosenLanguage, isRecording, isTranscribing]);
 
   const activeLangObj =
     SUPPORTED_VOICE_LANGUAGES.find(l => l.code === currentLang) || SUPPORTED_VOICE_LANGUAGES[0];
