@@ -214,7 +214,8 @@ export const AnalysisResultsHUD: React.FC<{
       </div>
 
       {!analysisUnavailable && <DiagnosisValidationNote validation={imageAnalysis.validation} />}
-      {!analysisUnavailable && <TranslationNotice translation={translation} />}
+      {/* Whenever anything here is shown translated, say so and offer the original. */}
+      <TranslationNotice translation={translation} />
       {analysisUnavailable ? (
         <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-2 text-amber-800 dark:text-amber-300">
           <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />

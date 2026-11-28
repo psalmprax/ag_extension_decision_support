@@ -324,7 +324,7 @@ function App() {
 
   const navItems = getNavItems().filter(item => {
     if (!effectiveUser || !item.roles.includes(effectiveUser.role)) return false;
-    if (isDemo && item.hiddenInDemo) return false;
+    if ((isDemo && item.hiddenInDemo) || item.hiddenFor?.(effectiveUser)) return false;
     return true;
   });
   useRoleTabGuard(activeTab, setActiveTab, navItems.map(item => item.id), Boolean(effectiveUser));

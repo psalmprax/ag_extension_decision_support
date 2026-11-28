@@ -312,7 +312,7 @@ jobs:
             # Push-notification keys: generated once, kept afterwards (see the script).
             bash scripts/ensure-vapid-keys.sh ag-extension-dashboard/.env || exit 1
             # Approximate place of demo visitors (never fails the deploy).
-            bash scripts/fetch-geoip.sh ag-extension-dashboard/geoip
+            timeout 300 bash scripts/fetch-geoip.sh ag-extension-dashboard/geoip || echo "City database refresh stopped after 5 minutes; keeping the current copy."
 
             # Ensure JWT_SECRET is configured in ag-extension-dashboard/.env (>= 32 chars)
             # No timestamp fallback: a predictable secret is worse than a failed

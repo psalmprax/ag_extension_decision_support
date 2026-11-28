@@ -19,7 +19,7 @@ import {
   Globe,
   Layers,
 } from 'lucide-react';
-import type { PaidService } from '@/lib/planAccess';
+import { isFreePlanUser, type PaidService, type PlanHolder } from '@/lib/planAccess';
 import { BILLING_ENABLED } from '@ag-extension/shared/api';
 
 export interface NavItem {
@@ -30,6 +30,8 @@ export interface NavItem {
   roles: string[];
   /** When true, this nav item is hidden for demo users */
   hiddenInDemo?: boolean;
+  /** Hidden from this signed-in user even though their role may open it. */
+  hiddenFor?: (user: PlanHolder) => boolean;
   /** When true, this feature requires a Pro or Enterprise subscription tier */
   requiresPro?: boolean;
   /** The paid service behind this item; a system-administrator grant of it unlocks the item. */
@@ -136,8 +138,10 @@ export const getNavItems = (): NavItem[] => [
     label: 'Billing',
     labelKey: 'nav_billing',
     icon: CreditCard,
-    // While billing is off only admins see it (plan grants and payment keys live there).
-    roles: BILLING_ENABLED ? ['extension_officer', 'admin', 'farmer'] : ['admin'],
+    roles: ['extension_officer', 'admin', 'farmer'],
+    // While billing is off there is nothing to buy: only admins (plan grants, payment keys) and
+    // paying accounts (to see invoices, manage or cancel their subscription) see it.
+    hiddenFor: user => !BILLING_ENABLED && user.role !== 'admin' && isFreePlanUser(user),
   },
   {
     id: 'telemetry',

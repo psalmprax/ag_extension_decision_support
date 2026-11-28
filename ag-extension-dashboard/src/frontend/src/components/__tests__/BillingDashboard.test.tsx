@@ -8,6 +8,15 @@ import { MemoryRouter } from 'react-router-dom';
 import { fetchSubscription } from '@/api/billingService';
 
 // Mock billing service to prevent real API calls
+// Most tests cover billing switched on; one checks the page while it is off.
+let billingOn = true;
+vi.mock('@ag-extension/shared/api', async importOriginal => ({
+  ...(await importOriginal<object>()),
+  get BILLING_ENABLED() {
+    return billingOn;
+  },
+}));
+
 vi.mock('@/api/billingService', () => ({
   fetchPlans: vi.fn().mockResolvedValue({
     success: true,
@@ -191,5 +200,24 @@ describe('BillingDashboard', () => {
     expect(screen.getByRole('button', { name: 'Select plan' }).className).toContain(
       'text-slate-900 dark:text-white'
     );
+  });
+
+  it('while billing is off, offers nothing to buy but keeps usage, invoices and the customer portal', async () => {
+    billingOn = false;
+    try {
+      await renderComponent();
+      await waitFor(() => {
+        expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      });
+      expect(screen.getByText(/Payments are switched off while pricing is decided/)).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Plans & pricing' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Payment methods' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('region', { name: /Available subscription plans/i })).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Usage' })).toHaveAttribute('aria-pressed', 'true');
+      expect(screen.getByRole('button', { name: 'Invoices & receipts' })).toBeInTheDocument();
+      expect(screen.getAllByRole('button', { name: /portal/i }).length).toBeGreaterThan(0);
+    } finally {
+      billingOn = true;
+    }
   });
 });

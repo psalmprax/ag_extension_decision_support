@@ -7,13 +7,18 @@ export function asNumberedList(texts: string[]): string {
   return texts.map((text, index) => `${index + 1}. ${text.replace(/\s*\n+\s*/g, ' ').trim()}`).join('\n');
 }
 
-/** The texts back from a translated numbered list, or null unless every number came back exactly once. */
+/**
+ * The texts back from a translated numbered list, or null unless every number came back exactly
+ * once and every line is a numbered one: text on an unnumbered line (a wrapped item, a note
+ * from the model) cannot be placed, so the English is shown rather than a shortened item.
+ */
 export function fromNumberedList(translated: string, count: number): string[] | null {
   const found: string[] = new Array(count);
   let seen = 0;
   for (const line of translated.split('\n')) {
+    if (!line.trim()) continue;
     const match = /^\s*(\d+)[.)]\s+(.+)$/.exec(line);
-    if (!match) continue;
+    if (!match) return null;
     const index = Number(match[1]) - 1;
     if (index < 0 || index >= count || found[index] !== undefined) return null;
     found[index] = match[2].trim();

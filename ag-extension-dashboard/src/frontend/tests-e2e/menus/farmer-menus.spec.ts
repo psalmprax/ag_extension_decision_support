@@ -1,6 +1,6 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { SEEDED } from '../helpers/auth';
-import { JOURNEY, apiAs, expectBillingSwitchedOff, openMenu, signedIn } from '../helpers/journey';
+import { JOURNEY, apiAs, expectPaymentsSwitchedOff, openMenu, signedIn } from '../helpers/journey';
 import { AI_UNAVAILABLE, CANNED_AI, apiData, statTile } from './menuStories';
 
 /** What a farmer expects from each page in their menu, against the real backend. */
@@ -61,7 +61,7 @@ test.describe('a farmer works through every menu page', () => {
     }
   });
 
-  test('Billing: switched off while pricing is decided, so there is nothing to pay', async ({ request }) => {
-    await expectBillingSwitchedOff(page, request, farmer);
+  test('Billing: still opens for my paid plan, but nothing can be bought while payments are off', async ({ request }) => {
+    await expectPaymentsSwitchedOff(page, request, farmer);
   });
 });

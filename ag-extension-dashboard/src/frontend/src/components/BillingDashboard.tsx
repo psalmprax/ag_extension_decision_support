@@ -18,6 +18,7 @@ import { CancelSubscriptionModal } from './billing/CancelSubscriptionModal';
 import { triggerHaptic } from '@/lib/haptics';
 import { ManualPlanGrants } from './billing/ManualPlanGrants';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { BILLING_ENABLED } from '@ag-extension/shared/api';
 import { PRIMARY_BUTTON, TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
 
 interface AdminVaultProps {
@@ -188,11 +189,10 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
   isAdmin,
 }) => {
   const { t } = useLanguage();
-
   return (
     <PageHeader
         title={t('ui_billing_dashboard_billing_subscriptions')}
-        description={t('billing_subtitle') || 'Your plan, usage, payment methods and invoices.'}
+        description={BILLING_ENABLED ? t('billing_subtitle') || 'Your plan, usage, payment methods and invoices.' : t('billing_off_subtitle', { defaultValue: 'Payments are switched off while pricing is decided. You can still see your invoices, and manage or cancel your subscription.' })}
         meta={t('billing_summary', {
           plan: currentPlanName,
           cycle: isAnnual ? t('billing_cycle_annual', { defaultValue: 'annually' }) : t('billing_cycle_monthly', { defaultValue: 'monthly' }),
@@ -225,7 +225,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
             { id: 'payments', label: t('billing_tab_payments', { defaultValue: 'Payment methods' }), icon: CreditCard },
             { id: 'invoices', label: t('billing_tab_invoices', { defaultValue: 'Invoices & receipts' }), icon: Receipt },
             ...(isAdmin ? [{ id: 'admin', label: t('billing_tab_admin', { defaultValue: 'Payment keys' }), icon: Shield }] : []),
-          ].map(tab => (
+          ].filter(tab => BILLING_ENABLED || (tab.id !== 'plans' && tab.id !== 'payments')).map(tab => ( // nothing to buy while billing is off
             <button
               key={tab.id}
               onClick={() => {
@@ -278,7 +278,7 @@ export const BillingDashboard: React.FC = () => {
   const { t } = useLanguage();
   const billing = useBillingActions();
   const [isAnnual, setIsAnnual] = useState(false);
-  const [activeTab, setActiveTab] = useState<'plans' | 'usage' | 'payments' | 'invoices' | 'admin'>('plans');
+  const [activeTab, setActiveTab] = useState<'plans' | 'usage' | 'payments' | 'invoices' | 'admin'>(BILLING_ENABLED ? 'plans' : 'usage');
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   if (billing.loading) {

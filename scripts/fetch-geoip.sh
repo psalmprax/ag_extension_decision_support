@@ -8,6 +8,7 @@
 # one (or last month's early in the month) when the copy is older than 25 days.
 #
 # Never fails a deploy: without the database, demo visits are recorded without a place.
+# Deploys run it under `timeout 300`; the copy in use is only replaced once a new one is complete.
 set -uo pipefail
 
 dir="${1:?usage: fetch-geoip.sh <folder>}"
@@ -21,10 +22,12 @@ fi
 
 tmp="$(mktemp "$dir/.dbip.XXXXXX")"
 trap 'rm -f "$tmp" "$tmp.gz"' EXIT
+# Deploys stop this with `timeout`: clean up, and leave the current copy in place.
+trap 'echo "City database refresh stopped; keeping the current copy." >&2; exit 0' TERM INT
 for month in "$(date -u +%Y-%m)" "$(date -u -d "$(date -u +%Y-%m-01) -1 day" +%Y-%m 2>/dev/null)"; do
   [ -n "$month" ] || continue
   url="https://download.db-ip.com/free/dbip-city-lite-${month}.mmdb.gz"
-  if curl -fsSL --max-time 300 --retry 2 -o "$tmp.gz" "$url" && gunzip -c "$tmp.gz" > "$tmp" 2>/dev/null; then
+  if curl -fsSL --max-time 120 --retry 1 -o "$tmp.gz" "$url" && gunzip -c "$tmp.gz" > "$tmp" 2>/dev/null; then
     # A real city database is tens of megabytes; anything small is an error page.
     if [ "$(stat -c %s "$tmp" 2>/dev/null || echo 0)" -gt 10000000 ]; then
       chmod 644 "$tmp"

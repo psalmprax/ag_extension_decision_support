@@ -7,6 +7,7 @@ jest.mock('@/services/serviceAccessService', () => ({ hasServiceAccess: (...args
 
 import type { NextFunction, Request, Response } from 'express';
 import { refusedWhileBillingOff } from '@/routes/billing';
+import { demoVisitDays } from '@/routes/demoVisits';
 import { demoSessionGuard } from '@/middleware/demoSessionGuard';
 import { PAID_SERVICES, isGrantableTo } from '@/services/paidServices';
 import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
@@ -36,6 +37,11 @@ describe('billing switched off', () => {
       expect(refusedWhileBillingOff('POST', path)).toBe(false);
     }
     expect(refusedWhileBillingOff('GET', '/subscription')).toBe(false);
+    // Express also routes these to the same handlers.
+    expect(refusedWhileBillingOff('POST', '/Subscribe')).toBe(true);
+    expect(refusedWhileBillingOff('post', '/subscribe/')).toBe(true);
+    expect(refusedWhileBillingOff('POST', '/PayPal/Subscription//')).toBe(true);
+    expect(refusedWhileBillingOff('POST', '/Cancel/')).toBe(false);
     expect(refusedWhileBillingOff('POST', '/subscribe', true)).toBe(false);
   });
 });
@@ -89,6 +95,11 @@ describe('demo visits', () => {
     expect(shortenIp('::ffff:198.51.100.7')).toBe('198.51.100.x');
     expect(shortenIp('2001:db8:85a3::8a2e:370:7334')).toBe('2001:db8:85a3::/48');
     expect(shortenIp('2001:db8::1')).toBe('2001:db8:0::/48');
+    // "::" can stand for groups before the third one: they are filled in first.
+    expect(shortenIp('2001::1:2:3:4:5:6')).toBe('2001:0:1::/48');
+    expect(shortenIp('2001:0DB8:0000:85a3::1')).toBe('2001:db8:0::/48');
+    expect(shortenIp('::1')).toBe('0:0:0::/48');
+    expect(shortenIp('64:ff9b::192.0.2.33')).toBe('64:ff9b:0::/48');
     expect(shortenIp('unknown')).toBeNull();
   });
 
@@ -119,6 +130,10 @@ describe('demo visits', () => {
   it('never stops someone opening the demo when the visit cannot be saved', async () => {
     query.mockRejectedValueOnce(new Error('relation "demo_visits" does not exist'));
     await expect(recordDemoVisit({ ip: '203.0.113.42', headers: {}, userAgent: null })).resolves.toBeUndefined();
+  });
+
+  it('asks the database for whole days only, from 1 to 90, 30 by default', () => {
+    expect([2.5, '7', 0.4, -3, 500, 'many', undefined, ''].map(demoVisitDays)).toEqual([2, 7, 1, 1, 90, 30, 30, 30]);
   });
 
   it('deletes visits older than 90 days', async () => {

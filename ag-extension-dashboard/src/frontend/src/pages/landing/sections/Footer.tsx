@@ -208,7 +208,7 @@ export function Footer() {
                       <strong className="text-white">{t('privacy_demo_visits_title', { defaultValue: '6. Demo visits.' })}</strong>{' '}
                       {t('privacy_demo_visits_body', {
                         defaultValue:
-                          'When you open the demo, we record the time, your approximate country, region and city (worked out from your IP address on our own server, without sending it to anyone), your type of device, and your IP address with its last part removed (for example 203.0.113.x). We use this to see where interest in the demo comes from and to stop misuse, and delete it after 90 days. As with any sign-in, the demo session also keeps your IP address for security.',
+                          'When you open the demo, we record the time, your approximate country, region and city, your type of device, and your IP address with its last part removed (for example 203.0.113.x). The place comes from the location our content-delivery network adds to your visit, when it adds one; otherwise we look up your IP address in a city database on our own server, and that lookup sends it nowhere. We use this to see where interest in the demo comes from and to stop misuse, and delete it after 90 days. As with any sign-in, the demo session also keeps your IP address for security.',
                       })}
                     </p>
                   </div>

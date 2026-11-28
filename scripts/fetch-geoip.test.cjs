@@ -51,3 +51,23 @@ test('never fails a deploy, and never saves an error page as the database', () =
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('stopped by the deploy timeout, it keeps the current copy and leaves no partial file', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'geoip-'));
+  const bin = fs.mkdtempSync(path.join(os.tmpdir(), 'geoip-bin-'));
+  try {
+    const target = path.join(dir, 'dbip-city-lite.mmdb');
+    fs.writeFileSync(target, 'current copy');
+    fs.utimesSync(target, new Date('2026-01-01'), new Date('2026-01-01')); // old enough to refresh
+    fs.writeFileSync(path.join(bin, 'curl'), '#!/bin/sh\nsleep 30\n', { mode: 0o755 });
+    const started = Date.now();
+    const result = spawnSync('timeout', ['2', 'bash', SCRIPT, dir], { env: { ...process.env, PATH: `${bin}:/usr/bin:/bin` }, encoding: 'utf8' });
+    assert.ok(Date.now() - started < 10_000, 'the download did not stop with the timeout');
+    assert.equal(fs.readFileSync(target, 'utf8'), 'current copy');
+    assert.deepEqual(fs.readdirSync(dir), ['dbip-city-lite.mmdb']);
+    assert.match(result.stderr, /keeping the current copy/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(bin, { recursive: true, force: true });
+  }
+});

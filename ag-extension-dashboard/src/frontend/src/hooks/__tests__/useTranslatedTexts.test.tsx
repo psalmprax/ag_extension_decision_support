@@ -31,6 +31,10 @@ describe('generated text in the app language', () => {
     expect(fromNumberedList('2) Ondoa majani.\n1. Ukungu', 2)).toEqual(['Ukungu', 'Ondoa majani.']);
     expect(fromNumberedList('1. Ukungu', 2)).toBeNull();
     expect(fromNumberedList('1. Ukungu\n1. Tena', 2)).toBeNull();
+    // A blank line is fine; a wrapped item or a note is not, so nothing is cut short.
+    expect(fromNumberedList('1. Ukungu\n\n2. Ondoa majani.', 2)).toEqual(['Ukungu', 'Ondoa majani.']);
+    expect(fromNumberedList('1. Ukungu\n2. Ondoa majani\nna uyachome.', 2)).toBeNull();
+    expect(fromNumberedList('Hii ni tafsiri:\n1. Ukungu\n2. Ondoa majani.', 2)).toBeNull();
   });
 
   it('sends nothing when the app is in English', () => {

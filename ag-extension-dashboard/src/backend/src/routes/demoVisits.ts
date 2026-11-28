@@ -11,8 +11,15 @@ import { logger } from '@/utils/logger';
  */
 const router = Router();
 
+/** The `days` asked for, as whole days from 1 to 90 (30 when missing or not a number). */
+export function demoVisitDays(value: unknown): number {
+  const days = value === undefined || value === '' ? NaN : Math.floor(Number(value));
+  return Number.isFinite(days) ? Math.min(Math.max(days, 1), 90) : 30;
+}
+
 router.get('/', authorize(['admin']), async (req: Request, res: Response) => {
-  const days = Math.min(Math.max(Number(req.query.days) || 30, 1), 90);
+  // Whole days only (the query counts days in an interval): 2.5 becomes 2.
+  const days = demoVisitDays(req.query.days);
   try {
     res.set('Cache-Control', 'no-store');
     res.json({ success: true, days, ...(await listDemoVisits(days)) });

@@ -30,17 +30,27 @@ export interface DemoVisitPlace {
   source: 'cdn' | 'geoip' | null;
 }
 
+/** The eight groups of an IPv6 address, with the groups "::" leaves out written as 0. */
+function expandIpv6(address: string): string[] {
+  const groupsOf = (part: string): string[] =>
+    part.split(':').filter(Boolean).flatMap(group => {
+      if (!group.includes('.')) return [group.replace(/^0+(?=.)/, '').toLowerCase()];
+      // An IPv4 tail (::ffff:1.2.3.4 or 64:ff9b::1.2.3.4) is two groups.
+      const [a, b, c, d] = group.split('.').map(Number);
+      return [((a << 8) | b).toString(16), ((c << 8) | d).toString(16)];
+    });
+  const [head, tail] = address.split('::');
+  const before = groupsOf(head);
+  const after = tail === undefined ? [] : groupsOf(tail);
+  return [...before, ...Array<string>(Math.max(8 - before.length - after.length, 0)).fill('0'), ...after];
+}
+
 /** 203.0.113.42 → 203.0.113.x; 2001:db8:85a3::8a2e:370:7334 → 2001:db8:85a3::/48. Null when not an IP. */
 export function shortenIp(ip: string | null | undefined): string | null {
   if (!ip) return null;
   const address = ip.startsWith('::ffff:') && isIP(ip.slice(7)) === 4 ? ip.slice(7) : ip;
   if (isIP(address) === 4) return address.replace(/\.\d+$/, '.x');
-  if (isIP(address) === 6) {
-    const [head] = address.split('::');
-    const groups = (address.includes('::') ? head.split(':').filter(Boolean) : address.split(':')).slice(0, 3);
-    while (groups.length < 3) groups.push('0');
-    return `${groups.join(':')}::/48`;
-  }
+  if (isIP(address) === 6) return `${expandIpv6(address).slice(0, 3).join(':')}::/48`;
   return null;
 }
 

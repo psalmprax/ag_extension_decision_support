@@ -175,24 +175,16 @@ export function imageSizeOf(image: Buffer | string): { width: number; height: nu
 }
 
 /**
- * While billing is switched off (ag-extension-shared/src/api/billingSwitch.ts): the menu has
- * no Billing item for this account, the billing address does not show Billing, and the
- * server refuses to start a subscription. Every menu section is opened first, so a hidden
- * item is truly absent.
+ * While billing is switched off (ag-extension-shared/src/api/billingSwitch.ts), for an account
+ * on a paid plan: Billing still opens (to see invoices, manage or cancel the subscription),
+ * but nothing can be bought there, and the server refuses to start a subscription.
  */
-export async function expectBillingSwitchedOff(page: Page, request: APIRequestContext, email: string): Promise<void> {
-  const nav = page.getByRole('navigation').first();
-  await nav.getByRole('button').first().waitFor({ timeout: 30_000 });
-  const collapsed = nav.locator('button[aria-expanded="false"]');
-  while ((await collapsed.count()) > 0) await collapsed.first().click();
-  await expect(nav.getByRole('button', { name: /^Billing/ })).toHaveCount(0);
-
-  // The billing address opens the account's own first page instead (a farmer's dashboard has
-  // no address of its own, so the address bar may still read /billing).
-  await page.goto('/billing');
-  const title = page.getByRole('heading', { level: 1 }).first();
-  await expect(title).toBeVisible();
-  await expect(title).not.toHaveText(/^Billing/);
+export async function expectPaymentsSwitchedOff(page: Page, request: APIRequestContext, email: string): Promise<void> {
+  await openMenu(page, 'Billing & subscription');
+  await expect(page.getByText(/Payments are switched off while pricing is decided/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Plans & pricing' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Payment methods' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Invoices & receipts' })).toBeVisible();
 
   const api = await apiAs(request, email);
   const refused = await api.post('/api/v1/billing/subscribe', { planId: 'pro' });

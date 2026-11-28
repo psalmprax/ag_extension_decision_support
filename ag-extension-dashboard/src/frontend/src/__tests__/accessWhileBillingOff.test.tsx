@@ -29,8 +29,11 @@ describe('access while billing is off', () => {
     expect(isMenuItemLocked(free, item('knowledge'))).toBe(false); // browsing stays open
   });
 
-  it('lists Billing for administrators only', () => {
-    expect(item('billing').roles).toEqual(['admin']);
+  it('lists Billing for administrators and paying accounts only, so they can manage or cancel', () => {
+    const billing = item('billing');
+    expect(billing.hiddenFor?.(free)).toBe(true);
+    expect(billing.hiddenFor?.({ role: 'farmer', planName: 'Pro', isFree: false })).toBe(false);
+    expect(billing.hiddenFor?.({ role: 'admin', planName: null })).toBe(false);
   });
 
   it('says asking the AI is locked, that the guides stay readable, and how to ask for access', () => {

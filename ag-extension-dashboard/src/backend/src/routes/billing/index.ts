@@ -27,7 +27,10 @@ const STARTS_A_PAYMENT = [
 ];
 
 export function refusedWhileBillingOff(method: string, path: string, enabled = BILLING_ENABLED): boolean {
-    return !enabled && method === 'POST' && STARTS_A_PAYMENT.some(pattern => pattern.test(path));
+    if (enabled || method.toUpperCase() !== 'POST') return false;
+    // Matched the way Express routes: any letter case, with or without a trailing slash.
+    const route = path.toLowerCase().replace(/\/+$/, '') || '/';
+    return STARTS_A_PAYMENT.some(pattern => pattern.test(route));
 }
 
 router.use((req, res, next) => {
