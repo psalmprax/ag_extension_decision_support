@@ -193,11 +193,14 @@ const RATE_LIMIT_MESSAGES: Partial<Record<Language, string>> = {
   ar: 'تم الوصول إلى الحد الأقصى للاستفسارات التجريبية (10 استفسارات/ساعة). يرجى إنشاء حساب مجاني للمتابعة بدون قيود.',
 };
 
+type Translate = (key: string, options?: { defaultValue?: string } & Record<string, unknown>) => string;
+
 async function fetchPublicDemoAdvisory(
   query: string,
   history: Message[],
   language: Language,
-  slots: AgronomicEntitySlots
+  slots: AgronomicEntitySlots,
+  t: Translate
 ): Promise<ApiAssistantResult> {
   try {
     const response = await apiClient.post('/chatbot/public-demo', {
@@ -214,7 +217,7 @@ async function fetchPublicDemoAdvisory(
     if (!data?.text?.trim()) throw new Error('Advisory response is empty');
     return {
       text: data.text,
-      source: data.source || 'AI-assisted guidance; verify local applicability',
+      source: data.source || t('assistant_default_source', { defaultValue: 'AI-assisted guidance; check it applies locally' }),
       citations: data?.citations,
       entitySlots: data?.entitySlots,
     };
@@ -224,16 +227,16 @@ async function fetchPublicDemoAdvisory(
       return {
         text:
           RATE_LIMIT_MESSAGES[language] ??
-          'Demo rate limit reached (10 queries/hour). Please sign up for a free account to unlock unlimited agronomic consultations.',
-        source: 'Rate Limit (10 queries/hour)',
+          t('assistant_rate_limit', { defaultValue: 'Demo limit reached (10 questions an hour). Create a free account to keep asking.' }),
+        source: t('assistant_rate_limit_badge', { defaultValue: 'Demo limit: 10 questions an hour' }),
       };
     }
     console.warn('Public demo advisory unavailable:', err);
     return {
       text: language === 'sw'
         ? 'Msaidizi wa ushauri hapatikani kwa sasa. Tafadhali jaribu tena au wasiliana na afisa ugani wa eneo lako.'
-        : 'The advisory assistant is unavailable right now. Please try again or contact your local extension officer.',
-      source: 'Advisory unavailable',
+        : t('assistant_unavailable', { defaultValue: 'The assistant is unavailable right now. Try again, or contact your local extension officer.' }),
+      source: t('assistant_unavailable_badge', { defaultValue: 'Assistant unavailable' }),
     };
   }
 }
@@ -418,8 +421,6 @@ interface PersonaConfig {
   id: VoicePersona;
   label: string;
   avatar: string;
-  role: string;
-  desc: string;
   prosody: PersonaProsody;
   serverVoice: 'nova' | 'alloy' | 'shimmer';
   voiceKeywords: Record<string, string[]>;
@@ -430,8 +431,6 @@ const PERSONA_CONFIGS: Record<VoicePersona, PersonaConfig> = {
     id: 'amani',
     label: 'Amani',
     avatar: 'Amani',
-    role: 'Warm field agronomist',
-    desc: 'Empathetic, warm, encouraging cadence',
     prosody: { rate: 0.94, pitch: 1.04 },
     serverVoice: 'nova',
     voiceKeywords: {
@@ -446,8 +445,6 @@ const PERSONA_CONFIGS: Record<VoicePersona, PersonaConfig> = {
     id: 'baraka',
     label: 'Baraka',
     avatar: 'Baraka',
-    role: 'Dynamic extension lead',
-    desc: 'Resonant, confident, clear cadence',
     prosody: { rate: 0.98, pitch: 0.98 },
     serverVoice: 'alloy',
     voiceKeywords: {
@@ -462,8 +459,6 @@ const PERSONA_CONFIGS: Record<VoicePersona, PersonaConfig> = {
     id: 'zawadi',
     label: 'Zawadi',
     avatar: 'Zawadi',
-    role: 'Diagnostic Specialist',
-    desc: 'Methodical, diagnostic, articulate cadence',
     prosody: { rate: 0.92, pitch: 1.00 },
     serverVoice: 'shimmer',
     voiceKeywords: {
@@ -1077,7 +1072,7 @@ function LanguageSelector({ selectedLanguage, onSelectLanguage }: LanguageSelect
         })}
         <div className="relative ms-auto">
           <select
-            aria-label="Select voice language"
+            aria-label={t('ui_talking_assistant_voice_language')}
             value={selectedLanguage}
             onChange={(e) => onSelectLanguage(e.target.value as Language)}
             className="appearance-none bg-white/[0.03] text-white text-xs font-medium ps-2.5 pe-7 py-1 rounded-lg border border-white/10 hover:border-emerald-500/40 focus:outline-none focus:border-emerald-500 cursor-pointer"
@@ -1120,20 +1115,21 @@ function getVoiceOrbStyle(
 }
 
 function getVoiceOrbAriaLabel(
+  t: Translate,
   isTranscribing?: boolean,
   isListening?: boolean,
   isSpeaking?: boolean
 ): string {
-  if (isTranscribing) return 'Transcribing speech audio';
-  if (isListening) return 'Stop recording voice';
-  if (isSpeaking) return 'Speaking response';
-  return 'Start speaking voice inquiry';
+  if (isTranscribing) return t('ui_talking_assistant_transcribing');
+  if (isListening) return t('chat_voice_stop');
+  if (isSpeaking) return t('assistant_speaking', { defaultValue: 'Speaking the answer' });
+  return t('ui_talking_assistant_tap_to_speak');
 }
 
-function getVoiceOrbTitle(isTranscribing?: boolean, isListening?: boolean): string {
-  if (isTranscribing) return 'Transcribing audio...';
-  if (isListening) return 'Stop listening';
-  return 'Tap to speak';
+function getVoiceOrbTitle(t: Translate, isTranscribing?: boolean, isListening?: boolean): string {
+  if (isTranscribing) return t('ui_talking_assistant_transcribing');
+  if (isListening) return t('chat_voice_stop');
+  return t('ui_talking_assistant_tap_to_speak');
 }
 
 function getOrbRingBorderClass(isTranscribing?: boolean, isListening?: boolean): string {
@@ -1185,6 +1181,7 @@ function VoiceOrbIcon({
 }
 
 function VoiceOrb({ isListening, isSpeaking, isTranscribing, onToggle }: VoiceOrbProps) {
+  const { t } = useLanguage();
   const active = isListening || isSpeaking || isTranscribing;
   const ringBorder = getOrbRingBorderClass(isTranscribing, isListening);
 
@@ -1209,13 +1206,13 @@ function VoiceOrb({ isListening, isSpeaking, isTranscribing, onToggle }: VoiceOr
         type="button"
         onClick={onToggle}
         disabled={isTranscribing}
-        aria-label={getVoiceOrbAriaLabel(isTranscribing, isListening, isSpeaking)}
+        aria-label={getVoiceOrbAriaLabel(t, isTranscribing, isListening, isSpeaking)}
         className={`relative w-28 h-28 rounded-full flex flex-col items-center justify-center transition-all duration-300 shadow-2xl focus:outline-none focus:ring-4 ${getVoiceOrbStyle(
           isTranscribing,
           isListening,
           isSpeaking
         )}`}
-        title={getVoiceOrbTitle(isTranscribing, isListening)}
+        title={getVoiceOrbTitle(t, isTranscribing, isListening)}
       >
         <VoiceOrbIcon
           isTranscribing={isTranscribing}
@@ -1323,9 +1320,9 @@ interface PersonaSelectorProps {
 function PersonaSelector({ selectedPersona, onSelectPersona }: PersonaSelectorProps) {
   const { t } = useLanguage();
   const personas: Array<{ id: VoicePersona; label: string; icon: React.ElementType; desc: string }> = [
-    { id: 'amani', label: 'Amani', icon: Leaf, desc: 'Warm field agronomist' },
-    { id: 'baraka', label: 'Baraka', icon: Zap, desc: 'Dynamic extension lead' },
-    { id: 'zawadi', label: 'Zawadi', icon: Activity, desc: 'Diagnostic Specialist' },
+    { id: 'amani', label: 'Amani', icon: Leaf, desc: t('assistant_persona_amani', { defaultValue: 'Warm field agronomist' }) },
+    { id: 'baraka', label: 'Baraka', icon: Zap, desc: t('assistant_persona_baraka', { defaultValue: 'Confident extension lead' }) },
+    { id: 'zawadi', label: 'Zawadi', icon: Activity, desc: t('assistant_persona_zawadi', { defaultValue: 'Diagnostic specialist' }) },
   ];
 
   return (
@@ -1455,7 +1452,7 @@ function ActiveContextBanner({ slots, onClear }: ActiveContextBannerProps) {
         type="button"
         onClick={onClear}
         className="text-white/50 hover:text-white inline-flex items-center gap-1 text-[11px] shrink-0"
-        title="Reset conversation context"
+        title={t('assistant_reset', { defaultValue: 'Start a new conversation' })}
       >
         <RotateCcw className="w-3 h-3" />
         <span>{t('ui_talking_assistant_reset')}</span>
@@ -1540,7 +1537,7 @@ function ChatMessage({ msg, onSpeak }: ChatMessageProps) {
               type="button"
               onClick={() => onSpeak(msg.text, msg.language ?? 'en')}
               className="ms-2 shrink-0 hover:text-emerald-300 inline-flex items-center gap-1 font-sans text-xs"
-              title="Listen to this advisory again"
+              title={t('assistant_listen_again', { defaultValue: 'Listen to this answer again' })}
             >
               <Volume2 className="w-3.5 h-3.5" />
               <span>{t('ui_talking_assistant_listen')}</span>
@@ -1613,9 +1610,10 @@ function ChatInputForm({
   onSubmit,
   onToggleListening,
 }: ChatInputFormProps) {
+  const { t } = useLanguage();
   const placeholder =
     PLACEHOLDERS[selectedLanguage] ??
-    'Ask about crop diagnosis, weather anomalies, or soil health...';
+    t('assistant_placeholder', { defaultValue: 'Ask about crops, pests, soil or the weather' });
 
   return (
     <form
@@ -1627,7 +1625,7 @@ function ChatInputForm({
     >
       <input
         type="text"
-        aria-label="Your question"
+        aria-label={t('ai_agronomist_question')}
         value={inputText}
         disabled={isLoading || isTranscribing}
         onChange={(e) => onChangeInput(e.target.value)}
@@ -1640,7 +1638,7 @@ function ChatInputForm({
           type="button"
           onClick={onToggleListening}
           disabled={isTranscribing}
-          aria-label={isListening ? 'Stop recording voice' : 'Speak inquiry with microphone'}
+          aria-label={isListening ? t('chat_voice_stop') : t('assistant_speak_question', { defaultValue: 'Speak your question' })}
           className={`flex h-11 w-11 items-center justify-center rounded-lg transition-all ${
             isListening
               ? 'bg-amber-500 text-slate-950 animate-pulse'
@@ -1648,7 +1646,7 @@ function ChatInputForm({
               ? 'bg-teal-500/20 text-teal-300'
               : 'hover:bg-white/10 text-white/60 hover:text-white'
           }`}
-          title={isTranscribing ? 'Transcribing speech...' : isListening ? 'Stop recording' : 'Speak inquiry'}
+          title={isTranscribing ? t('ui_talking_assistant_transcribing') : isListening ? t('chat_voice_stop') : t('assistant_speak_question', { defaultValue: 'Speak your question' })}
         >
           {isTranscribing ? (
             <Loader2 className="w-4 h-4 animate-spin text-teal-400" />
@@ -1662,9 +1660,9 @@ function ChatInputForm({
         <button
           type="submit"
           disabled={!inputText.trim() || isLoading || isTranscribing}
-          aria-label="Send message"
+          aria-label={t('chat_send_message')}
           className="flex h-11 w-11 items-center justify-center rounded-lg bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:hover:bg-emerald-600 text-white transition-all"
-          title="Send message"
+          title={t('chat_send_message')}
         >
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
         </button>
@@ -1686,7 +1684,9 @@ function getNextAssistantTab(tab: 'chat' | 'voice', key: string): 'chat' | 'voic
 }
 
 export function TalkingAssistant({ defaultOpen = false, className = '' }: TalkingAssistantProps = {}) {
-  const { t } = useLanguage();
+  const { t, language: pageLanguage } = useLanguage();
+  // The assistant speaks the pilot languages; it starts in the page's language when it can.
+  const startLanguage: Language = PILOT_LANGUAGES.includes(pageLanguage as Language) ? (pageLanguage as Language) : 'en';
   const [isOpen, setIsOpen] = useState(defaultOpen);
   const [activeTab, setActiveTab] = useState<'chat' | 'voice'>('chat');
   const isOpenRef = useRef(isOpen);
@@ -1717,14 +1717,14 @@ export function TalkingAssistant({ defaultOpen = false, className = '' }: Talkin
     {
       id: 'welcome',
       sender: 'assistant',
-      text: 'Hello! I am your AI Agronomic Extension Assistant. You can speak to me using your microphone or type a question about crop pathology, soil health, satellite weather, or platform security.',
-      language: 'en',
-      sourceBadge: 'GP-Ext Voice Core',
-      timestamp: 'Just now',
+      text: t('assistant_welcome', { defaultValue: 'Hello! I am the GPExts farm assistant. Speak into your microphone or type a question about crops, pests, soil or the weather.' }),
+      language: pageLanguage as Language,
+      sourceBadge: 'GPExts',
+      timestamp: t('assistant_just_now', { defaultValue: 'Just now' }),
     },
   ]);
   const [inputText, setInputText] = useState('');
-  const [selectedLanguage, setSelectedLanguage] = useState<Language>('en');
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>(startLanguage);
   const [selectedPersona, setSelectedPersona] = useState<VoicePersona>('amani');
   const [autoSpeak, setAutoSpeak] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -1747,7 +1747,7 @@ export function TalkingAssistant({ defaultOpen = false, className = '' }: Talkin
     ) => {
       // Every advisory uses the backend's grounding and safety policy.
       setIsLoading(true);
-      const apiResult = await fetchPublicDemoAdvisory(query, messages, lang, activeSlots);
+      const apiResult = await fetchPublicDemoAdvisory(query, messages, lang, activeSlots, t);
       setIsLoading(false);
 
       const assistantMsg: Message = {
@@ -1772,7 +1772,7 @@ export function TalkingAssistant({ defaultOpen = false, className = '' }: Talkin
         speakFn(apiResult.text, lang);
       }
     },
-    [autoSpeak, messages]
+    [autoSpeak, messages, t]
   );
 
   const handleSendMessageRef = useRef<(textToSend?: string) => void>(() => {});
@@ -1879,7 +1879,7 @@ export function TalkingAssistant({ defaultOpen = false, className = '' }: Talkin
       onClose={handleClose}
       className={className}
     >
-      <div className="flex shrink-0 items-center gap-1 border-b border-white/10 px-4 py-2" role="tablist" aria-label="Assistant mode">
+      <div className="flex shrink-0 items-center gap-1 border-b border-white/10 px-4 py-2" role="tablist" aria-label={t('assistant_mode', { defaultValue: 'Assistant mode' })}>
         {(['chat', 'voice'] as const).map((tab) => (
           <button
             key={tab}

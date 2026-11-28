@@ -74,8 +74,8 @@ export function FloatingAssistantShell({
               <button
                 type="button"
                 onClick={onClose}
-                aria-label="Close agronomic assistant"
-                title="Close assistant"
+                aria-label={t('assistant_close', { defaultValue: 'Close the assistant' })}
+                title={t('assistant_close', { defaultValue: 'Close the assistant' })}
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-white/75 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
               >
                 <X className="h-5 w-5" aria-hidden="true" />
@@ -89,11 +89,11 @@ export function FloatingAssistantShell({
         ref={launcherRef}
         type="button"
         onClick={isOpen ? onClose : onOpen}
-        aria-label={isOpen ? 'Minimize agronomic assistant' : 'Open agronomic assistant'}
+        aria-label={isOpen ? t('assistant_minimize', { defaultValue: 'Minimize the assistant' }) : t('assistant_open', { defaultValue: 'Open the assistant' })}
         aria-expanded={isOpen}
         aria-controls={panelId}
         aria-haspopup="dialog"
-        title={isOpen ? 'Minimize assistant' : 'Ask agronomic copilot'}
+        title={isOpen ? t('assistant_minimize', { defaultValue: 'Minimize the assistant' }) : t('assistant_open', { defaultValue: 'Open the assistant' })}
         className="fixed end-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-[60] flex h-14 items-center justify-center gap-2.5 rounded-full border border-emerald-300/30 bg-emerald-600 px-4 text-white shadow-lg shadow-black/30 transition-colors hover:bg-emerald-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 sm:end-6 sm:bottom-[calc(1.5rem+env(safe-area-inset-bottom))]"
       >
         <MessageCircle className="h-6 w-6" aria-hidden="true" />

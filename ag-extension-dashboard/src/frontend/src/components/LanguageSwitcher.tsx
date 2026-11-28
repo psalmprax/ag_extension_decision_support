@@ -122,7 +122,9 @@ const LanguageDropdown: React.FC<DropdownProps> = ({
   setQuery,
   currentCode,
   onSelect,
-}) => (
+}) => {
+  const { t } = useLanguage();
+  return (
   // Sets its own text colour: the switcher also sits on pages that are dark in both themes
   // (landing, sign-in), and inherited white text would vanish on this panel in light mode.
   <div className="absolute end-0 mt-2 w-64 bg-white dark:bg-theme-bg-secondary text-slate-900 dark:text-theme-text-primary border border-gray-200 dark:border-white/10 rounded-xl shadow-2xl z-50 overflow-hidden">
@@ -134,14 +136,15 @@ const LanguageDropdown: React.FC<DropdownProps> = ({
           autoFocus
           value={query}
           onChange={e => setQuery(e.target.value)}
-          placeholder="Search languages"
+          placeholder={t('common_search_languages', { defaultValue: 'Search languages' })}
+          aria-label={t('common_search_languages', { defaultValue: 'Search languages' })}
           className="w-full ps-8 pe-2 py-1.5 text-xs bg-gray-50 dark:bg-theme-bg-tertiary text-slate-900 dark:text-theme-text-primary placeholder:text-slate-500 dark:placeholder:text-theme-text-muted border border-gray-200 dark:border-white/10 rounded-lg focus:outline-none focus:ring-1 focus:ring-primary-500"
         />
       </div>
     </div>
     <ul role="listbox" className="max-h-64 overflow-y-auto py-1">
       {filtered.length === 0 ? (
-        <li className="px-3 py-2 text-xs text-slate-500 dark:text-theme-text-muted">No languages match "{query}"</li>
+        <li className="px-3 py-2 text-xs text-slate-500 dark:text-theme-text-muted">{t('common_no_languages_match', { query, defaultValue: 'No languages match "{query}"' })}</li>
       ) : (
         filtered.map(lang => (
           <li key={lang.code}>
@@ -167,6 +170,7 @@ const LanguageDropdown: React.FC<DropdownProps> = ({
       )}
     </ul>
   </div>
-);
+  );
+};
 
 export default LanguageSwitcher;
