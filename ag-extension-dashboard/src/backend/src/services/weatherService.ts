@@ -213,6 +213,35 @@ export class WeatherService {
     });
   }
 
+  /** The forecast for a point (a farm), straight from Open-Meteo: no place-name lookup to go wrong. */
+  static async getByCoordinates(lat: number, lng: number, days: number = 3): Promise<WeatherData> {
+    return this.fromOpenMeteo(await this.fetchOpenMeteoForecast(lat, lng, days), 'Open-Meteo');
+  }
+
+  private static fromOpenMeteo(weatherResponse: Awaited<ReturnType<typeof WeatherService.fetchOpenMeteoForecast>>, source: string): WeatherData {
+    const current = weatherResponse.current;
+    const daily = weatherResponse.daily;
+
+    return {
+      temperature: Math.round(current.temperature_2m),
+      temp: Math.round(current.temperature_2m),
+      condition: getCondition(current.weather_code),
+      humidity: Math.round(current.relative_humidity_2m),
+      windSpeed: Math.round(current.wind_speed_10m),
+      forecast: daily.time.map((date: string, i: number) => {
+        const precip = daily.precipitation_sum;
+        return {
+          date,
+          maxTemp: requiredForecastTemperature(daily.temperature_2m_max[i]),
+          minTemp: requiredForecastTemperature(daily.temperature_2m_min[i]),
+          precipitationMm: precip && Number.isFinite(precip[i]) ? Number(precip[i]) : undefined,
+          condition: getCondition(daily.weather_code[i]),
+        };
+      }),
+      source,
+    };
+  }
+
   /**
    * Unified weather retrieval: Uses WeatherAPI.com when configured, with automatic fallback to Open-Meteo
    */
@@ -231,27 +260,7 @@ export class WeatherService {
       const cityName = location.split(',')[0].trim();
       const coords = await this.geocode(cityName, location.toLowerCase());
       const weatherResponse = await this.fetchOpenMeteoForecast(coords.latitude, coords.longitude, days);
-      const current = weatherResponse.current;
-      const daily = weatherResponse.daily;
-
-      return {
-        temperature: Math.round(current.temperature_2m),
-        temp: Math.round(current.temperature_2m),
-        condition: getCondition(current.weather_code),
-        humidity: Math.round(current.relative_humidity_2m),
-        windSpeed: Math.round(current.wind_speed_10m),
-        forecast: daily.time.map((date: string, i: number) => {
-          const precip = daily.precipitation_sum;
-          return {
-            date,
-            maxTemp: requiredForecastTemperature(daily.temperature_2m_max[i]),
-            minTemp: requiredForecastTemperature(daily.temperature_2m_min[i]),
-            precipitationMm: precip && Number.isFinite(precip[i]) ? Number(precip[i]) : undefined,
-            condition: getCondition(daily.weather_code[i]),
-          };
-        }),
-        source: 'Open-Meteo (Free Fallback)',
-      };
+      return this.fromOpenMeteo(weatherResponse, 'Open-Meteo (Free Fallback)');
     } catch (error) {
       logger.error(`All weather services failed for ${location}:`, error);
       throw error;

@@ -78,7 +78,39 @@ const NOTICES = {
         fr: 'Les avis sont de nouveau activés. Envoyez STOP pour les arrêter.',
         pt: 'Os avisos voltaram a estar ligados. Envie STOP para os parar.',
     },
+    weather_warning: {
+        en: 'Weather warning for your farm on {date}: {condition} (Open-Meteo forecast). Reply STOP to stop notices.',
+        sw: 'Tahadhari ya hali ya hewa kwa shamba lako tarehe {date}: {condition} (utabiri wa Open-Meteo). Jibu STOP kusitisha taarifa.',
+        fr: 'Alerte météo pour votre exploitation le {date} : {condition} (prévision Open-Meteo). Répondez STOP pour ne plus recevoir d\'avis.',
+        pt: 'Alerta meteorológico para a sua machamba em {date}: {condition} (previsão Open-Meteo). Responda STOP para deixar de receber avisos.',
+    },
+    weather_warning_rain: {
+        en: 'Weather warning for your farm on {date}: {condition}, about {mm} mm of rain (Open-Meteo forecast). Reply STOP to stop notices.',
+        sw: 'Tahadhari ya hali ya hewa kwa shamba lako tarehe {date}: {condition}, takriban mm {mm} za mvua (utabiri wa Open-Meteo). Jibu STOP kusitisha taarifa.',
+        fr: 'Alerte météo pour votre exploitation le {date} : {condition}, environ {mm} mm de pluie (prévision Open-Meteo). Répondez STOP pour ne plus recevoir d\'avis.',
+        pt: 'Alerta meteorológico para a sua machamba em {date}: {condition}, cerca de {mm} mm de chuva (previsão Open-Meteo). Responda STOP para deixar de receber avisos.',
+    },
+    officer_alert: {
+        en: 'Alert from {officer}: {title}. Reply here to ask about it. Reply STOP to stop notices.',
+        sw: 'Tahadhari kutoka kwa {officer}: {title}. Jibu hapa kuuliza zaidi. Jibu STOP kusitisha taarifa.',
+        fr: 'Alerte de {officer} : {title}. Répondez ici pour en savoir plus. Répondez STOP pour ne plus recevoir d\'avis.',
+        pt: 'Alerta de {officer}: {title}. Responda aqui para saber mais. Responda STOP para deixar de receber avisos.',
+    },
 } as const satisfies Record<string, Record<'en' | 'sw' | 'fr' | 'pt', string>>;
+
+/** The forecast's severe conditions (Open-Meteo weather codes 65, 75, 82, 95, 96) as farmers read them. */
+const WEATHER_WORDS: Record<string, Record<'en' | 'sw' | 'fr' | 'pt', string>> = {
+    'Heavy rain': { en: 'heavy rain', sw: 'mvua kubwa', fr: 'fortes pluies', pt: 'chuva forte' },
+    'Violent rain showers': { en: 'violent rain showers', sw: 'mvua kubwa za ghafla', fr: 'averses violentes', pt: 'aguaceiros violentos' },
+    Thunderstorm: { en: 'thunderstorm', sw: 'radi na dhoruba', fr: 'orages', pt: 'trovoada' },
+    'Thunderstorm with hail': { en: 'thunderstorm with hail', sw: 'dhoruba ya radi na mvua ya mawe', fr: 'orages avec grêle', pt: 'trovoada com granizo' },
+    'Heavy snow': { en: 'heavy snow', sw: 'theluji nzito', fr: 'fortes chutes de neige', pt: 'neve forte' },
+};
+
+/** A forecast condition in the farmer's language; the forecast's own words when there is no translation. */
+export function weatherConditionText(condition: string, language: string | null | undefined): string {
+    return WEATHER_WORDS[condition]?.[smsLanguage(language)] ?? condition.toLowerCase();
+}
 
 export type NoticeKey = keyof typeof NOTICES;
 

@@ -15,6 +15,8 @@ const createAlertBody = z.object({
     description: z.string().max(5000).optional(),
     location: z.string().max(255).optional(),
     affectedFarmers: z.array(z.string().uuid()).max(5000).optional(),
+    /** Text the farmers in affectedFarmers too (on the channel each last used). */
+    notifyFarmers: z.boolean().optional(),
 });
 
 const router = Router();
@@ -80,7 +82,7 @@ router.get('/', async (req: Request, res: Response) => {
 
 // Create a new alert (Extension Officer/Admin only)
 router.post('/', authorize(['extension_officer', 'admin']), validate({ body: createAlertBody }), async (req: Request, res: Response) => {
-    const { type, severity, title, description, location, affectedFarmers } = req.body;
+    const { type, severity, title, description, location, affectedFarmers, notifyFarmers } = req.body;
 
     if (req.user?.role !== 'extension_officer' && req.user?.role !== 'admin') {
         return sendForbidden(res, 'Only officers and admins can create alerts');
@@ -112,11 +114,19 @@ router.post('/', authorize(['extension_officer', 'admin']), validate({ body: cre
             const tRes = await query('SELECT tenant_id FROM users WHERE id = $1 LIMIT 1', [req.user?.userId]);
             tenantId = tRes.rows[0]?.tenant_id ?? null;
         }
+        // The farmers hear it in the officer's name: "Alert from Daniel Banda: ...".
+        const tellFarmers = notifyFarmers === true && farmerIds.length > 0;
+        const officerName = tellFarmers
+            ? (await query<{ name: string | null }>(
+                `SELECT NULLIF(TRIM(COALESCE(first_name, '') || ' ' || COALESCE(last_name, '')), '') AS name FROM users WHERE id = $1`,
+                [req.user?.userId],
+            )).rows[0]?.name ?? null
+            : null;
         const result = await query(`
-            INSERT INTO alerts (type, severity, title, description, location, affected_farmers, tenant_id, is_active, triggered_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW())
-            RETURNING id, title, triggered_at
-        `, [type, severity || 'medium', title, description, location, farmerIds, tenantId]);
+            INSERT INTO alerts (type, severity, title, description, location, affected_farmers, tenant_id, is_active, triggered_at, notify_farmers, details)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, true, NOW(), $8, $9)
+            RETURNING id, title, triggered_at, notify_farmers
+        `, [type, severity || 'medium', title, description, location, farmerIds, tenantId, tellFarmers, officerName ? JSON.stringify({ officerName }) : null]);
         sendCreated(res, result.rows[0]);
     } catch (error) {
         logger.error('Error creating alert:', error);
