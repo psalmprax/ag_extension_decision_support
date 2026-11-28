@@ -2319,7 +2319,6 @@
     "billing_config_title": "Betalingen zijn niet ingesteld",
     "billing_config_body": "Voeg de PayPal (of Stripe) sleutels toe onder Betalingssleutels hieronder. Tot die tijd kan niemand betalen met een kaart of PayPal.",
     "billing_loading": "Facturering laden…",
-    "diagnosis_photo_title": "Bladfoto",
     "diagnosis_photo_crop": "Gewas (optioneel)",
     "diagnosis_photo_crop_placeholder": "Bijvoorbeeld maïs, koffie of tomaat",
     "diagnosis_photo_retake": "Kies een andere foto",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Illustratie van een maïsblad van dichtbij",
     "landing_alt_farmer_phone": "Een boerin gebruikt een telefoon in haar maïsveld",
     "common_search_languages": "Talen zoeken",
-    "common_no_languages_match": "Geen taal komt overeen met \"{query}\""
+    "common_no_languages_match": "Geen taal komt overeen met \"{query}\"",
+    "error_screen_title": "Er is iets misgegaan",
+    "error_screen_description": "Dit deel van de pagina werkt niet meer. Probeer het opnieuw of laad de pagina opnieuw. Blijft het gebeuren, neem dan contact op met support.",
+    "error_screen_message": "Foutmelding",
+    "error_screen_copy": "Foutdetails kopiëren",
+    "error_screen_copied": "Gekopieerd",
+    "error_screen_component": "Onderdeel:",
+    "error_screen_try_again": "Opnieuw proberen",
+    "error_screen_reload": "Pagina opnieuw laden",
+    "error_screen_go_home": "Naar de startpagina",
+    "error_screen_technical_details": "Technische details"
 }

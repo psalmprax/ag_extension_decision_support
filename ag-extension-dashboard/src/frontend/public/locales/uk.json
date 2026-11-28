@@ -2319,7 +2319,6 @@
     "billing_config_title": "Платежі не налаштовані",
     "billing_config_body": "Додайте ключі PayPal (або Stripe) у розділі «Платіжні ключі» нижче. До того часу ніхто не зможе оплатити карткою або через PayPal.",
     "billing_loading": "Завантаження білінгу…",
-    "diagnosis_photo_title": "Фото листка",
     "diagnosis_photo_crop": "Культура (необов'язково)",
     "diagnosis_photo_crop_placeholder": "Наприклад, кукурудза, кава або томати",
     "diagnosis_photo_retake": "Вибрати інше фото",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Ілюстрація листка кукурудзи зблизька",
     "landing_alt_farmer_phone": "Фермерка користується телефоном на своєму кукурудзяному полі",
     "common_search_languages": "Пошук мов",
-    "common_no_languages_match": "Немає мов, що відповідають «{query}»"
+    "common_no_languages_match": "Немає мов, що відповідають «{query}»",
+    "error_screen_title": "Щось пішло не так",
+    "error_screen_description": "Ця частина сторінки перестала працювати. Спробуйте ще раз або перезавантажте сторінку. Якщо це повторюється, зверніться до підтримки.",
+    "error_screen_message": "Повідомлення про помилку",
+    "error_screen_copy": "Скопіювати подробиці помилки",
+    "error_screen_copied": "Скопійовано",
+    "error_screen_component": "Компонент:",
+    "error_screen_try_again": "Спробувати ще раз",
+    "error_screen_reload": "Перезавантажити сторінку",
+    "error_screen_go_home": "На головну сторінку",
+    "error_screen_technical_details": "Технічні подробиці"
 }

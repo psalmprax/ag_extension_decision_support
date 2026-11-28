@@ -2319,7 +2319,6 @@
     "billing_config_title": "ክፍያዎች አልተዋቀሩም",
     "billing_config_body": "የ PayPal (ወይም Stripe) ቁልፎችን ከታች ባለው የክፍያ ቁልፎች ስር ያክሉ። እስከዚያ ድረስ ማንም በካርድ ወይም በ PayPal መክፈል አይችልም።",
     "billing_loading": "የክፍያ መረጃ በመጫን ላይ…",
-    "diagnosis_photo_title": "የቅጠል ፎቶ",
     "diagnosis_photo_crop": "ሰብል (አማራጭ)",
     "diagnosis_photo_crop_placeholder": "ለምሳሌ በቆሎ፣ ቡና ወይም ቲማቲም",
     "diagnosis_photo_retake": "ሌላ ፎቶ ይምረጡ",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "የበቆሎ ቅጠል የቅርብ ሥዕል",
     "landing_alt_farmer_phone": "አንዲት አርሶ አደር በበቆሎ ማሳዋ ውስጥ ስልክ ስትጠቀም",
     "common_search_languages": "ቋንቋዎችን ፈልግ",
-    "common_no_languages_match": "ከ\"{query}\" ጋር የሚዛመድ ቋንቋ የለም"
+    "common_no_languages_match": "ከ\"{query}\" ጋር የሚዛመድ ቋንቋ የለም",
+    "error_screen_title": "የሆነ ችግር ተፈጥሯል",
+    "error_screen_description": "ይህ የገጹ ክፍል መሥራት አቁሟል። እንደገና ይሞክሩ ወይም ገጹን እንደገና ይጫኑ። ከቀጠለ ድጋፍን ያነጋግሩ።",
+    "error_screen_message": "የስህተት መልዕክት",
+    "error_screen_copy": "የስህተቱን ዝርዝር ቅዳ",
+    "error_screen_copied": "ተቀድቷል",
+    "error_screen_component": "ክፍል፦",
+    "error_screen_try_again": "እንደገና ሞክር",
+    "error_screen_reload": "ገጹን እንደገና ጫን",
+    "error_screen_go_home": "ወደ መነሻ ገጽ ሂድ",
+    "error_screen_technical_details": "ቴክኒካዊ ዝርዝሮች"
 }

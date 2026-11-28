@@ -2319,7 +2319,6 @@
     "billing_config_title": "Плащанията не са конфигурирани",
     "billing_config_body": "Добавете ключовете за PayPal (или Stripe) в секцията „Ключове за плащане“ по-долу. Дотогава никой не може да плаща с карта или PayPal.",
     "billing_loading": "Зареждане на фактурирането…",
-    "diagnosis_photo_title": "Снимка на лист",
     "diagnosis_photo_crop": "Култура (по избор)",
     "diagnosis_photo_crop_placeholder": "Например царевица, кафе или домат",
     "diagnosis_photo_retake": "Избери друга снимка",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Илюстрация на царевичен лист отблизо",
     "landing_alt_farmer_phone": "Фермерка използва телефон в царевичната си нива",
     "common_search_languages": "Търсене на езици",
-    "common_no_languages_match": "Няма езици, отговарящи на „{query}“"
+    "common_no_languages_match": "Няма езици, отговарящи на „{query}“",
+    "error_screen_title": "Нещо се обърка",
+    "error_screen_description": "Тази част от страницата спря да работи. Опитайте отново или презаредете страницата. Ако продължи, свържете се с поддръжката.",
+    "error_screen_message": "Съобщение за грешка",
+    "error_screen_copy": "Копиране на подробностите за грешката",
+    "error_screen_copied": "Копирано",
+    "error_screen_component": "Компонент:",
+    "error_screen_try_again": "Опитай отново",
+    "error_screen_reload": "Презареди страницата",
+    "error_screen_go_home": "Към началната страница",
+    "error_screen_technical_details": "Технически подробности"
 }

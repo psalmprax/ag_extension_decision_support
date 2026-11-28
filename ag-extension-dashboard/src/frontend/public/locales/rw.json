@@ -2319,7 +2319,6 @@
     "billing_config_title": "Uburyo bwo kwishyura ntibwashyizweho",
     "billing_config_body": "Ongeramo imfunguzo za PayPal (cyangwa Stripe) munsi y'imfunguzo zo kwishyura (Payment keys). Igihe utarabikora, nta muntu ushobora kwishyura hakoreshejwe ikarita cyangwa PayPal.",
     "billing_loading": "Birimo gupakira imiterere yo kwishyura…",
-    "diagnosis_photo_title": "Ifoto y'ikibabi",
     "diagnosis_photo_crop": "Igihingwa (bitari ngombwa)",
     "diagnosis_photo_crop_placeholder": "Urugero: ibigori, ikawa cyangwa inyanya",
     "diagnosis_photo_retake": "Hitamo indi foto",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Igishushanyo cy’ikibabi cy’ibigori kirebewe hafi",
     "landing_alt_farmer_phone": "Umuhinzikazi akoresha telefoni mu murima we w’ibigori",
     "common_search_languages": "Shakisha indimi",
-    "common_no_languages_match": "Nta rurimi ruhuye na \"{query}\""
+    "common_no_languages_match": "Nta rurimi ruhuye na \"{query}\"",
+    "error_screen_title": "Hari ikitagenze neza",
+    "error_screen_description": "Iki gice cy’urupapuro cyahagaze gukora. Ongera ugerageze cyangwa wongere ufungure urupapuro. Bikomeje, vugana n’ubufasha.",
+    "error_screen_message": "Ubutumwa bw’ikosa",
+    "error_screen_copy": "Koporora ibisobanuro by’ikosa",
+    "error_screen_copied": "Byakoporowe",
+    "error_screen_component": "Igice:",
+    "error_screen_try_again": "Ongera ugerageze",
+    "error_screen_reload": "Ongera ufungure urupapuro",
+    "error_screen_go_home": "Jya ku rupapuro rw’ibanze",
+    "error_screen_technical_details": "Ibisobanuro bya tekiniki"
 }

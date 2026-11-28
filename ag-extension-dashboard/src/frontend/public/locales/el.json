@@ -2319,7 +2319,6 @@
     "billing_config_title": "Οι πληρωμές δεν έχουν ρυθμιστεί",
     "billing_config_body": "Προσθέστε τα κλειδιά PayPal (ή Stripe) στα κλειδιά πληρωμής παρακάτω. Μέχρι τότε, κανείς δεν μπορεί να πληρώσει με κάρτα ή PayPal.",
     "billing_loading": "Φόρτωση χρεώσεων…",
-    "diagnosis_photo_title": "Φωτογραφία φύλλου",
     "diagnosis_photo_crop": "Καλλιέργεια (προαιρετικό)",
     "diagnosis_photo_crop_placeholder": "Για παράδειγμα καλαμπόκι, καφές ή ντομάτα",
     "diagnosis_photo_retake": "Επιλέξτε άλλη φωτογραφία",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Εικονογράφηση φύλλου καλαμποκιού από κοντά",
     "landing_alt_farmer_phone": "Μια αγρότισσα χρησιμοποιεί τηλέφωνο στο χωράφι της με καλαμπόκι",
     "common_search_languages": "Αναζήτηση γλωσσών",
-    "common_no_languages_match": "Καμία γλώσσα δεν ταιριάζει με «{query}»"
+    "common_no_languages_match": "Καμία γλώσσα δεν ταιριάζει με «{query}»",
+    "error_screen_title": "Κάτι πήγε στραβά",
+    "error_screen_description": "Αυτό το τμήμα της σελίδας σταμάτησε να λειτουργεί. Δοκιμάστε ξανά ή φορτώστε ξανά τη σελίδα. Αν συνεχίσει, επικοινωνήστε με την υποστήριξη.",
+    "error_screen_message": "Μήνυμα σφάλματος",
+    "error_screen_copy": "Αντιγραφή λεπτομερειών σφάλματος",
+    "error_screen_copied": "Αντιγράφηκε",
+    "error_screen_component": "Στοιχείο:",
+    "error_screen_try_again": "Δοκιμάστε ξανά",
+    "error_screen_reload": "Επαναφόρτωση σελίδας",
+    "error_screen_go_home": "Μετάβαση στην αρχική σελίδα",
+    "error_screen_technical_details": "Τεχνικές λεπτομέρειες"
 }

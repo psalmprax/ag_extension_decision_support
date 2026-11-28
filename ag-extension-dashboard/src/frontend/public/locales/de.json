@@ -2319,7 +2319,6 @@
     "billing_config_title": "Zahlungen sind nicht eingerichtet",
     "billing_config_body": "Fügen Sie die PayPal (oder Stripe) Schlüssel unter Zahlungsschlüssel unten hinzu. Bis dahin kann niemand per Karte oder PayPal bezahlen.",
     "billing_loading": "Abrechnung wird geladen…",
-    "diagnosis_photo_title": "Blattfoto",
     "diagnosis_photo_crop": "Kultur (optional)",
     "diagnosis_photo_crop_placeholder": "Zum Beispiel Mais, Kaffee oder Tomate",
     "diagnosis_photo_retake": "Anderes Foto wählen",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Illustration eines Maisblatts in Nahaufnahme",
     "landing_alt_farmer_phone": "Eine Bäuerin nutzt ein Telefon in ihrem Maisfeld",
     "common_search_languages": "Sprachen suchen",
-    "common_no_languages_match": "Keine Sprache passt zu „{query}“"
+    "common_no_languages_match": "Keine Sprache passt zu „{query}“",
+    "error_screen_title": "Etwas ist schiefgelaufen",
+    "error_screen_description": "Dieser Teil der Seite funktioniert nicht mehr. Versuchen Sie es erneut oder laden Sie die Seite neu. Wenn es weiter passiert, wenden Sie sich an den Support.",
+    "error_screen_message": "Fehlermeldung",
+    "error_screen_copy": "Fehlerdetails kopieren",
+    "error_screen_copied": "Kopiert",
+    "error_screen_component": "Komponente:",
+    "error_screen_try_again": "Erneut versuchen",
+    "error_screen_reload": "Seite neu laden",
+    "error_screen_go_home": "Zur Startseite",
+    "error_screen_technical_details": "Technische Details"
 }

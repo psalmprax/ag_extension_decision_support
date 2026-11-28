@@ -2319,7 +2319,6 @@
     "billing_config_title": "ادائیگیاں سیٹ اپ نہیں ہیں",
     "billing_config_body": "ذیل میں ادائیگی کی کنجیوں (Payment keys) کے تحت PayPal (یا Stripe) کی کنجیاں شامل کریں۔ تب تک، کوئی بھی کارڈ یا PayPal کے ذریعے ادائیگی نہیں کر سکتا۔",
     "billing_loading": "بلنگ لوڈ ہو رہی ہے…",
-    "diagnosis_photo_title": "پتے کی تصویر",
     "diagnosis_photo_crop": "فصل (اختیاری)",
     "diagnosis_photo_crop_placeholder": "مثال کے طور پر مکئی، کافی یا ٹماٹر",
     "diagnosis_photo_retake": "ایک اور تصویر منتخب کریں",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "مکئی کے پتے کی قریبی تصویری خاکہ",
     "landing_alt_farmer_phone": "ایک کسان خاتون اپنے مکئی کے کھیت میں فون استعمال کر رہی ہے",
     "common_search_languages": "زبانیں تلاش کریں",
-    "common_no_languages_match": "\"{query}\" سے ملتی کوئی زبان نہیں"
+    "common_no_languages_match": "\"{query}\" سے ملتی کوئی زبان نہیں",
+    "error_screen_title": "کچھ غلط ہو گیا",
+    "error_screen_description": "صفحے کے اس حصے نے کام کرنا بند کر دیا۔ دوبارہ کوشش کریں یا صفحہ دوبارہ لوڈ کریں۔ اگر یہ جاری رہے تو سپورٹ سے رابطہ کریں۔",
+    "error_screen_message": "خرابی کا پیغام",
+    "error_screen_copy": "خرابی کی تفصیلات کاپی کریں",
+    "error_screen_copied": "کاپی ہو گیا",
+    "error_screen_component": "جزو:",
+    "error_screen_try_again": "دوبارہ کوشش کریں",
+    "error_screen_reload": "صفحہ دوبارہ لوڈ کریں",
+    "error_screen_go_home": "ہوم پیج پر جائیں",
+    "error_screen_technical_details": "تکنیکی تفصیلات"
 }

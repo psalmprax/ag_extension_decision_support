@@ -2319,7 +2319,6 @@
     "billing_config_title": "A fizetés nincs beállítva",
     "billing_config_body": "Adja meg a PayPal (vagy Stripe) kulcsokat az alábbi Fizetési kulcsoknál. Addig senki sem fizethet kártyával vagy PayPal használatával.",
     "billing_loading": "Számlázás betöltése…",
-    "diagnosis_photo_title": "Levélfotó",
     "diagnosis_photo_crop": "Növénykultúra (opcionális)",
     "diagnosis_photo_crop_placeholder": "Például kukorica, kávé vagy paradicsom",
     "diagnosis_photo_retake": "Másik fénykép választása",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Kukoricalevél közeli illusztrációja",
     "landing_alt_farmer_phone": "Egy gazdálkodó nő telefont használ a kukoricatábláján",
     "common_search_languages": "Nyelvek keresése",
-    "common_no_languages_match": "Nincs a(z) „{query}” keresésnek megfelelő nyelv"
+    "common_no_languages_match": "Nincs a(z) „{query}” keresésnek megfelelő nyelv",
+    "error_screen_title": "Hiba történt",
+    "error_screen_description": "Az oldal ezen része leállt. Próbálja újra, vagy töltse újra az oldalt. Ha ismét előfordul, forduljon az ügyfélszolgálathoz.",
+    "error_screen_message": "Hibaüzenet",
+    "error_screen_copy": "Hiba részleteinek másolása",
+    "error_screen_copied": "Másolva",
+    "error_screen_component": "Összetevő:",
+    "error_screen_try_again": "Újrapróbálás",
+    "error_screen_reload": "Oldal újratöltése",
+    "error_screen_go_home": "Ugrás a kezdőlapra",
+    "error_screen_technical_details": "Technikai részletek"
 }

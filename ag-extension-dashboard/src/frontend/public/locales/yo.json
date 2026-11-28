@@ -2319,7 +2319,6 @@
     "billing_config_title": "A kò tíì ṣètò ìsanwó",
     "billing_config_body": "Fi àwọn kọ́kọ́rọ́ PayPal (tàbí Stripe) kún inú àwọn kọ́kọ́rọ́ ìsanwó ní ìsàlẹ̀ yìí. Títí di ìgbà náà, kò sí ẹni tí ó lè sanwó pẹ̀lú káàdì tàbí PayPal.",
     "billing_loading": "Ó ń gbé ìsanwó wá…",
-    "diagnosis_photo_title": "Fọ́tò ewé",
     "diagnosis_photo_crop": "Ohun ọ̀gbìn (tí ó bá wà)",
     "diagnosis_photo_crop_placeholder": "Fún àpẹẹrẹ àgbàdo, kọfí tàbí tòmátì",
     "diagnosis_photo_retake": "Yan fọ́tò mìíràn",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Àwòrán ewé àgbàdo ní tòsí",
     "landing_alt_farmer_phone": "Àgbẹ̀ obìnrin kan ń lo fóònù nínú oko àgbàdo rẹ̀",
     "common_search_languages": "Wá èdè",
-    "common_no_languages_match": "Kò sí èdè tó bá \"{query}\" mu"
+    "common_no_languages_match": "Kò sí èdè tó bá \"{query}\" mu",
+    "error_screen_title": "Nǹkan kan ṣẹlẹ̀ tí kò tọ́",
+    "error_screen_description": "Apá ojú-ìwé yìí ti dúró ṣíṣẹ́. Gbìyànjú lẹ́ẹ̀kansí tàbí tún ojú-ìwé náà gbé. Bí ó bá ń bá a lọ, kàn sí ìrànlọ́wọ́.",
+    "error_screen_message": "Ìfiránṣẹ́ àṣìṣe",
+    "error_screen_copy": "Ṣe ẹ̀dà àlàyé àṣìṣe",
+    "error_screen_copied": "A ti ṣe ẹ̀dà rẹ̀",
+    "error_screen_component": "Ẹ̀yà:",
+    "error_screen_try_again": "Gbìyànjú lẹ́ẹ̀kansí",
+    "error_screen_reload": "Tún ojú-ìwé gbé",
+    "error_screen_go_home": "Lọ sí ojú-ìwé àkọ́kọ́",
+    "error_screen_technical_details": "Àlàyé ìmọ̀ ẹ̀rọ"
 }

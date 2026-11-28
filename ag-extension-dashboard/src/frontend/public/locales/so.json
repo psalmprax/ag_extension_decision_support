@@ -2319,7 +2319,6 @@
     "billing_config_title": "Lacag-bixinta lama habayn",
     "billing_config_body": "Ku dar furayaasha PayPal (ama Stripe) hoosta furayaasha Lacag-bixinta ee hoose. Ilaa markaas, qofna kuma bixin karo kaar ama PayPal.",
     "billing_loading": "Waa la soo rarayaa biilka...",
-    "diagnosis_photo_title": "Sawirka caleenta",
     "diagnosis_photo_crop": "Dalagga (ikhtiyaari)",
     "diagnosis_photo_crop_placeholder": "Tusaale ahaan galley, kafee ama yaanyo",
     "diagnosis_photo_retake": "Dooro sawir kale",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Sawir caleen galley ah oo dhow",
     "landing_alt_farmer_phone": "Beeraley haweeney ah oo taleefan ku isticmaalaysa beerteeda galleyda",
     "common_search_languages": "Raadi luqadaha",
-    "common_no_languages_match": "Ma jiro luqad la mid ah \"{query}\""
+    "common_no_languages_match": "Ma jiro luqad la mid ah \"{query}\"",
+    "error_screen_title": "Wax baa khaldamay",
+    "error_screen_description": "Qaybtan bogga ayaa shaqadeedii joojisay. Isku day mar kale ama dib u soo rar bogga. Haddii ay sii socoto, la xiriir taageerada.",
+    "error_screen_message": "Fariinta khaladka",
+    "error_screen_copy": "Koobiyee faahfaahinta khaladka",
+    "error_screen_copied": "Waa la koobiyeeyay",
+    "error_screen_component": "Qayb:",
+    "error_screen_try_again": "Isku day mar kale",
+    "error_screen_reload": "Dib u soo rar bogga",
+    "error_screen_go_home": "Tag bogga hore",
+    "error_screen_technical_details": "Faahfaahin farsamo"
 }

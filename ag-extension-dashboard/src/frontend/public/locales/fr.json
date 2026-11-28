@@ -2319,7 +2319,6 @@
     "billing_config_title": "Les paiements ne sont pas configurés",
     "billing_config_body": "Ajoutez les clés PayPal (ou Stripe) dans les clés de paiement ci-dessous. En attendant, personne ne peut payer par carte ou PayPal.",
     "billing_loading": "Chargement de la facturation…",
-    "diagnosis_photo_title": "Photo de feuille",
     "diagnosis_photo_crop": "Culture (optionnel)",
     "diagnosis_photo_crop_placeholder": "Par exemple maïs, café ou tomate",
     "diagnosis_photo_retake": "Choisir une autre photo",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Illustration d’une feuille de maïs en gros plan",
     "landing_alt_farmer_phone": "Une agricultrice utilise un téléphone dans son champ de maïs",
     "common_search_languages": "Rechercher une langue",
-    "common_no_languages_match": "Aucune langue ne correspond à « {query} »"
+    "common_no_languages_match": "Aucune langue ne correspond à « {query} »",
+    "error_screen_title": "Un problème est survenu",
+    "error_screen_description": "Cette partie de la page a cessé de fonctionner. Réessayez ou rechargez la page. Si cela continue, contactez l’assistance.",
+    "error_screen_message": "Message d’erreur",
+    "error_screen_copy": "Copier les détails de l’erreur",
+    "error_screen_copied": "Copié",
+    "error_screen_component": "Composant :",
+    "error_screen_try_again": "Réessayer",
+    "error_screen_reload": "Recharger la page",
+    "error_screen_go_home": "Aller à l’accueil",
+    "error_screen_technical_details": "Détails techniques"
 }

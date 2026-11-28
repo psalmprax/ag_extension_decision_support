@@ -2319,7 +2319,6 @@
     "billing_config_title": "Platby nie sú nastavené",
     "billing_config_body": "Pridajte kľúče PayPal (alebo Stripe) v časti Platobné kľúče nižšie. Dovtedy nikto nemôže platiť kartou ani cez PayPal.",
     "billing_loading": "Načítavanie fakturácie…",
-    "diagnosis_photo_title": "Fotografia listu",
     "diagnosis_photo_crop": "Plodina (voliteľné)",
     "diagnosis_photo_crop_placeholder": "Napríklad kukurica, káva alebo paradajka",
     "diagnosis_photo_retake": "Vybrať inú fotografiu",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Ilustrácia listu kukurice zblízka",
     "landing_alt_farmer_phone": "Farmárka používa telefón na svojom kukuričnom poli",
     "common_search_languages": "Hľadať jazyky",
-    "common_no_languages_match": "Žiadny jazyk nezodpovedá „{query}“"
+    "common_no_languages_match": "Žiadny jazyk nezodpovedá „{query}“",
+    "error_screen_title": "Niečo sa pokazilo",
+    "error_screen_description": "Táto časť stránky prestala fungovať. Skúste to znova alebo stránku znova načítajte. Ak sa to opakuje, kontaktujte podporu.",
+    "error_screen_message": "Chybové hlásenie",
+    "error_screen_copy": "Kopírovať podrobnosti chyby",
+    "error_screen_copied": "Skopírované",
+    "error_screen_component": "Komponent:",
+    "error_screen_try_again": "Skúsiť znova",
+    "error_screen_reload": "Znova načítať stránku",
+    "error_screen_go_home": "Prejsť na úvodnú stránku",
+    "error_screen_technical_details": "Technické podrobnosti"
 }

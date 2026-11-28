@@ -2319,7 +2319,6 @@
     "billing_config_title": "Betalinger er ikke opsat",
     "billing_config_body": "Tilføj PayPal (eller Stripe) nøgler under Betalingsnøgler herunder. Indtil da kan ingen betale med kort eller PayPal.",
     "billing_loading": "Indlæser fakturering…",
-    "diagnosis_photo_title": "Billede af blad",
     "diagnosis_photo_crop": "Afgrøde (valgfri)",
     "diagnosis_photo_crop_placeholder": "For eksempel majs, kaffe eller tomat",
     "diagnosis_photo_retake": "Vælg et andet billede",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Illustration af et majsblad tæt på",
     "landing_alt_farmer_phone": "En landmand bruger sin telefon i sin majsmark",
     "common_search_languages": "Søg efter sprog",
-    "common_no_languages_match": "Intet sprog matcher \"{query}\""
+    "common_no_languages_match": "Intet sprog matcher \"{query}\"",
+    "error_screen_title": "Noget gik galt",
+    "error_screen_description": "Denne del af siden holdt op med at virke. Prøv igen, eller genindlæs siden. Hvis det bliver ved, så kontakt support.",
+    "error_screen_message": "Fejlmeddelelse",
+    "error_screen_copy": "Kopiér fejldetaljer",
+    "error_screen_copied": "Kopieret",
+    "error_screen_component": "Komponent:",
+    "error_screen_try_again": "Prøv igen",
+    "error_screen_reload": "Genindlæs siden",
+    "error_screen_go_home": "Gå til forsiden",
+    "error_screen_technical_details": "Tekniske detaljer"
 }

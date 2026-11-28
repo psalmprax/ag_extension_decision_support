@@ -2319,7 +2319,6 @@
     "billing_config_title": "Платежи не настроены",
     "billing_config_body": "Добавьте ключи PayPal (или Stripe) в разделе «Платежные ключи» ниже. До этого момента никто не сможет оплатить картой или через PayPal.",
     "billing_loading": "Загрузка биллинга…",
-    "diagnosis_photo_title": "Фотография листа",
     "diagnosis_photo_crop": "Культура (необязательно)",
     "diagnosis_photo_crop_placeholder": "Например, кукуруза, кофе или томат",
     "diagnosis_photo_retake": "Выбрать другое фото",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Иллюстрация листа кукурузы крупным планом",
     "landing_alt_farmer_phone": "Фермер пользуется телефоном на своём кукурузном поле",
     "common_search_languages": "Поиск языков",
-    "common_no_languages_match": "Нет языков, соответствующих «{query}»"
+    "common_no_languages_match": "Нет языков, соответствующих «{query}»",
+    "error_screen_title": "Что-то пошло не так",
+    "error_screen_description": "Эта часть страницы перестала работать. Попробуйте ещё раз или перезагрузите страницу. Если ошибка повторяется, обратитесь в поддержку.",
+    "error_screen_message": "Сообщение об ошибке",
+    "error_screen_copy": "Скопировать подробности ошибки",
+    "error_screen_copied": "Скопировано",
+    "error_screen_component": "Компонент:",
+    "error_screen_try_again": "Попробовать снова",
+    "error_screen_reload": "Перезагрузить страницу",
+    "error_screen_go_home": "На главную страницу",
+    "error_screen_technical_details": "Технические подробности"
 }

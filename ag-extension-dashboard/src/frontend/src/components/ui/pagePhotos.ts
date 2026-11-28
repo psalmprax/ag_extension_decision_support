@@ -1,6 +1,6 @@
 /**
  * Field photos for page headers, from the landing page set. Two landing photos are left out on
- * purpose: one shows another company's app on a phone, one another brand's name on a wall screen.
+ * purpose: one shows another company's app on a phone, and the manager's office is not a field.
  * `position` is the CSS object-position that keeps the subject in view in a wide, short band.
  */
 export const PAGE_PHOTOS = {

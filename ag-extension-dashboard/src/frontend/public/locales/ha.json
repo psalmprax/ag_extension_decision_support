@@ -2319,7 +2319,6 @@
     "billing_config_title": "Ba a saita biyan kudi ba",
     "billing_config_body": "Kara makullin PayPal (ko Stripe) a karkashin makullin Biyan kudi a kasa. Har sai lokacin, babu wanda zai iya biya da katin banki ko PayPal.",
     "billing_loading": "Ana loda bayanan biyan kudi...",
-    "diagnosis_photo_title": "Hoton ganye",
     "diagnosis_photo_crop": "Amfanin gona (zabi ne)",
     "diagnosis_photo_crop_placeholder": "Misali masara, kofi ko tumatir",
     "diagnosis_photo_retake": "Zabi wani hoton",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Zanen ganyen masara daga kusa",
     "landing_alt_farmer_phone": "Wata manomiya tana amfani da waya a gonarta ta masara",
     "common_search_languages": "Nemo harsuna",
-    "common_no_languages_match": "Babu harshen da ya dace da \"{query}\""
+    "common_no_languages_match": "Babu harshen da ya dace da \"{query}\"",
+    "error_screen_title": "Wani abu ya faru ba daidai ba",
+    "error_screen_description": "Wannan ɓangaren shafin ya daina aiki. Sake gwadawa ko sake loda shafin. Idan ya ci gaba, tuntuɓi tallafi.",
+    "error_screen_message": "Saƙon kuskure",
+    "error_screen_copy": "Kwafi bayanan kuskure",
+    "error_screen_copied": "An kwafa",
+    "error_screen_component": "Sashi:",
+    "error_screen_try_again": "Sake gwadawa",
+    "error_screen_reload": "Sake loda shafi",
+    "error_screen_go_home": "Je zuwa shafin farko",
+    "error_screen_technical_details": "Bayanan fasaha"
 }

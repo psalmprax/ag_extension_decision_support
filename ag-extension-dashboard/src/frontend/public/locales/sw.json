@@ -2319,7 +2319,6 @@
     "billing_config_title": "Malipo hayajawekwa",
     "billing_config_body": "Ongeza funguo za PayPal (au Stripe) chini ya Funguo za malipo hapa chini. Hadi wakati huo, hakuna mtu anayeweza kulipa kwa kadi au PayPal.",
     "billing_loading": "Inapakia malipo...",
-    "diagnosis_photo_title": "Picha ya jani",
     "diagnosis_photo_crop": "Zao (hiari)",
     "diagnosis_photo_crop_placeholder": "Kwa mfano mahindi, kahawa au nyanya",
     "diagnosis_photo_retake": "Chagua picha nyingine",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Mchoro wa jani la mahindi kwa karibu",
     "landing_alt_farmer_phone": "Mkulima mwanamke akitumia simu shambani mwake mwa mahindi",
     "common_search_languages": "Tafuta lugha",
-    "common_no_languages_match": "Hakuna lugha inayolingana na \"{query}\""
+    "common_no_languages_match": "Hakuna lugha inayolingana na \"{query}\"",
+    "error_screen_title": "Hitilafu imetokea",
+    "error_screen_description": "Sehemu hii ya ukurasa imeacha kufanya kazi. Jaribu tena au pakia upya ukurasa. Ikiendelea, wasiliana na msaada.",
+    "error_screen_message": "Ujumbe wa hitilafu",
+    "error_screen_copy": "Nakili maelezo ya hitilafu",
+    "error_screen_copied": "Imenakiliwa",
+    "error_screen_component": "Kipengele:",
+    "error_screen_try_again": "Jaribu tena",
+    "error_screen_reload": "Pakia upya ukurasa",
+    "error_screen_go_home": "Nenda kwenye ukurasa wa mwanzo",
+    "error_screen_technical_details": "Maelezo ya kiufundi"
 }

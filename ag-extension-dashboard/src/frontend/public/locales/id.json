@@ -2319,7 +2319,6 @@
     "billing_config_title": "Pembayaran belum diatur",
     "billing_config_body": "Tambahkan kunci PayPal (atau Stripe) di bawah Kunci pembayaran. Sampai saat itu, tidak ada yang bisa membayar dengan kartu atau PayPal.",
     "billing_loading": "Memuat penagihan…",
-    "diagnosis_photo_title": "Foto daun",
     "diagnosis_photo_crop": "Tanaman (opsional)",
     "diagnosis_photo_crop_placeholder": "Contoh: jagung, kopi, atau tomat",
     "diagnosis_photo_retake": "Pilih foto lain",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Ilustrasi daun jagung dari dekat",
     "landing_alt_farmer_phone": "Seorang petani perempuan memakai ponsel di ladang jagungnya",
     "common_search_languages": "Cari bahasa",
-    "common_no_languages_match": "Tidak ada bahasa yang cocok dengan \"{query}\""
+    "common_no_languages_match": "Tidak ada bahasa yang cocok dengan \"{query}\"",
+    "error_screen_title": "Terjadi kesalahan",
+    "error_screen_description": "Bagian halaman ini berhenti bekerja. Coba lagi atau muat ulang halaman. Jika terus terjadi, hubungi dukungan.",
+    "error_screen_message": "Pesan kesalahan",
+    "error_screen_copy": "Salin detail kesalahan",
+    "error_screen_copied": "Disalin",
+    "error_screen_component": "Komponen:",
+    "error_screen_try_again": "Coba lagi",
+    "error_screen_reload": "Muat ulang halaman",
+    "error_screen_go_home": "Ke halaman beranda",
+    "error_screen_technical_details": "Detail teknis"
 }

@@ -2319,7 +2319,6 @@
     "billing_config_title": "Ödemeler ayarlanmadı",
     "billing_config_body": "Aşağıdaki Ödeme anahtarları kısmına PayPal (veya Stripe) anahtarlarını ekleyin. Aksi takdirde, kimse kart veya PayPal ile ödeme yapamaz.",
     "billing_loading": "Faturalandırma yükleniyor…",
-    "diagnosis_photo_title": "Yaprak fotoğrafı",
     "diagnosis_photo_crop": "Ürün (isteğe bağlı)",
     "diagnosis_photo_crop_placeholder": "Örneğin mısır, kahve veya domates",
     "diagnosis_photo_retake": "Başka bir fotoğraf seç",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Yakından bir mısır yaprağı çizimi",
     "landing_alt_farmer_phone": "Bir çiftçi kadın mısır tarlasında telefon kullanıyor",
     "common_search_languages": "Dil ara",
-    "common_no_languages_match": "\"{query}\" ile eşleşen dil yok"
+    "common_no_languages_match": "\"{query}\" ile eşleşen dil yok",
+    "error_screen_title": "Bir sorun oluştu",
+    "error_screen_description": "Sayfanın bu bölümü çalışmayı durdurdu. Tekrar deneyin veya sayfayı yeniden yükleyin. Devam ederse destek ekibiyle iletişime geçin.",
+    "error_screen_message": "Hata mesajı",
+    "error_screen_copy": "Hata ayrıntılarını kopyala",
+    "error_screen_copied": "Kopyalandı",
+    "error_screen_component": "Bileşen:",
+    "error_screen_try_again": "Tekrar dene",
+    "error_screen_reload": "Sayfayı yeniden yükle",
+    "error_screen_go_home": "Ana sayfaya git",
+    "error_screen_technical_details": "Teknik ayrıntılar"
 }

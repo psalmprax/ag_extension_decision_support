@@ -2319,7 +2319,6 @@
     "billing_config_title": "भुगतान सेट नहीं हैं",
     "billing_config_body": "नीचे भुगतान कुंजियों (Payment keys) के अंतर्गत PayPal (या Stripe) कुंजियाँ जोड़ें। तब तक, कोई भी कार्ड या PayPal द्वारा भुगतान नहीं कर सकता है।",
     "billing_loading": "बिलिंग लोड हो रही है…",
-    "diagnosis_photo_title": "पत्ती की फोटो",
     "diagnosis_photo_crop": "फसल (वैकल्पिक)",
     "diagnosis_photo_crop_placeholder": "उदाहरण के लिए मक्का, कॉफी या टमाटर",
     "diagnosis_photo_retake": "दूसरी फोटो चुनें",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "मक्के की पत्ती का नज़दीकी चित्र",
     "landing_alt_farmer_phone": "एक किसान महिला अपने मक्के के खेत में फ़ोन इस्तेमाल कर रही है",
     "common_search_languages": "भाषाएँ खोजें",
-    "common_no_languages_match": "\"{query}\" से मेल खाती कोई भाषा नहीं"
+    "common_no_languages_match": "\"{query}\" से मेल खाती कोई भाषा नहीं",
+    "error_screen_title": "कुछ गड़बड़ हो गई",
+    "error_screen_description": "पेज के इस हिस्से ने काम करना बंद कर दिया। फिर से कोशिश करें या पेज दोबारा लोड करें। अगर ऐसा होता रहे तो सहायता से संपर्क करें।",
+    "error_screen_message": "त्रुटि संदेश",
+    "error_screen_copy": "त्रुटि का विवरण कॉपी करें",
+    "error_screen_copied": "कॉपी हो गया",
+    "error_screen_component": "घटक:",
+    "error_screen_try_again": "फिर से कोशिश करें",
+    "error_screen_reload": "पेज दोबारा लोड करें",
+    "error_screen_go_home": "होम पेज पर जाएँ",
+    "error_screen_technical_details": "तकनीकी विवरण"
 }

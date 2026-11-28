@@ -2319,7 +2319,6 @@
     "billing_config_title": "Izinkokhelo azikamiswa",
     "billing_config_body": "Engeza okhiye be-PayPal (noma be-Stripe) ngaphansi kokhiye bokukhokha ngezansi. Kuze kube yileso sikhathi, akekho ongakhokha ngekhadi noma nge-PayPal.",
     "billing_loading": "Iyalayisha ukukhokha...",
-    "diagnosis_photo_title": "Isithombe seqabunga",
     "diagnosis_photo_crop": "Isitshalo (uyazikhethela)",
     "diagnosis_photo_crop_placeholder": "Isibonelo ummbila, ikhofi noma utamatisi",
     "diagnosis_photo_retake": "Khetha esinye isithombe",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Umfanekiso weqabunga lommbila eduze",
     "landing_alt_farmer_phone": "Umlimi wesifazane esebenzisa ucingo ensimini yakhe yommbila",
     "common_search_languages": "Sesha izilimi",
-    "common_no_languages_match": "Alukho ulimi oluhambisana no-\"{query}\""
+    "common_no_languages_match": "Alukho ulimi oluhambisana no-\"{query}\"",
+    "error_screen_title": "Kukhona okungahambanga kahle",
+    "error_screen_description": "Le ngxenye yekhasi iyekile ukusebenza. Zama futhi noma ulayishe kabusha ikhasi. Uma kuqhubeka, xhumana nosizo.",
+    "error_screen_message": "Umlayezo wephutha",
+    "error_screen_copy": "Kopisha imininingwane yephutha",
+    "error_screen_copied": "Kukopishiwe",
+    "error_screen_component": "Ingxenye:",
+    "error_screen_try_again": "Zama futhi",
+    "error_screen_reload": "Layisha kabusha ikhasi",
+    "error_screen_go_home": "Iya ekhasini lasekhaya",
+    "error_screen_technical_details": "Imininingwane yobuchwepheshe"
 }

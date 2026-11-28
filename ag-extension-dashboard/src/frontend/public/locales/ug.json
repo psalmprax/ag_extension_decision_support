@@ -2319,7 +2319,6 @@
     "billing_config_title": "ھەق تۆلەش تەڭشەلمىگەن",
     "billing_config_body": "تۆۋەندىكى ھەق تۆلەش ئاچقۇچلىرى ئاستىغا PayPal (ياكى Stripe) ئاچقۇچلىرىنى قوشۇڭ. بولمىسا، ھېچكىم كارتا ياكى PayPal ئارقىلىق ھەق تۆلىيەلمەيدۇ.",
     "billing_loading": "ھەق تۆلەش ئۇچۇرلىرى يۈكلەنمەكتە…",
-    "diagnosis_photo_title": "يوپۇرماق سۈرىتى",
     "diagnosis_photo_crop": "زىرائەت (تاللاشچان)",
     "diagnosis_photo_crop_placeholder": "مەسىلەن: قۇناق، قەھۋە ياكى شوخلا",
     "diagnosis_photo_retake": "باشقا سۈرەت تاللاش",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "كۆممىقوناق يوپۇرمىقىنىڭ يېقىندىن سىزىلغان رەسىمى",
     "landing_alt_farmer_phone": "بىر ئايال دېھقان كۆممىقوناق ئېتىزىدا تېلېفون ئىشلىتىۋاتىدۇ",
     "common_search_languages": "تىل ئىزدەش",
-    "common_no_languages_match": "\"{query}\" غا ماس تىل يوق"
+    "common_no_languages_match": "\"{query}\" غا ماس تىل يوق",
+    "error_screen_title": "بىر خاتالىق كۆرۈلدى",
+    "error_screen_description": "بەتنىڭ بۇ قىسمى ئىشلىمەي قالدى. قايتا سىناڭ ياكى بەتنى قايتا يۈكلەڭ. داۋاملىق يۈز بەرسە، قوللاش گۇرۇپپىسى بىلەن ئالاقىلىشىڭ.",
+    "error_screen_message": "خاتالىق ئۇچۇرى",
+    "error_screen_copy": "خاتالىق تەپسىلاتىنى كۆچۈرۈش",
+    "error_screen_copied": "كۆچۈرۈلدى",
+    "error_screen_component": "زاپچاس:",
+    "error_screen_try_again": "قايتا سىناش",
+    "error_screen_reload": "بەتنى قايتا يۈكلەش",
+    "error_screen_go_home": "باش بەتكە بېرىش",
+    "error_screen_technical_details": "تېخنىكىلىق تەپسىلات"
 }

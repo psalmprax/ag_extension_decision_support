@@ -2319,7 +2319,6 @@
     "billing_config_title": "Płatności nie zostały skonfigurowane",
     "billing_config_body": "Dodaj klucze PayPal (lub Stripe) w sekcji Klucze płatności poniżej. Do tego czasu nikt nie będzie mógł płacić kartą ani przez PayPal.",
     "billing_loading": "Ładowanie rozliczeń…",
-    "diagnosis_photo_title": "Zdjęcie liścia",
     "diagnosis_photo_crop": "Uprawa (opcjonalnie)",
     "diagnosis_photo_crop_placeholder": "Na przykład kukurydza, kawa lub pomidor",
     "diagnosis_photo_retake": "Wybierz inne zdjęcie",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Ilustracja liścia kukurydzy z bliska",
     "landing_alt_farmer_phone": "Rolniczka korzysta z telefonu na swoim polu kukurydzy",
     "common_search_languages": "Szukaj języków",
-    "common_no_languages_match": "Brak języków pasujących do „{query}”"
+    "common_no_languages_match": "Brak języków pasujących do „{query}”",
+    "error_screen_title": "Coś poszło nie tak",
+    "error_screen_description": "Ta część strony przestała działać. Spróbuj ponownie lub odśwież stronę. Jeśli to się powtarza, skontaktuj się z pomocą techniczną.",
+    "error_screen_message": "Komunikat o błędzie",
+    "error_screen_copy": "Kopiuj szczegóły błędu",
+    "error_screen_copied": "Skopiowano",
+    "error_screen_component": "Komponent:",
+    "error_screen_try_again": "Spróbuj ponownie",
+    "error_screen_reload": "Odśwież stronę",
+    "error_screen_go_home": "Przejdź na stronę główną",
+    "error_screen_technical_details": "Szczegóły techniczne"
 }

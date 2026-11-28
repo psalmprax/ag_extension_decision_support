@@ -2319,7 +2319,6 @@
     "billing_config_title": "尚未设置付款",
     "billing_config_body": "请在下方的“付款密钥”中添加 PayPal (或 Stripe) 密钥。在此之前，无人能通过银行卡或 PayPal 付款。",
     "billing_loading": "正在加载账单…",
-    "diagnosis_photo_title": "叶片照片",
     "diagnosis_photo_crop": "作物 (可选)",
     "diagnosis_photo_crop_placeholder": "例如玉米、咖啡或番茄",
     "diagnosis_photo_retake": "选择另一张照片",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "玉米叶片特写插图",
     "landing_alt_farmer_phone": "一位女农户在玉米地里使用手机",
     "common_search_languages": "搜索语言",
-    "common_no_languages_match": "没有与“{query}”匹配的语言"
+    "common_no_languages_match": "没有与“{query}”匹配的语言",
+    "error_screen_title": "出了点问题",
+    "error_screen_description": "页面的这一部分已停止工作。请重试或重新加载页面。如果问题持续出现，请联系支持人员。",
+    "error_screen_message": "错误信息",
+    "error_screen_copy": "复制错误详情",
+    "error_screen_copied": "已复制",
+    "error_screen_component": "组件：",
+    "error_screen_try_again": "重试",
+    "error_screen_reload": "重新加载页面",
+    "error_screen_go_home": "返回首页",
+    "error_screen_technical_details": "技术详情"
 }

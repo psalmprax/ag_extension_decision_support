@@ -2319,7 +2319,6 @@
     "billing_config_title": "Emebeghị ịkwụ ụgwọ",
     "billing_config_body": "Tinye igodo PayPal (ma ọ bụ Stripe) n'okpuru igodo ịkwụ ụgwọ n'okpuru. Ruo mgbe ahụ, ọ dịghị onye nwere ike ịkwụ ụgwọ site na kaadị ma ọ bụ PayPal.",
     "billing_loading": "Na-ebunye ịkwụ ụgwọ…",
-    "diagnosis_photo_title": "Foto akwụkwọ osisi",
     "diagnosis_photo_crop": "Ihe ọkụkụ (nhọrọ)",
     "diagnosis_photo_crop_placeholder": "Dịka ọmụmaatụ ọka, kọfị ma ọ bụ tomato",
     "diagnosis_photo_retake": "Họrọ foto ọzọ",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Eserese akwụkwọ ọka a hụrụ nso",
     "landing_alt_farmer_phone": "Nwanyị onye ọrụ ugbo na-eji ekwentị n’ubi ọka ya",
     "common_search_languages": "Chọọ asụsụ",
-    "common_no_languages_match": "Ọ dịghị asụsụ dabara \"{query}\""
+    "common_no_languages_match": "Ọ dịghị asụsụ dabara \"{query}\"",
+    "error_screen_title": "Ihe ezighi ezi mere",
+    "error_screen_description": "Akụkụ ibe a akwụsịla ịrụ ọrụ. Nwaa ọzọ ma ọ bụ budata ibe ahụ ọzọ. Ọ bụrụ na ọ na-aga n’ihu, kpọtụrụ nkwado.",
+    "error_screen_message": "Ozi njehie",
+    "error_screen_copy": "Detuo nkọwa njehie",
+    "error_screen_copied": "E detuola ya",
+    "error_screen_component": "Akụkụ:",
+    "error_screen_try_again": "Nwaa ọzọ",
+    "error_screen_reload": "Budata ibe ọzọ",
+    "error_screen_go_home": "Gaa na ibe mbụ",
+    "error_screen_technical_details": "Nkọwa teknụzụ"
 }

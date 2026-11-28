@@ -14,7 +14,7 @@ import { useThemeClasses } from '@/hooks/useThemeClasses';
 import { useAppStore } from '@/store/useAppStore';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useRoleTabGuard } from '@/hooks/useRoleTabGuard';
-import ErrorBoundary from '@ag-extension/shared';
+import { AppErrorBoundary } from '@/components/AppErrorBoundary';
 import { getNavItems } from './config/navItems';
 import { HubTabs } from '@/components/layout/HubTabs';
 import { useDemoMode } from '@/demo';
@@ -332,7 +332,7 @@ function App() {
   // Public routes
   if (!effectiveUser) {
     return (
-      <ErrorBoundary componentName="PublicAuth">
+      <AppErrorBoundary componentName="PublicAuth">
         <Suspense
           fallback={
             <div className="min-h-screen flex items-center justify-center">
@@ -373,7 +373,7 @@ function App() {
             <Route path="*" element={<LandingPage />} />
           </Routes>
         </Suspense>
-      </ErrorBoundary>
+      </AppErrorBoundary>
     );
   }
 
@@ -449,7 +449,7 @@ function App() {
             id="main-content" tabIndex={0} aria-label="Main content"
             className={`flex-1 overflow-y-auto overflow-x-hidden outline-none transition-all duration-300 ${sidebarOpen ? 'md:ms-64' : ''} relative pb-[calc(7rem+env(safe-area-inset-bottom))] md:pb-20`}
           >
-            <ErrorBoundary componentName="MainContent">
+            <AppErrorBoundary componentName="MainContent">
               <Suspense
                 fallback={
                   <div className="p-6">
@@ -514,7 +514,7 @@ function App() {
                   />
                 </div>
               </Suspense>
-            </ErrorBoundary>
+            </AppErrorBoundary>
           </main>
         </div>
 

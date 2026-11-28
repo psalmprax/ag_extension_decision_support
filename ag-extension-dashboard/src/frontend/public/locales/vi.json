@@ -2319,7 +2319,6 @@
     "billing_config_title": "Thanh toán chưa được thiết lập",
     "billing_config_body": "Thêm khóa PayPal (hoặc Stripe) vào phần Khóa thanh toán bên dưới. Cho đến lúc đó, sẽ không ai có thể thanh toán bằng thẻ hoặc PayPal.",
     "billing_loading": "Đang tải thông tin thanh toán…",
-    "diagnosis_photo_title": "Ảnh lá cây",
     "diagnosis_photo_crop": "Cây trồng (tùy chọn)",
     "diagnosis_photo_crop_placeholder": "Ví dụ: ngô, cà phê hoặc cà chua",
     "diagnosis_photo_retake": "Chọn ảnh khác",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Hình minh họa cận cảnh lá ngô",
     "landing_alt_farmer_phone": "Một nữ nông dân dùng điện thoại trên ruộng ngô",
     "common_search_languages": "Tìm ngôn ngữ",
-    "common_no_languages_match": "Không có ngôn ngữ nào khớp với \"{query}\""
+    "common_no_languages_match": "Không có ngôn ngữ nào khớp với \"{query}\"",
+    "error_screen_title": "Đã xảy ra lỗi",
+    "error_screen_description": "Phần này của trang đã ngừng hoạt động. Hãy thử lại hoặc tải lại trang. Nếu vẫn tiếp diễn, hãy liên hệ bộ phận hỗ trợ.",
+    "error_screen_message": "Thông báo lỗi",
+    "error_screen_copy": "Sao chép chi tiết lỗi",
+    "error_screen_copied": "Đã sao chép",
+    "error_screen_component": "Thành phần:",
+    "error_screen_try_again": "Thử lại",
+    "error_screen_reload": "Tải lại trang",
+    "error_screen_go_home": "Về trang chủ",
+    "error_screen_technical_details": "Chi tiết kỹ thuật"
 }

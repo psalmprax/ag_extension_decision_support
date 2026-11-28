@@ -2319,7 +2319,6 @@
     "billing_config_title": "Njira zolipirira sizinakonzedwe",
     "billing_config_body": "Lowetsani makiyi a PayPal (kapena Stripe) pansi pa 'Payment keys'. Mpaka nthawi imeneyo, palibe amene angathe kulipira ndi khadi kapena PayPal.",
     "billing_loading": "Kukweza zolipirira...",
-    "diagnosis_photo_title": "Chithunzi cha tsamba",
     "diagnosis_photo_crop": "Chakudya (chosankha)",
     "diagnosis_photo_crop_placeholder": "Mwachitsanzo chimanga, khofi kapena tomato",
     "diagnosis_photo_retake": "Sankhani chithunzi china",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Chithunzi cha tsamba la chimanga moyandikira",
     "landing_alt_farmer_phone": "Mlimi wamkazi akugwiritsa ntchito foni m’munda wake wa chimanga",
     "common_search_languages": "Sakani zinenero",
-    "common_no_languages_match": "Palibe chinenero chofanana ndi \"{query}\""
+    "common_no_languages_match": "Palibe chinenero chofanana ndi \"{query}\"",
+    "error_screen_title": "China chalakwika",
+    "error_screen_description": "Gawo ili la tsambali lasiya kugwira ntchito. Yesaninso kapena tsitsaninso tsambalo. Ngati zikupitirira, lankhulani ndi othandiza.",
+    "error_screen_message": "Uthenga wa vuto",
+    "error_screen_copy": "Koperani zambiri za vuto",
+    "error_screen_copied": "Zakoperedwa",
+    "error_screen_component": "Gawo:",
+    "error_screen_try_again": "Yesaninso",
+    "error_screen_reload": "Tsitsaninso tsamba",
+    "error_screen_go_home": "Pitani ku tsamba loyamba",
+    "error_screen_technical_details": "Zambiri zaukadaulo"
 }

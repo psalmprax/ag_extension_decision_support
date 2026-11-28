@@ -12,8 +12,37 @@ const sanitizeErrorMessage = (message: string | null | undefined): string => {
     .replace(/'/g, '&#039;');
 };
 
+/** Text on the error screen; apps pass translations, English is the default. */
+export interface ErrorBoundaryLabels {
+  title: string;
+  description: string;
+  errorMessage: string;
+  copy: string;
+  copied: string;
+  component: string;
+  tryAgain: string;
+  reload: string;
+  goHome: string;
+  technicalDetails: string;
+}
+
+export const DEFAULT_ERROR_LABELS: ErrorBoundaryLabels = {
+  title: 'Something went wrong',
+  description: 'This part of the page stopped working. Try again or reload the page. If it keeps happening, contact support.',
+  errorMessage: 'Error message',
+  copy: 'Copy error details',
+  copied: 'Copied',
+  component: 'Component:',
+  tryAgain: 'Try again',
+  reload: 'Reload page',
+  goHome: 'Go to the home page',
+  technicalDetails: 'Technical details',
+};
+
 export interface Props {
   children: ReactNode;
+  /** Translated text for the dashboard error screen; missing entries fall back to English. */
+  labels?: Partial<ErrorBoundaryLabels>;
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
   componentName?: string;
@@ -154,6 +183,7 @@ class ErrorBoundary extends Component<Props, State> {
 
   private renderDashboardFallback(): ReactNode {
     const { error, errorInfo, copied } = this.state;
+    const label = { ...DEFAULT_ERROR_LABELS, ...this.props.labels };
     const isDev = typeof import.meta !== 'undefined' && (import.meta as { env?: { DEV?: boolean } }).env?.DEV;
 
     return (
@@ -172,27 +202,24 @@ class ErrorBoundary extends Component<Props, State> {
           </div>
 
           <h1 id="error-title" className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Something went wrong
+            {label.title}
           </h1>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
-            We encountered an unexpected error. Please try again or contact support if the problem
-            persists.
-          </p>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">{label.description}</p>
 
           {error && (
             <div className="bg-gray-100 dark:bg-gray-700/50 rounded-lg p-4 mb-6 text-left">
               <div className="flex items-center justify-between mb-2">
                 <p
                   className="text-sm font-mono text-red-600 dark:text-red-400 truncate flex-1"
-                  aria-label="Error message"
+                  aria-label={label.errorMessage}
                 >
                   {sanitizeErrorMessage(error.message)}
                 </p>
                 <button
                   onClick={this.handleCopyError}
                   className="ml-2 p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded transition-colors"
-                  aria-label={copied ? 'Copied!' : 'Copy error details'}
-                  title="Copy error details"
+                  aria-label={copied ? label.copied : label.copy}
+                  title={label.copy}
                 >
                   {copied ? (
                     <Check className="w-4 h-4 text-green-600" aria-hidden="true" />
@@ -203,7 +230,7 @@ class ErrorBoundary extends Component<Props, State> {
               </div>
               {this.props.componentName && (
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-                  Component:{' '}
+                  {label.component}{' '}
                   <code className="bg-gray-200 dark:bg-gray-600 px-1 py-0.5 rounded">
                     {this.props.componentName}
                   </code>
@@ -216,32 +243,29 @@ class ErrorBoundary extends Component<Props, State> {
             <button
               onClick={this.handleReset}
               className="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              aria-label="Try again"
             >
               <RefreshCw className="w-4 h-4" aria-hidden="true" />
-              Try Again
+              {label.tryAgain}
             </button>
             <button
               onClick={this.handleReload}
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-              aria-label="Reload page"
             >
-              Reload Page
+              {label.reload}
             </button>
             <button
               onClick={this.handleGoHome}
               className="flex items-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-              aria-label="Go to home page"
             >
               <Home className="w-4 h-4" aria-hidden="true" />
-              Go Home
+              {label.goHome}
             </button>
           </div>
 
           {isDev && errorInfo && (
             <details className="mt-6 text-left">
               <summary className="text-sm text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:hover:text-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 rounded">
-                Technical Details
+                {label.technicalDetails}
               </summary>
               <pre className="mt-2 text-xs bg-gray-100 dark:bg-gray-700 p-3 rounded-lg overflow-auto max-h-40 text-gray-600 dark:text-gray-300">
                 {sanitizeErrorMessage(error?.stack ?? '')}

@@ -2319,7 +2319,6 @@
     "billing_config_title": "পেমেন্ট সেট আপ করা হয়নি",
     "billing_config_body": "নিচের পেমেন্ট কি (Payment keys) সেকশনে PayPal (অথবা Stripe) কি যোগ করুন। তা না হওয়া পর্যন্ত, কেউ কার্ড বা PayPal দিয়ে পেমেন্ট করতে পারবে না।",
     "billing_loading": "বিলিং লোড হচ্ছে…",
-    "diagnosis_photo_title": "পাতার ছবি",
     "diagnosis_photo_crop": "ফসল (ঐচ্ছিক)",
     "diagnosis_photo_crop_placeholder": "উদাহরণস্বরূপ ভুট্টা, কফি বা টমেটো",
     "diagnosis_photo_retake": "অন্য একটি ছবি বেছে নিন",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "কাছ থেকে দেখা ভুট্টার পাতার চিত্র",
     "landing_alt_farmer_phone": "একজন কৃষক নারী তাঁর ভুট্টাখেতে ফোন ব্যবহার করছেন",
     "common_search_languages": "ভাষা খুঁজুন",
-    "common_no_languages_match": "\"{query}\"-এর সঙ্গে মেলে এমন কোনো ভাষা নেই"
+    "common_no_languages_match": "\"{query}\"-এর সঙ্গে মেলে এমন কোনো ভাষা নেই",
+    "error_screen_title": "কিছু একটা ভুল হয়েছে",
+    "error_screen_description": "পৃষ্ঠার এই অংশটি কাজ করা বন্ধ করে দিয়েছে। আবার চেষ্টা করুন বা পৃষ্ঠাটি আবার লোড করুন। এমন চলতে থাকলে সহায়তায় যোগাযোগ করুন।",
+    "error_screen_message": "ত্রুটির বার্তা",
+    "error_screen_copy": "ত্রুটির বিবরণ কপি করুন",
+    "error_screen_copied": "কপি হয়েছে",
+    "error_screen_component": "উপাদান:",
+    "error_screen_try_again": "আবার চেষ্টা করুন",
+    "error_screen_reload": "পৃষ্ঠা আবার লোড করুন",
+    "error_screen_go_home": "হোম পৃষ্ঠায় যান",
+    "error_screen_technical_details": "প্রযুক্তিগত বিবরণ"
 }

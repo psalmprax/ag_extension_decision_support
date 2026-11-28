@@ -2319,7 +2319,6 @@
     "billing_config_title": "Okusasula tekunaba kuteekebwateekebwa",
     "billing_config_body": "Gattako ebisumuluzo bya PayPal (oba Stripe) wansi mu 'Payment keys'. Okutuusa olwo, tewali ayinza kusasula na kaadi oba PayPal.",
     "billing_loading": "Okutikka eby'okusasula...",
-    "diagnosis_photo_title": "Ekifaananyi ky'ebikoola",
     "diagnosis_photo_crop": "Ekirime (si kyetaagisa)",
     "diagnosis_photo_crop_placeholder": "Ng'ekyokulabirako kasooli, emwanyi oba ennyanya",
     "diagnosis_photo_retake": "Londa ekifaananyi ekirala",
@@ -3217,5 +3216,15 @@
     "landing_alt_leaf_illustration": "Ekifaananyi ky’ekikoola kya kasooli okuva okumpi",
     "landing_alt_farmer_phone": "Omulimi omukazi ng’akozesa ssimu mu nnimiro ye eya kasooli",
     "common_search_languages": "Noonya ennimi",
-    "common_no_languages_match": "Tewali lulimi lukwatagana ne \"{query}\""
+    "common_no_languages_match": "Tewali lulimi lukwatagana ne \"{query}\"",
+    "error_screen_title": "Waliwo ekitagenze bulungi",
+    "error_screen_description": "Ekitundu kino eky’olupapula kiyimiriddeko okukola. Gezaako nate oba ddamu okutikka olupapula. Bwe kigenda mu maaso, tuukirira obuyambi.",
+    "error_screen_message": "Obubaka bw’ensobi",
+    "error_screen_copy": "Koppa ebikwata ku nsobi",
+    "error_screen_copied": "Kikoppeddwa",
+    "error_screen_component": "Ekitundu:",
+    "error_screen_try_again": "Gezaako nate",
+    "error_screen_reload": "Ddamu otikke olupapula",
+    "error_screen_go_home": "Genda ku lupapula olusooka",
+    "error_screen_technical_details": "Ebikwata ku tekinologiya"
 }
