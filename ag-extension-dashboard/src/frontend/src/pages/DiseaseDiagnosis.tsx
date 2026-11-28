@@ -26,7 +26,7 @@ import { DiagnosisTestingTab } from '@/components/diagnosisTests/DiagnosisTestin
 type DiagnosisTab = 'symptoms' | 'image' | 'video' | 'soil' | 'library' | 'testing';
 import { DiagnosisHistoryPanel } from './diagnostics/DiagnosisHistoryPanel';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { PRIMARY_BUTTON, TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
+import { TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
 
 export function DiseaseDiagnosis() {
   const online = useOnlineStatus();
@@ -93,7 +93,7 @@ export function DiseaseDiagnosis() {
 
   return (
     <div className="space-y-6">
-        <PageHeader
+        <PageHeader photo="leafCloseUp"
           title={t('ui_disease_diagnosis_crop_doctor_plant_pathology_clinic')}
           description={t('ui_disease_diagnosis_upload_a_photo_or_video_or_describe')}
           meta={
@@ -103,12 +103,6 @@ export function DiseaseDiagnosis() {
                 ? t('diagnosis_online', { defaultValue: 'Online: analysis available' })
                 : t('diagnosis_offline', { defaultValue: 'Offline: analysis needs a connection' })}
             </span>
-          }
-          actions={
-            <button onClick={() => setShowScannerModal(true)} className={PRIMARY_BUTTON}>
-              <Camera className="w-4 h-4" aria-hidden="true" />
-              <span>{t('ui_disease_diagnosis_camera_scan_leaf')}</span>
-            </button>
           }
         />
 
@@ -135,8 +129,8 @@ export function DiseaseDiagnosis() {
           ))}
         </div>
 
-        {/* Tab Content Container */}
-        <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 sm:p-6 text-slate-800 dark:text-theme-text-primary">
+        {/* Tab content on one card; the photo tab's two panels are cards themselves, so they sit on the page. */}
+        <div className={activeTab === 'image' ? 'text-slate-800 dark:text-theme-text-primary' : 'bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-5 sm:p-6 text-slate-800 dark:text-theme-text-primary'}>
           {activeTab === 'symptoms' && (
             <SymptomDiagnosisTab
               cropType={cropType}
@@ -163,6 +157,7 @@ export function DiseaseDiagnosis() {
                 addNotification as unknown as (n: { type: string; message: string }) => void
               }
               getSeverityColor={getSeverityColor}
+              onOpenScanner={() => setShowScannerModal(true)}
             />
           )}
 

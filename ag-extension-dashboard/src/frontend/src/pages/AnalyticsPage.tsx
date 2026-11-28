@@ -16,8 +16,8 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = ({ performanceData })
   const { t } = useLanguage();
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <PageHeader
+    <div className="space-y-6">
+      <PageHeader photo="aerialFarmland"
         title={t('ui_analytics_page_system_analytics')}
         description={t('ui_analytics_page_support_performance_commodity_prices')}
         meta={t('ui_analytics_page_last_30_days')}

@@ -29,6 +29,7 @@ import { AssignOfficerField } from './AssignOfficerField';
 import { StaffRegionNote } from './StaffRegionNote';
 import { getApiErrorMessage } from '@/lib/apiError';
 import { useUnits } from '@/hooks/useUnits';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 // Coordinates are optional: a blank number input must mean "not given", not NaN
 // (which failed validation silently and blocked registration without GPS).
@@ -176,7 +177,7 @@ export const FarmerRegistrationForm: React.FC = () => {
         <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
           <Lock className="w-6 h-6 text-amber-800 dark:text-amber-300" />
         </div>
-        <h2 className="text-xl font-medium tracking-tight text-slate-900 dark:text-theme-text-primary mb-2">{t('ui_farmer_registration_form_register_client')}</h2>
+        <h2 className="text-xl font-medium tracking-tight text-slate-900 dark:text-theme-text-primary mb-2">{t('nav_register_farmer')}</h2>
         <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 text-xs font-medium mb-3">
           <Layers className="w-3.5 h-3.5" />
           <span>{t('ui_farmer_registration_form_interactive_preview_mode')}</span>
@@ -201,26 +202,16 @@ export const FarmerRegistrationForm: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      <div className="backdrop-blur-xl bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl p-6 shadow-sm relative overflow-hidden">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-medium tracking-tight text-slate-900 dark:text-theme-text-primary">{t('ui_farmer_registration_form_register_client')}</h1>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-theme-text-muted mt-0.5">
-                {t('ui_farmer_registration_form_enroll_smallholders_into_real_time_a')}
-              </p>
-            </div>
-          </div>
-
-        </div>
-      </div>
+    <div className="max-w-5xl space-y-6">
+      <PageHeader
+        photo="officerWithFarmer"
+        title={t('nav_register_farmer')}
+        description={t('register_farmer_desc', { defaultValue: 'Add a farmer so you can send them advice, plan visits and keep their field records.' })}
+      />
 
       {/* Field Onboarding Contextual Prompt */}
       <InlinePrompt
-        title="Field Onboarding Guidance"
+        title={t('register_farmer_tip_title', { defaultValue: 'Registering a farmer' })}
         variant="tip"
         dismissible
         enableAudio

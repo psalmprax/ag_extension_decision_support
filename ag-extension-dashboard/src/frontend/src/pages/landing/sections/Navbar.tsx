@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 
 const TALKING_ASSISTANT_HASH = '#talking-assistant';
 
@@ -18,8 +19,11 @@ const NAV_LINKS = [
   { href: '#faq', labelKey: 'ui_navbar_faq', fallback: 'FAQ' },
 ] as const;
 
-/** Shown in the top bar only where all eight links fit on one line; always in the phone menu. */
-const WIDE_SCREEN_ONLY = new Set<string>(['#problem', '#agent-os']);
+/**
+ * The top bar shows these four links from 1280px and all eight from 1536px; translated labels
+ * run longer than English, so anything that would wrap stays in the menu instead.
+ */
+const MAIN_LINKS = new Set<string>(['#services', '#how-it-works', '#trust-safety', '#faq']);
 
 export function Navbar() {
   const { t } = useLanguage();
@@ -49,13 +53,13 @@ export function Navbar() {
           <span className="text-base font-medium text-white">{t('app_title')}</span>
         </button>
 
-        <div className="hidden md:flex items-center gap-6">
+        <div className="hidden xl:flex items-center gap-6 min-w-0">
           {links.map(link => (
             <a
               key={link.href}
               href={link.href}
               onClick={e => handleLinkClick(e, link.href)}
-              className={`${WIDE_SCREEN_ONLY.has(link.href) ? 'hidden xl:inline' : ''} text-sm text-[#9db2a6] hover:text-white transition-colors`}
+              className={`${MAIN_LINKS.has(link.href) ? '' : 'hidden 2xl:inline'} whitespace-nowrap text-sm text-[#9db2a6] hover:text-white transition-colors`}
             >
               {link.label}
             </a>
@@ -63,6 +67,7 @@ export function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          <LanguageSwitcher compact />
           <button
             type="button"
             onClick={() => navigate('/login')}
@@ -79,10 +84,10 @@ export function Navbar() {
           </button>
           <button
             type="button"
-            aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
+            aria-label={mobileMenuOpen ? t('landing_menu_close', { defaultValue: 'Close menu' }) : t('landing_menu_open', { defaultValue: 'Open menu' })}
             aria-expanded={mobileMenuOpen}
             onClick={() => setMobileMenuOpen(prev => !prev)}
-            className="md:hidden h-9 w-9 flex items-center justify-center rounded-md text-[#9db2a6] hover:text-white hover:bg-white/[0.06] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+            className="2xl:hidden h-9 w-9 flex items-center justify-center rounded-md text-[#9db2a6] hover:text-white hover:bg-white/[0.06] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -96,7 +101,7 @@ export function Navbar() {
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
-            className="md:hidden bg-[#0d1a14] border-b border-white/[0.08] px-6 py-4"
+            className="2xl:hidden bg-[#0d1a14] border-b border-white/[0.08] px-6 py-4"
           >
             <div className="flex flex-col">
               {links.map(link => (

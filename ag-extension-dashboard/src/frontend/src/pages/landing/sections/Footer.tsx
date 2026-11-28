@@ -175,7 +175,7 @@ export function Footer() {
                       <Shield className="w-4 h-4" />
                     </div>
                     <h3 className="text-sm sm:text-lg font-medium text-white truncate">
-                      {legalModal === 'privacy' ? 'Privacy policy & data sovereignty' : 'Terms of service'}
+                      {legalModal === 'privacy' ? t('ui_footer_privacy_policy') : t('ui_footer_terms_of_service')}
                     </h3>
                   </div>
                   <button

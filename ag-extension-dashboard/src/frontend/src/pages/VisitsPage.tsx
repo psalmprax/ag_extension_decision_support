@@ -63,7 +63,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
   };
 
   return (
-    <main id="visits-main" className="max-w-7xl mx-auto space-y-6">
+    <main id="visits-main" className="space-y-6">
       {reportFor && (
         <VisitReportModal
           target={reportFor}
@@ -74,7 +74,7 @@ export const VisitsPage: React.FC<VisitsPageProps> = ({
           }}
         />
       )}
-      <PageHeader
+      <PageHeader photo="officerWithFarmer"
         title={t('ui_visits_page_field_visits_itineraries')}
         description={t('ui_visits_page_manage_scheduled_on_site_inspections')}
         actions={

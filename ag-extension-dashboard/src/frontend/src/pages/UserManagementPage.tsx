@@ -157,8 +157,8 @@ export function UserManagementPage() {
   const uniqueCountries = new Set(usersList.map(u => u.country).filter(Boolean)).size || (usersList.length > 0 ? 1 : 0);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-24">
-      <PageHeader
+    <div className="space-y-6 pb-24">
+      <PageHeader photo="officerWithFarmer"
         title={t('users_directory_title', 'Staff & officers')}
         description={t('users_directory_desc', 'Accounts for officers, regional managers, farmers and administrators.')}
         meta={

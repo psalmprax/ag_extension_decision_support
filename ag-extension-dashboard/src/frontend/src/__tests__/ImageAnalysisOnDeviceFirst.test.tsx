@@ -51,11 +51,23 @@ class LoadingImage {
 function renderTab() {
   render(
     <ImageAnalysisTab cropType="beans" setCropType={() => undefined} radiusClass="" btnClass="" t={key => key}
-      addNotification={() => undefined} getSeverityColor={() => ''} />,
+      addNotification={() => undefined} getSeverityColor={() => ''} onOpenScanner={() => undefined} />,
   );
   const input = document.getElementById('image-upload') as HTMLInputElement;
   fireEvent.change(input, { target: { files: [new File(['leaf'], 'leaf.jpg', { type: 'image/jpeg' })] } });
 }
+
+describe('camera scanner', () => {
+  it('opens the live camera scanner from the photo card', () => {
+    const onOpenScanner = vi.fn();
+    render(
+      <ImageAnalysisTab cropType="" setCropType={() => undefined} radiusClass="" btnClass="" t={key => key}
+        addNotification={() => undefined} getSeverityColor={() => ''} onOpenScanner={onOpenScanner} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Camera scan leaf' }));
+    expect(onOpenScanner).toHaveBeenCalledTimes(1);
+  });
+});
 
 beforeEach(() => {
   vi.stubGlobal('Image', LoadingImage);

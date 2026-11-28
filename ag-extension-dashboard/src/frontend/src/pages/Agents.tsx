@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { appLocale } from '@/lib/appLocale';
 import { QueueStats } from './agents/QueueStats';
 import {
@@ -26,7 +27,7 @@ import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
 
 function Agents() {
   const { t } = useLanguage();
-  const { headingClass, btnClass } = useThemeClasses();
+  const { btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
 
   // State
@@ -109,8 +110,9 @@ function Agents() {
   if (isLoading) {
     return (
       <LoadingHeaderSkeleton
-        title="Agent Orchestration Status"
-        description="Monitor and manage AI agents"
+        photo="fieldSunrise"
+        title={t('nav_agents')}
+        description={t('ui_agents_real_time_telemetry_auto_handoff_coo')}
       />
     );
   }
@@ -118,23 +120,11 @@ function Agents() {
 
   return (
     <div className="space-y-8">
-      {/* Header & Status Ribbons */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              {t('ui_agents_autonomous_mesh_fleet')}
-            </span>
-          </div>
-          <h1 className={`text-2xl font-medium text-slate-900 dark:text-white tracking-tight ${headingClass}`}>
-            {t('ui_agents_agent_orchestration')}
-          </h1>
-          <p className="text-slate-600 dark:text-white/60 text-sm mt-1">
-            {t('ui_agents_real_time_telemetry_auto_handoff_coo')}
-          </p>
-        </div>
-
+      <PageHeader
+        photo="fieldSunrise"
+        title={t('nav_agents')}
+        description={t('ui_agents_real_time_telemetry_auto_handoff_coo')}
+        actions={
         <div className="flex items-center gap-3">
           {agents.length > 0 && (
             <div className="hidden lg:inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-mono">
@@ -152,7 +142,8 @@ function Agents() {
             <span>{t('ui_farmer_detail_panel_refresh')}</span>
           </button>
         </div>
-      </div>
+        }
+      />
 
       {queueStatus && <QueueStats status={queueStatus} />}
 

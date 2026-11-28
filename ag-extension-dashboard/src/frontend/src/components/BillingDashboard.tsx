@@ -190,7 +190,7 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
 }) => {
   const { t } = useLanguage();
   return (
-    <PageHeader
+    <PageHeader photo="fieldSunrise"
         title={t('ui_billing_dashboard_billing_subscriptions')}
         description={BILLING_ENABLED ? t('billing_subtitle') || 'Your plan, usage, payment methods and invoices.' : t('billing_off_subtitle', { defaultValue: 'Payments are switched off while pricing is decided. You can still see your invoices, redeem a voucher code, and manage or cancel your subscription.' })}
         meta={t('billing_summary', {
@@ -311,7 +311,7 @@ export const BillingDashboard: React.FC = () => {
   );
 
   return (
-    <main id="billing-main" className="max-w-7xl mx-auto space-y-6">
+    <main id="billing-main" className="space-y-6">
       {/* Only an administrator can fix missing payment keys, so only they see it. */}
       {billing.user?.role === 'admin' && (billing.configErrors.stripe || billing.configErrors.paypal) && (
         <div role="status" className="p-4 bg-amber-50 dark:bg-amber-400/[0.08] border border-amber-600/20 dark:border-amber-300/20 rounded-lg flex items-start gap-3">

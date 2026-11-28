@@ -77,8 +77,8 @@ const WorldMonitor: React.FC = () => {
 
   return (
     <div className="space-y-5">
-      <PageHeader
-        title={t('map_title', { defaultValue: 'Map of farms and field signals' })}
+      <PageHeader photo="aerialFarmland"
+        title={t('nav_worldmonitor', { defaultValue: 'Farm map' })}
         description={t('map_description', {
           defaultValue: 'Farms with a saved location, crop stress from recent diagnoses, pest reports and soil data. Drag the globe to turn it.',
         })}

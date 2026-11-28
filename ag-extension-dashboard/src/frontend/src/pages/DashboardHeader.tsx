@@ -3,8 +3,7 @@ import toast from 'react-hot-toast';
 import { RefreshCw } from 'lucide-react';
 import { syncQueue } from '@/api/syncQueueService';
 import { dashboardGreeting } from './dashboardGreeting';
-import { PAGE_DESCRIPTION, PAGE_TITLE } from '@/components/ui/typography';
-import { PhotoHeaderBand } from '@/components/ui/PhotoHeaderBand';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 /** Dashboard title, greeting, and browser connectivity / queued-sync status. */
 export const DashboardHeader: React.FC<{
@@ -64,20 +63,15 @@ export const DashboardHeader: React.FC<{
   };
 
   return (
-    <PhotoHeaderBand src="/images/landing/maize-field-sunrise.webp" width={1319} height={860} position="center 65%" className="mb-6 sm:mb-8">
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-      <div>
-        <h1 className={`mb-2 ${PAGE_TITLE}`}>
-          {t('dashboard_operations_title', { defaultValue: 'Overview' })}
-        </h1>
-        <p className={PAGE_DESCRIPTION}>
-          {dashboardGreeting(t, userName)}
-        </p>
-      </div>
-
-      {/* Browser connectivity and queued-sync status (not database activity). */}
+    <PageHeader
+      photo="fieldSunrise"
+      className="mb-6 sm:mb-8"
+      title={t('nav_dashboard', { defaultValue: 'Dashboard' })}
+      description={dashboardGreeting(t, userName)}
+      // Browser connectivity and queued-sync status (not database activity).
+      actions={
       <div className="flex flex-wrap items-center gap-3">
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] text-sm">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-white/90 dark:bg-theme-bg-primary/90 border border-slate-900/[0.08] dark:border-white/[0.08] text-sm">
           <span
             className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-rose-500'}`}
             aria-hidden="true"
@@ -110,7 +104,7 @@ export const DashboardHeader: React.FC<{
           )}
         </div>
       </div>
-    </div>
-    </PhotoHeaderBand>
+      }
+    />
   );
 };

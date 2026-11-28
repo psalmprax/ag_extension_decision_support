@@ -68,7 +68,7 @@ export const ReportsPage: React.FC<ReportsPageProps> = ({
 
   return (
     <div className="space-y-6">
-      <PageHeader
+      <PageHeader photo="aerialFarmland"
         title={t('ui_reports_page_data_reports')}
         description={t('ui_reports_page_verified_field_synthesis_farmer_coho')}
         meta={

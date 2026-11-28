@@ -7,6 +7,16 @@ vi.mock('@/components/canvas-ui/DiseaseSaliencyCanvas', () => ({
 }));
 
 describe('ImageAnalysisTab Provenance Display', () => {
+  it('shows no example picture before a photo is checked, only what to do next', () => {
+    const { container } = render(
+      <AnalysisResultsHUD imageAnalysis={null} imagePreview={null} offlineQueued={false} getSeverityColor={() => ''} />
+    );
+    expect(screen.getByRole('heading', { name: 'Result' })).toBeInTheDocument();
+    expect(screen.getByText('Choose a leaf photo on the left to check it.')).toBeInTheDocument();
+    expect(container.querySelector('canvas, img')).toBeNull();
+    expect(screen.queryByRole('button', { name: /magnif/i })).not.toBeInTheDocument();
+  });
+
   const baseAnalysis: ImageAnalysisData = {
     overallHealth: 'diseased',
     diseases: [],

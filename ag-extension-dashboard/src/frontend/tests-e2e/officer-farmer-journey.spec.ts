@@ -51,7 +51,7 @@ test.describe.serial('officer and farmer through a season', () => {
 
   test('the farmer starts the conversation, describes the farm and sends photos', async () => {
     await openMenu(farmerPage, MY_OFFICER_MENU);
-    await expect(farmerPage.getByRole('heading', { name: 'My extension officer' })).toBeVisible();
+    await expect(farmerPage.getByRole('heading', { name: 'My officer', exact: true })).toBeVisible();
 
     const composer = farmerPage.getByLabel('Message to your officer');
     await composer.fill(farmDescription);

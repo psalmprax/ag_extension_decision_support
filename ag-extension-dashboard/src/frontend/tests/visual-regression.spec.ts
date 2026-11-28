@@ -47,7 +47,7 @@ test.describe('@release multi-viewport layout & visual stability gates', () => {
     await expect(page.locator('.mesh-orb-1, .mesh-orb-2, .mesh-orb-3')).toHaveCount(0);
 
     // Responsive hero backdrop must resolve to the 640px variant
-    const heroImg = page.locator('img[alt*="extension officer consulting"]').first();
+    const heroImg = page.locator('img[alt*="extension officer and a farmer"]').first();
     await expect(heroImg).toBeAttached();
     await expect(heroImg).toHaveAttribute('srcset', /officer-farmer-hero-640\.webp 640w/);
   });

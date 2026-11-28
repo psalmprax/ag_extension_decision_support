@@ -96,7 +96,7 @@ describe('TalkingAssistant Component', () => {
   it('starts collapsed and focuses the composer when opened', async () => {
     render(<TalkingAssistant />);
 
-    const launcher = screen.getByRole('button', { name: /Open agronomic assistant/i });
+    const launcher = screen.getByRole('button', { name: /Open the assistant/i });
     expect(launcher).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     fireEvent.click(launcher);
@@ -108,7 +108,7 @@ describe('TalkingAssistant Component', () => {
   it('dismisses with Escape and restores launcher focus', async () => {
     render(<TalkingAssistant />);
 
-    const launcher = screen.getByRole('button', { name: /Open agronomic assistant/i });
+    const launcher = screen.getByRole('button', { name: /Open the assistant/i });
     fireEvent.click(launcher);
     fireEvent.keyDown(window, { key: 'Escape' });
 
@@ -120,7 +120,7 @@ describe('TalkingAssistant Component', () => {
   it('renders assistant welcome message and sample question chips', () => {
     render(<TalkingAssistant defaultOpen />);
 
-    expect(screen.getByText(/AI Agronomic Extension Assistant/i)).toBeInTheDocument();
+    expect(screen.getByText(/GPExts farm assistant/i)).toBeInTheDocument();
     expect(screen.getByText(/Fall Armyworm bio-control/i)).toBeInTheDocument();
     expect(screen.getByText(/Acidic Soil Remediation/i)).toBeInTheDocument();
   });
@@ -141,7 +141,7 @@ describe('TalkingAssistant Component', () => {
       expect(screen.getByText(/^Fall Armyworm$/i)).toBeInTheDocument();
     });
 
-    const input = screen.getByPlaceholderText(/Ask about crop diagnosis/i);
+    const input = screen.getByPlaceholderText(/Ask about crops, pests, soil or the weather/i);
     fireEvent.change(input, { target: { value: 'What dosage should I use for 3 acres?' } });
     fireEvent.submit(input.closest('form')!);
 
@@ -171,7 +171,7 @@ describe('TalkingAssistant Component', () => {
     });
 
     // Turn 2: Query lime for acidic soil
-    const input = screen.getByPlaceholderText(/Ask about crop diagnosis/i);
+    const input = screen.getByPlaceholderText(/Ask about crops, pests, soil or the weather/i);
     fireEvent.change(input, { target: { value: 'How much lime should I apply for acidic soil?' } });
     fireEvent.submit(input.closest('form')!);
 
@@ -208,7 +208,7 @@ describe('TalkingAssistant Component', () => {
 
     render(<TalkingAssistant defaultOpen />);
 
-    const input = screen.getByPlaceholderText(/Ask about crop diagnosis/i);
+    const input = screen.getByPlaceholderText(/Ask about crops, pests, soil or the weather/i);
     fireEvent.change(input, { target: { value: 'Can I use push-pull intercropping with desmodium?' } });
     fireEvent.submit(input.closest('form')!);
 
@@ -239,13 +239,13 @@ describe('TalkingAssistant Component', () => {
 
     render(<TalkingAssistant defaultOpen />);
 
-    const input = screen.getByPlaceholderText(/Ask about crop diagnosis/i);
+    const input = screen.getByPlaceholderText(/Ask about crops, pests, soil or the weather/i);
     fireEvent.change(input, { target: { value: 'Novel question exceeding rate limit' } });
     fireEvent.submit(input.closest('form')!);
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Demo rate limit reached \(10 queries\/hour\)/i)
+        screen.getByText(/Demo limit reached \(10 questions an hour\)/i)
       ).toBeInTheDocument();
     });
   });
@@ -365,11 +365,11 @@ describe('TalkingAssistant Component', () => {
     render(<TalkingAssistant defaultOpen />);
     fireEvent.click(screen.getByRole('tab', { name: 'Voice' }));
 
-    const orb = screen.getByLabelText(/Start speaking voice inquiry/i);
+    const orb = screen.getByLabelText(/Tap to speak/i);
     fireEvent.click(orb);
 
     if (action === 'pending') {
-      fireEvent.click(screen.getByRole('button', { name: /Close agronomic assistant/i }));
+      fireEvent.click(screen.getByRole('button', { name: /Close the assistant/i }));
       releasePermission?.(mockStream);
       await waitFor(() => expect(mockTrack.stop).toHaveBeenCalled());
       expect(mockedPost).not.toHaveBeenCalled();
@@ -377,19 +377,19 @@ describe('TalkingAssistant Component', () => {
     }
 
     await waitFor(() => {
-      expect(screen.getAllByLabelText(/Stop recording voice/i).length).toBeGreaterThan(0);
+      expect(screen.getAllByLabelText(/Stop recording/i).length).toBeGreaterThan(0);
     });
     expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalledWith({ audio: true });
 
     if (action === 'dismiss') {
-      fireEvent.click(screen.getByRole('button', { name: /Close agronomic assistant/i }));
+      fireEvent.click(screen.getByRole('button', { name: /Close the assistant/i }));
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
       expect(mockTrack.stop).toHaveBeenCalled();
       expect(mockedPost).not.toHaveBeenCalled();
       return;
     }
 
-    const stopOrbs = screen.getAllByLabelText(/Stop recording voice/i);
+    const stopOrbs = screen.getAllByLabelText(/Stop recording/i);
     fireEvent.click(stopOrbs[0]!);
 
     await waitFor(() => {
@@ -502,7 +502,7 @@ describe('TalkingAssistant Component', () => {
     const input = screen.getByPlaceholderText(/Posez une question sur le diagnostic/i);
     expect(input).toBeInTheDocument();
 
-    const selectDropdown = screen.getByLabelText(/Select voice language/i);
+    const selectDropdown = screen.getByLabelText(/Voice language/i);
     fireEvent.change(selectDropdown, { target: { value: 'es' } });
 
     expect(screen.getByPlaceholderText(/Haga una pregunta sobre diagnóstico/i)).toBeInTheDocument();
@@ -538,14 +538,14 @@ describe('TalkingAssistant Component', () => {
   it('preserves messages when closed and reopened without speaking a pending reply', async () => {
     render(<TalkingAssistant defaultOpen />);
     fireEvent.click(screen.getByText(/Fall Armyworm bio-control/i));
-    fireEvent.click(screen.getByRole('button', { name: /Close agronomic assistant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Close the assistant/i }));
 
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     await new Promise((resolve) => setTimeout(resolve, 350));
     expect(mockSpeak).not.toHaveBeenCalled();
     expect(mockedPost.mock.calls.some(([url]) => url === '/chatbot/public-demo/tts')).toBe(false);
 
-    fireEvent.click(screen.getByRole('button', { name: /Open agronomic assistant/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Open the assistant/i }));
     expect(screen.getByText(/scout leaf whorls at dawn or dusk/i)).toBeInTheDocument();
     expect(screen.getByText(/Active context:/i)).toBeInTheDocument();
   });

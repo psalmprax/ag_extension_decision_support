@@ -14,6 +14,7 @@ import {
   type MemoryEntry,
 } from '../api/memoryService';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { RagKnowledgeGraphCanvas } from '@/components/canvas-ui/RagKnowledgeGraphCanvas';
 import { CardHeading } from '@/components/ui/CardHeading';
 
@@ -126,28 +127,21 @@ function Memory() {
   if (isLoading) {
     return (
       <LoadingHeaderSkeleton
-        title={t('ui_memory_agent_memory_knowledge_engine')}
+        photo="fieldSunrise"
+        title={t('nav_memory')}
         description={t('ui_memory_dynamic_conversational_memory_region')}
       />
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-24">
-      <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-medium text-slate-900 dark:text-white">{t('ui_memory_agent_memory_knowledge_engine')}</h1>
-              </div>
-              <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
-                {t('ui_memory_dynamic_conversational_memory_region')}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
+    <div className="space-y-6 pb-24">
+      <PageHeader
+        photo="fieldSunrise"
+        title={t('nav_memory')}
+        description={t('ui_memory_dynamic_conversational_memory_region')}
+        actions={
+          <>
             {/* KPI Telemetry Chips */}
             <div className="grid grid-cols-3 sm:flex items-center gap-2 w-full sm:w-auto">
               <div className="px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 text-xs text-center sm:text-start">
@@ -184,16 +178,16 @@ function Memory() {
                 <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               </button>
             </div>
-          </div>
-        </div>
-
-        {/* Search & Category Filter Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-5 mt-5 border-t border-slate-200 dark:border-white/5">
+          </>
+        }
+      >
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
           <div className="relative w-full sm:w-96">
             <Search className="absolute start-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 dark:text-white/40" />
             <input
               type="text"
-              placeholder="Search vector keys, semantic values, or categories..."
+              placeholder={t('memory_search_placeholder')}
+              aria-label={t('memory_search_placeholder')}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full ps-10 pe-4 py-2 text-xs rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.02] text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-white/30 focus:ring-1 focus:ring-slate-400 outline-none"
@@ -216,7 +210,7 @@ function Memory() {
             <Filter className="absolute end-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 dark:text-white/40 pointer-events-none" />
           </div>
         </div>
-      </div>
+      </PageHeader>
 
       {/* ── Real-Time Impulse Knowledge Graph ── */}
       <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-4">

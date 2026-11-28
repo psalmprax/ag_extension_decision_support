@@ -14,6 +14,7 @@ import type { ThreadPageProps } from '@/components/chat/threadProps';
 import { useQuery } from '@tanstack/react-query';
 import { fetchFarmerStats } from '@/api/farmerService';
 import { EarlierMessagesButton } from '@/components/chat/EarlierMessagesButton';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 /**
  * The farmer's chat with their extension officer, the in-app counterpart of
@@ -110,21 +111,24 @@ export const FarmerOfficerChatPage: React.FC<ThreadPageProps> = ({
 
   return (
     <div className="flex flex-col h-[calc(100dvh-150px)] md:h-[calc(100vh-140px)] gap-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h2 className="text-lg font-medium text-slate-900 dark:text-white">{t('ui_farmer_officer_chat_page_my_extension_officer')}</h2>
-          <p className="text-sm text-slate-500 dark:text-white/60 flex items-center gap-1.5">
+      <PageHeader
+        photo="officerWithFarmer"
+        title={t('nav_officerchat')}
+        description={
+          <span className="flex items-center gap-1.5">
             <UserCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
             {thread?.officerName ||
               assignedOfficer ||
               t('farmer_chat_no_officer', { defaultValue: 'No officer is assigned to you yet. Your message will reach the next one assigned.' })}
-          </p>
-        </div>
-        <span role="status" className="flex items-center gap-1.5 text-xxs text-slate-500 dark:text-white/50 shrink-0">
-          <span className={`w-1.5 h-1.5 rounded-full ${realtime.connected ? 'bg-emerald-500' : 'bg-slate-400'}`} aria-hidden="true" />
-          {realtime.connected ? t('chat_live_updates', { defaultValue: 'Live updates' }) : t('chat_updates_paused', { defaultValue: 'Updates paused' })}
-        </span>
-      </div>
+          </span>
+        }
+        actions={
+          <span role="status" className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-theme-text-muted">
+            <span className={`w-2 h-2 rounded-full ${realtime.connected ? 'bg-emerald-600' : 'bg-slate-400'}`} aria-hidden="true" />
+            {realtime.connected ? t('chat_live_updates', { defaultValue: 'Live updates' }) : t('chat_updates_paused', { defaultValue: 'Updates paused' })}
+          </span>
+        }
+      />
 
       <div className="flex-1 min-h-0 flex flex-col bg-white dark:bg-theme-bg-secondary/60 border border-slate-200 dark:border-white/10 rounded-xl">
         <div className="flex-1 overflow-y-auto p-4 space-y-3" aria-live="polite">

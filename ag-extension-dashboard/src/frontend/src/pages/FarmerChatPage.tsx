@@ -42,7 +42,6 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
   loadFarmers,
   setShowFarmerModal,
   onDeleteConversation,
-  // eslint-disable-next-line sonarjs/cognitive-complexity
 }) => {
   const { t, language } = useLanguage();
   const isFarmerUser = useAppStore(state => state.user?.role) === 'farmer';
@@ -140,8 +139,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
 
   return (
     <div className="flex flex-col h-[calc(100dvh-150px)] md:h-[calc(100vh-140px)] gap-4 md:gap-6">
-      <PageHeader
-        bare
+      <PageHeader photo="farmerWithPhone"
         title={t('ui_farmer_chat_page_farmer_chat')}
         description={t('chat_subtitle') || 'Messages with your farmers by SMS, WhatsApp and Telegram.'}
         actions={
@@ -280,7 +278,7 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                         }
                       }}
                       className="opacity-0 group-hover:opacity-100 p-2 me-2 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 transition-all border border-rose-500/20"
-                      title="Delete conversation"
+                      title={t('chat_delete_conversation', { defaultValue: 'Delete conversation' })}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
@@ -328,22 +326,21 @@ export const FarmerChatPage: React.FC<FarmerChatPageProps> = ({
                   {onDeleteConversation && (
                     <button
                       onClick={() => {
-                        const name = activeConv.farmerName || activeConv.title || 'this conversation';
-                        if (window.confirm(`Delete conversation with ${name}?`)) {
+                        const name = activeConv.farmerName || activeConv.title;
+                        const question = name
+                          ? t('chat_delete_confirm_named', { name, defaultValue: 'Delete the conversation with {name}?' })
+                          : t('chat_delete_confirm', { defaultValue: 'Delete this conversation?' });
+                        if (window.confirm(question)) {
                           onDeleteConversation(activeConv.id);
                         }
                       }}
-                      className="px-2.5 py-1.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-700 dark:text-rose-300 hover:text-rose-800 dark:hover:text-rose-200 transition-colors border border-rose-500/20 flex items-center gap-1.5 text-xs"
-                      title="Delete conversation"
+                      className="px-2.5 py-1.5 rounded-lg text-slate-600 dark:text-theme-text-secondary hover:bg-rose-500/10 hover:text-rose-700 dark:hover:text-rose-300 transition-colors border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center gap-1.5 text-xs"
+                      title={t('chat_delete_conversation', { defaultValue: 'Delete conversation' })}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
                       <span className="hidden sm:inline">{t('common_delete')}</span>
                     </button>
                   )}
-                  <span className={`w-1.5 h-1.5 rounded-full ${socketConnected ? 'bg-emerald-500 dark:bg-emerald-400' : 'bg-slate-400'}`} aria-hidden="true" />
-                  <span className={`text-xxs hidden lg:inline ${socketConnected ? 'text-emerald-700 dark:text-emerald-400' : 'text-slate-500'}`}>
-                    {socketConnected ? 'Live updates' : 'Updates paused'}
-                  </span>
                 </div>
               </div>
 

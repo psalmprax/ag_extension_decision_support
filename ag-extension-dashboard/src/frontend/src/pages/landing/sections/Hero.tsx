@@ -34,7 +34,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
           src="/images/landing/officer-farmer-hero.webp"
           srcSet="/images/landing/officer-farmer-hero-640.webp 640w, /images/landing/officer-farmer-hero-1024.webp 1024w, /images/landing/officer-farmer-hero.webp 1920w"
           sizes="(max-width: 640px) 640px, (max-width: 1100px) 1024px, 1920px"
-          alt="Agricultural extension officer consulting with a smallholder farmer in a maize field using a digital tablet"
+          alt={t('landing_alt_officer_with_farmer', { defaultValue: 'An extension officer and a farmer looking at a tablet in a maize field' })}
           role="presentation"
           aria-hidden="true"
           width={1920}
@@ -220,7 +220,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
               <div className="relative h-[210px] sm:h-[230px] w-full overflow-hidden bg-white/[0.03]">
                 <img
                   src="/images/landing/maize-leaf-diagnostics.webp"
-                  alt="Illustrative close-up of a maize leaf"
+                  alt={t('landing_alt_leaf_illustration', { defaultValue: 'Illustration of a maize leaf close up' })}
                   className="w-full h-full object-cover object-center filter saturate-110"
                 />
                 <div data-scrim className="absolute inset-0 bg-gradient-to-t from-[#0d1a14] via-transparent to-black/30" />
@@ -335,7 +335,7 @@ export function Hero({ heroY, heroOpacity }: { heroY: MotionValue<number>; heroO
             <div className="w-14 h-14 rounded-xl overflow-hidden shrink-0 border border-emerald-400/30">
               <img
                 src="/images/landing/farmer-in-field-phone.webp"
-                alt="Real smallholder farmer using smartphone in maize field"
+                alt={t('landing_alt_farmer_phone', { defaultValue: 'A farmer using a phone in her maize field' })}
                 width={120}
                 height={120}
                 className="w-full h-full object-cover object-top"

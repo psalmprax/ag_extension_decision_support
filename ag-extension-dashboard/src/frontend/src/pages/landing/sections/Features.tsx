@@ -42,7 +42,7 @@ export function Features() {
                 <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-[#0d1a14]">
                   <img
                     src="/images/landing/farmer-inspecting-ear.webp"
-                    alt="African smallholder farmer inspecting healthy maize crop in field"
+                    alt={t('landing_alt_farmer_inspecting', { defaultValue: 'A farmer checking her maize' })}
                     width={600}
                     height={450}
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
@@ -98,7 +98,7 @@ export function Features() {
                 <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-[#0d1a14]">
                   <img
                     src="/images/landing/persona-officer.webp"
-                    alt="Field extension officer diagnosing crop leaf health in the field with mobile AI app"
+                    alt={t('landing_alt_officer_scanning', { defaultValue: 'An extension officer photographing a maize leaf with a phone' })}
                     width={600}
                     height={450}
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
@@ -154,7 +154,7 @@ export function Features() {
                 <div className="relative aspect-[16/11] sm:aspect-[4/3] w-full overflow-hidden bg-[#0d1a14]">
                   <img
                     src="/images/landing/persona-manager.webp"
-                    alt="Regional agribusiness manager analyzing yield analytics and field operations on dashboard"
+                    alt={t('landing_alt_manager_dashboard', { defaultValue: 'A manager reviewing field maps and yields on screens' })}
                     width={600}
                     height={450}
                     className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-700 filter brightness-95 group-hover:brightness-100"
