@@ -204,10 +204,19 @@ The dashboard is the first screen after sign-in and answers one question: what n
 | Metric cards | Farmers, active conversations, visits this month, satisfaction | Compare against last month; open the menu item behind a number for details |
 | Farm locations | Registered farmers plotted by location and crop | Select a marker to see the farmer, field size and estimated yield |
 | Rain and temperature | Measured weather for your area | Add your location to your profile if the card asks for it |
+| Alerts to review | Crop stress seen from space and possible outbreaks near your farmers, with the measurements | Check the farm, then write your own message and choose **Send to my farmers**, or **Dismiss** |
 | Advisories | Planting, weather and pest alerts sent to farmers | Check what farmers have already received before sending more |
 | Follow-ups | Whether advice worked | Record the outcome after a follow-up visit |
 
 Numbers are computed from records you can open. If a card shows zero or a dash, check the zone filter before assuming data is missing; a dash means nothing has been recorded yet, not zero.
+
+At 06:00 your time the app also leaves a short note ("Your day") with visits in the next 24 hours, overdue visits, follow-ups due and new alerts about your farmers.
+
+### Alerts farmers receive
+
+Some alerts reach farmers without an officer, because they only state a forecast: severe weather for their farm today or tomorrow, and moderate or heavier rain in the days before a harvest is due. Farmers get them on the channel they last used, in their language, at most twice a day, only between 06:00 and 20:00 their time, and never after they send STOP. Texting farmers costs money per message, so an administrator switches it on.
+
+Crop stress and possible outbreaks never go to farmers as they stand. They wait in **Alerts to review** until an officer has checked and written to the farmers in their own words.
 
 ## Farmer dashboard
 
@@ -295,6 +304,7 @@ The page summarises the total cultivated area, active crop timelines and harvest
 - **Boundary and area** - the outline, number of corners and measured area.
 - **Soil tests** - results over the years, including organic carbon.
 - **Satellite indices and weather** - vegetation and moisture indices with the observation date, and measured weather.
+- **Satellite** (from Digital Earth Africa, free) - last month's rain against the same month in earlier years, crop greenness against its 1984–2020 normal, how often the spot has been seen under water since 1984, whether it was mapped as cropland in 2019, and what ESA WorldCereal mapped there in 2021. Each fact names its source.
 
 > Satellite and soil modules state their own data status. A modelled estimate is labelled as modelled; a proxy measurement is labelled as a proxy. Never present an estimate as a field sensor reading in a report.
 

@@ -1,8 +1,8 @@
 /**
  * Alerts to the farmers they concern, by the channel each farmer last used (SMS otherwise).
  *
- * Only alerts marked notify_farmers go out: forecast severe weather (a statement of the
- * forecast, no advice) and alerts an officer chose to send. Alerts written by the AI alert
+ * Only alerts marked notify_farmers go out: forecast severe weather and rain before a harvest
+ * (statements of the forecast, no advice) and alerts an officer chose to send. Alerts written by the AI alert
  * tool never are, because their text carries the tool's own recommendations.
  *
  * Off unless FARMER_ALERTS_ENABLED=true: every SMS is paid for. A farmer gets each alert at
@@ -66,6 +66,19 @@ export function noticeFor(delivery: PendingDelivery): { key: NoticeKey; vars: No
                 date: date ? visitDateText(new Date(`${date}T12:00:00Z`), farmer.language, farmer.country) : '',
                 condition: weatherConditionText(condition, farmer.language),
                 mm: hasRain ? String(rain) : '',
+            }),
+        };
+    }
+    if (delivery.type === 'harvest_rain') {
+        const date = text(details, 'date');
+        const harvest = text(details, 'harvestDate');
+        return {
+            key: 'harvest_rain',
+            vars: farmer => ({
+                date: date ? visitDateText(new Date(`${date}T12:00:00Z`), farmer.language, farmer.country) : '',
+                harvest: harvest ? visitDateText(new Date(`${harvest}T12:00:00Z`), farmer.language, farmer.country) : '',
+                condition: weatherConditionText(text(details, 'condition') ?? 'Moderate rain', farmer.language),
+                crop: text(details, 'crop') ?? '',
             }),
         };
     }

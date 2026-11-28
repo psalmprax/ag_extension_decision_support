@@ -1,6 +1,7 @@
 jest.mock('@/services/databaseService', () => ({ query: jest.fn() }));
 jest.mock('@/services/notificationService', () => ({ notificationService: { send: jest.fn().mockResolvedValue(true) } }));
 jest.mock('@/services/weatherService', () => ({ WeatherService: { getByCoordinates: jest.fn(), getByLocation: jest.fn() } }));
+jest.mock('@/services/deafrica/satelliteFacts', () => ({ floodHistory: jest.fn().mockResolvedValue(null) }));
 jest.mock('@/services/notify/farmerNotices', () => ({
     ...jest.requireActual('@/services/notify/farmerNotices'),
     sendFarmerNotice: jest.fn().mockResolvedValue('sent'),

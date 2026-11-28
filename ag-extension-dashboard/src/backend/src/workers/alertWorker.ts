@@ -4,6 +4,9 @@ import { query } from '../services/databaseService';
 import { checkSevereWeather } from '../services/alerts/weatherAlerts';
 import { deliverFarmerAlerts } from '../services/alerts/farmerAlertDelivery';
 import { sendOfficerDigests } from '../services/alerts/officerDigest';
+import { checkHarvestRain } from '../services/alerts/harvestRainAlerts';
+import { checkCropStress } from '../services/alerts/cropStressAlerts';
+import { checkOutbreakSpread } from '../services/alerts/outbreakAlerts';
 import { runIfLeader } from '../services/leaderElection';
 
 /**
@@ -16,6 +19,8 @@ import { runIfLeader } from '../services/leaderElection';
  * - Severe weather in the forecast for each farm, hourly (services/alerts/weatherAlerts)
  * - Alerts to the farmers themselves, when FARMER_ALERTS_ENABLED (services/alerts/farmerAlertDelivery)
  * - The officer's morning digest at 06:00 local time (services/alerts/officerDigest)
+ * - Rain before a due harvest (hourly), crop stress from satellite greenness and outbreak
+ *   spread (daily) — the last two for officers to review (services/alerts/*)
  * - Subscription expiry warnings
  * - Chatbot low satisfaction alerts
  * - Payment due reminders
@@ -52,6 +57,7 @@ async function runAlertChecks(): Promise<void> {
             checkWeatherAlerts(),
             checkFarmerAlerts(),
             checkOfficerDigests(),
+            checkPrevention(),
             checkSubscriptionExpiry(),
             lapseExpiredSubscriptions(),
             checkChatbotSatisfaction(),
@@ -72,8 +78,24 @@ async function checkWeatherAlerts(): Promise<void> {
     lastWeatherCheck = Date.now();
     try {
         await checkSevereWeather();
+        await checkHarvestRain();
     } catch (error) {
         logger.error('Error checking severe weather:', error);
+    }
+}
+
+/** Satellite months and two-week outbreak windows move slowly: once a day is enough. */
+const PREVENTION_CHECK_EVERY_MS = 24 * 60 * 60 * 1000;
+let lastPreventionCheck = 0;
+
+async function checkPrevention(): Promise<void> {
+    if (Date.now() - lastPreventionCheck < PREVENTION_CHECK_EVERY_MS) return;
+    lastPreventionCheck = Date.now();
+    try {
+        await checkOutbreakSpread();
+        await checkCropStress();
+    } catch (error) {
+        logger.error('Error running prevention checks:', error);
     }
 }
 

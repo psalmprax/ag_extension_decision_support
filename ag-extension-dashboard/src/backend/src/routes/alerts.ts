@@ -6,6 +6,8 @@ import { sendSuccess, sendCreated, sendForbidden, sendError } from '@/utils/resp
 import { getPrincipalTenantId } from '@/services/dataGovernanceService';
 import { z } from 'zod';
 import { validate } from '@/middleware/validate';
+import { isUuid } from '@/utils/uuid';
+import { alertsToReview, sendReviewedAlert, MESSAGE_MAX } from '@/services/alerts/alertReview';
 
 /** What an alert needs: a kind and a title; everything else is optional. */
 const createAlertBody = z.object({
@@ -131,6 +133,33 @@ router.post('/', authorize(['extension_officer', 'admin']), validate({ body: cre
     } catch (error) {
         logger.error('Error creating alert:', error);
         sendError(res, 500, 'Failed to create alert');
+    }
+});
+
+const sendToFarmersBody = z.object({ message: z.string().trim().min(3).max(MESSAGE_MAX) });
+
+// Alerts waiting for an officer's look before farmers hear (crop stress, possible outbreaks)
+router.get('/review', authorize(['extension_officer', 'admin']), async (req: Request, res: Response) => {
+    try {
+        sendSuccess(res, await alertsToReview(req.user as AlertPrincipal));
+    } catch (error) {
+        logger.error('Error listing alerts to review:', error);
+        sendError(res, 500, 'Failed to list alerts to review');
+    }
+});
+
+// The officer's own message about a reviewed alert, to their farmers among those named
+router.post('/:id/send-to-farmers', authorize(['extension_officer', 'admin']), validate({ body: sendToFarmersBody }), async (req: Request, res: Response) => {
+    if (!isUuid(req.params.id)) return sendError(res, 404, 'Alert not found');
+    try {
+        const result = await sendReviewedAlert(req.params.id, req.user as AlertPrincipal, req.body.message);
+        if (result.status === 'not_found') return sendError(res, 404, 'Alert not found');
+        if (result.status === 'no_farmers') return sendForbidden(res, 'None of the farmers named are yours');
+        if (result.status === 'already_sent') return sendError(res, 409, 'You have already sent a message about this alert');
+        sendCreated(res, result);
+    } catch (error) {
+        logger.error('Error sending reviewed alert:', error);
+        sendError(res, 500, 'Failed to send the message');
     }
 });
 

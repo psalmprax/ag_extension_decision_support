@@ -1,6 +1,6 @@
 import React from 'react';
 import { appLocale } from '@/lib/appLocale';
-import { CheckCircle, CloudSun, Edit, FlaskConical, Info, Sprout, Trash2 } from 'lucide-react';
+import { CheckCircle, CloudSun, Edit, FlaskConical, Info, Satellite, Sprout, Trash2 } from 'lucide-react';
 import type { Field, CropCycle } from '@/api/fieldService';
 import { FarmPlanSection } from '@/components/fieldtools/FarmPlanSection';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -95,6 +95,10 @@ export const FieldCard: React.FC<FieldCardProps> = ({ field, cardClass, onEdit, 
           <button type="button" onClick={() => onOpenRecords(field, 'weather')} className={RECORD_BUTTON}>
             <CloudSun className="w-4 h-4" aria-hidden="true" />
             {t('field_records_weather', { defaultValue: 'Weather' })}
+          </button>
+          <button type="button" onClick={() => onOpenRecords(field, 'satellite')} className={RECORD_BUTTON}>
+            <Satellite className="w-4 h-4" aria-hidden="true" />
+            {t('field_records_satellite', { defaultValue: 'Satellite' })}
           </button>
         </div>
 

@@ -9,13 +9,15 @@
  *
  * Alerts are marked notify_farmers: they state a forecast and give no advice, so
  * farmerAlertDelivery may text them. Officers hear through the alert worker's alert
- * check; regional managers are told here when an alert is new.
+ * check; regional managers are told here when an alert is new. For rain, the alert adds how
+ * many of the area's farms satellites have seen under water since 1984 (WOfS), for officers.
  */
 import { createHash } from 'crypto';
 import { query } from '@/services/databaseService';
 import { notificationService } from '@/services/notificationService';
 import { WeatherService, type WeatherData } from '@/services/weatherService';
 import { logger } from '@/utils/logger';
+import { floodHistory } from '@/services/deafrica/satelliteFacts';
 
 /** Worst first: the condition named when a day has several. */
 export const SEVERE_CONDITIONS = ['Thunderstorm with hail', 'Violent rain showers', 'Thunderstorm', 'Heavy rain', 'Heavy snow'] as const;
@@ -42,6 +44,8 @@ export interface FarmGroup {
     country: string | null;
     region: string | null;
     farmerIds: string[];
+    /** The farms' own coordinates, for the flood history. */
+    farmPoints: Array<{ lat: number; lng: number }>;
 }
 
 function mostCommon(values: Array<string | null>): string | null {
@@ -75,6 +79,11 @@ export function groupFarms(farms: WeatherFarm[]): FarmGroup[] {
         country: mostCommon(members.map(f => f.country)),
         region: mostCommon(members.map(f => f.region)),
         farmerIds: members.map(f => f.id),
+        farmPoints: members.flatMap(f => {
+            const lat = Number(f.location_lat);
+            const lng = Number(f.location_lng);
+            return f.location_lat !== null && f.location_lng !== null && Number.isFinite(lat) && Number.isFinite(lng) ? [{ lat, lng }] : [];
+        }),
     }));
 }
 
@@ -94,9 +103,32 @@ async function forecastFor(group: FarmGroup): Promise<WeatherData> {
     return WeatherService.getByLocation(group.country ? `${group.place}, ${group.country}` : group.place);
 }
 
+/** Conditions that bring water onto fields, for which the flood history is worth adding. */
+const WET_CONDITIONS = new Set<string>(['Heavy rain', 'Violent rain showers', 'Thunderstorm', 'Thunderstorm with hail']);
+const FLOOD_POINTS_PER_AREA = 20;
+
+export interface AreaFloodHistory { farmsSeenWet: number; farmsChecked: number }
+
+/** How many of the area's farms satellites have seen under water at least once since 1984 (WOfS). */
+export async function areaFloodHistory(points: FarmGroup['farmPoints']): Promise<AreaFloodHistory | null> {
+    let checked = 0;
+    let wet = 0;
+    for (const point of points.slice(0, FLOOD_POINTS_PER_AREA)) {
+        const history = await floodHistory(point.lat, point.lng);
+        if (!history) continue;
+        checked++;
+        if (history.frequency > 0) wet++;
+    }
+    return checked > 0 ? { farmsSeenWet: wet, farmsChecked: checked } : null;
+}
+
 async function recordAlert(group: FarmGroup, day: SevereDay): Promise<string | null> {
     const dedupeKey = `weather:${day.date}:${createHash('sha256').update(group.key).digest('hex').slice(0, 24)}`;
     const rain = day.rainMm !== null ? `, about ${day.rainMm} mm of rain` : '';
+    const flood = WET_CONDITIONS.has(day.condition) ? await areaFloodHistory(group.farmPoints) : null;
+    const floodText = flood
+        ? ` Satellites have seen water at ${flood.farmsSeenWet} of ${flood.farmsChecked} farm(s) here since 1984 (WOfS, Digital Earth Africa).`
+        : '';
     const { rows } = await query<{ id: string }>(
         `INSERT INTO alerts (type, severity, title, description, location, affected_farmers, tenant_id, is_active, triggered_at,
                              notify_farmers, dedupe_key, expires_at, details)
@@ -106,13 +138,13 @@ async function recordAlert(group: FarmGroup, day: SevereDay): Promise<string | n
         [
             HIGH_SEVERITY.has(day.condition) ? 'high' : 'medium',
             `${day.condition} forecast for ${group.place} on ${day.date}`,
-            `Open-Meteo forecast for ${day.date}: ${day.condition}${rain}. ${group.farmerIds.length} farm(s) in the area.`,
+            `Open-Meteo forecast for ${day.date}: ${day.condition}${rain}. ${group.farmerIds.length} farm(s) in the area.${floodText}`,
             group.region ?? group.place,
             group.farmerIds,
             group.tenantId,
             dedupeKey,
             day.date,
-            JSON.stringify({ source: 'Open-Meteo', date: day.date, condition: day.condition, rainMm: day.rainMm }),
+            JSON.stringify({ source: 'Open-Meteo', date: day.date, condition: day.condition, rainMm: day.rainMm, ...(flood ? { floodHistory: flood } : {}) }),
         ],
     );
     return rows[0]?.id ?? null;

@@ -25,12 +25,7 @@ import { farmerCoordinates } from '@/lib/farmerLocation';
 import apiClient from '@/api/client';
 import { LiveActivityStream } from '@/components/LiveActivityStream';
 import { RecentWeatherCard } from '@/components/RecentWeatherCard';
-import { EfficacyCard } from '@/components/efficacy/EfficacyCard';
-import { AdvisoriesCard } from '@/components/advisories/AdvisoriesCard';
-import { FieldToolsCard } from '@/components/fieldtools/FieldToolsCard';
-import { LeaderboardCard } from '@/components/fieldtools/FieldIntelCards';
 import { OutbreakBanner } from '@/components/outbreaks/OutbreakBanner';
-import { OutreachDeliveryWidget } from '@/components/campaigns/OutreachDeliveryWidget';
 import { useDemoMode } from '@/demo';
 import { DashboardHeader } from './DashboardHeader';
 import type { PerformanceData } from '@/api/analyticsService';
@@ -39,6 +34,7 @@ import { DistributionPanels } from '@/components/dashboard/DistributionPanels';
 import { DashboardToolbar } from '@/components/dashboard/DashboardToolbar';
 import { useZoneFarmers } from '@/hooks/useDashboardZone';
 import { SoilClimateSampleCard } from '@/components/dashboard/SoilClimateSampleCard';
+import { FieldOperationsGrid } from '@/components/dashboard/FieldOperationsGrid';
 import { formatLabel } from '@/lib/formatLabel';
 import { CardHeading } from '@/components/ui/CardHeading';
 
@@ -542,22 +538,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
         </div>
       </div>
 
-      {/* Balanced Agronomic Intelligence & Field Operations Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-        <div className="space-y-4 sm:space-y-6">
-          <FieldToolsCard />
-          <LeaderboardCard />
-        </div>
-        <div className="space-y-4 sm:space-y-6">
-          <AdvisoriesCard />
-          <EfficacyCard />
-        </div>
-        <div className="space-y-4 sm:space-y-6">
-          <OutreachDeliveryWidget />
-          {isAdmin && <ActivePulseCard cardClass={cardClass} isLoading={isLoading} />}
-          {!isAdmin && isDemo && <SoilClimateSampleCard cardClass={cardClass} />}
-        </div>
-      </div>
+      <FieldOperationsGrid
+        showReview={isOfficer || isAdmin}
+        extra={isAdmin ? <ActivePulseCard cardClass={cardClass} isLoading={isLoading} /> : isDemo ? <SoilClimateSampleCard cardClass={cardClass} /> : null}
+      />
 
       {/* KnockKnock-style Real-Time Intelligence & Severity Stream */}
       <div className="mb-6 sm:mb-8">

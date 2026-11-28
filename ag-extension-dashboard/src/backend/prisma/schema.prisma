@@ -551,6 +551,23 @@ model AlertDelivery {
   @@map("alert_deliveries")
 }
 
+/// A Digital Earth Africa point value: one layer, one point, one date ("latest" for the newest).
+model SatelliteReading {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  layer          String   @db.VarChar(60)
+  pointKey       String   @map("point_key") @db.VarChar(40)
+  /// YYYY-MM-DD asked for, or "latest"
+  requestedOn    String   @map("requested_on") @db.VarChar(10)
+  /// The date the service answered for; null when it had no data there
+  observedOn     String?  @map("observed_on") @db.VarChar(10)
+  bands          Json?
+  availableDates Json?    @map("available_dates")
+  fetchedAt      DateTime @default(now()) @map("fetched_at") @db.Timestamp(6)
+
+  @@unique([layer, pointKey, requestedOn])
+  @@map("satellite_readings")
+}
+
 model SubscriptionPlan {
   id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   name        String   @db.VarChar(100)

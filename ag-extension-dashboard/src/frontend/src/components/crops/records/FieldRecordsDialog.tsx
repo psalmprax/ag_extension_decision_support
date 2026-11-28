@@ -1,5 +1,5 @@
 import React from 'react';
-import { CloudSun, FlaskConical, X } from 'lucide-react';
+import { CloudSun, FlaskConical, Satellite, X } from 'lucide-react';
 import type { Field } from '@/api/fieldService';
 import { Dialog, DialogTitle } from '@/components/ui/Dialog';
 import { TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
@@ -7,9 +7,10 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { uuidSchema } from '@ag-extension/shared/api';
 import { SoilTestsPanel } from './SoilTestsPanel';
 import { FieldWeatherPanel } from './FieldWeatherPanel';
+import { FieldSatellitePanel } from './FieldSatellitePanel';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
 
-export type FieldRecordsTab = 'soil' | 'weather';
+export type FieldRecordsTab = 'soil' | 'weather' | 'satellite';
 
 interface FieldRecordsDialogProps {
   field: Field;
@@ -18,7 +19,7 @@ interface FieldRecordsDialogProps {
   onClose: () => void;
 }
 
-/** One field's soil tests and weather, in tabs. Demo fields have no saved records. */
+/** One field's soil tests, weather and satellite record, in tabs. Demo fields have no saved records. */
 export const FieldRecordsDialog: React.FC<FieldRecordsDialogProps> = ({ field, tab, onTabChange, onClose }) => {
   const { t } = useLanguage();
   const saved = uuidSchema.safeParse(field.id).success;
@@ -27,6 +28,7 @@ export const FieldRecordsDialog: React.FC<FieldRecordsDialogProps> = ({ field, t
   const tabs: Array<{ id: FieldRecordsTab; label: string; Icon: typeof FlaskConical }> = [
     { id: 'soil', label: t('field_records_soil', { defaultValue: 'Soil tests' }), Icon: FlaskConical },
     { id: 'weather', label: t('field_records_weather', { defaultValue: 'Weather' }), Icon: CloudSun },
+    { id: 'satellite', label: t('field_records_satellite', { defaultValue: 'Satellite' }), Icon: Satellite },
   ];
 
   return (
@@ -55,10 +57,14 @@ export const FieldRecordsDialog: React.FC<FieldRecordsDialogProps> = ({ field, t
             <SoilTestsPanel fieldId={field.id} fieldName={field.name} />
           ) : !online || field.pendingSync ? (
             <p className="py-6 text-sm text-slate-600 dark:text-theme-text-secondary">
-              {t('weather_needs_connection', { defaultValue: 'Weather comes from NASA POWER, so it needs a connection, and a new field has to reach the server first.' })}
+              {tab === 'weather'
+                ? t('weather_needs_connection', { defaultValue: 'Weather comes from NASA POWER, so it needs a connection, and a new field has to reach the server first.' })
+                : t('sat_needs_connection', { defaultValue: 'The satellite record comes from Digital Earth Africa, so it needs a connection, and a new field has to reach the server first.' })}
             </p>
-          ) : (
+          ) : tab === 'weather' ? (
             <FieldWeatherPanel fieldId={field.id} hasLocation={hasLocation} />
+          ) : (
+            <FieldSatellitePanel fieldId={field.id} hasLocation={hasLocation} />
           )}
         </div>
       </div>

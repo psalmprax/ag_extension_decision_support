@@ -90,6 +90,12 @@ const NOTICES = {
         fr: 'Alerte météo pour votre exploitation le {date} : {condition}, environ {mm} mm de pluie (prévision Open-Meteo). Répondez STOP pour ne plus recevoir d\'avis.',
         pt: 'Alerta meteorológico para a sua machamba em {date}: {condition}, cerca de {mm} mm de chuva (previsão Open-Meteo). Responda STOP para deixar de receber avisos.',
     },
+    harvest_rain: {
+        en: 'Rain forecast for your farm on {date}: {condition} (Open-Meteo forecast). Your {crop} harvest is due around {harvest}. Reply STOP to stop notices.',
+        sw: 'Mvua inatarajiwa shambani kwako tarehe {date}: {condition} (utabiri wa Open-Meteo). Mavuno yako ya {crop} yanatarajiwa karibu tarehe {harvest}. Jibu STOP kusitisha taarifa.',
+        fr: 'Pluie prévue sur votre exploitation le {date} : {condition} (prévision Open-Meteo). Votre récolte de {crop} est prévue vers le {harvest}. Répondez STOP pour ne plus recevoir d\'avis.',
+        pt: 'Chuva prevista para a sua machamba em {date}: {condition} (previsão Open-Meteo). A sua colheita de {crop} está prevista para cerca de {harvest}. Responda STOP para deixar de receber avisos.',
+    },
     officer_alert: {
         en: 'Alert from {officer}: {title}. Reply here to ask about it. Reply STOP to stop notices.',
         sw: 'Tahadhari kutoka kwa {officer}: {title}. Jibu hapa kuuliza zaidi. Jibu STOP kusitisha taarifa.',
@@ -98,8 +104,10 @@ const NOTICES = {
     },
 } as const satisfies Record<string, Record<'en' | 'sw' | 'fr' | 'pt', string>>;
 
-/** The forecast's severe conditions (Open-Meteo weather codes 65, 75, 82, 95, 96) as farmers read them. */
+/** The forecast's rain and severe conditions (Open-Meteo weather codes 63, 65, 75, 81, 82, 95, 96) as farmers read them. */
 const WEATHER_WORDS: Record<string, Record<'en' | 'sw' | 'fr' | 'pt', string>> = {
+    'Moderate rain': { en: 'moderate rain', sw: 'mvua ya wastani', fr: 'pluie modérée', pt: 'chuva moderada' },
+    'Moderate rain showers': { en: 'moderate rain showers', sw: 'manyunyu ya wastani', fr: 'averses modérées', pt: 'aguaceiros moderados' },
     'Heavy rain': { en: 'heavy rain', sw: 'mvua kubwa', fr: 'fortes pluies', pt: 'chuva forte' },
     'Violent rain showers': { en: 'violent rain showers', sw: 'mvua kubwa za ghafla', fr: 'averses violentes', pt: 'aguaceiros violentos' },
     Thunderstorm: { en: 'thunderstorm', sw: 'radi na dhoruba', fr: 'orages', pt: 'trovoada' },

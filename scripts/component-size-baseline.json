@@ -27,7 +27,7 @@
   "components/forms/VisitSynthesisForm.tsx": 668,
   "components/ui/InfoPrompt.tsx": 568,
   "pages/AdvisoryStudioPage.tsx": 347,
-  "pages/DashboardPage.tsx": 575,
+  "pages/DashboardPage.tsx": 559,
   "pages/DemoPage.tsx": 395,
   "pages/FarmerChatPage.tsx": 434,
   "pages/Memory.tsx": 484,
