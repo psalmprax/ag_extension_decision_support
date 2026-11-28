@@ -1,6 +1,6 @@
 import { expect, test, type BrowserContext, type Page } from '@playwright/test';
 import { SEEDED } from '../helpers/auth';
-import { JOURNEY, apiAs, openMenu, signedIn } from '../helpers/journey';
+import { JOURNEY, apiAs, expectPaymentsSwitchedOff, openMenu, signedIn } from '../helpers/journey';
 import { AI_UNAVAILABLE, CANNED_AI, apiData, statTile } from './menuStories';
 
 /**
@@ -180,11 +180,8 @@ test.describe('an extension officer works through every menu page', () => {
     await expect(page.getByText(/Sources|No sources matched|not available right now|is unavailable/).first()).toBeVisible();
   });
 
-  test('Billing: shows my real plan, and no administrator-only setup notices', async ({ request }) => {
-    const subscription = await apiData<{ plan?: { name: string } } | null>(request, officer, '/api/billing/subscription');
-    await openMenu(page, 'Billing & subscription');
-    await expect(page.getByText(`Plan: ${subscription?.plan?.name ?? 'Free'}`).first()).toBeVisible();
-    await expect(page.getByText(/Stripe or PayPal keys|updating our payment gateways/)).toHaveCount(0);
+  test('Billing: still opens for my paid plan, but nothing can be bought while payments are off', async ({ request }) => {
+    await expectPaymentsSwitchedOff(page, request, officer);
   });
 
   test('Advisory Studio: a saved protocol is still there after a reload', async ({ request }) => {

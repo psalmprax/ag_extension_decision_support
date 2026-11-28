@@ -3,11 +3,9 @@ import { Farmer, Visit, DashboardData } from '@/types/dashboard';
 import { Report } from '@/api/reportService';
 import { PlanUpgradeGuard } from '@/components/PlanUpgradeGuard';
 import type { PerformanceData } from '@/api/analyticsService';
-
 import { DashboardLoadError } from '@/components/DashboardLoadError';
 import { threadProps, type ThreadHistory } from './chat/threadProps';
 import { useLanguage } from '@/lib/LanguageContext';
-
 const DashboardPage = React.lazy(() =>
   import('@/pages/DashboardPage').then(m => ({ default: m.DashboardPage }))
 );
@@ -188,29 +186,29 @@ export function TabContent(props: TabContentProps) {
       );
     case 'reports':
       return (
-        <ReportsPage
-          reports={props.reports as unknown as Report[]}
-          handleGenerateReport={props.handleGenerateReport}
-          isGeneratingReport={props.isGeneratingReport}
-          viewingReport={props.viewingReport}
-          setViewingReport={props.setViewingReport}
-          reportContent={props.reportContent}
-          setReportContent={props.setReportContent}
-          isLoadingReport={props.isLoadingReport}
-          setIsLoadingReport={props.setIsLoadingReport}
-          addNotification={addNotification}
-          user={user as { firstName?: string; lastName?: string; avatarUrl?: string } | undefined}
-        />
+        <PlanUpgradeGuard category="reports" featureName={t('plan_gate_name_reports', { defaultValue: 'Reports' })}>
+          <ReportsPage
+            reports={props.reports as unknown as Report[]}
+            handleGenerateReport={props.handleGenerateReport}
+            isGeneratingReport={props.isGeneratingReport}
+            viewingReport={props.viewingReport}
+            setViewingReport={props.setViewingReport}
+            reportContent={props.reportContent}
+            setReportContent={props.setReportContent}
+            isLoadingReport={props.isLoadingReport}
+            setIsLoadingReport={props.setIsLoadingReport}
+            addNotification={addNotification}
+            user={user as { firstName?: string; lastName?: string; avatarUrl?: string } | undefined}
+          />
+        </PlanUpgradeGuard>
       );
     case 'analytics':
       return (
         <PlanUpgradeGuard category="analytics" featureName={t('plan_gate_name_analytics', { defaultValue: 'Analytics' })}>
-          <AnalyticsPage
-            performanceData={props.performanceData}
-          />
+          <AnalyticsPage performanceData={props.performanceData} />
         </PlanUpgradeGuard>
       );
-    case 'billing':
+    case 'billing': // while billing is off only admins have it in their menu (plan grants, payment keys)
       return <BillingDashboard />;
     case 'knowledge':
       return <KnowledgeBase />;
@@ -272,7 +270,7 @@ export function TabContent(props: TabContentProps) {
         </PlanUpgradeGuard>
       );
     case 'fields':
-      return <CropsFields />;
+      return <PlanUpgradeGuard category="fields" featureName={t('plan_gate_name_fields', { defaultValue: 'Crops & fields' })}><CropsFields /></PlanUpgradeGuard>;
     case 'memory':
       return <Memory />;
     case 'email_workflows':

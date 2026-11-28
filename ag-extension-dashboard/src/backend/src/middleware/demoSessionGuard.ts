@@ -44,7 +44,6 @@ export const DEMO_WRITES: ReadonlySet<string> = new Set([
   '/chatbot/public-demo', // the landing-page assistant, public anyway
   '/chatbot/public-demo/stt',
   '/chatbot/public-demo/tts',
-  '/knowledge/ask', // knowledge-base answers, with the demo's daily quota
 ]);
 
 /**

@@ -173,3 +173,21 @@ export function imageSizeOf(image: Buffer | string): { width: number; height: nu
   }
   throw new Error('image size not found');
 }
+
+/**
+ * While billing is switched off (ag-extension-shared/src/api/billingSwitch.ts), for an account
+ * on a paid plan: Billing still opens (to see invoices, manage or cancel the subscription),
+ * but nothing can be bought there, and the server refuses to start a subscription.
+ */
+export async function expectPaymentsSwitchedOff(page: Page, request: APIRequestContext, email: string): Promise<void> {
+  await openMenu(page, 'Billing & subscription');
+  await expect(page.getByText(/Payments are switched off while pricing is decided/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Plans & pricing' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Payment methods' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Invoices & receipts' })).toBeVisible();
+
+  const api = await apiAs(request, email);
+  const refused = await api.post('/api/v1/billing/subscribe', { planId: 'pro' });
+  expect(refused.status()).toBe(403);
+  expect(await refused.json()).toMatchObject({ code: 'BILLING_DISABLED' });
+}

@@ -21,6 +21,7 @@ import { findCountry } from '@/shared-api/countries';
 import { toE164 } from '@/services/country/phone';
 import { clientIpOf } from '@/utils/clientIp';
 import { registerIpRateLimit, signupHumanCheck, issueSignupChallenge } from '@/middleware/botDefense';
+import { recordDemoVisit } from '@/services/demoVisits';
 
 const router = Router();
 
@@ -275,6 +276,8 @@ router.post('/demo', async (req: Request, res: Response) => {
         }).catch(err => logger.warn(`Session for demo user ${user.id} could not be persisted:`, err));
 
         setAuthCookie(res, token);
+        // Roughly who opened the demo (country, region, city, shortened IP); never blocks the sign-in.
+        void recordDemoVisit({ ip, headers: req.headers, userAgent: req.get('user-agent') });
 
         res.json({
             success: true,

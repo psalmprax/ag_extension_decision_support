@@ -427,13 +427,14 @@ class UsageService {
         dailyKnowledge: { current: number; limit: number; remaining: number }
     ): Array<{ type: string; current: number; limit: number; remaining?: number; label: string }> {
         const usageTypes: Array<{ type: UsageType; label: string }> = [
-            { type: 'knowledge', label: 'DAILY KNOWLEDGE SEARCHES (FREE 3/DAY)' },
-            { type: 'ai_chat', label: 'AI ADVISOR CREDITS' },
-            { type: 'sms', label: 'SMS BROADCASTS' },
-            { type: 'report', label: 'ANALYTIC REPORTS' },
-            { type: 'ai_vision', label: 'AI VISION SCANS' },
-            { type: 'speech', label: 'SPEECH MINUTES' },
-            { type: 'whatsapp', label: 'WHATSAPP BROADCASTS' },
+            // Sentence case, as shown (the app may translate them by type).
+            { type: 'knowledge', label: 'Knowledge searches today' },
+            { type: 'ai_chat', label: 'AI agronomist questions' },
+            { type: 'sms', label: 'SMS messages' },
+            { type: 'report', label: 'Reports' },
+            { type: 'ai_vision', label: 'Photo checks' },
+            { type: 'speech', label: 'Speech minutes' },
+            { type: 'whatsapp', label: 'WhatsApp messages' },
         ];
         return usageTypes.map(({ type, label }) => ({
             type,

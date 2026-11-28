@@ -10,11 +10,14 @@ jest.mock('@/services/knowledgeService', () => ({
 }));
 jest.mock('@/services/usageService', () => ({
     usageService: {
+        // AI answers are a paid service: most tests here are for an account that has it.
+        isFreeUser: jest.fn().mockResolvedValue(false),
         checkDailyKnowledgeLimit: jest.fn().mockResolvedValue({ allowed: true, remaining: 3, limit: 3 }),
         recordKnowledgeSearch: jest.fn().mockResolvedValue(undefined),
     },
 }));
 jest.mock('@/services/cacheService', () => ({ cacheGet: jest.fn(), cacheSet: jest.fn() }));
+jest.mock('@/services/serviceAccessService', () => ({ hasServiceAccess: jest.fn().mockResolvedValue(false) }));
 jest.mock('@/services/databaseService', () => ({ getPool: jest.fn(), query: jest.fn() }));
 jest.mock('@/services/tavilyService', () => ({ tavilyService: {} }));
 jest.mock('@/utils/logger', () => ({
@@ -31,6 +34,17 @@ app.use('/knowledge', router);
 describe('Knowledge answer availability', () => {
     beforeEach(() => {
         jest.clearAllMocks();
+    });
+
+    it('refuses a Free account without the Knowledge AI grant, before asking or charging anything', async () => {
+        jest.mocked(usageService.isFreeUser).mockResolvedValueOnce(true);
+
+        const res = await request(app).post('/knowledge/ask').send({ question: 'Maize advice' });
+
+        expect(res.status).toBe(403);
+        expect(res.body).toMatchObject({ success: false, upgradeRequired: true });
+        expect(KnowledgeService.askQuestion).not.toHaveBeenCalled();
+        expect(usageService.recordKnowledgeSearch).not.toHaveBeenCalled();
     });
 
     it('returns 503 without charging quota when no answer is available', async () => {

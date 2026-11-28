@@ -43,6 +43,7 @@ import { selfHealingService } from './services/selfHealing';
 // Routes
 import authRoutes from './routes/auth';
 import knowledgeRoutes from './routes/knowledge';
+import demoVisitsRoutes from './routes/demoVisits';
 import knowledgeSourcesRoutes from './routes/knowledgeSources';
 import knowledgeSyncRoutes from './routes/knowledgeSync';
 import chatbotRoutes from './routes/chatbot';
@@ -591,6 +592,7 @@ export const routeMounts: RouteMount[] = [
   { path: '/reporting', router: reportingRoutes },
   { path: '/analytics', router: analyticsRoutes },
   { path: '/portfolio', router: portfolioRoutes },
+  { path: '/demo-visits', router: demoVisitsRoutes }, // admins: who opened the demo, roughly
   { path: '/users', router: serviceAccessRoutes }, // /:id/service-access (system administrator)
   { path: '/users', router: usersRoutes },
   { path: '/farmers', router: farmersRoutes },

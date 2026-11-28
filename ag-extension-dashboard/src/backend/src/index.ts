@@ -177,10 +177,15 @@ async function startScheduledSms() {
         }, Number(process.env.PILOT_FOLLOWUP_POLL_MS || 15 * 60_000));
         pilotTimer.unref?.();
         const { agentTelemetry } = await import('./services/agentTelemetry');
+        const { pruneDemoVisits } = await import('./services/demoVisits');
         telemetryPruneTimer = setInterval(() => {
             runIfLeader('telemetry-prune', () => agentTelemetry.prune())
                 .then(removed => { if (removed) logger.info(`Removed ${removed} AI telemetry events past retention`); })
                 .catch(e => logger.warn('Telemetry prune tick failed:', e));
+            // Demo visits are kept 90 days.
+            runIfLeader('demo-visits-prune', () => pruneDemoVisits())
+                .then(removed => { if (removed) logger.info(`Removed ${removed} demo visits past retention`); })
+                .catch(e => logger.warn('Demo visit prune tick failed:', e));
         }, 60 * 60_000);
         telemetryPruneTimer.unref?.();
         // Partner recordings still waiting for a transcript (e.g. a speech service was down).

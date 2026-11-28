@@ -1,12 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { subscribeUserToPush } from '@/api/pushNotificationService';
+import { isDemoSession } from '@/demo/demoSession';
 import { registerServiceWorker } from '@/lib/swRegistration';
 import { EncryptedStorageService } from '@/services/encryptedStorageService';
 
-export const useAppBootstrap = (storeUser: unknown, setActiveTab: (tab: string) => void) => {
-  const [weatherLocation, setWeatherLocation] = useState<string>(
-    (storeUser as { region?: string })?.region || 'Nairobi, KE'
-  );
+/** The signed-in user's fields that starting the app reads. */
+export interface BootstrapUser {
+  id?: string;
+  email?: string | null;
+  isDemo?: boolean;
+  region?: string | null;
+  country?: string | null;
+}
+
+export const useAppBootstrap = (storeUser: BootstrapUser | null | undefined, setActiveTab: (tab: string) => void) => {
+  const [weatherLocation, setWeatherLocation] = useState<string>(storeUser?.region || 'Nairobi, KE');
 
   // Service Worker Registration
   const swRegistrationAttempted = useRef(false);
@@ -27,7 +35,7 @@ export const useAppBootstrap = (storeUser: unknown, setActiveTab: (tab: string) 
   const keyInitAttempted = useRef(false);
   useEffect(() => {
     if (!storeUser || keyInitAttempted.current) return;
-    const user = storeUser as { id?: string; email?: string };
+    const user = storeUser;
     const secret = user.id || user.email || '';
     if (!secret) return;
     keyInitAttempted.current = true;
@@ -36,9 +44,9 @@ export const useAppBootstrap = (storeUser: unknown, setActiveTab: (tab: string) 
     });
   }, [storeUser]);
 
-  // Push Notification Subscription
+  // Push Notification Subscription (not in the demo, which may not subscribe: the server answers 403)
   useEffect(() => {
-    if (storeUser) {
+    if (storeUser && !isDemoSession(storeUser, false)) {
       subscribeUserToPush().catch(err => {
         console.warn('Push subscription failed:', err);
       });
@@ -69,7 +77,7 @@ export const useAppBootstrap = (storeUser: unknown, setActiveTab: (tab: string) 
           }
         },
         () => {
-          setWeatherLocation((storeUser as { region?: string; country?: string | null } | null)?.region || (storeUser as { country?: string | null } | null)?.country || '');
+          setWeatherLocation(storeUser?.region || storeUser?.country || '');
         }
       );
     } else {

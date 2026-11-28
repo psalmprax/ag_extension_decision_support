@@ -6,6 +6,7 @@ import type { CountRow, FieldStatsRow } from '@/types/rowTypes';
 import { mapFieldStatsRows, mapCountRow } from '@/types/dtos';
 import { logger } from '@/utils/logger';
 import { authorize } from '@/middleware/authorize';
+import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
 import { safeError } from '@/utils/safeResponse';
 import { UUID_REGEX, isUuid } from '@/utils/uuid';
 import { demoWhere, linkedDemoSql } from '@/services/demoScope';
@@ -16,6 +17,7 @@ import { fieldColumnsFromWrite } from '@/services/fields/fieldWrite';
 const router = Router();
 
 router.use(authorize(['admin', 'regional_manager', 'extension_officer', 'farmer']));
+router.use(requirePaidPlan('fields'));
 router.use((req: Request, res: Response, next) => {
     if (req.user?.isDemo && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
         logger.warn('Demo field mutation rejected', { method: req.method });

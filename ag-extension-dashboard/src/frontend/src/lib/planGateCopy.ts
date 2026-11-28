@@ -1,4 +1,4 @@
-import { MessageSquare, Send, Bot, Eye, FileText, Zap, MapPin, BarChart3, Globe, type LucideIcon } from 'lucide-react';
+import { MessageSquare, Send, Bot, Eye, FileText, Zap, MapPin, BarChart3, Globe, Leaf, Search, type LucideIcon } from 'lucide-react';
 
 export type PlanGateCategory =
   | 'sms'
@@ -9,7 +9,9 @@ export type PlanGateCategory =
   | 'workflows'
   | 'visits'
   | 'analytics'
-  | 'worldmonitor';
+  | 'worldmonitor'
+  | 'fields'
+  | 'knowledge';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
@@ -109,6 +111,26 @@ export function planGateCopy(category: PlanGateCategory, t: Translate): PlanGate
           c('b2', 'Farmer satisfaction from ratings'),
           c('b3', 'Crop prices and daily activity'),
           c('b4', 'Data export'),
+        ],
+      };
+    case 'fields':
+      return {
+        icon: Leaf,
+        description: c('desc', 'Each farm\'s fields with crops, growth stages, soil tests and harvests.'),
+        benefits: [
+          c('b1', 'Fields with their crops and growth stages'),
+          c('b2', 'Soil tests and weather for each field'),
+          c('b3', 'Harvests recorded per season'),
+        ],
+      };
+    case 'knowledge':
+      return {
+        icon: Search,
+        description: c('desc', 'Ask questions and get answers written from your guides, with the sources behind them.'),
+        benefits: [
+          c('b1', 'Answers in the language you read the app in'),
+          c('b2', 'The sources behind every answer'),
+          c('b3', 'Answers read aloud'),
         ],
       };
     case 'worldmonitor':

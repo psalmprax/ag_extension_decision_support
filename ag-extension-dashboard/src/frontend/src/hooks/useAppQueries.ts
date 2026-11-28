@@ -8,6 +8,7 @@ import { getMyTransactions } from '@/api/billingService';
 import { useAppStore, type Farmer } from '@/store/useAppStore';
 import { useDemoMode, DEMO_FARMERS, buildDemoDashboardData, buildDemoPerformanceData } from '@/demo';
 import { isDemoFarmerId } from '@/demo/demoIds';
+import { lacksPaidAccess } from '@/lib/planAccess';
 
 function mapApiFarmerToStoreFarmer(farmer: ApiFarmer): Farmer {
   return {
@@ -100,7 +101,8 @@ export function useAppQueries(activeTab: string, searchQuery: string) {
   const { data: reportsResponse, refetch: refetchReports } = useQuery({
     queryKey: ['reports', user?.id, isDemo],
     queryFn: fetchReports,
-    enabled: isDemoQueryEnabled(activeTab === 'reports', hasUser, isDemo),
+    // Reports are a paid service: no request (and no 403) for accounts without it.
+    enabled: isDemoQueryEnabled(activeTab === 'reports' && !lacksPaidAccess(user, 'reports'), hasUser, isDemo),
   });
 
   const { data: performanceResponse } = useQuery({

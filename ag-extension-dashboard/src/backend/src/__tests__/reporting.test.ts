@@ -60,6 +60,8 @@ jest.mock('../middleware/usageMiddleware', () => ({
 
 jest.mock('../services/usageService', () => ({
     usageService: {
+        // Reports are a paid service: these tests are for an account that has it.
+        isFreeUser: jest.fn().mockResolvedValue(false),
         incrementUsage: jest.fn().mockResolvedValue(undefined),
         incrementUsageBy: jest.fn().mockResolvedValue(undefined),
     },

@@ -159,6 +159,8 @@ jobs:
 
             # Push-notification keys: generated once, kept afterwards (see the script).
             bash ../scripts/ensure-vapid-keys.sh .env || exit 1
+            # Approximate place of demo visitors (never fails the deploy).
+            timeout 300 bash ../scripts/fetch-geoip.sh geoip || echo "City database refresh stopped after 5 minutes; keeping the current copy."
 
             # Ensure JWT_SECRET is configured in .env
             # No timestamp fallback: a predictable secret is worse than a failed
@@ -670,6 +672,8 @@ jobs:
 
             # Push-notification keys: generated once, kept afterwards (see the script).
             bash ../scripts/ensure-vapid-keys.sh .env || exit 1
+            # Approximate place of demo visitors (never fails the deploy).
+            timeout 300 bash ../scripts/fetch-geoip.sh geoip || echo "City database refresh stopped after 5 minutes; keeping the current copy."
 
             # Ensure JWT_SECRET is configured in .env
             # No timestamp fallback: a predictable secret is worse than a failed

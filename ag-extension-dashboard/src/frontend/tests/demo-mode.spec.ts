@@ -103,10 +103,10 @@ test.describe('Demo mode network isolation', () => {
     // the first demo farmer is rendered client-side.
     await expect(page.getByText('Emmanuel Mwangi').first()).toBeVisible({ timeout: 15000 });
 
-    // Positive control #2 — Crops & Fields (the original leak site) renders the
-    // static demo field for the selected demo farmer.
+    // Crops & Fields (the original leak site) is not part of the demo: it shows the
+    // locked card and loads nothing.
     await page.goto('/fields');
-    await expect(page.getByText('Machakos Maize Sector A').first()).toBeVisible({
+    await expect(page.getByText('Not included in your account yet').first()).toBeVisible({
       timeout: 15000,
     });
 
@@ -118,45 +118,22 @@ test.describe('Demo mode network isolation', () => {
     expect(demoIdRequests, `demo-id requests hit the network: ${JSON.stringify(demoIdRequests)}`).toEqual([]);
   });
 
-  test('demo mode allows querying Knowledge Base benchmark scenarios without error', async ({
+  test('the demo can browse the Knowledge guides, but asking the AI is locked and nothing is sent', async ({
     page,
   }) => {
     const requests: string[] = [];
     await mockDemoBackend(page, url => requests.push(url));
-    await page.route(url => url.pathname === '/api/knowledge/ask', async route => {
-      requests.push(route.request().url());
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            answer: 'Confirm soil acidity with a current soil test before deciding on liming.',
-            answerMode: 'generated',
-            evidenceStatus: 'no_verified_source',
-            contextUsed: [],
-            citations: [],
-          },
-        }),
-      });
-    });
     await loginAsDemo(page);
 
-    // Navigate to Knowledge Base
     await page.goto('/knowledge');
     await expect(page.getByRole('heading', { name: 'Knowledge', exact: true })).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText('Asking the AI is not included in this account')).toBeVisible({ timeout: 10000 });
+    await expect(page.getByRole('link', { name: 'Ask us for access' })).toHaveAttribute('href', /^mailto:info@gpfed\.com/);
+    await expect(page.getByRole('searchbox', { name: 'Search the guides' })).toHaveCount(0);
+    await page.getByRole('button', { name: /Document library/ }).first().click();
 
-    // Verify benchmark research scenario is clickable and executes
-    const scenarioCard = page.getByText('Liming very acidic soil (pH below 5)').first();
-    await expect(scenarioCard).toBeVisible({ timeout: 10000 });
-    await scenarioCard.click();
-
-    await expect(page.getByText('General guidance, not checked against a source')).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText('Confirm soil acidity with a current soil test before deciding on liming.')).toBeVisible();
-    expect(requests.some(url => new URL(url).pathname === '/api/knowledge/ask')).toBe(true);
-
-    // Verify no demo id requests leaked to the network
-    const demoIdRequests = requests.filter(url => containsDemoId(url));
-    expect(demoIdRequests).toEqual([]);
+    await page.waitForTimeout(1000);
+    expect(requests.some(url => new URL(url).pathname.endsWith('/knowledge/ask'))).toBe(false);
+    expect(requests.filter(url => containsDemoId(url))).toEqual([]);
   });
 });

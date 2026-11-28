@@ -2,6 +2,8 @@ import React from 'react';
 import { ShieldAlert } from 'lucide-react';
 import { useLanguage } from '@/lib/LanguageContext';
 import { useHowSure } from '@/hooks/useHowSure';
+import { useTranslatedTexts } from '@/hooks/useTranslatedTexts';
+import { TranslationNotice } from './TranslationNotice';
 
 export interface PossibleCauseProps {
   disease: string;
@@ -45,9 +47,14 @@ export const PossibleCause: React.FC<PossibleCauseProps> = ({
   const { t } = useLanguage();
   const howSure = useHowSure();
   const seriousness = severity ? SERIOUSNESS[severity.toLowerCase()] : undefined;
+  // What the check wrote is in English; it is shown in the app language, with the original a tap away.
+  const translation = useTranslatedTexts([disease, description, safetyNotice, ...(symptoms ?? [])]);
+  const [shownDisease, shownDescription, shownNotice, ...shownSymptoms] = translation.texts;
+  // The English name stays beside a translated one: it is the name in sources and on product labels.
+  const diseaseName = shownDisease === disease ? disease : `${shownDisease} (${disease})`;
   const name = confirmedBySource
-    ? t('diag_looks_like', { defaultValue: 'Looks like {disease}', disease })
-    : t('diag_might_be', { defaultValue: 'Might be {disease}', disease });
+    ? t('diag_looks_like', { defaultValue: 'Looks like {disease}', disease: diseaseName })
+    : t('diag_might_be', { defaultValue: 'Might be {disease}', disease: diseaseName });
 
   return (
     <div className="p-4 rounded-lg bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] space-y-2">
@@ -67,16 +74,17 @@ export const PossibleCause: React.FC<PossibleCauseProps> = ({
             : t('diag_source_unchecked', 'Not checked by an expert yet')}
         </span>
       </p>
-      <p className="text-sm text-slate-800 dark:text-theme-text-secondary leading-relaxed">{description}</p>
-      {symptoms && symptoms.length > 0 && (
+      <p className="text-sm text-slate-800 dark:text-theme-text-secondary leading-relaxed">{shownDescription}</p>
+      {shownSymptoms.length > 0 && (
         <p className="text-xs text-slate-700 dark:text-theme-text-secondary">
-          {t('diag_signs', { defaultValue: 'Signs: {signs}', signs: symptoms.join('; ') })}
+          {t('diag_signs', { defaultValue: 'Signs: {signs}', signs: shownSymptoms.join('; ') })}
         </p>
       )}
       <p className="flex items-start gap-1.5 text-xs text-amber-800 dark:text-amber-300">
         <ShieldAlert className="w-3.5 h-3.5 shrink-0 mt-0.5" aria-hidden="true" />
-        {safetyNotice}
+        {shownNotice}
       </p>
+      <TranslationNotice translation={translation} />
       {onMore && (
         <div className="pt-2 border-t border-slate-900/[0.08] dark:border-white/[0.08] flex justify-end">
           <button

@@ -13,7 +13,7 @@ import {
   checkTierMet,
 } from './subscriptionPromptState';
 import { useLanguage } from '@/lib/LanguageContext';
-
+import { BILLING_ENABLED } from '@ag-extension/shared/api';
 export type { PromptVariant, PromptPlacement, PromptTrigger, SubscriptionTier, SubscriptionState };
 
 export interface InfoPromptProps {
@@ -312,8 +312,8 @@ export const InfoPrompt: React.FC<InfoPromptProps> = ({
 
                   <div className="text-slate-600 dark:text-theme-text-secondary font-normal">{content}</div>
 
-                  {/* Subscription upgrade prompt if plan not met */}
-                  {!isTierMet && requiredPlan && (
+                  {/* Subscription upgrade prompt if plan not met (none while billing is off) */}
+                  {BILLING_ENABLED && !isTierMet && requiredPlan && (
                     <PromptUpgradeFooter
                       planName={subState.planName}
                       requiredPlan={requiredPlan}
@@ -529,7 +529,7 @@ export const InlinePrompt: React.FC<InlinePromptProps> = ({
         </div>
         <div className="text-slate-600 dark:text-theme-text-secondary font-normal leading-relaxed">{children}</div>
 
-        {!isTierMet && requiredPlan && (
+        {BILLING_ENABLED && !isTierMet && requiredPlan && (
           <div className="mt-2 flex items-center gap-3">
             <button
               type="button"

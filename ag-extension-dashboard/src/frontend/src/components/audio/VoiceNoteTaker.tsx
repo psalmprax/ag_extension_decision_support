@@ -33,6 +33,11 @@ const SUPPORTED_VOICE_LANGUAGES = [
   { code: 'am', name: 'Amharic', flag: '🇪🇹' },
 ];
 
+/** The app language when dictation supports it, otherwise English. */
+function dictationLanguage(appCode: string): string {
+  return SUPPORTED_VOICE_LANGUAGES.some(l => l.code === appCode) ? appCode : 'en';
+}
+
 function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = seconds % 60;
@@ -50,11 +55,12 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
   compact = false,
   className = '',
 }) => {
-  const { t } = useLanguage();
+  const { t, language: appLanguageCode } = useLanguage();
   const storeLanguage = useAppStore(s => s.preferredAudioLanguage);
   const setStoreLanguage = useAppStore(s => s.setPreferredAudioLanguage);
 
-  const [currentLang, setCurrentLang] = useState(initialLanguage || storeLanguage || 'sw');
+  // Until a language is picked here, dictation listens in the app's language (Kiswahili made English notes garbled).
+  const [currentLang, setCurrentLang] = useState(() => initialLanguage || storeLanguage || dictationLanguage(appLanguageCode));
   const [transcript, setTranscript] = useState('');
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
   const languageMenuRef = useRef<HTMLDivElement>(null);
@@ -72,6 +78,14 @@ export const VoiceNoteTaker: React.FC<VoiceNoteTakerProps> = ({
       setTranscript(prev => (prev ? `${prev} ${chunk}` : chunk));
     },
   });
+
+  // Follows the app language when it changes, unless a language was chosen (here or by the
+  // caller), and never while a recording is running or being transcribed.
+  const chosenLanguage = initialLanguage || storeLanguage;
+  useEffect(() => {
+    if (chosenLanguage || isRecording || isTranscribing) return;
+    setCurrentLang(dictationLanguage(appLanguageCode));
+  }, [appLanguageCode, chosenLanguage, isRecording, isTranscribing]);
 
   const activeLangObj =
     SUPPORTED_VOICE_LANGUAGES.find(l => l.code === currentLang) || SUPPORTED_VOICE_LANGUAGES[0];

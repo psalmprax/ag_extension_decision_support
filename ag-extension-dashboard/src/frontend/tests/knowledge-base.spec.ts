@@ -7,6 +7,9 @@ const DEMO_USER = {
   lastName: 'Mwangi',
   role: 'extension_officer',
   region: 'Machakos',
+  // AI answers are a paid service: this account has them (the demo and Free accounts see a lock).
+  planName: 'Pro',
+  isFree: false,
 };
 
 const AUTH_RESPONSE = {

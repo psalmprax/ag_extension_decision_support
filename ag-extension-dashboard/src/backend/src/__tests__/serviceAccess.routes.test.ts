@@ -57,7 +57,7 @@ describe('service access granted by the system administrator', () => {
   it('lists the services a Free farmer can be given', async () => {
     const res = await request(app).get(`/users/${FARMER}/service-access`).set('Authorization', tokenFor(SYSTEM_ADMIN));
     expect(res.status).toBe(200);
-    expect(res.body.data.grantable.map((s: { service: string }) => s.service)).toEqual(['chat', 'field_visits']);
+    expect(res.body.data.grantable.map((s: { service: string }) => s.service)).toEqual(['chat', 'field_visits', 'knowledge_ai', 'fields']);
   });
 
   it('grants a service with an end date and note', async () => {

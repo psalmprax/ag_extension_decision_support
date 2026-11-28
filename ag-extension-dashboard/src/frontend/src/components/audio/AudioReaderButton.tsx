@@ -4,11 +4,12 @@ import toast from 'react-hot-toast';
 import { useAppStore } from '@/store/useAppStore';
 import { synthesizeSpeech } from '@/api/aiService';
 import { cleanTextForSpeech, stopAllAudioPlayback, setActiveAudioPlayback } from './audioHelpers';
+import { appLanguage } from '@/lib/appLocale';
 
 export interface AudioReaderButtonProps {
   /** The text content to read aloud */
   text: string;
-  /** Language code (e.g. 'sw', 'en', 'fr', 'ha', 'yo', 'zu', 'ny'). Defaults to user's preferredAudioLanguage */
+  /** Language code (e.g. 'sw', 'en', 'fr', 'ha', 'yo', 'zu', 'ny'). Defaults to the chosen audio language, else the app language */
   language?: string;
   /** Optional visible button label (e.g. "Listen") */
   label?: string;
@@ -89,7 +90,7 @@ export const AudioReaderButton: React.FC<AudioReaderButtonProps> = ({
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
 
   const preferredStoreLang = useAppStore(s => s.preferredAudioLanguage);
-  const targetLanguage = propLanguage || preferredStoreLang || 'sw';
+  const targetLanguage = propLanguage || preferredStoreLang || appLanguage();
   const bcp47 = LANGUAGE_BCP47_MAP[targetLanguage] || 'en-US';
   const langName = LANGUAGE_NAMES[targetLanguage] || targetLanguage.toUpperCase();
 

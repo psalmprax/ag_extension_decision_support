@@ -248,6 +248,8 @@ services:
       # the container, and every deploy (--force-recreate) deleted them while their
       # database records stayed: photos then answered 404.
       - backend_uploads:/app/uploads
+      # Free DB-IP Lite city database (scripts/fetch-geoip.sh): demo visitors' approximate place.
+      - ./geoip:/app/geoip:ro
     depends_on:
       app-db:
         condition: service_healthy

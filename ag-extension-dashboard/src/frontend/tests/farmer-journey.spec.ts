@@ -70,11 +70,12 @@ test.describe('@e2e Critical Operational User Journey', () => {
     // 1. Positive control: Verify the assigned demo officer and farmer are rendered
     await expect(page.getByText('Emmanuel Mwangi').first()).toBeVisible({ timeout: 15000 });
 
-    // 2. Navigation to Knowledge Base / Fields
+    // 2. Crops & fields is not part of the demo: the locked card says how to ask for access.
     await page.goto('/fields');
-    await expect(page.getByText('Machakos Maize Sector A').first()).toBeVisible({
+    await expect(page.getByText('Not included in your account yet').first()).toBeVisible({
       timeout: 15000,
     });
+    await expect(page.getByRole('link', { name: 'Ask us for access' })).toHaveAttribute('href', /^mailto:info@gpfed\.com/);
   });
 
   test('mobile viewport provides accessible bottom navigation bar for field officers', async ({

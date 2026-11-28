@@ -1,6 +1,6 @@
 import { formatDate } from '@/lib/appLocale';
 import React, { useState } from 'react';
-import { CreditCard, AlertCircle, Settings, Shield, Layers, Activity, Receipt, CheckCircle2, Clock, ExternalLink, ShieldCheck } from 'lucide-react';
+import { CreditCard, AlertCircle, Settings, Shield, Layers, Activity, Receipt, CheckCircle2, Clock, ExternalLink, ShieldCheck, Ticket } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useBillingActions } from '@/hooks/useBillingActions';
 import { useLanguage } from '@/lib/LanguageContext';
@@ -11,13 +11,14 @@ import { Button } from './ui/Button';
 import { Input } from './ui/Input';
 import { Textarea } from './ui/Textarea';
 import { PlanCard } from './billing/PlanCard';
-import { PaymentMethods } from './billing/PaymentMethods';
+import { PaymentsTab } from './billing/PaymentsTab';
 import { Invoices } from './billing/Invoices';
 import { ChurnReasons } from './billing/ChurnReasons';
 import { CancelSubscriptionModal } from './billing/CancelSubscriptionModal';
 import { triggerHaptic } from '@/lib/haptics';
 import { ManualPlanGrants } from './billing/ManualPlanGrants';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { BILLING_ENABLED } from '@ag-extension/shared/api';
 import { PRIMARY_BUTTON, TAB_ROW, tabButtonClass } from '@/components/ui/controlStyles';
 
 interface AdminVaultProps {
@@ -188,11 +189,10 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
   isAdmin,
 }) => {
   const { t } = useLanguage();
-
   return (
     <PageHeader
         title={t('ui_billing_dashboard_billing_subscriptions')}
-        description={t('billing_subtitle') || 'Your plan, usage, payment methods and invoices.'}
+        description={BILLING_ENABLED ? t('billing_subtitle') || 'Your plan, usage, payment methods and invoices.' : t('billing_off_subtitle', { defaultValue: 'Payments are switched off while pricing is decided. You can still see your invoices, redeem a voucher code, and manage or cancel your subscription.' })}
         meta={t('billing_summary', {
           plan: currentPlanName,
           cycle: isAnnual ? t('billing_cycle_annual', { defaultValue: 'annually' }) : t('billing_cycle_monthly', { defaultValue: 'monthly' }),
@@ -222,10 +222,12 @@ const BillingHeader: React.FC<BillingHeaderProps> = ({
           {[
             { id: 'plans', label: t('billing_tab_plans', { defaultValue: 'Plans & pricing' }), icon: Layers },
             { id: 'usage', label: t('billing_tab_usage', { defaultValue: 'Usage' }), icon: Activity },
-            { id: 'payments', label: t('billing_tab_payments', { defaultValue: 'Payment methods' }), icon: CreditCard },
+            BILLING_ENABLED
+              ? { id: 'payments', label: t('billing_tab_payments', { defaultValue: 'Payment methods' }), icon: CreditCard }
+              : { id: 'payments', label: t('billing_tab_voucher', { defaultValue: 'Voucher code' }), icon: Ticket },
             { id: 'invoices', label: t('billing_tab_invoices', { defaultValue: 'Invoices & receipts' }), icon: Receipt },
             ...(isAdmin ? [{ id: 'admin', label: t('billing_tab_admin', { defaultValue: 'Payment keys' }), icon: Shield }] : []),
-          ].map(tab => (
+          ].filter(tab => BILLING_ENABLED || tab.id !== 'plans').map(tab => ( // nothing to buy while billing is off; vouchers still redeem
             <button
               key={tab.id}
               onClick={() => {
@@ -278,7 +280,7 @@ export const BillingDashboard: React.FC = () => {
   const { t } = useLanguage();
   const billing = useBillingActions();
   const [isAnnual, setIsAnnual] = useState(false);
-  const [activeTab, setActiveTab] = useState<'plans' | 'usage' | 'payments' | 'invoices' | 'admin'>('plans');
+  const [activeTab, setActiveTab] = useState<'plans' | 'usage' | 'payments' | 'invoices' | 'admin'>(BILLING_ENABLED ? 'plans' : 'usage');
   const [showCancelModal, setShowCancelModal] = useState(false);
 
   if (billing.loading) {
@@ -525,39 +527,7 @@ export const BillingDashboard: React.FC = () => {
             transition={{ duration: 0.2 }}
             className="space-y-6"
           >
-            <PaymentMethods
-              paymentMethods={billing.paymentMethods}
-              plans={billing.plans}
-              onAddMethod={billing.handleAddMethod}
-              onDeleteMethod={billing.handleDeleteMethod}
-              onPayPalSubscription={billing.handlePayPalSubscription}
-              actionLoading={billing.actionLoading}
-              showMobilePayForm={billing.showMobilePayForm}
-              setShowMobilePayForm={billing.setShowMobilePayForm}
-              mobilePayData={
-                billing.mobilePayData as unknown as {
-                  method: string;
-                  planId: string;
-                  transactionId: string;
-                  amount?: string | undefined;
-                }
-              }
-              setMobilePayData={
-                billing.setMobilePayData as unknown as (data: {
-                  method: string;
-                  planId: string;
-                  transactionId: string;
-                  amount?: string | undefined;
-                }) => void
-              }
-              handleSubmitTransaction={billing.handleSubmitTransaction}
-              showVoucherForm={billing.showVoucherForm}
-              setShowVoucherForm={billing.setShowVoucherForm}
-              voucherCode={billing.voucherCode}
-              setVoucherCode={billing.setVoucherCode}
-              handleRedeemVoucher={billing.handleRedeemVoucher}
-              formMessage={billing.formMessage}
-            />
+            <PaymentsTab billing={billing} />
           </motion.div>
         )}
 

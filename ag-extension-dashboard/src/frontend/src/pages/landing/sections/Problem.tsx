@@ -6,12 +6,14 @@ import { painPoints } from '../sectionData';
 import { useLanguage } from '@/lib/LanguageContext';
 import { SectionHeader } from './SectionHeader';
 import { CONTAINER, SECTION } from './sectionStyles';
+import { PhotoBackdrop } from './PhotoBackdrop';
 
 /** Four everyday farm problems, each beside what GPExts offers instead. */
 export function Problem() {
   const { t } = useLanguage();
   return (
     <section id="problem" className={SECTION}>
+      <PhotoBackdrop src="/images/landing/maize-leaf-diagnostics.webp" width={1200} height={896} position="center 40%" />
       <div className={CONTAINER}>
         <SectionHeader
           title={`${t('ui_problem_farming_is_hard_enough')} ${t('ui_problem_without_the_guesswork')}`}

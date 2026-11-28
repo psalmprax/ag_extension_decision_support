@@ -1352,6 +1352,21 @@ model LoginHistory {
   @@map("login_history")
 }
 
+/// Who opens the demo, roughly. The IP is shortened (203.0.113.x), never stored whole. Kept 90 days.
+model DemoVisit {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  countryCode    String?  @map("country_code") @db.VarChar(2)
+  region         String?  @db.VarChar(120)
+  city           String?  @db.VarChar(120)
+  ipPrefix       String?  @map("ip_prefix") @db.VarChar(64)
+  device         String?  @db.VarChar(100)
+  locationSource String?  @map("location_source") @db.VarChar(10)
+
+  @@index([createdAt])
+  @@map("demo_visits")
+}
+
 model UserSession {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId       String    @map("user_id") @db.Uuid

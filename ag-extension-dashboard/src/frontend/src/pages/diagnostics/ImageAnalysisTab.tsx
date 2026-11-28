@@ -13,6 +13,8 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { DiagnosisValidationNote, type DiagnosisValidation } from '@/components/diagnosisTests/DiagnosisValidationNote';
 import { PossibleCause } from '@/components/diagnosis/PossibleCause';
 import { useHowSure } from '@/hooks/useHowSure';
+import { useTranslatedTexts } from '@/hooks/useTranslatedTexts';
+import { TranslationNotice } from '@/components/diagnosis/TranslationNotice';
 
 interface Props {
   cropType: string;
@@ -153,6 +155,12 @@ export const AnalysisResultsHUD: React.FC<{
 }> = ({ imageAnalysis, imagePreview, offlineQueued, getSeverityColor: _getSeverityColor }) => {
   const { t } = useLanguage();
   const howSure = useHowSure();
+  // The check writes in English; health, nutrient notes and guidance are shown in the app language.
+  const nutrients = imageAnalysis?.nutrientDeficiencies ?? [];
+  const translation = useTranslatedTexts(imageAnalysis ? [imageAnalysis.overallHealth, ...nutrients, ...imageAnalysis.recommendations] : []);
+  const [shownHealth, ...shownLists] = translation.texts;
+  const shownNutrients = shownLists.slice(0, nutrients.length);
+  const shownRecommendations = shownLists.slice(nutrients.length);
   if (offlineQueued) {
     return (
       <div className="p-5 rounded-lg bg-slate-50 dark:bg-white/[0.04] border border-amber-500/40 flex flex-col justify-center space-y-4">
@@ -206,6 +214,8 @@ export const AnalysisResultsHUD: React.FC<{
       </div>
 
       {!analysisUnavailable && <DiagnosisValidationNote validation={imageAnalysis.validation} />}
+      {/* Whenever anything here is shown translated, say so and offer the original. */}
+      <TranslationNotice translation={translation} />
       {analysisUnavailable ? (
         <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-start gap-2 text-amber-800 dark:text-amber-300">
           <ShieldAlert className="w-4 h-4 shrink-0 mt-0.5" />
@@ -219,7 +229,7 @@ export const AnalysisResultsHUD: React.FC<{
               ? <ShieldAlert className="w-4 h-4 text-amber-600 dark:text-amber-400" aria-hidden="true" />
               : <CheckCircle className="w-4 h-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />}
             <h4 className="text-sm font-medium text-slate-900 dark:text-theme-text-primary">
-              {t('diag_plant_health', { defaultValue: 'Plant health: {health}', health: imageAnalysis.overallHealth })}
+              {t('diag_plant_health', { defaultValue: 'Plant health: {health}', health: shownHealth })}
             </h4>
           </div>
           <p className="text-xs text-slate-700 dark:text-theme-text-secondary">{howSure(imageAnalysis.confidence)}</p>
@@ -239,7 +249,7 @@ export const AnalysisResultsHUD: React.FC<{
         <div className="space-y-2">
           <h4 className="text-xs font-medium text-slate-900 dark:text-white">{t('ui_image_analysis_tab_possible_nutrient_issues_unconfirmed')}</h4>
           <ul className="list-disc ps-4 space-y-1 text-xs text-slate-700 dark:text-theme-text-secondary">
-            {imageAnalysis.nutrientDeficiencies?.map((observation, index) => (
+            {shownNutrients.map((observation, index) => (
               <li key={index}>{observation}</li>
             ))}
           </ul>
@@ -278,7 +288,7 @@ export const AnalysisResultsHUD: React.FC<{
             {t('ui_image_analysis_tab_guidance')}
           </h4>
           <div className="grid grid-cols-1 gap-1.5">
-            {imageAnalysis.recommendations.map((rec, index) => (
+            {shownRecommendations.map((rec, index) => (
               <div
                 key={index}
                 className="p-2 rounded-lg bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] text-xs text-slate-700 dark:text-theme-text-secondary flex items-start gap-2"
