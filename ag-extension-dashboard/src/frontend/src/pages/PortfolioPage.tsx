@@ -62,8 +62,8 @@ export const PortfolioPage: React.FC<PortfolioPageProps> = ({
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-24">
-      <PageHeader
+    <div className="space-y-6 pb-24">
+      <PageHeader photo="officerWithFarmer"
         title={t('ui_portfolio_page_client_portfolio')}
         description={t('ui_portfolio_page_manage_smallholder_cohorts_inspect_i')}
         meta={

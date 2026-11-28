@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { ratePercent } from '@/lib/rates';
 import { RefreshCw, Wrench, Play, CheckCircle, Terminal } from 'lucide-react';
 import { useLanguage } from '../lib/LanguageContext';
@@ -40,7 +41,7 @@ function getDefaultArgs(tool: MCPTool): Record<string, unknown> {
 
 function MCPTools() {
   const { t } = useLanguage();
-  const { headingClass, radiusClass, btnClass } = useThemeClasses();
+  const { radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
 
   // State
@@ -144,8 +145,9 @@ function MCPTools() {
   if (isLoading) {
     return (
       <LoadingHeaderSkeleton
-        title="MCP Tools Browser"
-        description="Explore and execute Model Context Protocol tools"
+        photo="fieldSunrise"
+        title={t('nav_mcp_tools')}
+        description={t('mcp_tools_subtitle')}
       />
     );
   }
@@ -159,11 +161,11 @@ function MCPTools() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className={`text-2xl font-medium tracking-tight text-slate-900 dark:text-white ${headingClass}`}>{t('ui_mcptools_system_tools')}</h1>
-          <p className="text-slate-600 dark:text-white/60 text-xs sm:text-sm mt-1">{t('mcp_tools_subtitle')}</p>
-        </div>
+      <PageHeader
+        photo="fieldSunrise"
+        title={t('nav_mcp_tools')}
+        description={t('mcp_tools_subtitle')}
+        actions={
         <button
           onClick={handleRefresh}
           disabled={isRefreshing}
@@ -172,7 +174,8 @@ function MCPTools() {
           <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           <span>{t('ui_farmer_detail_panel_refresh')}</span>
         </button>
-      </div>
+        }
+      />
 
       {health && <MCPToolsHealthCard health={health} t={t} />}
 

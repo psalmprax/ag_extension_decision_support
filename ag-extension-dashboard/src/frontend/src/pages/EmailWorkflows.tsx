@@ -27,7 +27,7 @@ import type { EditForm } from '@/types/emailWorkflows';
 
 function EmailWorkflows() {
   const { t } = useLanguage();
-  const { headingClass, radiusClass, btnClass } = useThemeClasses();
+  const { radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
 
   // Resource loader encapsulates the category-filter + parallel-fetch + refresh
@@ -181,8 +181,9 @@ function EmailWorkflows() {
   if (isLoading) {
     return (
       <LoadingHeaderSkeleton
-        title="Email Workflow Manager"
-        description="Manage email templates and approval workflows"
+        photo="farmerWithPhone"
+        title={t('nav_email_workflows')}
+        description={t('email_workflows_subtitle')}
       />
     );
   }
@@ -190,7 +191,6 @@ function EmailWorkflows() {
   return (
     <div className="space-y-6">
       <EmailWorkflowsHeader
-        headingClass={headingClass}
         subtitle={t('email_workflows_subtitle')}
         isRefreshing={isRefreshing}
         onRefresh={refresh}

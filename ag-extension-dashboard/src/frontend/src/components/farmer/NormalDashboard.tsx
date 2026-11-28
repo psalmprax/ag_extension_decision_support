@@ -10,6 +10,7 @@ import { RecentWeather } from '@/components/weather/RecentWeather';
 import { dataStatusLabel } from './dataStatusLabels';
 import type { FarmerStats } from '@/api/farmerService';
 import { MetricCardSkeleton, ChartSkeleton } from '../Skeleton';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 interface NormalDashboardProps {
   stats: Array<{
@@ -149,12 +150,11 @@ export const NormalDashboard: React.FC<NormalDashboardProps> = ({ stats, statsLo
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <header>
-        <h1 className="text-2xl font-medium text-slate-900 dark:text-white">
-          {t('farmer_greeting').replace('{name}', user?.firstName || 'Farmer')}
-        </h1>
-        <p className="text-slate-600 dark:text-theme-text-muted mt-1">{t('farmer_overview')}</p>
-      </header>
+      <PageHeader
+        photo="farmerInspecting"
+        title={t('nav_dashboard', { defaultValue: 'Dashboard' })}
+        description={`${t('farmer_greeting', { name: user?.firstName || t('users_role_farmer') })} ${t('farmer_overview')}`}
+      />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {stats.map((stat, i) => (

@@ -88,7 +88,7 @@ test.describe.serial('service access granted by the system administrator', () =>
     const page = farmerSession.page;
     await page.reload();
     await openMenu(page, MY_OFFICER_MENU);
-    await expect(page.getByRole('heading', { name: 'My extension officer' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'My officer', exact: true })).toBeVisible();
     await page.getByLabel('Message to your officer').fill(question);
     await page.getByRole('button', { name: 'Send message' }).click();
     await expect(page.getByRole('group', { name: 'You message' }).filter({ hasText: 'rust-coloured spots' })).toBeVisible();

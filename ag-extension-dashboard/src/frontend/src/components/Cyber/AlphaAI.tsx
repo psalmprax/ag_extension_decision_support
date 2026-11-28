@@ -296,8 +296,8 @@ export const AlphaAI: React.FC = () => {
   const hasAnswer = Boolean(latestAdvisoryText(messages));
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 pb-20">
-      <PageHeader
+    <div className="space-y-6 pb-20">
+      <PageHeader photo="officerScanning"
         title={t('nav_aiassistant', { defaultValue: 'AI agronomist' })}
         description={t('ai_agronomist_description', {
           defaultValue: 'Ask about crops, pests, soil and weather. Check any product dose on its label before use.',

@@ -93,7 +93,7 @@ export function DiseaseDiagnosis() {
 
   return (
     <div className="space-y-6">
-        <PageHeader
+        <PageHeader photo="leafCloseUp"
           title={t('ui_disease_diagnosis_crop_doctor_plant_pathology_clinic')}
           description={t('ui_disease_diagnosis_upload_a_photo_or_video_or_describe')}
           meta={

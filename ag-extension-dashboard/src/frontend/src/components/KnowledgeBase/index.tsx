@@ -312,8 +312,8 @@ export const KnowledgeBase: React.FC = () => {
 
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-20">
-      <PageHeader
+    <div className="space-y-6 pb-20">
+      <PageHeader photo="farmerInspecting"
         title={t('ui_index_agro_spatial_knowledge_mesh')}
         description={t('ui_index_multi_modal_grounded_semantic_retrie')}
         actions={quota ? <QuotaChip quota={quota} onUpgrade={() => setActiveTab('billing')} /> : undefined}

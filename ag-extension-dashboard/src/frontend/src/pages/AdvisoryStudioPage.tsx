@@ -9,6 +9,8 @@ import { useLanguage } from '@/lib/LanguageContext';
 import { DEFAULT_TEMPLATES, PALETTE_ITEMS, renderStepIcon, type PaletteItem, type WorkflowStep } from './advisoryStudio/studioModel';
 import { StepCard } from './advisoryStudio/StepCard';
 import { PhonePreviewPanel } from './advisoryStudio/PhonePreviewPanel';
+import { PageHeader } from '@/components/ui/PageHeader';
+import { downloadJson } from '@/lib/downloadJson';
 
 export function AdvisoryStudioPage() {
   const { t } = useLanguage();
@@ -159,24 +161,16 @@ export function AdvisoryStudioPage() {
     }
   };
 
-  const handleExportJson = () => {
-    const payload = JSON.stringify({ title, description, category, version, status, steps }, null, 2);
-    const blob = new Blob([payload], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `workflow-${title.toLowerCase().replace(/\s+/g, '-')}-v${version}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+  const handleExportJson = () =>
+    downloadJson(`workflow-${title.toLowerCase().replace(/\s+/g, '-')}-v${version}.json`, { title, description, category, version, status, steps });
 
   return (
+    <div className="space-y-6">
+    <PageHeader photo="farmerInspecting" title={t('nav_advisory_studio')}
+      description={t('advisory_studio_desc', { defaultValue: 'Build step-by-step advice for a crop and preview what officers see on their phones.' })} />
     <div className="min-h-screen bg-white dark:bg-theme-bg-primary text-slate-800 dark:text-theme-text-primary flex flex-col rounded-lg border border-slate-900/[0.08] dark:border-white/[0.08] overflow-hidden">
       <header className="min-h-16 border-b border-slate-900/[0.08] dark:border-white/[0.08] bg-slate-50 dark:bg-white/[0.04] backdrop-blur-md px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3 z-20 shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="w-8 h-8 shrink-0 rounded-md bg-slate-50 dark:bg-white/[0.04] border border-slate-900/[0.08] dark:border-white/[0.08] flex items-center justify-center text-slate-700 dark:text-theme-text-secondary">
-            <Layers className="w-4 h-4 text-emerald-400" />
-          </div>
           <div>
             <div className="flex items-center gap-2">
               <input
@@ -346,6 +340,7 @@ export function AdvisoryStudioPage() {
 
         <PhonePreviewPanel steps={steps} />
       </div>
+    </div>
     </div>
   );
 }

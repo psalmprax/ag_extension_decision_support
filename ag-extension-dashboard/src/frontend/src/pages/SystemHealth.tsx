@@ -8,6 +8,7 @@ import { useAppStore } from '../store/useAppStore';
 import { fetchHealthStatus, fetchRecoveryLog, triggerRecovery, HealthCheck, RecoveryAction } from '../api/systemHealthService';
 import { runDiagnostics, DiagnosticResult } from '../api/diagnosticsService';
 import { LoadingHeaderSkeleton } from '@/components/ui/LoadingHeaderSkeleton';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { SyncQueuePanel } from '@/components/SyncQueuePanel';
 import { AuditIntegrityPanel } from './systemHealth/AuditIntegrityPanel';
 import { RATE_LIMIT_STATUS, CERT_EXPIRY_WARN_DAYS, ERROR_COOLDOWN_MS } from '@/lib/constants';
@@ -606,29 +607,21 @@ function SystemHealth() {
   if (isLoading) {
     return (
       <LoadingHeaderSkeleton
-        title="Self-Healing Monitor"
-        description="Monitor system health and automatic recovery"
+        photo="fieldSunrise"
+        title={t('nav_system_health')}
+        description={t('ui_system_health_real_time_node_latency_database_conn')}
       />
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-24">
-      {/* ── Top Bento Banner: SRE & Telemetry Health Hub ── */}
-      <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 relative overflow-hidden">
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-2xl font-medium text-slate-900 dark:text-white">{t('ui_system_health_sre_self_healing_telemetry')}</h1>
-              </div>
-              <p className="text-sm text-slate-600 dark:text-white/60 mt-1">
-                {t('ui_system_health_real_time_node_latency_database_conn')}
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3 w-full lg:w-auto justify-between lg:justify-end flex-wrap">
+    <div className="space-y-6 pb-24">
+      <PageHeader
+        photo="fieldSunrise"
+        title={t('nav_system_health')}
+        description={t('ui_system_health_real_time_node_latency_database_conn')}
+        actions={
+          <>
             <button
               onClick={handleRunDiagnostics}
               disabled={isRunningDiagnostics}
@@ -645,11 +638,10 @@ function SystemHealth() {
               <RefreshCw className={`w-4 h-4 ${isRefreshing ? 'animate-spin' : ''}`} />
               <span>{t('ui_farmer_detail_panel_refresh')}</span>
             </button>
-          </div>
-        </div>
-
-        {/* ── Subsystem Metric Tiles ── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-6 mt-6 border-t border-slate-900/[0.08] dark:border-white/[0.08]">
+          </>
+        }
+      >
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
             { label: t('ui_system_health_healthy_services'), value: overallHealth.healthy, dot: 'bg-emerald-500' },
             { label: t('ui_system_health_degraded_nodes'), value: overallHealth.degraded, dot: 'bg-amber-500' },
@@ -669,7 +661,7 @@ function SystemHealth() {
             />
           ))}
         </div>
-      </div>
+      </PageHeader>
 
       {/* ── Component Health Radar Grid ── */}
       <div className="bg-white dark:bg-white/[0.03] border border-slate-900/[0.08] dark:border-white/[0.08] rounded-lg p-6 space-y-6">

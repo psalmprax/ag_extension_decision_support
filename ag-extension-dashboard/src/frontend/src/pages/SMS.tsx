@@ -174,7 +174,7 @@ export function SMSPage() {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-80px)] lg:h-[calc(100vh-80px)] bg-slate-50 dark:bg-theme-bg-primary">
-    <PageHeader className="px-3.5 sm:px-4 lg:px-6 pt-3.5 sm:pt-4 lg:pt-6" title={t('nav_sms', { defaultValue: 'SMS' })} description={t('sms_page_desc', { defaultValue: 'Send advice and alerts by text message to one farmer or many.' })} />
+    <PageHeader photo="farmerWithPhone" className="mx-3.5 sm:mx-4 lg:mx-6 mt-3.5 sm:mt-4 lg:mt-6" title={t('nav_sms', { defaultValue: 'SMS' })} description={t('sms_page_desc', { defaultValue: 'Send advice and alerts by text message to one farmer or many.' })} />
     <div className="flex-1 min-h-0 flex flex-col lg:flex-row overflow-y-auto lg:overflow-hidden gap-4 p-3.5 sm:p-4 lg:p-6 pb-28 md:pb-6">
       <SMSContactsPanel searchQuery={searchQuery} setSearchQuery={setSearchQuery} sendMode={sendMode} recentContacts={recentContacts} isLoadingContacts={isLoadingContacts}
         selectedContact={selectedContact} bulkSelectedIds={bulkSelectedIds} handleBulkSelectAll={handleBulkSelectAll} selectContact={selectContact}

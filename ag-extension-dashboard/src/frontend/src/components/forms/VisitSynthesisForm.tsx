@@ -32,6 +32,7 @@ import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useLanguage } from '@/lib/LanguageContext';
 import { AntiFraudVerificationBadge } from '@/components/AntiFraudVerificationBadge';
+import { PageHeader } from '@/components/ui/PageHeader';
 
 const FIELD_PRESETS = [
   {
@@ -497,22 +498,12 @@ export const VisitSynthesisForm: React.FC = () => {
   };
 
   return (
-    <div className="max-w-5xl mx-auto space-y-6">
-      {/* ── Header Telemetry & Preset Hub ── */}
-      <div className="backdrop-blur-xl bg-slate-50 dark:bg-theme-bg-secondary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl p-6 shadow-sm relative overflow-hidden">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div>
-              <div className="flex items-center gap-2.5">
-                <h1 className="text-xl sm:text-2xl font-medium tracking-tight text-slate-900 dark:text-theme-text-primary">{t('nav_visit_synthesis')}</h1>
-              </div>
-              <p className="text-xs text-slate-600 dark:text-theme-text-muted mt-0.5">
-                {t('ui_visit_synthesis_form_convert_unorganized_voice_dictation')}
-              </p>
-            </div>
-          </div>
-
-          {/* Quick-Preset Chips */}
+    <div className="max-w-5xl space-y-6">
+      <PageHeader
+        photo="officerScanning"
+        title={t('nav_visit_synthesis')}
+        description={t('ui_visit_synthesis_form_convert_unorganized_voice_dictation')}
+      >
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs font-medium text-slate-600 dark:text-theme-text-muted">{t('ui_visit_synthesis_form_presets')}</span>
             {FIELD_PRESETS.map(p => (
@@ -529,8 +520,7 @@ export const VisitSynthesisForm: React.FC = () => {
               </button>
             ))}
           </div>
-        </div>
-      </div>
+      </PageHeader>
 
       {/* ── Farmer Selection Card ── */}
       <FarmerSelectorCard

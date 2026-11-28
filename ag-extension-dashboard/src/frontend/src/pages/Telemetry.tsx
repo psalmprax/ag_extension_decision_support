@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { PageHeader } from '@/components/ui/PageHeader';
 import { appLocale } from '@/lib/appLocale';
 import { RefreshCw } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -20,7 +21,7 @@ import { CARD_SUBTITLE, CARD_TITLE } from '@/components/ui/typography';
 
 function Telemetry() {
   const { t } = useLanguage();
-  const { headingClass, radiusClass, btnClass } = useThemeClasses();
+  const { radiusClass, btnClass } = useThemeClasses();
   const { addNotification } = useAppStore();
 
   // State
@@ -79,20 +80,20 @@ function Telemetry() {
   if (isLoading) {
     return (
       <LoadingHeaderSkeleton
-        title="Agent Telemetry Dashboard"
-        description="Monitor AI agent performance and usage"
+        photo="aerialFarmland"
+        title={t('nav_telemetry')}
+        description={t('telemetry_subtitle')}
       />
     );
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className={`text-2xl font-medium tracking-tight text-slate-900 dark:text-white ${headingClass}`}>{t('nav_telemetry')}</h1>
-          <p className="text-slate-600 dark:text-white/60 text-xs sm:text-sm mt-1">{t('telemetry_subtitle')}</p>
-        </div>
+      <PageHeader
+        photo="aerialFarmland"
+        title={t('nav_telemetry')}
+        description={t('telemetry_subtitle')}
+        actions={
         <div className="flex items-center gap-2 sm:gap-3">
           <select
             value={timeRange}
@@ -113,7 +114,8 @@ function Telemetry() {
             <span>{t('ui_farmer_detail_panel_refresh')}</span>
           </button>
         </div>
-      </div>
+        }
+      />
 
       {summary && <TelemetryStatTiles summary={summary} events={events} />}
 

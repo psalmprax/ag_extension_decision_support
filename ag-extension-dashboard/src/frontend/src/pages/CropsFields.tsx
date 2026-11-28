@@ -159,8 +159,8 @@ export function CropsFields() {
     .reduce((sum, c) => sum + (c.yieldKg || 0), 0);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
-      <PageHeader
+    <div className="space-y-6">
+      <PageHeader photo="aerialFarmland"
         title={t('ui_crops_fields_fields_geospatial_parcels')}
         description={
           isFarmer
