@@ -24,8 +24,10 @@ const QuotaBar = ({
 }: QuotaBarProps) => {
   const { t } = useLanguage();
   const isUnlimited = limit === -1;
-  const percentage = isUnlimited ? 0 : Math.min(Math.round((current / limit) * 100), 100);
-  const isHigh = !isUnlimited && percentage > 80;
+  // A limit of 0 means the plan does not include it: no percentage (it was "NaN%").
+  const notIncluded = limit === 0;
+  const percentage = isUnlimited || notIncluded ? 0 : Math.min(Math.round((current / limit) * 100), 100);
+  const isHigh = !isUnlimited && !notIncluded && percentage > 80;
 
   return (
     <div className="space-y-2.5 group/bar">
@@ -41,7 +43,7 @@ const QuotaBar = ({
               {label}
             </span>
             <span
-              className={`text-xs font-mono font-medium ${isHigh ? 'text-rose-400' : 'text-white'}`}
+              className={`text-xs font-mono font-medium ${isHigh ? 'text-rose-700 dark:text-rose-400' : 'text-slate-900 dark:text-theme-text-primary'}`}
             >
               {current.toLocaleString(appLocale())}{' '}
               <span className="text-slate-600 dark:text-theme-text-muted font-normal">
@@ -52,9 +54,13 @@ const QuotaBar = ({
         </div>
         <div className="text-end">
           <span
-            className={`text-xxs font-medium font-mono ${isHigh ? 'text-rose-400 animate-pulse' : 'text-emerald-400'}`}
+            className={`text-xxs font-medium font-mono ${isHigh ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400'}`}
           >
-            {isUnlimited ? t('usage_unlimited') || 'UNLIMITED' : `${percentage}%`}
+            {isUnlimited
+              ? t('usage_unlimited', { defaultValue: 'Unlimited' })
+              : notIncluded
+                ? t('usage_not_included', { defaultValue: 'Not included' })
+                : `${percentage}%`}
           </span>
         </div>
       </div>
@@ -98,7 +104,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
   if (!plan || usageData.length === 0) {
     return (
       <div
-        className={`relative overflow-hidden ${compact ? '' : 'p-6 bg-slate-900/60 border border-white/10 rounded-xl shadow-xl backdrop-blur-xl'}`}
+        className={`relative overflow-hidden ${compact ? '' : 'p-6 bg-white dark:bg-theme-bg-secondary/60 border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl'}`}
       >
         <div className="relative z-10 flex flex-col items-center text-center py-4">
           <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center mb-3 shadow-sm text-emerald-700 dark:text-emerald-400">
@@ -133,7 +139,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
 
   return (
     <div
-      className={`relative overflow-hidden transition-all duration-500 ${compact ? '' : 'p-6 bg-slate-900/60 border border-white/10 rounded-xl shadow-xl backdrop-blur-xl group'}`}
+      className={`relative overflow-hidden transition-all duration-500 ${compact ? '' : 'p-6 bg-white dark:bg-theme-bg-secondary/60 border border-slate-900/[0.08] dark:border-white/[0.08] rounded-xl group'}`}
     >
       {!compact && (
         <div className="flex items-center justify-between mb-6 relative z-10">
@@ -164,7 +170,7 @@ export const UsageQuota = ({ compact = false }: { compact?: boolean }) => {
           return (
             <QuotaBar
               key={item.type}
-              label={item.label}
+              label={t(`usage_type_${item.type}`, { defaultValue: item.label })}
               current={item.current}
               limit={item.limit}
               icon={config.icon}
