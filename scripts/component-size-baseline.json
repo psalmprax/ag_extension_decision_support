@@ -34,7 +34,7 @@
   "pages/PortfolioPage.tsx": 343,
   "pages/SystemHealth.tsx": 704,
   "pages/UserManagementPage.tsx": 651,
-  "pages/diagnostics/SoilDiagnosticsTab.tsx": 420,
+  "pages/diagnostics/SoilDiagnosticsTab.tsx": 409,
   "pages/landing/sections/FarmerServices.tsx": 326,
   "pages/landing/sections/Hero.tsx": 361,
   "pages/landing/sections/TalkingAssistant.tsx": 1972

@@ -45,6 +45,19 @@ test.describe('a farmer works through every menu page', () => {
     expect((await api.get(`/api/fields?farmerId=${SEEDED.mzuzuFarmerId}`)).status()).toBe(403);
   });
 
+  test('Disease diagnosis: I can check my own crops, my own soil loads, and model testing is not mine', async ({ request }) => {
+    await openMenu(page, 'Disease diagnosis');
+    await expect(page.getByRole('tab', { name: 'Leaf photo' })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Testing' })).toHaveCount(0);
+    await expect(page.getByText('Choose a leaf photo on the left to check it.')).toBeVisible();
+    await page.getByRole('tab', { name: 'Soil' }).click();
+    const picker = page.getByRole('combobox', { name: /farmer/i });
+    await expect(picker).toHaveValue(JOURNEY.farmer.id);
+    await expect(picker.locator('option')).toHaveCount(2); // the prompt and my own record
+    const api = await apiAs(request, farmer);
+    expect((await api.get(`/api/soil/farmer/${SEEDED.mzuzuFarmerId}`)).status()).toBe(403);
+  });
+
   test('AI agronomist: the answer shown is the one the server returned', async () => {
     await openMenu(page, 'AI agronomist');
     const composer = page.getByRole('textbox', { name: /question/i }).first();

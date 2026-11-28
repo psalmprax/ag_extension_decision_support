@@ -14,6 +14,13 @@ describe('menu per role', () => {
     expect(menuFor('regional_manager')).not.toContain('user_management');
   });
 
+  it('lets farmers check their own crops, as a paid service like for officers', () => {
+    const diagnosis = getNavItems().find(item => item.id === 'disease_diagnosis')!;
+    expect(diagnosis.roles).toEqual(expect.arrayContaining(['farmer', 'extension_officer', 'admin']));
+    expect(diagnosis.roles).not.toContain('regional_manager');
+    expect(diagnosis.requiresPro).toBe(true);
+  });
+
   it('starts a farmer on their own dashboard, never the officer one', () => {
     expect(menuFor('farmer')[0]).toBe('farmer_dashboard');
     expect(menuFor('farmer')).not.toContain('dashboard');

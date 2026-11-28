@@ -9,7 +9,7 @@ It is written against the application as shipped in this repository (version 1.2
 | Reader | Start with |
 |---|---|
 | Field extension officer | Chapters 2 to 11 |
-| Farmer | Chapters 2, 3, 6, 9 and 10 |
+| Farmer | Chapters 2, 3, 6, 7, 9 and 10 |
 | Regional manager | Chapters 2, 3, 4, 11 and 13 |
 | Administrator | Chapters 2, 14, 15 and 16 |
 | Support and onboarding staff | Chapters 2, 14, 17 and 18 |
@@ -127,7 +127,7 @@ The platform enforces permissions on the server, not just in the menu. A menu it
 | Farmers | No | Own portfolio | Region | All |
 | Visits (paid) | Own | Yes | Yes | Yes |
 | Crops & fields (paid) | Own | Yes | Yes | Yes |
-| Disease diagnosis (paid) | No | Yes | No | Yes |
+| Disease diagnosis (paid) | Own crops | Yes | No | Yes |
 | Advisory Studio | No | Yes | No | Yes |
 | Reports (paid) | No | Own data | Region | All |
 | Analytics (paid) | No | Yes | Yes | Yes |
@@ -140,7 +140,7 @@ A paid item you cannot use stays in the menu with a lock symbol. Opening it expl
 
 ## Navigation tour
 
-The sidebar groups the application into four sections. On a phone the same destinations appear in the bottom navigation bar and the menu drawer.
+The sidebar groups the application into four sections. On a phone the main destinations appear in the bottom navigation bar and the rest in the menu drawer. For farmers the bottom bar holds **Home**, **My officer**, **AI scan** (Disease diagnosis) and **Knowledge**.
 
 | Section | Items |
 |---|---|
@@ -360,7 +360,7 @@ Older visits are read-only to preserve the audit trail.
 
 # Disease diagnosis
 
-The diagnosis tools turn a photograph, a video or a symptom description into an evidence-labelled assessment. **Disease diagnosis** is a paid service for extension officers and administrators.
+The diagnosis tools turn a photograph, a video or a symptom description into an evidence-labelled assessment. **Disease diagnosis** is a paid service for farmers, extension officers and administrators. Farmers use it for their own crops; whoever runs the check, treatment advice waits for an extension officer's confirmation.
 
 The page has these tabs: **Leaf photo**, **Video**, **Describe symptoms**, **Soil** and **Disease library**. Administrators and regional managers also see **Testing**, which checks the diagnosis models against known photos.
 
@@ -384,7 +384,7 @@ Offline: the photo is queued for the online check, and the device's answer, if a
 
 **Camera scan leaf**, under the photo, opens the live camera scanner instead. It points the camera at the leaf and runs the check on the device, so it works without a connection; when online it can ask the server to verify.
 
-Model confidence and symptom-match scores are not proof of a diagnosis, at any value. Treatment advice is held back until an extension officer confirms the diagnosis.
+Model confidence and symptom-match scores are not proof of a diagnosis, at any value. Treatment advice is held back until an extension officer confirms the diagnosis; farmers can send the result to their officer in **My officer**.
 
 ## Reading a result
 
@@ -408,7 +408,7 @@ When a photo is not possible, describe the symptoms in **Describe symptoms**. Th
 
 ## Soil and disease library
 
-**Soil** shows soil data for a chosen farmer, including SoilGrids (250 m) values adjusted by the farmer's own soil tests where they exist. **Disease library** describes common diseases, their symptoms and how they spread.
+**Soil** shows soil data for a chosen farmer, including SoilGrids (250 m) values adjusted by the farmer's own soil tests where they exist. A farmer sees only their own soil, which loads without choosing. **Disease library** describes common diseases, their symptoms and how they spread.
 
 ---
 

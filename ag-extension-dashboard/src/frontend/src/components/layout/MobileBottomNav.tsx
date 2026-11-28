@@ -88,6 +88,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({
   const farmerItems: NavItemConfig[] = [
     { id: 'farmer_dashboard', label: t('nav_home', { defaultValue: 'Home' }), icon: LayoutDashboard },
     { id: 'officerchat', label: t('nav_officerchat', { defaultValue: 'My officer' }), icon: MessageSquare, requiresPro: true, service: 'chat' },
+    { id: 'disease_diagnosis', label: t('nav_ai_scan', { defaultValue: 'AI scan' }), icon: Camera, requiresPro: true },
     { id: 'knowledge', label: t('nav_knowledge', { defaultValue: 'Knowledge' }), icon: BookOpen },
   ];
 
