@@ -1,11 +1,11 @@
 import React, { type ReactNode } from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { BillingDashboard } from '../BillingDashboard';
 import { LanguageProvider } from '../../lib/LanguageContext';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { fetchSubscription } from '@/api/billingService';
+import { fetchSubscription, redeemVoucher } from '@/api/billingService';
 
 // Mock billing service to prevent real API calls
 // Most tests cover billing switched on; one checks the page while it is off.
@@ -202,7 +202,7 @@ describe('BillingDashboard', () => {
     );
   });
 
-  it('while billing is off, offers nothing to buy but keeps usage, invoices and the customer portal', async () => {
+  it('while billing is off, offers nothing to buy but keeps usage, invoices, vouchers and the customer portal', async () => {
     billingOn = false;
     try {
       await renderComponent();
@@ -216,6 +216,15 @@ describe('BillingDashboard', () => {
       expect(screen.getByRole('button', { name: 'Usage' })).toHaveAttribute('aria-pressed', 'true');
       expect(screen.getByRole('button', { name: 'Invoices & receipts' })).toBeInTheDocument();
       expect(screen.getAllByRole('button', { name: /portal/i }).length).toBeGreaterThan(0);
+
+      // A voucher is a prepaid grant code, not a payment: it can still be redeemed.
+      vi.mocked(redeemVoucher).mockResolvedValueOnce({ success: true, message: 'Voucher redeemed' } as never);
+      fireEvent.click(screen.getByRole('button', { name: 'Voucher code' }));
+      expect(screen.queryByText('Payment intelligence')).not.toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Redeem' }));
+      fireEvent.change(screen.getByPlaceholderText(/Enter voucher code/), { target: { value: 'agv-a1b2c3d4' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Activate token' }));
+      await waitFor(() => expect(redeemVoucher).toHaveBeenCalledWith('AGV-A1B2C3D4'));
     } finally {
       billingOn = true;
     }

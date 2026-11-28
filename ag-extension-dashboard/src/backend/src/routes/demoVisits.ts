@@ -18,9 +18,9 @@ export function demoVisitDays(value: unknown): number {
 }
 
 router.get('/', authorize(['admin']), async (req: Request, res: Response) => {
-  // Whole days only (the query counts days in an interval): 2.5 becomes 2.
-  const days = demoVisitDays(req.query.days);
   try {
+    // Whole days only (the query counts days in an interval): 2.5 becomes 2.
+    const days = demoVisitDays(req.query.days);
     res.set('Cache-Control', 'no-store');
     res.json({ success: true, days, ...(await listDemoVisits(days)) });
   } catch (error) {
