@@ -15,7 +15,7 @@ const EMOJI = /(?![©®™])\p{Extended_Pictographic}/u;
 const ACRONYMS = new Set([
   'SMS', 'USSD', 'CSV', 'NDVI', 'AI', 'API', 'FAO', 'KES', 'USD', 'MWK', 'PDF', 'MIS', 'GPS', 'ID', 'PIN', 'URL', 'ISRIC', 'FAOSTAT',
   'GIEWS', 'FX', 'NASA', 'POWER', 'MCP', 'RAG', 'PWA', 'OK', 'EN', 'SW', 'NY', 'UTC', 'EAT', 'CAN', 'DAP', 'NPK', 'IPM', 'PHI', 'REI',
-  'TOTP', 'CIMMYT', 'MFA', 'SSO', 'CPU', 'RAM', 'DB', 'HTTP', 'JSON', 'WFP', 'FEWS', 'NET', 'USDA', 'FAS', 'PSD', 'OTP', 'VAT', 'GDPR', 'II', 'III',
+  'TOTP', 'CIMMYT', 'MFA', 'SSO', 'CPU', 'RAM', 'DB', 'HTTP', 'JSON', 'WFP', 'FEWS', 'NET', 'USDA', 'FAS', 'PSD', 'OTP', 'VAT', 'GDPR', 'II', 'III', 'ECMWF', 'ERA', 'KALRO',
 ]);
 
 /**

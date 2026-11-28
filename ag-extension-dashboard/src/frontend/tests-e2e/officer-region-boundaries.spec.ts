@@ -111,6 +111,18 @@ test.describe('an officer works only with farmers in their region', () => {
     expect(await res.json()).toMatchObject({ upgradeRequired: true });
   });
 
+  test('a farmer on the Free plan has disease diagnosis locked, and the server refuses a photo check', async ({ page }) => {
+    await loginThroughUi(page, JOURNEY.freeFarmer.email);
+    const nav = page.getByRole('navigation').first();
+    await expect(nav.getByRole('button', { name: /^Disease diagnosis.*Pro plan required$/ })).toBeVisible();
+
+    // The photo allowance on the Free plan is zero, so the check is refused with an upgrade prompt.
+    const farmer = await apiAs(page.request, JOURNEY.freeFarmer.email);
+    const res = await farmer.post('/api/v1/ai/diseases/diagnose/image', { imageData: 'data:image/png;base64,iVBORw0KGgo=', cropType: 'maize' });
+    expect(res.status()).toBe(403);
+    expect(await res.json()).toMatchObject({ upgradeRequired: true });
+  });
+
   test('the officer\'s chat lists only their own farmers\' threads', async ({ page }) => {
     // Loveness writes to her own officer…
     const otherFarmer = await apiAs(page.request, other.email);

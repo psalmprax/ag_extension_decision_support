@@ -292,6 +292,7 @@ model Farmer {
   @@index([locationLat, locationLng])
   @@map("farmers")
    officerSmsRefs           OfficerSmsRef[]
+  alertDeliveries          AlertDelivery[]
 }
 
 model Visit {
@@ -515,16 +516,56 @@ model Alert {
   isActive        Boolean?  @default(true) @map("is_active")
   notificationSent Boolean? @default(false) @map("notification_sent")
   alertNotificationSent Boolean? @default(false) @map("alert_notification_sent")
+  /// Farmers in affectedFarmers are told too (see alert_deliveries). Never set by the AI alert tool.
+  notifyFarmers   Boolean   @default(false) @map("notify_farmers")
+  dedupeKey       String?   @unique @map("dedupe_key") @db.VarChar(120)
+  expiresAt       DateTime? @map("expires_at") @db.Timestamp(6)
+  /// Facts a farmer notice is built from: forecast day, condition and rain, or the officer's name.
+  details         Json?
   triggeredAt     DateTime? @default(now()) @map("triggered_at") @db.Timestamp(6)
   resolvedAt      DateTime? @map("resolved_at") @db.Timestamp(6)
   createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamp(6)
   tenant          Tenant?  @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+  deliveries      AlertDelivery[]
 
   @@index([isActive])
   @@index([type])
   @@index([severity])
   @@index([tenantId])
   @@map("alerts")
+}
+
+/// One alert to one farmer, written before the send so nobody gets it twice.
+model AlertDelivery {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  alertId   String   @map("alert_id") @db.Uuid
+  farmerId  String   @map("farmer_id") @db.Uuid
+  /// pending, sent, opted_out, no_contact or failed
+  outcome   String   @default("pending") @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  alert     Alert    @relation(fields: [alertId], references: [id], onDelete: Cascade)
+  farmer    Farmer   @relation(fields: [farmerId], references: [id], onDelete: Cascade)
+
+  @@unique([alertId, farmerId])
+  @@index([farmerId, createdAt])
+  @@map("alert_deliveries")
+}
+
+/// A Digital Earth Africa point value: one layer, one point, one date ("latest" for the newest).
+model SatelliteReading {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  layer          String   @db.VarChar(60)
+  pointKey       String   @map("point_key") @db.VarChar(40)
+  /// YYYY-MM-DD asked for, or "latest"
+  requestedOn    String   @map("requested_on") @db.VarChar(10)
+  /// The date the service answered for; null when it had no data there
+  observedOn     String?  @map("observed_on") @db.VarChar(10)
+  bands          Json?
+  availableDates Json?    @map("available_dates")
+  fetchedAt      DateTime @default(now()) @map("fetched_at") @db.Timestamp(6)
+
+  @@unique([layer, pointKey, requestedOn])
+  @@map("satellite_readings")
 }
 
 model SubscriptionPlan {

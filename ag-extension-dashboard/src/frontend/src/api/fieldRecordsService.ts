@@ -48,7 +48,16 @@ function withPendingSoilTests(fieldId: string, tests: SoilTest[]): SoilTest[] {
 // Undated results go last, as the server lists them.
 const byTestDay = (a: SoilTest, b: SoilTest) => (a.testedAt ?? '9999').localeCompare(b.testedAt ?? '9999');
 
-/** Soil test results and NASA POWER weather for one saved field. */
+/** What Digital Earth Africa says about a field (GET /fields/:id/satellite); each part null where it has nothing. */
+export interface FieldSatelliteRecord {
+  rainfall: { month: string; rainMm: number; averageMm: number | null; baselineYears: number; percentOfAverage: number | null; source: string } | null;
+  greenness: { month: string; ndvi: number | null; stdAnomaly: number; clearObservations: number | null; source: string } | null;
+  floodHistory: { frequency: number; wetObservations: number | null; clearObservations: number | null; source: string } | null;
+  cropland2019: { cropland: boolean; probabilityPct: number | null; source: string } | null;
+  worldCereal2021: { temporaryCrops: boolean | null; maizeMainSeason: boolean | null; maizeConfidencePct: number | null; source: string } | null;
+}
+
+/** Soil test results, NASA POWER weather and the satellite record for one saved field. */
 export const fieldRecordsService = {
   /** Oldest first. Without a connection, the copy kept on this device and anything saved since. */
   async soilTests(fieldId: string): Promise<SoilTest[]> {
@@ -84,6 +93,11 @@ export const fieldRecordsService = {
 
   async weather(fieldId: string): Promise<FieldWeather> {
     const { data } = await apiClient.get(`/v1/fields/${fieldId}/weather`);
+    return data.data;
+  },
+
+  async satellite(fieldId: string): Promise<FieldSatelliteRecord> {
+    const { data } = await apiClient.get(`/v1/fields/${fieldId}/satellite`);
     return data.data;
   },
 };

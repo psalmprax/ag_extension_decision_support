@@ -178,7 +178,8 @@ export const getNavItems = (): NavItem[] => [
     label: 'Disease Diagnosis',
     labelKey: 'nav_disease_diagnosis',
     icon: Leaf,
-    roles: ['extension_officer', 'admin'],
+    // Farmers check their own crops; treatment advice still waits for an officer's confirmation.
+    roles: ['extension_officer', 'admin', 'farmer'],
     requiresPro: true,
   },
   {

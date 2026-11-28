@@ -19,8 +19,8 @@ const BASE_URL = process.argv[2] || process.env.MANUAL_BASE_URL || 'http://local
 const OUT_DIR = path.join(__dirname, '..', 'docs', 'manual', 'figures');
 
 /**
- * Pin definitions: a CSS selector plus the caption text the manual legend uses.
- * Selectors are resolved in page order; the number is the pin label.
+ * Pin definitions: a Playwright selector and the number the manual's legend uses. A pin sits
+ * just left of its control, or just right of it with anchor 'after' (for inline links).
  */
 const FIGURES = [
   {
@@ -32,8 +32,10 @@ const FIGURES = [
       { selector: '#login-email', label: '1' },
       { selector: '#login-password', label: '2' },
       { selector: 'button[type="submit"]', label: '3' },
-      { selector: 'a[href="/forgot-password"], a[href*="forgot"]', label: '4', anchor: 'center' },
-      { selector: 'a[href="/register"], a[href*="register"]', label: '5', anchor: 'center' },
+      { selector: 'a[href="/forgot-password"], a[href*="forgot"]', label: '4' },
+      { selector: 'a[href="/register"], a[href*="register"]', label: '5', anchor: 'after' },
+      { selector: 'button:has-text("Try the demo")', label: '6' },
+      { selector: 'button:has-text("Sign in with your phone number")', label: '7' },
     ],
   },
   {
@@ -42,11 +44,12 @@ const FIGURES = [
     viewport: { width: 1440, height: 1000 },
     waitFor: 'form',
     pins: [
-      { selector: 'input[type="text"]', label: '1' },
+      { selector: 'input[placeholder="Enter first name"]', label: '1' },
       { selector: 'input[type="email"]', label: '2' },
       { selector: 'input[type="password"]', label: '3' },
-      { selector: 'select', label: '4' },
-      { selector: 'button[type="submit"]', label: '5' },
+      { selector: 'xpath=//label[normalize-space()="Country"]/following::select[1]', label: '4' },
+      { selector: 'xpath=//label[normalize-space()="Role"]/following::select[1]', label: '5' },
+      { selector: 'button[type="submit"]', label: '6' },
     ],
   },
 ];
@@ -90,7 +93,8 @@ async function capture(browser, figure) {
       console.warn(`  [${figure.name}] element not visible: ${pin.selector}`);
       continue;
     }
-    const x = Math.round(pin.anchor === 'center' ? box.x + box.width / 2 : box.x + 16);
+    // Pins sit just outside the control, so they never cover its label or what is typed in it.
+    const x = Math.round(pin.anchor === 'after' ? box.x + box.width + 18 : box.x - 18);
     const y = Math.round(box.y + box.height / 2);
     await page.evaluate(
       ({ x, y, label, style }) => {

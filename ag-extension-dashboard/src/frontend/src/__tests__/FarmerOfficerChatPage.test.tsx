@@ -148,7 +148,8 @@ describe("the farmer's mobile tabs", () => {
 
     expect(screen.getByRole('button', { name: /My officer/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Farmers/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: /AI scan/ })).not.toBeInTheDocument();
+    // Farmers check their own crops from the field.
+    expect(screen.getByRole('button', { name: /AI scan/ })).toBeInTheDocument();
   });
 
   it('offers earlier messages when the thread has more than the latest page', async () => {

@@ -35,18 +35,22 @@ async function loadFarmer(farmerId: string): Promise<NoticeFarmer | null> {
     return rows[0] ?? null;
 }
 
+/** Words for a notice, fixed or worked out for the farmer (their language, their country's dates). */
+export type NoticeVars = Record<string, string> | ((farmer: { language: string | null; country: string | null }) => Record<string, string>);
+
 /** Send one notice. `always` is for the STOP and START confirmations themselves. */
 export async function sendFarmerNotice(
     farmerId: string,
     key: NoticeKey,
-    vars: Record<string, string> = {},
+    vars: NoticeVars = {},
     options: { always?: boolean } = {},
 ): Promise<NoticeOutcome> {
     try {
         const farmer = await loadFarmer(farmerId);
         if (!farmer) return 'no_contact';
         if (farmer.sms_opt_out && !options.always) return 'opted_out';
-        const text = noticeText(key, farmer.language_preference, vars);
+        const words = typeof vars === 'function' ? vars({ language: farmer.language_preference, country: farmer.country }) : vars;
+        const text = noticeText(key, farmer.language_preference, words);
         const channel = farmer.thread_id ? await replyChannelFor(farmer.thread_id) : null;
         if (farmer.thread_id && (channel === 'whatsapp' || channel === 'telegram')) {
             await noticeOnChannel(farmer.thread_id, channel, text);

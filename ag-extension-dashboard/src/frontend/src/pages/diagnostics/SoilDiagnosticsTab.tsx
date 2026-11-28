@@ -6,7 +6,8 @@ import { SoilSampleForm } from './soil/SoilSampleForm';
 import { SoilResults } from './soil/SoilResults';
 import { downloadReportPdf } from '../../api/reportService';
 import { fetchFarmerSoilProfile, type FarmerSoilProfile } from '../../api/soilService';
-import { fetchFarmers, updateFarmer } from '../../api/farmerService';
+import { updateFarmer } from '../../api/farmerService';
+import { useSoilFarmers } from './useSoilFarmers';
 import { requestGpsFix } from '@/lib/geo';
 import { SoilNutrientHeatmapCanvas, type SoilHeatmapRealPoints } from '../../components/canvas-ui/SoilNutrientHeatmapCanvas';
 import { useDemoMode } from '@/demo';
@@ -37,27 +38,14 @@ export function SoilDiagnosticsTab({
   const [isExporting, setIsExporting] = useState(false);
   const [soilAnalysis, setSoilAnalysis] = useState<SoilAnalysisResult | null>(null);
   const [farmNotes, setFarmNotes] = useState('');
-  const [farmersList, setFarmersList] = useState<{ id: string; firstName: string; lastName: string }[]>([]);
   const [selectedFarmerId, setSelectedFarmerId] = useState<string>('');
+  const { farmers: farmersList, error: farmersError } = useSoilFarmers(setSelectedFarmerId);
   const [soilProfile, setSoilProfile] = useState<FarmerSoilProfile | null>(null);
   const [isLoadingProfile, setIsLoadingProfile] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
   const [isSavingLocation, setIsSavingLocation] = useState(false);
   const [locationNotice, setLocationNotice] = useState<string | null>(null);
   const [profileReloadKey, setProfileReloadKey] = useState(0);
-  const [farmersError, setFarmersError] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetchFarmers()
-      .then(res => {
-        if (res.success && Array.isArray(res.data?.farmers)) {
-          setFarmersList(res.data.farmers);
-        } else if (Array.isArray(res.data)) {
-          setFarmersList(res.data);
-        }
-      })
-      .catch((err: unknown) => setFarmersError(err instanceof Error ? err.message : 'request failed'));
-  }, []);
 
   useEffect(() => {
     if (!selectedFarmerId) {
@@ -219,6 +207,7 @@ export function SoilDiagnosticsTab({
           <div className="flex flex-wrap items-center gap-2">
             <select
               value={selectedFarmerId}
+              aria-label={t('ui_soil_diagnostics_tab_select_farmer_to_load_real_soil_base')}
               onChange={e => setSelectedFarmerId(e.target.value)}
               className="px-3 py-1.5 bg-white dark:bg-theme-bg-primary border border-slate-900/[0.08] dark:border-white/[0.08] rounded-[3px] text-xs text-slate-900 dark:text-theme-text-primary focus:border-slate-500 outline-none"
             >

@@ -17,6 +17,7 @@
   "/api/v1/ai/telemetry/events",
   "/api/v1/ai/telemetry/summary",
   "/api/v1/alerts",
+  "/api/v1/alerts/review",
   "/api/v1/analytics/chatbot",
   "/api/v1/analytics/dashboard",
   "/api/v1/analytics/farmer-stats",

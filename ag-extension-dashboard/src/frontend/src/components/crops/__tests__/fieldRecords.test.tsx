@@ -10,7 +10,7 @@ import { organicChange, organicRows } from '../records/soilTestModel';
 import type { Field } from '@/api/fieldService';
 
 vi.mock('@/api/fieldRecordsService', () => ({
-  fieldRecordsService: { soilTests: vi.fn(), addSoilTest: vi.fn(), deleteSoilTest: vi.fn(), weather: vi.fn() },
+  fieldRecordsService: { soilTests: vi.fn(), addSoilTest: vi.fn(), deleteSoilTest: vi.fn(), weather: vi.fn(), satellite: vi.fn() },
 }));
 
 const FIELD_ID = '22222222-2222-2222-2222-222222222222';

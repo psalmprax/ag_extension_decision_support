@@ -4,6 +4,7 @@ import { getPrisma } from '@/services/prismaService';
 import { requestCanSeeFarmer } from '@/services/access/farmerScope';
 import { soilLabService } from '@/services/soilLabService';
 import { fieldWeather } from '@/services/fields/fieldWeather';
+import { satelliteRecord } from '@/services/deafrica/satelliteFacts';
 import { soilTestInputSchema } from '@/shared-api/fieldRecords';
 import { safeError } from '@/utils/safeResponse';
 import { logger } from '@/utils/logger';
@@ -11,7 +12,8 @@ import { isUuid } from '@/utils/uuid';
 import { requirePaidPlan } from '@/middleware/subscriptionMiddleware';
 
 /**
- * Records kept for one field: soil test results and daily NASA POWER weather. Anyone who may
+ * Records kept for one field: soil test results, daily NASA POWER weather and the Digital Earth
+ * Africa satellite record. Anyone who may
  * see the field's farmer may read them; demo sessions may not change them.
  */
 const router = Router();
@@ -112,6 +114,25 @@ router.get('/:fieldId/weather', fieldUsers, async (req: Request, res: Response) 
     } catch (error) {
         logger.error('Failed to load field weather:', error);
         return safeError(res, 500, 'Failed to load field weather');
+    }
+});
+
+// What Digital Earth Africa says about the field: rain, greenness, cropland, WorldCereal, flood history
+router.get('/:fieldId/satellite', fieldUsers, async (req: Request, res: Response) => {
+    try {
+        const field = await visibleField(req, res);
+        if (!field) return;
+        if (field.latitude === null || field.longitude === null) {
+            return res.status(409).json({ success: false, error: 'This field has no location yet. Add its coordinates or map its boundary.' });
+        }
+        const record = await satelliteRecord(field.latitude, field.longitude);
+        if (Object.values(record).every(part => part === null)) {
+            return res.status(503).json({ success: false, error: 'Digital Earth Africa could not be reached or has no data here. Try again later.' });
+        }
+        return res.json({ success: true, data: record });
+    } catch (error) {
+        logger.error('Failed to load field satellite record:', error);
+        return safeError(res, 500, 'Failed to load the satellite record');
     }
 });
 

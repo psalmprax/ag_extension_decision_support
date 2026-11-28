@@ -1,7 +1,12 @@
 import { notificationService } from '../services/notificationService';
 import { logger } from '../utils/logger';
 import { query } from '../services/databaseService';
-import { WeatherService } from '../services/weatherService';
+import { checkSevereWeather } from '../services/alerts/weatherAlerts';
+import { deliverFarmerAlerts } from '../services/alerts/farmerAlertDelivery';
+import { sendOfficerDigests } from '../services/alerts/officerDigest';
+import { checkHarvestRain } from '../services/alerts/harvestRainAlerts';
+import { checkCropStress } from '../services/alerts/cropStressAlerts';
+import { checkOutbreakSpread } from '../services/alerts/outbreakAlerts';
 import { runIfLeader } from '../services/leaderElection';
 
 /**
@@ -10,8 +15,12 @@ import { runIfLeader } from '../services/leaderElection';
  * - Upcoming visits (24h before, on day of)
  * - Overdue visits
  * - Follow-up required
- * - Disease/weather alerts from FAO
- * - Weather extreme warnings
+ * - Alerts (disease, pests, weather) to the officers of the region and of the farmers named
+ * - Severe weather in the forecast for each farm, hourly (services/alerts/weatherAlerts)
+ * - Alerts to the farmers themselves, when FARMER_ALERTS_ENABLED (services/alerts/farmerAlertDelivery)
+ * - The officer's morning digest at 06:00 local time (services/alerts/officerDigest)
+ * - Rain before a due harvest (hourly), crop stress from satellite greenness and outbreak
+ *   spread (daily) — the last two for officers to review (services/alerts/*)
  * - Subscription expiry warnings
  * - Chatbot low satisfaction alerts
  * - Payment due reminders
@@ -46,6 +55,9 @@ async function runAlertChecks(): Promise<void> {
             checkFollowUpRequired(),
             checkDiseaseAlerts(),
             checkWeatherAlerts(),
+            checkFarmerAlerts(),
+            checkOfficerDigests(),
+            checkPrevention(),
             checkSubscriptionExpiry(),
             lapseExpiredSubscriptions(),
             checkChatbotSatisfaction(),
@@ -57,51 +69,49 @@ async function runAlertChecks(): Promise<void> {
     }
 }
 
-/**
- * Check for weather warnings and notify officers in affected areas
- */
+/** Forecasts change slowly: look once an hour, not on every 15-minute tick. */
+const WEATHER_CHECK_EVERY_MS = 60 * 60 * 1000;
+let lastWeatherCheck = 0;
+
 async function checkWeatherAlerts(): Promise<void> {
+    if (Date.now() - lastWeatherCheck < WEATHER_CHECK_EVERY_MS) return;
+    lastWeatherCheck = Date.now();
     try {
-        const regionsResult = await query<{ region: string }>(`
-            SELECT DISTINCT region
-            FROM farmers
-            WHERE region IS NOT NULL
-            LIMIT 25
-        `);
-        const managersResult = await query<{ id: string; region: string | null }>(`
-            SELECT id, region FROM users
-            WHERE role = 'regional_manager' AND is_active = TRUE
-        `);
-        const severeConditions = new Set(['Heavy rain', 'Violent rain showers', 'Thunderstorm', 'Thunderstorm with hail', 'Heavy snow']);
-        let notificationsSent = 0;
-
-        for (const { region } of regionsResult.rows) {
-            try {
-                const weather = await WeatherService.getByLocation(`${region}, Kenya`);
-                const severeForecast = weather.forecast.find(day => severeConditions.has(day.condition));
-                if (!severeConditions.has(weather.condition) && !severeForecast) continue;
-
-                const condition = severeConditions.has(weather.condition) ? weather.condition : severeForecast!.condition;
-                const managers = managersResult.rows.filter(manager => !manager.region || manager.region === region);
-                for (const manager of managers) {
-                    await notificationService.send({
-                        userId: manager.id,
-                        type: 'warning',
-                        title: `Severe weather warning: ${region}`,
-                        message: `${condition} detected for ${region}. Review affected farms and field schedules.`,
-                        channel: 'in_app',
-                        metadata: { region, condition },
-                    });
-                    notificationsSent++;
-                }
-            } catch (error) {
-                logger.warn(`Weather data unavailable for region ${region}:`, error instanceof Error ? error.message : error);
-            }
-        }
-
-        logger.info(`Processed weather alerts check; sent ${notificationsSent} notifications`);
+        await checkSevereWeather();
+        await checkHarvestRain();
     } catch (error) {
-        logger.error('Error checking weather alerts:', error);
+        logger.error('Error checking severe weather:', error);
+    }
+}
+
+/** Satellite months and two-week outbreak windows move slowly: once a day is enough. */
+const PREVENTION_CHECK_EVERY_MS = 24 * 60 * 60 * 1000;
+let lastPreventionCheck = 0;
+
+async function checkPrevention(): Promise<void> {
+    if (Date.now() - lastPreventionCheck < PREVENTION_CHECK_EVERY_MS) return;
+    lastPreventionCheck = Date.now();
+    try {
+        await checkOutbreakSpread();
+        await checkCropStress();
+    } catch (error) {
+        logger.error('Error running prevention checks:', error);
+    }
+}
+
+async function checkFarmerAlerts(): Promise<void> {
+    try {
+        await deliverFarmerAlerts();
+    } catch (error) {
+        logger.error('Error sending alerts to farmers:', error);
+    }
+}
+
+async function checkOfficerDigests(): Promise<void> {
+    try {
+        await sendOfficerDigests();
+    } catch (error) {
+        logger.error('Error sending officer digests:', error);
     }
 }
 
@@ -432,10 +442,10 @@ async function checkDiseaseAlerts(): Promise<void> {
     try {
         // Check for active alerts that haven't been notified
         const alertsResult = await query(`
-            SELECT id, type, severity, description, location, created_at
+            SELECT id, type, severity, title, description, location, affected_farmers, created_at
             FROM alerts
             WHERE is_active = TRUE
-              AND (notification_sent IS NULL OR notification_sent = FALSE)
+              AND (alert_notification_sent IS NULL OR alert_notification_sent = FALSE)
             ORDER BY 
                 CASE severity 
                     WHEN 'critical' THEN 1 
@@ -453,9 +463,15 @@ async function checkDiseaseAlerts(): Promise<void> {
         `);
 
         for (const alert of alertsResult.rows) {
-            // Determine which officers to notify based on alert location
+            // Officers of the region, and the officers of the farmers the alert names.
+            const assigned = Array.isArray(alert.affected_farmers) && alert.affected_farmers.length > 0
+                ? (await query<{ officer_id: string }>(
+                    'SELECT DISTINCT assigned_officer_id AS officer_id FROM farmers WHERE id = ANY($1::uuid[]) AND assigned_officer_id IS NOT NULL',
+                    [alert.affected_farmers],
+                )).rows.map(row => row.officer_id)
+                : [];
             const relevantOfficers = officersResult.rows.filter((officer) =>
-                !alert.location || alert.location === officer.region || alert.location === 'All'
+                !alert.location || alert.location === officer.region || alert.location === 'All' || assigned.includes(officer.id)
             );
 
             for (const officer of relevantOfficers) {
@@ -463,7 +479,7 @@ async function checkDiseaseAlerts(): Promise<void> {
                 await notificationService.send({
                     userId: officer.id,
                     type: alert.severity === 'critical' || alert.severity === 'high' ? 'error' : 'warning',
-                    title: `${alert.type} alert (${alert.severity})`,
+                    title: alert.title || `${alert.type} alert (${alert.severity})`,
                     message: alert.description,
                     channel: 'in_app',
                     metadata: {
