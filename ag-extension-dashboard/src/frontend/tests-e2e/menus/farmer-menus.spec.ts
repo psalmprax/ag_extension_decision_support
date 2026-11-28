@@ -55,7 +55,8 @@ test.describe('a farmer works through every menu page', () => {
     await expect(picker).toHaveValue(JOURNEY.farmer.id);
     await expect(picker.locator('option')).toHaveCount(2); // the prompt and my own record
     const api = await apiAs(request, farmer);
-    expect((await api.get(`/api/soil/farmer/${SEEDED.mzuzuFarmerId}`)).status()).toBe(403);
+    // 404, not 403: the server does not confirm that a farmer outside my reach exists.
+    expect((await api.get(`/api/soil/farmer/${SEEDED.mzuzuFarmerId}`)).status()).toBe(404);
   });
 
   test('AI agronomist: the answer shown is the one the server returned', async () => {
